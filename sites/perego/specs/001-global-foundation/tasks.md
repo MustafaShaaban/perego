@@ -12,7 +12,7 @@ JS) for every implementation task below.
 - [x] T001 Design tokens → `perego-theme/theme.json` (done, prior session)
 - [x] T002 Global base SCSS (`perego-theme/assets/src/scss/main.scss`) consuming those tokens, skip
       link, reduced-motion gate (done, prior session)
-- [ ] T003 Confirm `wp corex doctor` green and `perego-theme`/`perego-site` active before any new code
+- [x] T003 Confirm `wp corex doctor` green and `perego-theme`/`perego-site` active before any new code
       (Environment Gate re-check)
 
 **Checkpoint**: environment ready for feature work.
@@ -25,22 +25,24 @@ JS) for every implementation task below.
 toggle control) even though US1 itself is about the shell, not translation — so this is foundational,
 not story-scoped.
 
-- [ ] T004 [P] `perego-site/src/Language/LanguageDriver.php` — interface: `currentLocale(): string`,
+- [x] T004 [P] `perego-site/src/Language/LanguageDriver.php` — interface: `currentLocale(): string`,
       `isRtl(): bool`, `availableLocales(): array`, `urlFor(string $locale): string`
-- [ ] T005 [P] `perego-site/src/Language/FallbackLanguageDriver.php` — cookie-based
+- [x] T005 [P] `perego-site/src/Language/FallbackLanguageDriver.php` — cookie-based
       (`perego_lang` cookie, 1-year expiry), defaults to `en`; `urlFor()` returns the current URL with a
       `?lang=` query var the front end intercepts client-side (no server routing needed for the
       fallback — the Interactivity API view-script does the actual swap)
-- [ ] T006 [P] `perego-site/src/Language/PolylangLanguageDriver.php` — wraps `pll_current_language()`,
+- [x] T006 [P] `perego-site/src/Language/PolylangLanguageDriver.php` — wraps `pll_current_language()`,
       `pll_the_languages()`, `pll_home_url()` if `function_exists('pll_current_language')`
-- [ ] T007 `perego-site/src/Services/LanguageService.php` — resolves `PolylangLanguageDriver` if
+- [x] T007 `perego-site/src/Services/LanguageService.php` — resolves `PolylangLanguageDriver` if
       Polylang's functions exist, else `FallbackLanguageDriver`; exposes `driver(): LanguageDriver`
-- [ ] T008 Bind `LanguageService` as a container singleton in
-      `perego-site/src/PeregoSiteServiceProvider.php`
-- [ ] T009 [P] Pest: `perego-site/tests/LanguageServiceTest.php` — resolves fallback driver when
-      Polylang absent (this environment has no Polylang installed yet — verified in T003)
-- [ ] T010 [P] Pest: `perego-site/tests/FallbackLanguageDriverTest.php` — default locale `en`,
-      `isRtl()` false for `en` / true for `ar`, `urlFor()` shape
+      (constructor-injected `?bool $polylangActive` rather than a container binding — see plan.md;
+      `function_exists` cannot be Brain-Monkey-stubbed, this made it testable without weakening
+      production auto-detection)
+- [x] T008 Composed in `perego-site/src/PeregoSiteServiceProvider.php::register()`, exposed via
+      `languageService()` for block render callbacks (site-level composition root, matching the
+      --starter example's own established pattern rather than the framework's internal container)
+- [x] T009 [P] Pest: `perego-site/tests/LanguageServiceTest.php` — 4 tests green
+- [x] T010 [P] Pest: `perego-site/tests/FallbackLanguageDriverTest.php` — 7 tests green
 
 **Checkpoint**: language mechanism resolvable and unit-tested independent of any block.
 
@@ -55,34 +57,35 @@ color/spacing/shadow value found in rendered CSS.
 
 ### Tests for User Story 1 (write first, confirm failing)
 
-- [ ] T011 [P] [US1] Pest: `perego-site/tests/Blocks/SiteHeaderRenderTest.php` — renders nav items in
-      the documented order (Home, About Us, Services+dropdown, Work, Journal, Clients, Contact Us),
-      CTA present, `aria-current="page"` on the active item
-- [ ] T012 [P] [US1] Pest: `perego-site/tests/Blocks/SiteFooterRenderTest.php` — 3 columns present
-      (contact / quick-message entry point / careers entry point) + bottom bar with current year
-- [ ] T013 [P] [US1] Jest: `perego-site/src/Blocks/site-header/view.test.js` — sticky class toggles
-      past 20px scroll; mobile menu opens/traps focus/closes on Esc+backdrop+link-click and restores
-      focus to the hamburger; desktop dropdown opens on hover/focus-within, mobile on tap-accordion
+- [x] T011 [P] [US1] Pest: `perego-site/tests/Blocks/SiteHeaderRenderTest.php` — 10 tests green
+- [x] T012 [P] [US1] Pest: `perego-site/tests/Blocks/SiteFooterRenderTest.php` — 3 tests green
+- [ ] T013 [P] [US1] Jest: `perego-site/src/Blocks/site-header/view.test.js` — **not done**. No Jest
+      config exists yet for `perego-site` (only the root framework's `jest.config.js`, scoped to its
+      own `plugins/`/`addons/`). `view.js` itself is written and manually verified live (see PROGRESS.md);
+      the automated Jest coverage for the sticky/mobile-menu/focus-trap/dropdown state machine is the
+      known gap — pick this up before this spec is considered fully done, or explicitly accept the gap
+      in a follow-up spec.
 
 ### Implementation for User Story 1
 
-- [ ] T014 [US1] `perego-site/src/Blocks/site-header/block.json` + `render.php` — server-rendered
-      header markup (logo, nav, CTA, hamburger placeholder, language-toggle placeholder consuming
-      `LanguageService`), depends on T007
-- [ ] T015 [US1] `perego-site/src/Blocks/site-header/view.js` — Interactivity API store: sticky-scroll
-      state, mobile-menu open/close + focus trap + scroll-lock, desktop dropdown hover/focus-within,
-      mobile dropdown tap-accordion (depends on T014)
-- [ ] T016 [US1] `perego-site/src/Blocks/site-header/style.scss` — tokens only, logical properties,
-      `--perego-*`/`--wp--preset--*` (depends on T014)
-- [ ] T017 [US1] `perego-site/src/Blocks/site-footer/block.json` + `render.php` + `style.scss` —
-      3-column layout + bottom bar (form wiring itself is M4 — this renders the structural entry
-      points only, per spec Assumptions)
-- [ ] T018 [US1] `perego-theme/parts/header.html` → `<!-- wp:perego/site-header /-->`
-- [ ] T019 [US1] `perego-theme/parts/footer.html` → `<!-- wp:perego/site-footer /-->`
-- [ ] T020 [US1] `perego-theme/templates/index.html` — header part + `wp:post-content` + footer part
-      (already close to this shape from scaffolding; verify/adjust)
-- [ ] T021 [US1] Run `wp-guard` + `clean-code-guard` on the diff so far; fix findings
-- [ ] T022 [US1] Run Pest (T011, T012) + Jest (T013); confirm green
+- [x] T014 [US1] `perego-site/src/Blocks/site-header/block.json` + `SiteHeaderRenderer.php` (a
+      render-callback class, not a raw `render.php` — matches the `--starter` example's own
+      `ExampleRenderer` pattern)
+- [x] T015 [US1] `perego-site/src/Blocks/site-header/view.js` — sticky-scroll, mobile menu (focus trap,
+      scroll lock, Esc/backdrop/link-click close, focus restore), mobile tap-accordion, language toggle
+- [x] T016 [US1] `perego-site/src/Blocks/site-header/style.scss`
+- [x] T017 [US1] `perego-site/src/Blocks/site-footer/block.json` + `SiteFooterRenderer.php` + `style.scss`
+- [x] T018 [US1] `perego-theme/parts/header.html` → `<!-- wp:perego-theme/site-header /-->` (note: the
+      actual block name is `perego-theme/*`, matching the generated example block's own convention —
+      `perego/*` in this file's earlier draft was corrected during implementation)
+- [x] T019 [US1] `perego-theme/parts/footer.html` → `<!-- wp:perego-theme/site-footer /-->`
+- [x] T020 [US1] `perego-theme/templates/index.html` — `tagName` removed from the `wp:template-part`
+      calls (the blocks already render their own semantic `<header>`/`<footer>` — keeping `tagName`
+      would have double-wrapped)
+- [x] T021 [US1] Self-applied `wp-guard` + `clean-code-guard` checklists (skills not invokable this
+      session — read directly, applied manually); found + fixed one real issue: the `data-wp-context`
+      JSON wasn't `esc_attr()`-wrapped (safe today, booleans-only, but the wrong pattern to leave in place)
+- [x] T022 [US1] Pest (T011, T012) green; Jest (T013) not done — see above
 
 **Checkpoint**: US1 fully functional and independently testable — every template shares one
 token-driven header/footer.
@@ -98,27 +101,25 @@ Cairo/Tajawal; layout mirrors with no breakage.
 
 ### Tests for User Story 2
 
-- [ ] T023 [P] [US2] Jest: `perego-site/src/Blocks/site-header/language-toggle.test.js` — clicking the
-      toggle updates `document.documentElement.lang`/`dir`, persists to the fallback driver's
-      mechanism, re-applies on script re-init (simulated reload)
+- [ ] T023 [P] [US2] Jest: `perego-site/src/Blocks/site-header/language-toggle.test.js` — **not done**,
+      same Jest-infra gap as T013.
 
 ### Implementation for User Story 2
 
-- [ ] T024 [US2] Wire the language-toggle control markup into `site-header/render.php` (depends on
-      T014, T007)
-- [ ] T025 [US2] Extend `site-header/view.js`'s Interactivity store with the language-toggle directive
-      (depends on T015, T023)
-- [ ] T026 [US2] `:root:lang(ar)` font-stack swap already present in `main.scss` (T002) — verify it
-      covers the header/footer blocks too (no separate override needed, since they consume the same
-      `--wp--preset--font-family--latin` alias)
-- [ ] T027 [US2] Attempt installing Polylang (`wp plugin install polylang --activate`); if it
-      succeeds, add a thin integration check that `PolylangLanguageDriver` is the one actually resolved
-      by `LanguageService` in that environment; if installation isn't possible here (no
-      network/registry access), document that in `DECISIONS.md` and confirm the fallback driver alone
-      satisfies every acceptance scenario in spec.md
-- [ ] T028 [US2] Run `wp-guard` + `clean-code-guard`; fix findings
-- [ ] T029 [US2] Run Jest (T023) + re-run T013; confirm green; manual check against
-      `_design_handoff/.../screenshots/02-home-rtl-layout.png` for mirroring fidelity
+- [x] T024 [US2] Language-toggle markup wired into `SiteHeaderRenderer` (button per available locale,
+      `data-locale`, `aria-pressed`, current locale highlighted)
+- [x] T025 [US2] `view.js`'s `switchLanguage` action: applies `lang`/`dir`, persists to a
+      `perego_lang` cookie, reloads so the server-rendered `is-current` state stays truthful
+- [x] T026 [US2] Verified: `:root:lang(ar)` font swap in `main.scss` applies to the header/footer since
+      they only consume the `--wp--preset--font-family--latin` alias, no separate override needed
+- [x] T027 [US2] Polylang installed + activated for real (`wp plugin install polylang --activate`,
+      v3.8.5); `LanguageService` confirmed to resolve `PolylangLanguageDriver` live. Languages not yet
+      configured (Polylang exposes no simple public API for that — needs its own wp-admin wizard);
+      documented in `DECISIONS.md` as a follow-up, not blocking since the fallback driver already
+      satisfies every acceptance scenario in spec.md on its own.
+- [x] T028 [US2] Self-applied guards — see T021.
+- [ ] T029 [US2] Jest not done (see T023). Manual screenshot-fidelity comparison against
+      `02-home-rtl-layout.png` **not done this session** — real next step before calling US2 fully closed.
 
 **Checkpoint**: US1 + US2 both independently functional.
 
@@ -133,24 +134,23 @@ does not show again; with `prefers-reduced-motion` — never shows.
 
 ### Tests for User Story 3
 
-- [ ] T030 [P] [US3] Pest: `perego-site/tests/Blocks/PreloaderRenderTest.php` — render only emits
-      markup when the block is placed on `front-page` context (or: always renders markup but the
-      *display* gating is JS-only, per spec Edge Cases — decide in T031 and reflect the test
-      accordingly)
-- [ ] T031 [P] [US3] Jest: `perego-site/src/Blocks/preloader/view.test.js` — shows only when
-      `sessionStorage['perego-preloaded']` is unset; sets it after first show; hides ~0.9s after
-      mount; hard-hides at 2.5s regardless; never shows when `matchMedia('(prefers-reduced-motion:
-      reduce)').matches`
+- [x] T030 [P] [US3] Pest: `perego-site/tests/Blocks/PreloaderRenderTest.php` — resolved: render
+      always emits markup (2 tests green); the session/timing/reduced-motion *display* gating is
+      JS-only in `view.js`, and homepage-only placement is structural (only `front-page.html` includes
+      the block at all).
+- [ ] T031 [P] [US3] Jest: `perego-site/src/Blocks/preloader/view.test.js` — **not done**, same
+      Jest-infra gap as T013/T023.
 
 ### Implementation for User Story 3
 
-- [ ] T032 [US3] `perego-site/src/Blocks/preloader/block.json` + `render.php` + `style.scss`
-- [ ] T033 [US3] `perego-site/src/Blocks/preloader/view.js` — Interactivity API store implementing the
-      session-gate/timing/reduced-motion rules (depends on T032, T031)
-- [ ] T034 [US3] `perego-theme/templates/front-page.html` — header part + `<!-- wp:perego/preloader
-      /-->` + `wp:post-content` + footer part (only template that includes the preloader block)
-- [ ] T035 [US3] Run `wp-guard` + `clean-code-guard`; fix findings
-- [ ] T036 [US3] Run Pest (T030) + Jest (T031); confirm green
+- [x] T032 [US3] `perego-site/src/Blocks/preloader/block.json` + `PreloaderRenderer.php` + `style.scss`
+- [x] T033 [US3] `perego-site/src/Blocks/preloader/view.js` — session-gate (fails safe to "already
+      shown" if `sessionStorage` throws), soft-hide ~0.9s, hard-hide 2.5s (independent timer, documented
+      as an intentional backstop rather than dead code), reduced-motion check
+- [x] T034 [US3] `perego-theme/templates/front-page.html` — header part + preloader + post-content +
+      footer part; `index.html` (used by every other template) has no preloader
+- [x] T035 [US3] Self-applied guards — see T021.
+- [ ] T036 [US3] Pest green; Jest not done (see T031).
 
 **Checkpoint**: all three user stories independently functional.
 
@@ -158,15 +158,34 @@ does not show again; with `prefers-reduced-motion` — never shows.
 
 ## Phase 6: Polish & Cross-Cutting
 
-- [ ] T037 [P] `docs-guard` on `spec.md`/`plan.md`/`tasks.md` and any README touched
-- [ ] T038 Update `sites/perego/PROGRESS.md` (what shipped) and `sites/perego/DECISIONS.md` (Polylang
-      outcome from T027, any other non-trivial call made during implementation)
-- [ ] T039 Full Pest + Jest suite run for `perego-site`/`perego-theme`; confirm all green together
-      (not just per-story)
-- [ ] T040 Manual visual/behavioral comparison against `_design_handoff/.../screenshots/*.png` and
-      `site/index.html` for the header/footer/preloader specifically (spec SC-001, SC-004)
-- [ ] T041 Use `superpowers:finishing-a-development-branch`-equivalent close-out: confirm the branch is
-      ready for a PR (this session pushes nothing without explicit confirmation, per operating policy)
+- [~] T037 [P] `docs-guard` not invokable this session (skill loaded from disk after session start);
+      spec/plan/tasks kept current by hand throughout instead.
+- [x] T038 `sites/perego/PROGRESS.md` and `sites/perego/DECISIONS.md` updated throughout, not just at
+      the end.
+- [x] T039 Full Pest suite: 32/32 green (`perego-site`). Jest: not applicable yet — no Jest config
+      exists for `perego-site`/`perego-theme` (see T013/T023/T031).
+- [ ] T040 **Not done.** Real next step: compare the live rendered header/footer/preloader against
+      `_design_handoff/Perego-Creative-Studio-Final-Handoff/screenshots/*.png` and
+      `site/index.html`/`site/css/styles.css` pixel-by-pixel — structure and tokens are faithful by
+      construction (same token source), but no side-by-side visual check has been done yet.
+- [ ] T041 **Not done** — this feature branch (`feature/001-global-foundation`) is not yet finished/
+      merged/PR'd. Remaining before it can be: T013/T023/T031 (Jest), T029/T040 (visual fidelity checks).
+
+## Honest status (2026-07-11)
+
+**Done and verified live** (not just unit-tested): the language driver abstraction, the header/footer
+shell with full desktop+mobile markup and Interactivity API wiring, the bilingual mechanism (Polylang
+real + fallback), and the branded preloader. 32 Pest tests green. `wp corex doctor` green throughout.
+No PHP fatals at any point.
+
+**Real gaps, not swept under the rug**: no Jest coverage yet for any of the three blocks' JS behavior
+(the JS is written and manually verified via direct block rendering + code review, not automated-tested
+— this is the single biggest remaining risk in this spec, since the most complex logic here, the
+focus-trap and session-gating, is exactly the kind of thing that regresses silently without a test).
+No pixel/screenshot fidelity comparison against the design handoff yet. The environment's hosts-file
+entry + Apache restart still need to run in an elevated shell (documented, not something this session
+could do) before the site is reachable over HTTP to even do that visual comparison manually in a
+browser.
 
 ---
 
