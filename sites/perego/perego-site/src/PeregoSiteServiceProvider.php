@@ -16,6 +16,7 @@ use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ProjectHeroRenderer;
+use PeregoSite\Blocks\SearchResultsRenderer;
 use PeregoSite\Blocks\ServiceHeroRenderer;
 use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
@@ -90,6 +91,14 @@ final class PeregoSiteServiceProvider
             register_block_type($this->blockDir('not-found'), [
                 'render_callback' => static function () use ($languageService): string {
                     return (new NotFoundRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render();
+                },
+            ]);
+
+            register_block_type($this->blockDir('search-results'), [
+                'render_callback' => static function () use ($languageService): string {
+                    return (new SearchResultsRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render();
                 },
