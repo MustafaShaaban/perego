@@ -77,3 +77,19 @@ admin-UI step a real site owner would do anyway.
 page=mlang` and add English (default) + Arabic. Not blocking for spec 001 — the language *mechanism*
 (driver resolution, toggle, persistence) is fully built and tested either way, per the driver's own
 graceful default.
+
+## 2026-07-11 — `upstream` (corex) is fetch-only, never push, from this project
+
+**Context**: owner directive: "corex repo should be just a starting point and updates, DON'T EVER PUSH
+TO COREX REPO FROM PEREGO PROJECT."
+
+**Decision**: `git remote set-url --push upstream DISABLED_DO_NOT_PUSH_TO_COREX` — a hard technical
+guardrail, not just a remembered rule. Any accidental `git push upstream` now fails immediately (no
+such remote URL) instead of silently succeeding. `upstream` exists **only** to `git fetch`/`merge` in
+framework updates; all pushes from this project go to `origin` (`MustafaShaaban/perego`) only.
+
+**Why**: corex is the shared framework other projects also build on; this client site must never be
+able to write to it, even by accident (wrong remote name typed, muscle memory from another repo, etc).
+
+**Status**: done. Verify with `git remote -v` — `upstream`'s push URL must always show the disabled
+placeholder, never a real one.
