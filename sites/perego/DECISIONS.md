@@ -184,3 +184,42 @@ excludes `wp/` and `docs-app/`, not `sites/`) and fails to resolve `@wordpress/i
 Follow-up (framework side, not this site's to fix): add `<rootDir>/sites/` to the root
 `jest.config.js`'s `testPathIgnorePatterns`, matching the existing `wp/`/`docs-app/` exclusions, so the
 root aggregate command doesn't reach into per-site test configs it can't resolve.
+
+## 2026-07-11 — Autonomous implementation run: repair-in-place, editor-first CPTs, Polylang Free
+
+**Context**: `PEREGO_IMPLEMENTATION_PROMPT.md` drives an end-to-end completion pass on the latest
+compatible CoreX baseline.
+
+**Decision 1 — Repair in place, not clean restart.** The `sites/perego/` client layer already follows
+CoreX + FSE correctly (FSE blocks, container-wired renderers, real CPTs, tests, guards; no framework
+pollution). Continue building on it rather than regenerating via `make:site`. Evidence + trigger-by-trigger
+analysis in `docs/decision-repair-vs-restart.md`.
+
+**Decision 2 — CoreX baseline already current.** `v0.33.0`/`71639e7` is the latest stable tag and is an
+ancestor of HEAD; `upstream/main` `ff61bf0` is also already merged. No re-sync needed this run; recorded in
+`docs/corex-baseline.md`. Recovery checkpoint `recovery/2026-07-11-pre-impl` pushed before structural work.
+
+**Decision 3 — Editor-first service content.** The four `perego_service` posts store their "What we do" /
+"Our Process" prose as real block markup in `post_content` (editable on the canvas), rendered by
+`single-perego_service.html` via `core/post-content`. Only structural chrome (eyebrow, H1, tabs) is a
+dynamic block (`perego-theme/service-hero`). ServiceContent is the seed default, not a runtime prose
+source. **Why**: satisfies the prompt's editor-canvas rule and is the pattern to follow when retrofitting
+the Home/portfolio surfaces (which still render prose from PHP providers — tracked remediation).
+
+**Decision 4 — Polylang **Free** slug strategy: never share slugs.** Slug-sharing across translations is
+Pro-only. The seeders let WordPress give the AR post a distinct slug (`video-editing-2`), namespaced by the
+`/ar/` directory prefix, and keep the canonical service key in `_perego_service_slug` meta (read by the
+hero block). We explicitly do **not** force a shared slug via `$wpdb` — an earlier attempt did, and it made
+AR URLs 301-collapse onto EN, exactly the Pro-only assumption the prompt forbids. **Why**: the build must
+pass with zero Pro dependency.
+
+**Decision 5 — Polylang `/ar/` rewrite flush is a documented admin step.** Polylang registers its
+directory rewrite rules only on a real admin/browser request, never under `wp-cli`/`wp eval` (verified:
+`wp rewrite flush`, deleting `rewrite_rules` + front-end regeneration, and manual
+`PLL_Links_Directory::rewrite_rules` re-registration all leave 0 language rules). So the one-time
+**Settings → Permalinks → Save** step is documented in `docs/multilingual-guide.md` rather than worked
+around with any Pro-only or hacky mechanism. All translation data/config is complete and correct without it.
+
+**Status**: services surface (singles) + Polylang EN/AR configuration + bilingual service seeding shipped,
+verified live, committed (`114a0b4`, `c902fd5`, `5017611`, `edd1f12`, `31b07ea`) and pushed. Remaining
+scope tracked in `PROGRESS.md` "Next".
