@@ -177,8 +177,9 @@ milestone; the service-single pattern is the template to follow when retrofittin
 
 Large scope remains from the implementation prompt; work continues in verified, committed increments.
 Immediate queue:
-1. **M3 US3 archive fidelity** — replace the interim query-loop `archive-perego_service.html` with a
-   language-aware `services-overview` block (H1 + intro + process + closing CTA from `ServiceContent`).
+1. ~~**M3 US3 archive fidelity** — language-aware `services-overview` block~~ — **done** (`e2f766b`):
+   `/services/` renders the Our-Services intro + 4 cards + process + CTA, one H1, EN/AR. **M3 US3
+   complete** (CPT + EN/AR content + singles + archive).
 2. **M3 US2** — `single-perego_project.html` template + wire the existing `project-gallery-lightbox`
    block + project meta (overview/challenge/approach/solution/result) + gallery seed; verify live.
 3. **Polylang Free EN/AR** — configure the two languages, then extend the seeders to create + link AR
