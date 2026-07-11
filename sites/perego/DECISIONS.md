@@ -36,3 +36,23 @@ repo's own `AGENTS.md`/`CLAUDE.md` mandate, with the guard skills as the quality
 system for the client site than the framework itself uses would defeat that.
 
 **Status**: done for this repo's tooling availability; each milestone spec still to be written.
+
+## 2026-07-11 — perego-site tests need their own Pest config + ABSPATH-defining bootstrap
+
+**Context**: the root `phpunit.xml.dist` only covers the framework's own `tests/Unit` — a client
+site's Pest suite needs its own config. Running the `--starter` example's `ExampleTest.php` through a
+naive bootstrap (autoload only) produced **zero output and exit code 0** — no error, no failure, just
+silence. Traced it (expensive — looked like a PHP crash at first) to every generated `PeregoSite\*`
+class carrying `defined('ABSPATH') || exit;` (the same direct-access guard convention as Corex's own
+classes, see the root repo's `DECISIONS.md` #20). Outside WordPress, `ABSPATH` is undefined, so the
+guard's `exit;` fires — silently, since bare `exit` with no argument prints nothing.
+
+**Decision**: added `sites/perego/perego-site/phpunit.xml.dist` (own `testsuite`, bootstrap) +
+`tests/bootstrap.php` that defines `ABSPATH` (and requires the root Composer autoloader) before any
+`PeregoSite\` class loads — mirroring the root `tests/bootstrap.php` pattern exactly, just scoped to
+this client site.
+
+**Why**: this is the established framework convention, not a bug to work around differently; matching
+it exactly keeps client tests consistent with how the framework tests itself.
+
+**Status**: done. Run via `cd sites/perego/perego-site && php ../../../vendor/bin/pest`.
