@@ -32,8 +32,19 @@ it('defines the four services with slugs matching the header routes', function (
     ])->and(ServicePostType::SERVICES['video-editing'])->toBe('Video Editing & Post-Production');
 });
 
-it('calls register_post_type on register()', function () {
-    Functions\expect('register_post_type')->once()->with(ServicePostType::POST_TYPE, Mockery::type('array'));
+it('calls register_post_type with the service slug and its args on register()', function () {
+    $captured = [];
+    Functions\expect('register_post_type')
+        ->once()
+        ->andReturnUsing(function ($slug, $args) use (&$captured) {
+            $captured = ['slug' => $slug, 'args' => $args];
+
+            return null;
+        });
 
     (new ServicePostType())->register();
+
+    expect($captured['slug'])->toBe(ServicePostType::POST_TYPE)
+        ->and($captured['args'])->toBeArray()
+        ->and($captured['args']['has_archive'])->toBe('services');
 });
