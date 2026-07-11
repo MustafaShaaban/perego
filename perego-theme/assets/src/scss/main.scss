@@ -1,0 +1,10 @@
+/**
+ * Perego theme styles. Consume Corex design tokens (the theme.json CSS custom properties,
+ * e.g. --wp--preset--color--*) and your own --perego-* tokens — never hardcode a
+ * colour, size, or font. Logical properties only (RTL-correct). wp-scripts emits source maps
+ * in `start` (dev) and minifies in `build` (prod).
+ */
+.perego-theme-app {
+	color: var(--wp--preset--color--foreground, inherit);
+	font-family: var(--wp--preset--font-family--body, inherit);
+}

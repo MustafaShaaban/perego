@@ -1,0 +1,6 @@
+# Perego — Progress
+
+> Live status. First action each session: read this, then continue from **Next**.
+
+## Next
+- Build the first feature: branch `feature/...`, add `specs/...`, implement in `perego-site/`.

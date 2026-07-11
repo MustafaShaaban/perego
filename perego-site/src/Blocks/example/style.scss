@@ -1,0 +1,8 @@
+/* Perego example block — token-only, logical properties (RTL-correct). */
+.perego-theme-example {
+	display: grid;
+	gap: var(--perego-gap, 0.5rem);
+	margin: 0;
+	padding-inline-start: 0;
+	list-style: none;
+}

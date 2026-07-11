@@ -1,0 +1,24 @@
+<?php
+
+/**
+ * @package PeregoSite
+ */
+
+declare(strict_types=1);
+
+namespace PeregoSite\Models;
+
+defined('ABSPATH') || exit;
+
+/**
+ * Example entity — a read-only value object (Corex models describe shape, not behaviour).
+ * Part of the --starter example; delete it per REMOVE-EXAMPLE.md.
+ */
+final class Example
+{
+    public function __construct(
+        public readonly int $id,
+        public readonly string $title,
+    ) {
+    }
+}
