@@ -11,6 +11,7 @@ namespace PeregoSite;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\ExampleRenderer;
+use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
 use PeregoSite\Controllers\ExampleController;
@@ -80,6 +81,11 @@ final class PeregoSiteServiceProvider
                 'render_callback' => static function (array $attributes) use ($footerRenderer): string {
                     return $footerRenderer->render((bool) ($attributes['flat'] ?? false));
                 },
+            ]);
+
+            $preloaderRenderer = new PreloaderRenderer();
+            register_block_type(__DIR__ . '/Blocks/preloader', [
+                'render_callback' => static fn (): string => $preloaderRenderer->render(),
             ]);
         });
     }

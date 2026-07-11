@@ -1,0 +1,27 @@
+/**
+ * perego-theme/preloader — branded first-visit overlay. Tokens only.
+ */
+
+.perego-preloader {
+	position: fixed;
+	inset: 0;
+	z-index: var(--perego-z-preloader);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: var(--wp--preset--color--bg-deep);
+	opacity: 1;
+	transition: opacity var(--perego-dur-medium) var(--perego-ease);
+	pointer-events: none;
+
+	&.is-hidden {
+		opacity: 0;
+		visibility: hidden;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.perego-preloader {
+		display: none;
+	}
+}

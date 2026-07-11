@@ -1,0 +1,16 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/preloader",
+	"title": "Perego Preloader",
+	"category": "theme",
+	"icon": "art",
+	"description": "Branded first-visit-per-session preload overlay for the homepage only. Reduced-motion-safe; hides itself with a hard 2.5s safety timeout regardless of asset load.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"style": "file:./style.scss",
+	"supports": {
+		"html": false
+	}
+}
