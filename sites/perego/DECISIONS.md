@@ -94,6 +94,35 @@ able to write to it, even by accident (wrong remote name typed, muscle memory fr
 **Status**: done. Verify with `git remote -v` — `upstream`'s push URL must always show the disabled
 placeholder, never a real one.
 
+## 2026-07-11 — M3 needs pretty permalinks + .htaccess (and a Git-Bash path-conversion gotcha)
+
+**Context**: the `project` CPT (M3) has a `work` archive + per-project singles, which need pretty
+permalinks. The dev install shipped with plain permalinks and **no `wp/.htaccess`**, so every
+CPT URL 404'd (Apache had nothing routing `/work/` to `index.php`).
+
+**Decision / environment steps** (runtime only — `wp/` is gitignored, so none of this is committed;
+reproduce on any fresh install):
+1. `wp eval 'update_option("permalink_structure","/%postname%/"); flush_rewrite_rules(true);'
+   --path=wp` — **not** `wp rewrite structure '/%postname%/'`: Git Bash's MSYS runtime rewrites a
+   leading-slash CLI argument into a Windows path (`/%postname%/` → `/C:/Program Files/Git/%postname%/`),
+   silently corrupting the permalink structure. Setting the option via `wp eval` (no leading-slash
+   arg on the command line) avoids the conversion. (General rule for this repo: never pass a bare
+   `/...` value as a wp-cli positional arg from Git Bash; use `wp eval`/`update_option`, or prefix
+   with `MSYS_NO_PATHCONV=1`.)
+2. Created `wp/.htaccess` with the standard WordPress `mod_rewrite` block. The perego vhost already
+   has `AllowOverride All` + `mod_rewrite` loaded, so it took effect immediately.
+
+**Also**: seeded 9 placeholder example projects + the 4 category terms via
+`sites/perego/perego-site/scripts/seed-projects.php`. Run it with
+`wp eval 'require "sites/perego/perego-site/scripts/seed-projects.php";' --path=wp` (the direct
+`wp eval-file` path hits a wp-cli quirk with the script's `use`/`WP_CLI::log` ordering; the `require`
+form works). These are the handoff's PLACEHOLDER projects ("Sample Client") — replace with Perego's
+real work before launch; do not invent results/metrics (CONTENT_MODEL.md).
+
+**Status**: done for this dev environment. The owner's environment + the M7 deploy pipeline must apply
+the same permalink structure + `.htaccess` (WordPress writes the latter automatically when permalinks
+are saved through wp-admin).
+
 ## 2026-07-11 — M2 asset build pipeline (the blocks were never compiled)
 
 **Context**: M1 shipped the header/footer/preloader blocks with `block.json` referencing raw

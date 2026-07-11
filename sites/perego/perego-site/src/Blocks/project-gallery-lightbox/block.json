@@ -1,0 +1,16 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/project-gallery-lightbox",
+	"title": "Perego Project Gallery Lightbox",
+	"category": "theme",
+	"icon": "format-gallery",
+	"description": "A project's gallery: a thumbnail grid that opens an accessible lightbox dialog (focus trap, counter, prev/next). Server-rendered; interaction via view.js.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"style": "file:./style-index.css",
+	"supports": {
+		"html": false
+	}
+}

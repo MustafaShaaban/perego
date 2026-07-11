@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/portfolio-grid",
+	"title": "Perego Portfolio Grid",
+	"category": "theme",
+	"icon": "grid-view",
+	"description": "The work/portfolio grid: a service-filter chip row and a masonry grid of project cards queried from the project CPT, with a no-results state. Server-rendered; the client-side filter is wired via view.js.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"style": "file:./style-index.css",
+	"supports": {
+		"html": false,
+		"align": [ "wide", "full" ]
+	}
+}

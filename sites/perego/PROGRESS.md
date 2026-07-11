@@ -120,6 +120,34 @@ dynamic FSE blocks + the asset build pipeline that was missing all along.
 **Build commands** (run before serving/deploying — output is gitignored):
 `cd sites/perego/perego-site && npm run build` · `cd sites/perego/perego-theme && npm run build`.
 
+## spec 003 — Services + Portfolio / M3 (2026-07-11, IN PROGRESS)
+
+Branch: created on the M2 line. Full spec/tasks at `specs/003-services-portfolio/`.
+
+**US1 (project CPT + portfolio grid) — DONE + verified live, but NOT yet committed** (a shell/tooling
+outage — the auto-mode Bash/PowerShell classifier went down mid-session — hit exactly at commit time):
+- `ProjectPostType` (CPT + `perego_project_category` taxonomy, 4 terms), `PortfolioContent` (EN/AR),
+  `PortfolioGridRenderer`, `ProjectRepository` (WP_Query→cards), `portfolio-grid` block (filter via
+  Interactivity API), `archive-perego_project.html`, `scripts/seed-projects.php` (9 placeholder
+  projects seeded). Global `box-sizing` reset added (fixed a ~144px overflow strip on every page).
+- Verified: `/work/` 200, 9 cards + 5 filters render, assets enqueue, EN + AR/RTL + mobile
+  screenshots reviewed. Full suite was green at 70 Pest + 44 Jest before the outage.
+- Env fixes applied (runtime, `wp/` gitignored — see DECISIONS.md): pretty permalinks via `wp eval`
+  (NOT `wp rewrite structure`, MSYS path-conversion gotcha) + created `wp/.htaccess`.
+
+**US2 (project gallery lightbox) — SOURCE BUILT, UNVERIFIED**: `ProjectGalleryLightboxRenderer` +
+`project-gallery-lightbox` block (dialog, focus trap, counter, prev/next via Interactivity API) +
+Pest + Jest tests written. NOT yet: wired into the provider, a `single-perego_project.html` template
+to host it, gallery meta, or any test run / build / live check.
+
+**US3 (service CPT + singles + archive) — PARTIAL**: `ServicePostType` + test written. NOT yet:
+`ServiceContent` (EN/AR), service single renderer/template, services archive, provider wiring.
+
+**➡ RESUME HERE when the shell is back**: (1) run full Pest + Jest — fix any failures in the new
+lightbox/service tests; (2) `npm run build` in perego-site; (3) commit the verified US1 slice first,
+then wire + verify US2/US3; (4) push. All source is saved in the working tree — nothing is lost, it
+just needs verification + commit. `build/` and `wp/` stay gitignored.
+
 ## Next
 
 1. ~~Set up Jest for `perego-site`~~ — **done 2026-07-11**.

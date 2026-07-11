@@ -61,6 +61,16 @@
 	--wp--preset--font-family--latin: var(--wp--preset--font-family--arabic);
 }
 
+/* Global box-sizing reset: our layout containers set both max-inline-size (= the contentSize
+   token) and padding-inline (= the gutter token); without border-box those add up and overflow the
+   viewport (a ~144px white strip at desktop). WP core sets border-box on blocks but not on plain
+   theme markup, so make it universal. */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
 html {
 	background: var(--perego-gradient-bg);
 	background-attachment: fixed;

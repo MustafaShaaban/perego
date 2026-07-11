@@ -12,13 +12,17 @@ defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\ExampleRenderer;
 use PeregoSite\Blocks\HeroSliderRenderer;
+use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
+use PeregoSite\Content\PortfolioContent;
 use PeregoSite\Controllers\ExampleController;
 use PeregoSite\Options\ExampleOptions;
+use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\Repositories\ExampleRepository;
+use PeregoSite\Repositories\ProjectRepository;
 use PeregoSite\Services\ExampleService;
 use PeregoSite\Services\LanguageService;
 
@@ -62,6 +66,33 @@ final class PeregoSiteServiceProvider
 
         $this->registerGlobalShellBlocks();
         $this->registerHomeBlocks();
+        $this->registerPortfolio();
+    }
+
+    /**
+     * spec 003 (M3): the project CPT + taxonomy, and the perego/portfolio-grid block that queries it.
+     */
+    private function registerPortfolio(): void
+    {
+        add_action('init', function (): void {
+            (new ProjectPostType())->register();
+
+            $gridRenderer = new PortfolioGridRenderer();
+            $languageService = $this->languageService;
+
+            register_block_type($this->blockDir('portfolio-grid'), [
+                'render_callback' => static function () use ($gridRenderer, $languageService): string {
+                    $content  = new PortfolioContent($languageService->driver()->currentLocale());
+                    $projects = (new ProjectRepository())->allForGrid($content);
+
+                    return $gridRenderer->render(
+                        $projects,
+                        $content->filterLabels(),
+                        $content->gridStrings(),
+                    );
+                },
+            ]);
+        });
     }
 
     /**
