@@ -11,7 +11,9 @@ namespace PeregoSite;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\ExampleRenderer;
+use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
+use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
 use PeregoSite\Controllers\ExampleController;
@@ -53,12 +55,13 @@ final class PeregoSiteServiceProvider
 
         add_action('init', function (): void {
             $renderer = new ExampleRenderer($this->exampleService);
-            register_block_type(__DIR__ . '/Blocks/example', [
+            register_block_type($this->blockDir('example'), [
                 'render_callback' => static fn (): string => $renderer->render(),
             ]);
         });
 
         $this->registerGlobalShellBlocks();
+        $this->registerHomeBlocks();
     }
 
     /**
@@ -68,7 +71,7 @@ final class PeregoSiteServiceProvider
     {
         add_action('init', function (): void {
             $headerRenderer = new SiteHeaderRenderer($this->languageService);
-            register_block_type(__DIR__ . '/Blocks/site-header', [
+            register_block_type($this->blockDir('site-header'), [
                 'render_callback' => static function () use ($headerRenderer): string {
                     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
@@ -77,17 +80,49 @@ final class PeregoSiteServiceProvider
             ]);
 
             $footerRenderer = new SiteFooterRenderer();
-            register_block_type(__DIR__ . '/Blocks/site-footer', [
+            register_block_type($this->blockDir('site-footer'), [
                 'render_callback' => static function (array $attributes) use ($footerRenderer): string {
                     return $footerRenderer->render((bool) ($attributes['flat'] ?? false));
                 },
             ]);
 
             $preloaderRenderer = new PreloaderRenderer();
-            register_block_type(__DIR__ . '/Blocks/preloader', [
+            register_block_type($this->blockDir('preloader'), [
                 'render_callback' => static fn (): string => $preloaderRenderer->render(),
             ]);
         });
+    }
+
+    /**
+     * spec 002 (M2): the homepage hero slider + services teaser.
+     */
+    private function registerHomeBlocks(): void
+    {
+        add_action('init', function (): void {
+            $heroRenderer = new HeroSliderRenderer($this->languageService);
+            register_block_type($this->blockDir('hero-slider'), [
+                'render_callback' => static fn (): string => $heroRenderer->render(),
+            ]);
+
+            $teaserRenderer = new ServicesTeaserRenderer($this->languageService);
+            register_block_type($this->blockDir('services-teaser'), [
+                'render_callback' => static fn (): string => $teaserRenderer->render(),
+            ]);
+        });
+    }
+
+    /**
+     * Resolve a block's registration directory: the compiled `build/Blocks/<name>` (with its
+     * style.css + bundled view.js + generated .asset.php) when a build has run, else the
+     * `src/Blocks/<name>` source so registration still works pre-build (markup renders; the raw
+     * SCSS/ESM assets just won't load until `npm run build`). Build output is gitignored and
+     * regenerated — see DECISIONS.md.
+     */
+    private function blockDir(string $name): string
+    {
+        $built = dirname(__DIR__) . '/build/Blocks/' . $name;
+
+        return is_dir($built) ? $built : __DIR__ . '/Blocks/' . $name;
     }
 
     /**

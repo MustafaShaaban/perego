@@ -8,5 +8,5 @@
 	"description": "An example Perego client-site block (server-rendered). Delete with the rest of the example — see REMOVE-EXAMPLE.md.",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
-	"style": "file:./style.scss"
+	"style": "file:./style-index.css"
 }

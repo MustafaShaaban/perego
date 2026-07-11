@@ -18,7 +18,10 @@
 	--perego-gradient-bg: var(--wp--custom--perego--gradient--bg);
 	--perego-gradient-violet-band: var(--wp--custom--perego--gradient--violet-band);
 	--perego-gradient-banner: var(--wp--custom--perego--gradient--banner);
+	--perego-gradient-card-media: var(--wp--custom--perego--gradient--card-media);
+	--perego-gradient-card-overlay: var(--wp--custom--perego--gradient--card-overlay);
 	--perego-glass-fill: var(--wp--custom--perego--color--glass-fill);
+	--perego-glass-panel-fill: var(--wp--custom--perego--color--glass-panel-fill);
 	--perego-glass-border: var(--wp--custom--perego--color--glass-border);
 	--perego-glass-blur: var(--wp--custom--perego--glass-blur);
 	--perego-muted: var(--wp--custom--perego--color--muted);
@@ -32,6 +35,7 @@
 	--perego-shadow-service-card: var(--wp--custom--perego--shadow--service-card);
 	--perego-shadow-featured: var(--wp--custom--perego--shadow--featured);
 	--perego-shadow-glow-accent: var(--wp--custom--perego--shadow--glow-accent);
+	--perego-shadow-glass-panel-inset: var(--wp--custom--perego--shadow--glass-panel-inset);
 
 	/* Motion */
 	--perego-ease: var(--wp--custom--perego--motion--ease);
@@ -101,4 +105,95 @@ body {
 
 .perego-skip-link:focus {
 	inset-block-start: 1rem;
+}
+
+/* ============================================================
+   Shared primitives (used across pages per COMPONENTS.md)
+   ============================================================ */
+
+/* Button (handoff `.btn` / `.btn--accent`). */
+.perego-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	border: 0;
+	border-radius: var(--perego-radius-btn);
+	padding: 16px 34px;
+	color: var(--wp--preset--color--text);
+	text-transform: uppercase;
+	text-decoration: none;
+	cursor: pointer;
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease),
+		background var(--perego-dur-fast) var(--perego-ease);
+}
+
+.perego-btn--accent {
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+
+	&:hover,
+	&:focus-visible {
+		transform: translateY(-2px);
+		box-shadow: var(--perego-shadow-glow-accent);
+	}
+}
+
+/* Glass panel (handoff `.glass-panel`). */
+.glass-panel {
+	border: 1px solid var(--perego-glass-border);
+	border-radius: var(--perego-radius-card);
+	background: var(--perego-glass-panel-fill);
+	backdrop-filter: blur(var(--perego-glass-blur));
+	padding: clamp(26px, 3vw, 44px);
+	box-shadow: var(--perego-shadow-glass-panel-inset);
+}
+
+.panel-title {
+	font-size: var(--wp--preset--font-size--h2);
+	font-weight: 700;
+	line-height: 1.08;
+	margin: 0 0 0.6em;
+}
+
+/* Home "About Us" section — two glass panels, right-aligned column (RTL mirrors to the left). */
+.home-about {
+	position: relative;
+	overflow: hidden;
+	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--perego-gradient-bg);
+}
+
+.home-about__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	display: grid;
+	grid-template-columns: 1fr minmax(0, 620px);
+}
+
+.home-about__panels {
+	grid-column: 2;
+	display: flex;
+	flex-direction: column;
+	gap: clamp(18px, 2.4vw, 30px);
+}
+
+[dir="rtl"] .home-about__panels {
+	grid-column: 1;
+}
+
+@media (max-width: 900px) {
+	.home-about__inner {
+		grid-template-columns: 1fr;
+	}
+	.home-about__panels {
+		grid-column: 1;
+	}
 }

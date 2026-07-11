@@ -9,7 +9,7 @@
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
 	"viewScriptModule": "file:./view.js",
-	"style": "file:./style.scss",
+	"style": "file:./style-index.css",
 	"supports": {
 		"html": false
 	}

@@ -1,0 +1,192 @@
+/**
+ * perego-theme/hero-slider — tokens only, logical properties (RTL-correct by default).
+ * Ported from the handoff prototype's `.hero*` rules; every literal replaced by a --perego-* /
+ * --wp--preset token. Adds the build-note controls + live region not in the static prototype.
+ */
+
+.hero {
+	position: relative;
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	margin-block-start: -94px;
+	padding-block-start: 94px;
+	overflow: hidden;
+	background: var(--perego-gradient-bg);
+}
+
+.hero__prism {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	overflow: hidden;
+	pointer-events: none;
+	// Decorative luminous wash; the real prism artwork lands with the M7 asset pipeline.
+	background: radial-gradient(
+		120% 80% at 72% 6%,
+		var(--perego-glass-border),
+		transparent 55%
+	);
+	opacity: 0.5;
+	animation: perego-hero-pulse 8s ease-in-out infinite;
+}
+
+.hero__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+}
+
+.hero__content {
+	max-inline-size: 1180px;
+}
+
+.hero__slide {
+	transition: opacity var(--perego-dur-medium) var(--perego-ease),
+		transform var(--perego-dur-medium) var(--perego-ease);
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.hero__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.02;
+	letter-spacing: -0.01em;
+	margin: 0;
+}
+
+.hero__text {
+	max-inline-size: 1150px;
+	margin-block-start: 28px;
+	font-size: var(--wp--preset--font-size--lead);
+	font-weight: 400;
+	color: var(--wp--preset--color--text);
+
+	strong {
+		font-weight: 700;
+	}
+}
+
+.hero__cta {
+	margin-block-start: 44px;
+}
+
+/* Controls: prev / play-pause / next (a11y build additions). */
+.hero__controls {
+	position: absolute;
+	z-index: 3;
+	inset-block-end: 40px;
+	inset-inline-end: var(--wp--preset--spacing--gutter);
+	display: flex;
+	gap: 12px;
+}
+
+.hero__control {
+	inline-size: 44px;
+	block-size: 44px;
+	border: 1px solid var(--perego-glass-border);
+	border-radius: var(--perego-radius-pill);
+	background: var(--perego-glass-fill);
+	color: var(--wp--preset--color--text);
+	cursor: pointer;
+	transition: background var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease);
+
+	&::before {
+		content: "";
+		display: block;
+		inline-size: 100%;
+		block-size: 100%;
+		background: currentColor;
+		mask-repeat: no-repeat;
+		mask-position: center;
+		mask-size: 40%;
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: var(--wp--preset--color--accent);
+		box-shadow: var(--perego-shadow-glow-accent);
+	}
+}
+
+/* Simple CSS-drawn glyphs so no image asset is needed. */
+.hero__control--prev::before {
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 5l-7 7 7 7' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.hero__control--next::before {
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 5l7 7-7 7' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Pause glyph by default; play glyph when the show is paused (aria-pressed=true). */
+.hero__control--play::before {
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='7' y='5' width='3.5' height='14' fill='%23fff'/%3E%3Crect x='13.5' y='5' width='3.5' height='14' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+.hero__control--play[aria-pressed="true"]::before {
+	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5l11 7-11 7z' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+/* RTL: prev/next glyphs mirror. */
+[dir="rtl"] .hero__control--prev::before,
+[dir="rtl"] .hero__control--next::before {
+	transform: scaleX(-1);
+}
+
+/* Dot tablist. */
+.hero__dots {
+	position: absolute;
+	z-index: 3;
+	inset-inline: 0;
+	inset-block-end: 40px;
+	display: flex;
+	justify-content: center;
+	gap: 12px;
+}
+
+.hero__dot {
+	inline-size: 26px;
+	block-size: 8px;
+	border: 0;
+	padding: 0;
+	border-radius: var(--perego-radius-pill);
+	background: var(--perego-muted-2);
+	cursor: pointer;
+	transition: all var(--perego-dur-fast) var(--perego-ease);
+
+	&.is-active {
+		inline-size: 40px;
+		background: var(--wp--preset--color--accent);
+		box-shadow: var(--perego-shadow-glow-accent);
+	}
+}
+
+.hero__status {
+	position: absolute;
+}
+
+@keyframes perego-hero-pulse {
+	0%,
+	100% {
+		opacity: 0.5;
+	}
+	50% {
+		opacity: 1;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.hero__prism {
+		animation: none;
+	}
+	.hero__slide {
+		transition: none;
+	}
+}

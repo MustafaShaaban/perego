@@ -1,0 +1,16 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/hero-slider",
+	"title": "Perego Hero Slider",
+	"category": "theme",
+	"icon": "slides",
+	"description": "The homepage hero: a rotating set of headline slides with dot tabs, prev/next and pause/play controls, an aria-live announcer, and a CTA. Auto-advances (6.5s), pauses on hover and when the tab is hidden, and never auto-advances under reduced motion. Server-rendered; interactivity via view.js.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"style": "file:./style-index.css",
+	"supports": {
+		"html": false
+	}
+}
