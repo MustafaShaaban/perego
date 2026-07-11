@@ -185,7 +185,20 @@ Immediate queue:
    + editable 5-section narrative seeded (demo copy, no invented metrics). **M3 complete.** Still
    deferred: gallery lightbox (needs seeded media — asset pipeline) + AR project translations (ship
    with real owner data).
-3. **Polylang Free EN/AR** — languages configured + services linked (done). Remaining: link AR for
+### Completed later in the same run (M4/M5/SEO)
+- **404** (`8e2c969`): `not-found` block + `404.html`, language-aware, HTTP 404, one H1.
+- **Search** (`421a7d9`): `search-results` block + `search.html`, real WP search, server-rendered,
+  empty/no-query states, EN/AR.
+- **Legal** (`7edd507`): `legal-toc` block (TOC generated from the page's own H2 anchors) + `legal`
+  custom template + Terms/Privacy pages (EN full drafts + AR linked, counsel-review note).
+- **Journal** (`6850376`): `journal-header` block + `home.html` (Query Loop) + `single.html`
+  (comments) + static-front-page/`/journal` wiring + 3 demo posts. Homepage still renders the hero.
+- **SEO** (`01fd9f0`, `af56600`): `noindex,follow` on search/404, default `page.html`, and JSON-LD
+  (Organization/WebSite/Service/Article/CreativeWork/BreadcrumbList — no fabricated claims).
+- Suite now **112 Pest + 54 Jest**, all green; wp-guard clean on every increment.
+
+### Still remaining (implementable — continues from here)
+3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). Remaining: link AR for
    translations idempotently; add the Navigation Language Switcher. (Biggest acceptance gap.)
 4. **Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
    404 repeated copy rendered language-aware inside the neutral FSE parts.
