@@ -14,13 +14,16 @@ use PeregoSite\Blocks\ExampleRenderer;
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
+use PeregoSite\Blocks\ServiceHeroRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
 use PeregoSite\Content\PortfolioContent;
+use PeregoSite\Content\ServiceContent;
 use PeregoSite\Controllers\ExampleController;
 use PeregoSite\Options\ExampleOptions;
 use PeregoSite\PostTypes\ProjectPostType;
+use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Repositories\ExampleRepository;
 use PeregoSite\Repositories\ProjectRepository;
 use PeregoSite\Services\ExampleService;
@@ -67,6 +70,34 @@ final class PeregoSiteServiceProvider
         $this->registerGlobalShellBlocks();
         $this->registerHomeBlocks();
         $this->registerPortfolio();
+        $this->registerServices();
+    }
+
+    /**
+     * spec 003 (M3, US3): the service CPT (four fixed services at /services/<slug>) and the
+     * server-rendered perego-theme/service-hero block (eyebrow + current-service H1 + the shared
+     * four-service tabs) used by the single-perego_service template. The editorial "what we do" /
+     * "our process" prose lives in each service post's editable block content (post-content), per
+     * the editor-canvas rule — see docs/repository-audit.md §6.
+     */
+    private function registerServices(): void
+    {
+        add_action('init', function (): void {
+            (new ServicePostType())->register();
+
+            $languageService = $this->languageService;
+            $heroRenderer = new ServiceHeroRenderer();
+
+            register_block_type($this->blockDir('service-hero'), [
+                'render_callback' => static function () use ($heroRenderer, $languageService): string {
+                    $content = new ServiceContent($languageService->driver()->currentLocale());
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    $currentSlug = ($queried instanceof \WP_Post) ? $queried->post_name : '';
+
+                    return $heroRenderer->render($content, $currentSlug);
+                },
+            ]);
+        });
     }
 
     /**

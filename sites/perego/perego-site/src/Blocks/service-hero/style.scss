@@ -1,0 +1,188 @@
+/**
+ * perego-theme/service-hero — the service single hero band (eyebrow + H1 + four-service tabs).
+ * Ported faithfully from the handoff prototype's `.svc-hero` / `.svc-tabs` rules. Tokens + logical
+ * properties (RTL-correct by default). The specific glass/gradient treatments are kept as literal
+ * decorative values to preserve exact fidelity (no token exists for them), matching the approved
+ * design — the same approach the other Perego blocks take for bespoke glass.
+ */
+
+.svc-hero {
+	position: relative;
+	overflow: hidden;
+	text-align: center;
+	min-block-size: 92vh;
+	display: flex;
+	align-items: center;
+	padding-block-end: clamp(48px, 6vw, 90px);
+	background: var(--wp--preset--color--bg-deep, #0c0020);
+	/* pull under the sticky header, then pad the content back down (matches handoff) */
+	margin-block-start: -90px;
+	padding-block-start: 90px;
+}
+
+.svc-hero__bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			180deg,
+			rgba(12, 0, 32, 0.25) 0%,
+			rgba(12, 0, 32, 0.4) 45%,
+			rgba(12, 0, 32, 0.9) 100%
+		);
+	}
+}
+
+.svc-hero__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	padding-block-start: clamp(70px, 9vw, 120px);
+}
+
+.svc-hero__eyebrow {
+	margin: 0 0 10px;
+	font-size: var(--wp--preset--font-size--small, 14px);
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--wp--preset--color--accent-soft);
+}
+
+.svc-hero__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.02;
+	margin: 0;
+	color: var(--wp--preset--color--text, #fff);
+	text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+}
+
+.svc-tabs {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: clamp(16px, 1.8vw, 26px);
+	margin-block-start: clamp(40px, 6vw, 76px);
+	max-inline-size: 1120px;
+	margin-inline: auto;
+}
+
+.svc-tab {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--perego-radius-card, 20px);
+	overflow: hidden;
+	background: rgba(34, 12, 58, 0.55);
+	border: 1px solid rgba(255, 255, 255, 0.22);
+	color: #fff;
+	backdrop-filter: blur(14px);
+	-webkit-backdrop-filter: blur(14px);
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 20px 50px rgba(0, 0, 0, 0.35);
+	transition:
+		transform 0.3s var(--perego-ease),
+		background 0.3s var(--perego-ease),
+		box-shadow 0.3s var(--perego-ease),
+		border-color 0.3s var(--perego-ease);
+}
+
+.svc-tab__main {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 20px;
+	inline-size: 100%;
+	flex: 1;
+	color: inherit;
+	text-decoration: none;
+}
+
+.svc-tab__label {
+	font-weight: 700;
+	font-size: clamp(15px, 1.3vw, 21px);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	text-align: center;
+	line-height: 1.2;
+}
+
+.svc-tab__cta {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	inline-size: 100%;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #fff;
+	text-decoration: none;
+	max-block-size: 0;
+	opacity: 0;
+	padding: 0 12px;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.22);
+	transition:
+		max-block-size 0.3s var(--perego-ease),
+		opacity 0.3s var(--perego-ease),
+		padding 0.3s var(--perego-ease);
+}
+
+.svc-tab:hover,
+.svc-tab.is-active {
+	z-index: 5;
+	background: linear-gradient(155deg, #e98bf7 0%, var(--wp--preset--color--accent) 52%, #c24fe0 100%);
+	border-color: rgba(255, 255, 255, 0.55);
+	transform: translateY(-6px);
+	box-shadow:
+		inset 0 1px 0 rgba(255, 255, 255, 0.4),
+		0 16px 26px -14px rgba(216, 106, 243, 0.45),
+		0 10px 22px rgba(0, 0, 0, 0.42);
+}
+
+.svc-tab:hover .svc-tab__cta,
+.svc-tab.is-active .svc-tab__cta {
+	max-block-size: 60px;
+	opacity: 1;
+	padding: 15px 12px;
+}
+
+.svc-tab:hover .svc-tab__label,
+.svc-tab.is-active .svc-tab__label,
+.svc-tab:hover .svc-tab__cta,
+.svc-tab.is-active .svc-tab__cta {
+	color: #2a0148;
+}
+
+@media (max-width: 768px) {
+	.svc-tabs {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.svc-tab,
+	.svc-tab__cta {
+		transition: none;
+	}
+
+	.svc-tab:hover,
+	.svc-tab.is-active {
+		transform: none;
+	}
+}
