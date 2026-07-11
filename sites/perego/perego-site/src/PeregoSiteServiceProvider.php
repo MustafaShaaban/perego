@@ -33,6 +33,7 @@ use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Repositories\ExampleRepository;
 use PeregoSite\Repositories\ProjectRepository;
+use PeregoSite\Seo\StructuredData;
 use PeregoSite\Services\ExampleService;
 use PeregoSite\Services\LanguageService;
 
@@ -79,6 +80,8 @@ final class PeregoSiteServiceProvider
         $this->registerPortfolio();
         $this->registerServices();
         $this->registerGlobalSurfaces();
+
+        (new StructuredData())->register();
     }
 
     /**
