@@ -92,7 +92,16 @@ final class PeregoSiteServiceProvider
                 'render_callback' => static function () use ($heroRenderer, $languageService): string {
                     $content = new ServiceContent($languageService->driver()->currentLocale());
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
-                    $currentSlug = ($queried instanceof \WP_Post) ? $queried->post_name : '';
+
+                    // Resolve the canonical service slug from meta, not post_name: a translated
+                    // (e.g. Arabic) service post carries a Polylang-de-duplicated slug like
+                    // "video-editing-2", but _perego_service_slug always holds the canonical
+                    // "video-editing" the ServiceContent map + tab routes are keyed on.
+                    $currentSlug = '';
+                    if ($queried instanceof \WP_Post) {
+                        $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
+                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                    }
 
                     return $heroRenderer->render($content, $currentSlug);
                 },
