@@ -11,6 +11,8 @@ namespace PeregoSite;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\ExampleRenderer;
+use PeregoSite\Blocks\SiteFooterRenderer;
+use PeregoSite\Blocks\SiteHeaderRenderer;
 use PeregoSite\Controllers\ExampleController;
 use PeregoSite\Options\ExampleOptions;
 use PeregoSite\Repositories\ExampleRepository;
@@ -52,6 +54,32 @@ final class PeregoSiteServiceProvider
             $renderer = new ExampleRenderer($this->exampleService);
             register_block_type(__DIR__ . '/Blocks/example', [
                 'render_callback' => static fn (): string => $renderer->render(),
+            ]);
+        });
+
+        $this->registerGlobalShellBlocks();
+    }
+
+    /**
+     * spec 001: the header/footer that every page template shares.
+     */
+    private function registerGlobalShellBlocks(): void
+    {
+        add_action('init', function (): void {
+            $headerRenderer = new SiteHeaderRenderer($this->languageService);
+            register_block_type(__DIR__ . '/Blocks/site-header', [
+                'render_callback' => static function () use ($headerRenderer): string {
+                    $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+
+                    return $headerRenderer->render($path !== '' ? $path : '/');
+                },
+            ]);
+
+            $footerRenderer = new SiteFooterRenderer();
+            register_block_type(__DIR__ . '/Blocks/site-footer', [
+                'render_callback' => static function (array $attributes) use ($footerRenderer): string {
+                    return $footerRenderer->render((bool) ($attributes['flat'] ?? false));
+                },
             ]);
         });
     }

@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/site-footer",
+	"title": "Perego Site Footer",
+	"category": "theme",
+	"icon": "align-full-width",
+	"description": "The global site footer: contact / quick-message / careers columns + bottom bar, or the flat 2-column variant on the contact page.",
+	"textdomain": "perego-site",
+	"attributes": {
+		"flat": {
+			"type": "boolean",
+			"default": false
+		}
+	},
+	"editorScript": "file:./index.js",
+	"style": "file:./style.scss",
+	"supports": {
+		"html": false
+	}
+}

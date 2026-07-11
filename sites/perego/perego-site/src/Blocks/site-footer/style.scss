@@ -1,0 +1,48 @@
+/**
+ * perego-theme/site-footer — tokens only, logical properties (RTL-correct by default).
+ */
+
+.perego-footer {
+	background: var(--perego-gradient-violet-band);
+	padding-block: var(--wp--preset--spacing--section-y);
+	padding-inline: var(--wp--preset--spacing--gutter);
+}
+
+.perego-footer__columns {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: var(--wp--preset--spacing--gutter);
+}
+
+.perego-footer--flat .perego-footer__columns {
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.perego-footer__bottom {
+	display: flex;
+	justify-content: space-between;
+	margin-block-start: 2rem;
+	padding-block-start: 1.5rem;
+	border-block-start: 1px solid var(--perego-glass-border);
+	color: var(--perego-muted);
+
+	nav {
+		display: flex;
+		gap: 1rem;
+
+		a {
+			color: var(--perego-muted);
+		}
+	}
+}
+
+@media (max-width: 900px) {
+	.perego-footer__columns {
+		grid-template-columns: 1fr;
+	}
+
+	.perego-footer__bottom {
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+}
