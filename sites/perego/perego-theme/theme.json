@@ -1,6 +1,9 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/theme.json",
 	"version": 3,
+	"customTemplates": [
+		{ "name": "legal", "title": "Legal (Terms / Privacy)", "postTypes": ["page"] }
+	],
 	"settings": {
 		"appearanceTools": true,
 		"useRootPaddingAwareAlignments": true,

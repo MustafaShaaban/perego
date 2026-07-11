@@ -13,6 +13,7 @@ defined('ABSPATH') || exit;
 use PeregoSite\Blocks\ExampleRenderer;
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
+use PeregoSite\Blocks\LegalTocRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ProjectHeroRenderer;
@@ -101,6 +102,16 @@ final class PeregoSiteServiceProvider
                     return (new SearchResultsRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render();
+                },
+            ]);
+
+            register_block_type($this->blockDir('legal-toc'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+
+                    return (new LegalTocRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render($queried instanceof \WP_Post ? $queried : null);
                 },
             ]);
         });

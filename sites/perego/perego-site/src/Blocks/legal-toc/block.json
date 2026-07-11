@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/legal-toc",
+	"title": "Perego Legal TOC",
+	"category": "theme",
+	"icon": "list-view",
+	"description": "The legal page aside: draft/review notice, last-updated line, and a table of contents generated from the page's own H2 anchors. Language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}

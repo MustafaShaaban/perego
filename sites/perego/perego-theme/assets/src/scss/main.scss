@@ -321,3 +321,22 @@ body {
 	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
 	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
 }
+
+/* Legal pages (M4) — the constrained title + TOC-aside / body columns */
+.legal {
+	padding-block: var(--wp--preset--spacing--section-y);
+}
+.legal__title {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	text-align: center;
+	margin-block-end: clamp(24px, 4vw, 44px);
+}
+.legal__lead {
+	color: var(--wp--preset--color--accent-soft);
+	font-size: var(--wp--preset--font-size--small);
+}
+.legal-layout__body h2 {
+	scroll-margin-block-start: 100px;
+	margin-block-start: 1.4em;
+}

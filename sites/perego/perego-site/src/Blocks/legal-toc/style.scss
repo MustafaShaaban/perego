@@ -1,0 +1,47 @@
+/**
+ * perego-theme/legal-toc — the legal page aside. Tokens + logical properties (RTL-safe).
+ */
+.legal-toc {
+	position: sticky;
+	inset-block-start: 100px;
+	align-self: start;
+	padding: clamp(18px, 2vw, 26px);
+	border-radius: var(--perego-radius-card, 20px);
+	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
+	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
+}
+
+.legal-toc__note {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--wp--preset--color--accent-soft);
+	margin: 0 0 12px;
+}
+
+.legal-toc__updated {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2, rgba(255, 255, 255, 0.6));
+	margin: 0 0 14px;
+}
+
+.legal-toc__title {
+	font-size: var(--wp--preset--font-size--h3);
+	font-weight: 700;
+	margin: 0 0 10px;
+}
+
+.legal-toc__list {
+	margin: 0;
+	padding-inline-start: 1.2em;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.legal-toc__list a {
+	color: var(--perego-muted);
+	text-decoration: none;
+}
+
+.legal-toc__list a:hover {
+	color: var(--wp--preset--color--accent-soft);
+}
