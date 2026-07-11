@@ -59,12 +59,16 @@ color/spacing/shadow value found in rendered CSS.
 
 - [x] T011 [P] [US1] Pest: `perego-site/tests/Blocks/SiteHeaderRenderTest.php` — 10 tests green
 - [x] T012 [P] [US1] Pest: `perego-site/tests/Blocks/SiteFooterRenderTest.php` — 3 tests green
-- [ ] T013 [P] [US1] Jest: `perego-site/src/Blocks/site-header/view.test.js` — **not done**. No Jest
-      config exists yet for `perego-site` (only the root framework's `jest.config.js`, scoped to its
-      own `plugins/`/`addons/`). `view.js` itself is written and manually verified live (see PROGRESS.md);
-      the automated Jest coverage for the sticky/mobile-menu/focus-trap/dropdown state machine is the
-      known gap — pick this up before this spec is considered fully done, or explicitly accept the gap
-      in a follow-up spec.
+- [x] T013 [P] [US1] Jest: `perego-site/src/Blocks/site-header/view.test.js` — done (2026-07-11).
+      Added `perego-site/jest.config.js` (extends the framework's `@wordpress/scripts` jest-unit
+      preset) + `perego-site/tests-js/wp-interactivity-mock.js` (test double for
+      `@wordpress/interactivity`, which is a WP runtime script handle, not an installed npm package).
+      19 tests covering sticky-scroll, mobile menu open/close + scroll lock + focus restore, the
+      Tab/Shift+Tab focus trap, Escape-to-close, backdrop/nav-link close, the mobile tap-accordion,
+      and the reduced-motion class — all green. Run via
+      `npx jest --config sites/perego/perego-site/jest.config.js --rootDir sites/perego/perego-site`.
+      Self-applied `test-guard`: found + removed one Rule 1/4 violation (a redundant test asserting
+      `setTimeout` call args instead of behavior); everything else held up.
 
 ### Implementation for User Story 1
 
@@ -101,8 +105,13 @@ Cairo/Tajawal; layout mirrors with no breakage.
 
 ### Tests for User Story 2
 
-- [ ] T023 [P] [US2] Jest: `perego-site/src/Blocks/site-header/language-toggle.test.js` — **not done**,
-      same Jest-infra gap as T013.
+- [x] T023 [P] [US2] Jest: `perego-site/src/Blocks/site-header/language-toggle.test.js` — done
+      (2026-07-11). 5 tests: `switchLanguage` flips `lang`/`dir`, adds/removes the RTL class,
+      persists the `perego_lang` cookie in both directions, and is a no-op without a `data-locale`;
+      `callbacks.init` re-applies (or leaves untouched) a persisted cookie on mount. jsdom's
+      `window.location`/`location.reload` are non-configurable so the real `reload()` runs and logs
+      its own "Not implemented: navigation" error — asserted explicitly via `toHaveErrored()` rather
+      than silenced.
 
 ### Implementation for User Story 2
 
@@ -138,8 +147,12 @@ does not show again; with `prefers-reduced-motion` — never shows.
       always emits markup (2 tests green); the session/timing/reduced-motion *display* gating is
       JS-only in `view.js`, and homepage-only placement is structural (only `front-page.html` includes
       the block at all).
-- [ ] T031 [P] [US3] Jest: `perego-site/src/Blocks/preloader/view.test.js` — **not done**, same
-      Jest-infra gap as T013/T023.
+- [x] T031 [P] [US3] Jest: `perego-site/src/Blocks/preloader/view.test.js` — done (2026-07-11).
+      6 tests: reduced-motion hides immediately without marking the session; already-shown-this-
+      session hides immediately without re-marking; first-visit marks the session and the soft-hide
+      timer clears it at 900ms; the hard-hide timer independently clears it at 2500ms even if
+      something else re-showed it after the soft-hide fired; `sessionStorage.getItem`/`setItem`
+      throwing (locked-down/private browsing) fails safe per the code's own documented contract.
 
 ### Implementation for User Story 3
 
@@ -162,30 +175,41 @@ does not show again; with `prefers-reduced-motion` — never shows.
       spec/plan/tasks kept current by hand throughout instead.
 - [x] T038 `sites/perego/PROGRESS.md` and `sites/perego/DECISIONS.md` updated throughout, not just at
       the end.
-- [x] T039 Full Pest suite: 32/32 green (`perego-site`). Jest: not applicable yet — no Jest config
-      exists for `perego-site`/`perego-theme` (see T013/T023/T031).
+- [x] T039 Full Pest suite: 32/32 green (`perego-site`). Jest: 25/25 green across the three block
+      test files (see T013/T023/T031) via `perego-site/jest.config.js`. Note: the framework's root
+      `jest.config.js` doesn't exclude `sites/`, so `npm run test:js` from the repo root also
+      discovers these files and fails to resolve `@wordpress/interactivity` (only the site-local
+      config maps it) — a root-config scope gap, out of bounds for Client Site Mode to fix directly;
+      flagged to the CoreX team, same as the two framework bugs already logged above. Run this
+      site's JS tests via `npx jest --config sites/perego/perego-site/jest.config.js --rootDir
+      sites/perego/perego-site` (or `npm --prefix sites/perego/perego-site run test:js`) until then.
 - [ ] T040 **Not done.** Real next step: compare the live rendered header/footer/preloader against
       `_design_handoff/Perego-Creative-Studio-Final-Handoff/screenshots/*.png` and
       `site/index.html`/`site/css/styles.css` pixel-by-pixel — structure and tokens are faithful by
       construction (same token source), but no side-by-side visual check has been done yet.
 - [ ] T041 **Not done** — this feature branch (`feature/001-global-foundation`) is not yet finished/
-      merged/PR'd. Remaining before it can be: T013/T023/T031 (Jest), T029/T040 (visual fidelity checks).
+      merged/PR'd. Jest (T013/T023/T031) is now done. Remaining before it can be: T029/T040 (visual
+      fidelity checks) — blocked on the owner action items (hosts entry + Apache restart) so the site
+      is reachable in a browser.
 
-## Honest status (2026-07-11)
+## Honest status (2026-07-11, updated same day)
 
 **Done and verified live** (not just unit-tested): the language driver abstraction, the header/footer
 shell with full desktop+mobile markup and Interactivity API wiring, the bilingual mechanism (Polylang
 real + fallback), and the branded preloader. 32 Pest tests green. `wp corex doctor` green throughout.
-No PHP fatals at any point.
+No PHP fatals at any point. **Jest is now also set up and green** (25/25 — T013/T023/T031), covering
+the sticky-scroll header, the mobile menu's focus trap/scroll lock/backdrop-close, the mobile
+tap-accordion, the language toggle (including RTL + cookie persistence), and the preloader's
+session-gate/reduced-motion/soft-and-hard-hide timers/storage-failure fallback — the JS logic that was
+previously only manually verified.
 
-**Real gaps, not swept under the rug**: no Jest coverage yet for any of the three blocks' JS behavior
-(the JS is written and manually verified via direct block rendering + code review, not automated-tested
-— this is the single biggest remaining risk in this spec, since the most complex logic here, the
-focus-trap and session-gating, is exactly the kind of thing that regresses silently without a test).
-No pixel/screenshot fidelity comparison against the design handoff yet. The environment's hosts-file
-entry + Apache restart still need to run in an elevated shell (documented, not something this session
-could do) before the site is reachable over HTTP to even do that visual comparison manually in a
-browser.
+**Real gaps, not swept under the rug**: no pixel/screenshot fidelity comparison against the design
+handoff yet. The environment's hosts-file entry + Apache restart still need to run in an elevated shell
+(documented, not something this session could do) before the site is reachable over HTTP to even do
+that visual comparison manually in a browser. Separately, the framework's root `jest.config.js` doesn't
+exclude `sites/`, so the monorepo-wide `npm run test:js` now also discovers these three test files and
+fails on them (only this site's own `jest.config.js` maps the `@wordpress/interactivity` test double) —
+a framework-root scope gap flagged for the CoreX team rather than fixed here, per Client Site Mode.
 
 ---
 

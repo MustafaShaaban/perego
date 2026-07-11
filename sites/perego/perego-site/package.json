@@ -1,0 +1,9 @@
+{
+	"name": "perego-site",
+	"version": "0.1.0",
+	"private": true,
+	"description": "Application code for the Perego website (Corex client site).",
+	"scripts": {
+		"test:js": "wp-scripts test-unit-js --config=jest.config.js"
+	}
+}

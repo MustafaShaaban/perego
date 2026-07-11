@@ -70,14 +70,23 @@ not only unit-tested):
   `--path` on the command line (see spec 001's plan.md Task 1 for the exact working invocation).
 
 **Real gaps — not done, not hidden**:
-- **No Jest coverage** for any of the three blocks' `view.js` (the actual JS logic — sticky scroll,
-  focus trap, session-gating, language toggle). This is the single biggest risk left: the JS is written
-  and was manually verified by rendering + reading, not automated-tested. Tracked as its own follow-up.
 - **No pixel/behavioral fidelity check** against the design handoff's screenshots yet — structure and
   tokens are faithful by construction (same token source, same documented interaction spec), but no
   side-by-side visual comparison has actually been done.
 - **Polylang languages not configured** — install/detection works, but no EN/AR languages exist in
   Polylang yet (its own wp-admin wizard, not WP-CLI-automatable in the version installed).
+
+**Closed since (2026-07-11, same day)**: Jest is now set up for `perego-site`
+(`perego-site/jest.config.js` + a local `@wordpress/interactivity` test double — see DECISIONS.md) with
+25 tests covering all three blocks' interactivity: sticky-scroll, mobile menu (open/close, focus trap,
+scroll lock, backdrop/link-click close), the mobile tap-accordion, the language toggle (RTL flip, cookie
+persistence, no-op guard), and the preloader (reduced-motion, session-gate, soft/hard-hide timers,
+storage-failure fallback). All green. Self-applied `test-guard` caught and removed one redundant
+implementation-detail test. Known rough edge: the framework's root `jest.config.js` doesn't exclude
+`sites/`, so `npm run test:js` from the repo root now also discovers (and fails to resolve) these files —
+flagged as a framework-side follow-up in DECISIONS.md rather than fixed here (out of bounds for Client
+Site Mode). Run this site's JS tests via `npx jest --config sites/perego/perego-site/jest.config.js
+--rootDir sites/perego/perego-site`.
 
 ## Outstanding action needed from the site owner
 
@@ -90,11 +99,10 @@ not only unit-tested):
 ## Next
 
 1. Do the two owner action items above.
-2. Set up Jest for `perego-site`/`perego-theme` and cover the three blocks' interactivity (the real gap
-   called out above) — this should happen before treating spec 001 as fully closed, not after moving on
-   to M2.
+2. ~~Set up Jest for `perego-site`/`perego-theme`~~ — **done 2026-07-11** (see "Closed since" above).
 3. Run the visual fidelity check against `_design_handoff/.../screenshots/*.png` once the site is
-   reachable in a browser.
+   reachable in a browser. This is now the single remaining item before spec 001 can be considered
+   fully closed.
 4. Then `/specify` M2 (Home: hero slider + services tabs) using
    `docs/superpowers/specs/2026-07-11-perego-corex-design.md` as the input design (its environment
    section is superseded by this file; its content mapping/phasing still stands) — following the same

@@ -93,3 +93,31 @@ able to write to it, even by accident (wrong remote name typed, muscle memory fr
 
 **Status**: done. Verify with `git remote -v` — `upstream`'s push URL must always show the disabled
 placeholder, never a real one.
+
+## 2026-07-11 — Jest for perego-site gets its own config, not a root jest.config.js edit
+
+**Context**: spec 001 T013/T023/T031 — the three Interactivity API blocks' `view.js` files had no
+automated JS coverage, only manual verification. `@wordpress/interactivity` (the module `view.js`
+imports for `store()`/`getContext()`/`getElement()`) is a WordPress runtime script handle, not an
+installed npm package — Jest can't resolve it without a mapping, and the root framework's
+`jest.config.js` has no such mapping (nothing in the framework uses the Interactivity API's `store()`
+this way yet).
+
+**Decision**: added `sites/perego/perego-site/jest.config.js` (extends the framework's
+`@wordpress/scripts` jest-unit preset, scoped to this plugin via its own `rootDir`) +
+`tests-js/wp-interactivity-mock.js` (a minimal test double: `store()` records its config under the
+namespace so a test can pull the real `actions`/`callbacks` back out; `getContext()`/`getElement()`
+return whatever the test last set). Did **not** edit the framework's root `jest.config.js` to add the
+same mapping there, even though that would let the monorepo-wide `npm run test:js` also pick these
+tests up cleanly — that file is framework tooling, out of bounds for Client Site Mode.
+
+**Why**: keeping the fix entirely inside `sites/perego/perego-site/` respects the Role Gate boundary
+(don't edit CoreX framework internals from client-site work) even though it leaves a rough edge: running
+`npm run test:js` from the repo root now discovers these three test files (root's `jest.config.js` only
+excludes `wp/` and `docs-app/`, not `sites/`) and fails to resolve `@wordpress/interactivity` for them.
+
+**Status**: done for this site — 25/25 Jest tests green via
+`npx jest --config sites/perego/perego-site/jest.config.js --rootDir sites/perego/perego-site`.
+Follow-up (framework side, not this site's to fix): add `<rootDir>/sites/` to the root
+`jest.config.js`'s `testPathIgnorePatterns`, matching the existing `wp/`/`docs-app/` exclusions, so the
+root aggregate command doesn't reach into per-site test configs it can't resolve.
