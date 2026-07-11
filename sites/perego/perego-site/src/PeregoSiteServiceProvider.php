@@ -14,6 +14,7 @@ use PeregoSite\Blocks\ExampleRenderer;
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
+use PeregoSite\Blocks\ProjectHeroRenderer;
 use PeregoSite\Blocks\ServiceHeroRenderer;
 use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
@@ -139,6 +140,17 @@ final class PeregoSiteServiceProvider
                         $projects,
                         $content->filterLabels(),
                         $content->gridStrings(),
+                    );
+                },
+            ]);
+
+            register_block_type($this->blockDir('project-hero'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $content = new PortfolioContent($languageService->driver()->currentLocale());
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+
+                    return (new ProjectHeroRenderer($content))->render(
+                        $queried instanceof \WP_Post ? $queried : null
                     );
                 },
             ]);

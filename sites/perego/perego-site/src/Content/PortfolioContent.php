@@ -182,4 +182,12 @@ final class PortfolioContent
     {
         return self::COPY[$this->locale]['clientLabel'];
     }
+
+    /**
+     * The localized "Home" breadcrumb root label (handoff `ui.breadcrumbHome`).
+     */
+    public function uiHome(): string
+    {
+        return $this->locale === 'ar' ? 'الرئيسية' : 'Home';
+    }
 }
