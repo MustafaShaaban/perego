@@ -69,13 +69,22 @@ if (-not (Test-Path (Join-Path $WpPath 'wp-load.php'))) {
 # --- 2. wp-config.php ---
 if (-not (Test-Path (Join-Path $WpPath 'wp-config.php'))) {
     Write-Host "Creating wp-config.php ..."
-    @"
-define( 'WP_DEBUG', true );
-define( 'WP_DEBUG_LOG', true );
-define( 'WP_DEBUG_DISPLAY', false );
-"@ | & wp config create --path="$WpPath" --dbname="$DbName" --dbuser="$DbUser" `
-        --dbpass="$DbPass" --dbhost="$DbHost" --dbprefix="$DbPrefix" --locale=en_US --extra-php
+    # Deliberately NOT using `--extra-php` with piped stdin here: Windows PowerShell 5.1 pipes
+    # here-strings to native executables with a leading BOM, which corrupts wp-config.php (a BOM
+    # landing mid-file breaks the PHP parser: "Call to undefined function define()"). Patch the
+    # file directly afterward instead, writing back BOM-less UTF-8.
+    & wp config create --path="$WpPath" --dbname="$DbName" --dbuser="$DbUser" `
+        --dbpass="$DbPass" --dbhost="$DbHost" --dbprefix="$DbPrefix" --locale=en_US
     if ($LASTEXITCODE -ne 0) { Fail "wp config create failed." }
+
+    $configPath = Join-Path $WpPath 'wp-config.php'
+    $configText = [System.IO.File]::ReadAllText($configPath)
+    $extraPhp   = "define( 'WP_DEBUG', true );`r`ndefine( 'WP_DEBUG_LOG', true );`r`ndefine( 'WP_DEBUG_DISPLAY', false );`r`n"
+    $marker     = "/* That's all, stop editing!"
+    if ($configText -like "*$marker*") {
+        $configText = $configText.Replace($marker, "$extraPhp$marker")
+        [System.IO.File]::WriteAllText($configPath, $configText, (New-Object System.Text.UTF8Encoding($false)))
+    }
 } else {
     Write-Host "wp-config.php already present."
 }
