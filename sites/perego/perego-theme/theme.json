@@ -4,9 +4,127 @@
 	"settings": {
 		"appearanceTools": true,
 		"useRootPaddingAwareAlignments": true,
+		"color": {
+			"palette": [
+				{ "slug": "bg-deep", "color": "#10002b", "name": "Background deep" },
+				{ "slug": "violet", "color": "#6c1eae", "name": "Violet" },
+				{ "slug": "accent", "color": "#d86af3", "name": "Accent" },
+				{ "slug": "accent-soft", "color": "#e59bf7", "name": "Accent soft" },
+				{ "slug": "panel", "color": "#480383", "name": "Panel" },
+				{ "slug": "panel-overlay", "color": "#160435", "name": "Panel overlay" },
+				{ "slug": "card-surface-1", "color": "#160435", "name": "Card surface" },
+				{ "slug": "card-surface-2", "color": "#1a0338", "name": "Card surface alt" },
+				{ "slug": "text", "color": "#ffffff", "name": "Text" },
+				{ "slug": "error", "color": "#ff6ba6", "name": "Error" },
+				{ "slug": "success", "color": "#7ff0b6", "name": "Success" },
+				{ "slug": "cta-text-on-accent", "color": "#2a0148", "name": "CTA text on accent" }
+			],
+			"defaultPalette": false,
+			"custom": true,
+			"defaultGradients": false,
+			"defaultDuotone": false
+		},
+		"typography": {
+			"fontFamilies": [
+				{ "slug": "latin", "fontFamily": "'Open Sans', system-ui, sans-serif", "name": "Latin (Open Sans)" },
+				{ "slug": "arabic", "fontFamily": "'Cairo', 'Tajawal', sans-serif", "name": "Arabic (Cairo)" }
+			],
+			"fontSizes": [
+				{ "slug": "small", "size": "13px", "name": "Small" },
+				{ "slug": "body", "size": "16px", "name": "Body" },
+				{ "slug": "nav", "size": "16px", "name": "Nav" },
+				{ "slug": "lead", "size": "clamp(16px, 1.35vw, 21px)", "name": "Lead" },
+				{ "slug": "h3", "size": "clamp(20px, 1.8vw, 26px)", "name": "Heading 3" },
+				{ "slug": "h2", "size": "clamp(28px, 3vw, 40px)", "name": "Heading 2" },
+				{ "slug": "h1", "size": "clamp(34px, 4vw, 56px)", "name": "Heading 1" },
+				{ "slug": "hero", "size": "clamp(42px, 5.2vw, 76px)", "name": "Hero" }
+			],
+			"defaultFontSizes": false,
+			"lineHeight": true
+		},
+		"spacing": {
+			"spacingSizes": [
+				{ "slug": "gutter", "size": "clamp(20px, 5vw, 80px)", "name": "Gutter" },
+				{ "slug": "section-y", "size": "clamp(52px, 6.5vw, 100px)", "name": "Section Y" }
+			],
+			"defaultSpacingSizes": false,
+			"units": ["px", "%", "vw", "vh", "em", "rem"]
+		},
+		"layout": {
+			"contentSize": "1440px",
+			"wideSize": "1440px"
+		},
 		"custom": {
-			"perego-theme": {
-				"comment": "Site design tokens are exposed as --wp--custom--perego-theme--* and the --perego-* convention."
+			"perego": {
+				"color": {
+					"muted": "rgba(255,255,255,0.72)",
+					"muted-2": "rgba(255,255,255,0.55)",
+					"glass-border": "rgba(216,106,243,0.45)",
+					"glass-fill": "rgba(72,3,131,0.28)"
+				},
+				"gradient": {
+					"bg": "linear-gradient(160deg, #10002b 0%, #12012e 14%, #1a0339 30%, #26074a 46%, #370d63 62%, #4e1483 78%, #691da9 92%, #6c1eae 100%)",
+					"violet-band": "linear-gradient(120deg, #2a0a52, #4e1483 45%, #6c1eae 78%, #7d24c4)",
+					"banner": "linear-gradient(105deg, #4a0d8f, #6c1eae 55%, #7d24c4)"
+				},
+				"radius": {
+					"card": "29px",
+					"btn": "9px",
+					"pill": "999px"
+				},
+				"border": {
+					"glass-width": "1px",
+					"field-width": "1.5px"
+				},
+				"shadow": {
+					"card": "0 16px 40px rgba(0,0,0,0.4)",
+					"service-card": "0 24px 60px rgba(0,0,0,0.45)",
+					"featured": "0 26px 70px rgba(0,0,0,0.5)",
+					"glow-accent": "0 0 24px rgba(216,106,243,0.55)"
+				},
+				"glass-blur": "14px",
+				"motion": {
+					"ease": "cubic-bezier(0.22, 1, 0.36, 1)",
+					"dur-fast": "0.3s",
+					"dur-medium": "0.7s",
+					"hero-slide-delay": "6500ms"
+				},
+				"breakpoint": {
+					"nav": "1080px",
+					"mobile-nav": "1024px",
+					"tablet": "900px",
+					"phone-large": "720px",
+					"phone": "640px",
+					"phone-small": "560px",
+					"reflow": "520px"
+				},
+				"z": {
+					"header": "1000",
+					"nav-panel": "1200",
+					"nav-backdrop": "1100",
+					"skip-link": "2000",
+					"lightbox": "3000",
+					"preloader": "4000"
+				}
+			}
+		}
+	},
+	"styles": {
+		"color": {
+			"background": "var(--wp--preset--color--bg-deep)",
+			"text": "var(--wp--preset--color--text)"
+		},
+		"typography": {
+			"fontFamily": "var(--wp--preset--font-family--latin)",
+			"fontSize": "var(--wp--preset--font-size--body)",
+			"lineHeight": "1.55"
+		},
+		"elements": {
+			"link": {
+				"color": { "text": "var(--wp--preset--color--accent-soft)" }
+			},
+			"heading": {
+				"typography": { "fontWeight": "700" }
 			}
 		}
 	}

@@ -1,10 +1,104 @@
 /**
- * Perego theme styles. Consume Corex design tokens (the theme.json CSS custom properties,
- * e.g. --wp--preset--color--*) and your own --perego-* tokens — never hardcode a
- * colour, size, or font. Logical properties only (RTL-correct). wp-scripts emits source maps
- * in `start` (dev) and minifies in `build` (prod).
+ * Perego theme styles. Consume Corex/theme.json design tokens exclusively:
+ * `--wp--preset--*` (color/typography/spacing from theme.json settings) and
+ * `--wp--custom--perego--*` (the values from theme.json settings.custom.perego, sourced from
+ * design-tokens.json). Never hardcode a colour, size, duration, or font — if a token is missing
+ * add it to theme.json first (single source of truth), not here.
+ *
+ * The `--perego-*` block below just aliases the `--wp--custom--perego--*` tokens under the
+ * client's own CSS prefix (spec 049 `--perego-`) for readability in component CSS; it does not
+ * duplicate values.
+ *
+ * Logical properties only (RTL-correct — corex's Polylang wiring switches `dir` on <html>, never
+ * a separate stylesheet).
  */
+
+:root {
+	/* Gradients + glass (theme.json settings.custom.perego.* aliased under --perego-) */
+	--perego-gradient-bg: var(--wp--custom--perego--gradient--bg);
+	--perego-gradient-violet-band: var(--wp--custom--perego--gradient--violet-band);
+	--perego-gradient-banner: var(--wp--custom--perego--gradient--banner);
+	--perego-glass-fill: var(--wp--custom--perego--color--glass-fill);
+	--perego-glass-border: var(--wp--custom--perego--color--glass-border);
+	--perego-glass-blur: var(--wp--custom--perego--glass-blur);
+	--perego-muted: var(--wp--custom--perego--color--muted);
+	--perego-muted-2: var(--wp--custom--perego--color--muted-2);
+
+	/* Radius / shadow */
+	--perego-radius-card: var(--wp--custom--perego--radius--card);
+	--perego-radius-btn: var(--wp--custom--perego--radius--btn);
+	--perego-radius-pill: var(--wp--custom--perego--radius--pill);
+	--perego-shadow-card: var(--wp--custom--perego--shadow--card);
+	--perego-shadow-service-card: var(--wp--custom--perego--shadow--service-card);
+	--perego-shadow-featured: var(--wp--custom--perego--shadow--featured);
+	--perego-shadow-glow-accent: var(--wp--custom--perego--shadow--glow-accent);
+
+	/* Motion */
+	--perego-ease: var(--wp--custom--perego--motion--ease);
+	--perego-dur-fast: var(--wp--custom--perego--motion--dur-fast);
+	--perego-dur-medium: var(--wp--custom--perego--motion--dur-medium);
+	--perego-hero-slide-delay: var(--wp--custom--perego--motion--hero-slide-delay);
+
+	/* Breakpoints (used by JS via getComputedStyle; CSS itself uses literal px in @media) */
+	--perego-bp-nav: var(--wp--custom--perego--breakpoint--nav);
+	--perego-bp-mobile-nav: var(--wp--custom--perego--breakpoint--mobile-nav);
+
+	/* Z-index scale */
+	--perego-z-header: var(--wp--custom--perego--z--header);
+	--perego-z-nav-panel: var(--wp--custom--perego--z--nav-panel);
+	--perego-z-nav-backdrop: var(--wp--custom--perego--z--nav-backdrop);
+	--perego-z-skip-link: var(--wp--custom--perego--z--skip-link);
+	--perego-z-lightbox: var(--wp--custom--perego--z--lightbox);
+	--perego-z-preloader: var(--wp--custom--perego--z--preloader);
+}
+
+/* Arabic pages swap the font stack (Interactivity API sets lang/dir on <html>; this just follows it) */
+:root:lang(ar) {
+	--wp--preset--font-family--latin: var(--wp--preset--font-family--arabic);
+}
+
+html {
+	background: var(--perego-gradient-bg);
+	background-attachment: fixed;
+}
+
+body {
+	min-block-size: 100vh;
+	background: transparent;
+}
+
+/* Reduced motion: decorative loops/parallax/auto-rotation are opt-out globally, matching
+   design-tokens.json `motion.reducedMotion`. Interactive blocks (hero slider, preloader) check
+   this again in JS before starting a timer, since this alone can't stop JS-driven intervals. */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
 .perego-theme-app {
-	color: var(--wp--preset--color--foreground, inherit);
-	font-family: var(--wp--preset--font-family--body, inherit);
+	color: var(--wp--preset--color--text, inherit);
+	font-family: var(--wp--preset--font-family--latin, inherit);
+}
+
+/* Skip link — first focusable element on every page (ACCESSIBILITY_HANDOFF.md) */
+.perego-skip-link {
+	position: absolute;
+	inset-inline-start: 1rem;
+	inset-block-start: -3rem;
+	z-index: var(--perego-z-skip-link);
+	padding: 0.75rem 1.25rem;
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+	border-radius: var(--perego-radius-btn);
+	font-weight: 700;
+	text-decoration: none;
+	transition: inset-block-start var(--perego-dur-fast) var(--perego-ease);
+}
+
+.perego-skip-link:focus {
+	inset-block-start: 1rem;
 }
