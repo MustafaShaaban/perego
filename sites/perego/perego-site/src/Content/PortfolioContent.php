@@ -59,11 +59,76 @@ final class PortfolioContent
         ],
     ];
 
+    /**
+     * Single-project (case study) labels — the meta labels, the five narrative section titles, the
+     * related heading, and the closing CTA. Mirrors the handoff `content/{en,ar}.json → project`.
+     *
+     * @var array<string, array<string, mixed>>
+     */
+    private const PROJECT = [
+        'en' => [
+            'categoryLabel' => 'Category',
+            'clientLabel' => 'Client',
+            'yearLabel' => 'Year',
+            'roleLabel' => 'Our role',
+            'deliverablesLabel' => 'Deliverables',
+            'overviewTitle' => 'Overview',
+            'challengeTitle' => 'The Challenge',
+            'approachTitle' => 'Our Approach',
+            'solutionTitle' => 'The Solution',
+            'resultTitle' => 'The Result',
+            'relatedTitle' => 'Related projects',
+            'prev' => 'Previous project',
+            'next' => 'Next project',
+            'ctaTitle' => 'Like what you see?',
+            'ctaBody' => "Let's create something worth watching together.",
+            'ctaButton' => 'Start a Project',
+        ],
+        'ar' => [
+            'categoryLabel' => 'الفئة',
+            'clientLabel' => 'العميل',
+            'yearLabel' => 'السنة',
+            'roleLabel' => 'دورنا',
+            'deliverablesLabel' => 'المُخرجات',
+            'overviewTitle' => 'نظرة عامة',
+            'challengeTitle' => 'التحدي',
+            'approachTitle' => 'منهجيتنا',
+            'solutionTitle' => 'الحل',
+            'resultTitle' => 'النتيجة',
+            'relatedTitle' => 'مشاريع ذات صلة',
+            'prev' => 'المشروع السابق',
+            'next' => 'المشروع التالي',
+            'ctaTitle' => 'أعجبك ما رأيت؟',
+            'ctaBody' => 'لنصنع معًا شيئًا يستحق المشاهدة.',
+            'ctaButton' => 'ابدأ مشروعك',
+        ],
+    ];
+
     private readonly string $locale;
 
     public function __construct(string $locale = self::DEFAULT_LOCALE)
     {
         $this->locale = isset(self::COPY[$locale]) ? $locale : self::DEFAULT_LOCALE;
+    }
+
+    /**
+     * The localized single-project (case study) labels.
+     *
+     * @return array<string, mixed>
+     */
+    public function projectLabels(): array
+    {
+        return self::PROJECT[$this->locale];
+    }
+
+    /**
+     * A single localized project label by key (empty string if unknown).
+     */
+    public function projectLabel(string $key): string
+    {
+        $value = self::PROJECT[$this->locale][$key] ?? '';
+
+        return is_string($value) ? $value : '';
     }
 
     public function heading(): string

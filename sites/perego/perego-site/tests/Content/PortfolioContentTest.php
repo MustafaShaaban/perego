@@ -38,3 +38,25 @@ it('includes heading + intro in the grid strings for a fully bilingual work page
     expect($strings)->toHaveKeys(['groupLabel', 'noResults', 'heading', 'intro'])
         ->and($strings['heading'])->toBe('Our Work');
 });
+
+it('exposes localized single-project (case study) labels in English', function () {
+    $labels = (new PortfolioContent('en'))->projectLabels();
+
+    expect($labels['overviewTitle'])->toBe('Overview')
+        ->and($labels['challengeTitle'])->toBe('The Challenge')
+        ->and($labels['resultTitle'])->toBe('The Result')
+        ->and($labels['roleLabel'])->toBe('Our role')
+        ->and($labels['ctaButton'])->toBe('Start a Project');
+});
+
+it('localizes single-project labels into Arabic', function () {
+    $content = new PortfolioContent('ar');
+
+    expect($content->projectLabel('overviewTitle'))->toBe('نظرة عامة')
+        ->and($content->projectLabel('relatedTitle'))->toBe('مشاريع ذات صلة')
+        ->and($content->projectLabels()['ctaTitle'])->toBe('أعجبك ما رأيت؟');
+});
+
+it('returns an empty string for an unknown project label key', function () {
+    expect((new PortfolioContent('en'))->projectLabel('nope'))->toBe('');
+});
