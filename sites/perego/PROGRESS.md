@@ -148,7 +148,47 @@ lightbox/service tests; (2) `npm run build` in perego-site; (3) commit the verif
 then wire + verify US2/US3; (4) push. All source is saved in the working tree — nothing is lost, it
 just needs verification + commit. `build/` and `wp/` stay gitignored.
 
-## Next
+## Autonomous implementation run (2026-07-11, PEREGO_IMPLEMENTATION_PROMPT.md)
+
+Branch `feature/002-home`. Recovery checkpoint `recovery/2026-07-11-pre-impl` (at `af9e4fe`)
+created + pushed to origin before any structural work. Remotes verified: `origin`=Perego,
+`upstream`=CoreX (push disabled). CoreX baseline re-verified at runtime — `v0.33.0`/`71639e7`
+is latest stable and already merged; `upstream/main` `ff61bf0` also already an ancestor of HEAD,
+nothing new to sync (full record in `docs/corex-baseline.md`).
+
+**Shipped + verified this run:**
+- Phase 0–2 deliverables: `docs/repository-audit.md`, `docs/corex-baseline.md`,
+  `docs/decision-repair-vs-restart.md` (decision: **repair in place** — architecture is sound).
+- **M3 US3 (Services) — service singles DONE + verified live**: `perego_service` CPT registered;
+  `ServiceContent` EN/AR provider; `perego-theme/service-hero` block (eyebrow + current-service H1 +
+  four-service tabs, faithful `svc-hero`/`svc-tabs` CSS, RTL + reduced-motion); `single-perego_service.html`
+  renders header → service-hero → **editable post-content** (What we do / Our Process authored as block
+  content, per the editor-canvas rule) → footer; `scripts/seed-services.php` idempotently seeds the four
+  services with real handoff copy. Verified: `/services/<slug>` HTTP 200, one H1, 4 tabs (active +
+  aria-current), zero PHP notices, seed idempotent. Fixed the previously-risky `ServicePostType` test.
+- Suite: **90 Pest + 54 Jest green**. wp-guard clean. Commits `114a0b4`, `c902fd5`, `5017611` pushed.
+
+**Editor-canvas remediation note (audit §6):** service singles now use editor-canvas post-content for
+prose. The Home/portfolio surfaces still render prose from PHP providers (`HomeContent`,
+`PortfolioContent`) — dynamic + bilingual but not yet canvas-editable. Tracked as a remediation
+milestone; the service-single pattern is the template to follow when retrofitting them.
+
+## Next (autonomous run — honest remaining scope)
+
+Large scope remains from the implementation prompt; work continues in verified, committed increments.
+Immediate queue:
+1. **M3 US3 archive fidelity** — replace the interim query-loop `archive-perego_service.html` with a
+   language-aware `services-overview` block (H1 + intro + process + closing CTA from `ServiceContent`).
+2. **M3 US2** — `single-perego_project.html` template + wire the existing `project-gallery-lightbox`
+   block + project meta (overview/challenge/approach/solution/result) + gallery seed; verify live.
+3. **Polylang Free EN/AR** — configure the two languages, then extend the seeders to create + link AR
+   translations idempotently; add the Navigation Language Switcher. (Biggest acceptance gap.)
+4. **Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
+   404 repeated copy rendered language-aware inside the neutral FSE parts.
+5. Then: clients CPT + carousels (Swiper), journal, legal + TOC, search, 404, forms (footer/brief/join-us)
+   + CoreX Email templates, SEO/schema, a11y + responsive audit, image pipeline, batched visual regression.
+
+### Earlier milestone log
 
 1. ~~Set up Jest for `perego-site`~~ — **done 2026-07-11**.
 2. ~~Visual fidelity check (M1/M2 homepage)~~ — **done 2026-07-11** via Playwright + host-resolver-rules
