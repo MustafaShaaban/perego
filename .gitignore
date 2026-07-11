@@ -1,0 +1,18 @@
+# WordPress dev runtime — never committed, generated locally per DECISIONS.md
+/wp/
+
+# Raw design handoff reference (large binaries) — kept local, not shipped
+/_design_handoff/
+/Perego Creative Studio Final.zip
+
+# Local AI/agent cache/notes
+.corex/cache/
+.corex/docs/
+.ai/
+.claude/local/
+.codex/local/
+
+# Common build artifacts
+node_modules/
+vendor/
+dist/
