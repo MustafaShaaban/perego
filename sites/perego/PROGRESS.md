@@ -180,9 +180,12 @@ Immediate queue:
 1. ~~**M3 US3 archive fidelity** — language-aware `services-overview` block~~ — **done** (`e2f766b`):
    `/services/` renders the Our-Services intro + 4 cards + process + CTA, one H1, EN/AR. **M3 US3
    complete** (CPT + EN/AR content + singles + archive).
-2. **M3 US2** — `single-perego_project.html` template + wire the existing `project-gallery-lightbox`
-   block + project meta (overview/challenge/approach/solution/result) + gallery seed; verify live.
-3. **Polylang Free EN/AR** — configure the two languages, then extend the seeders to create + link AR
+2. ~~**M3 US2** — case-study project singles~~ — **done** (`3f573a1`): `project-hero` block
+   (breadcrumb + category + title H1 + client/year/role/deliverables meta) + `single-perego_project.html`
+   + editable 5-section narrative seeded (demo copy, no invented metrics). **M3 complete.** Still
+   deferred: gallery lightbox (needs seeded media — asset pipeline) + AR project translations (ship
+   with real owner data).
+3. **Polylang Free EN/AR** — languages configured + services linked (done). Remaining: link AR for
    translations idempotently; add the Navigation Language Switcher. (Biggest acceptance gap.)
 4. **Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
    404 repeated copy rendered language-aware inside the neutral FSE parts.
