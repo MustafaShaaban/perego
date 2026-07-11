@@ -29,3 +29,17 @@ add_action('wp_enqueue_scripts', static function (): void {
         'defer'     => true,
     ]);
 });
+
+/**
+ * SEO: keep search-results and 404 pages out of the index (`noindex, follow`) — thin/duplicate pages
+ * per the handoff SEO_HANDOFF. Uses core's `wp_robots` filter so it composes with WordPress's own
+ * robots meta and Polylang's hreflang. All other routes stay indexable.
+ */
+add_filter('wp_robots', static function (array $robots): array {
+    if (is_search() || is_404()) {
+        $robots['noindex'] = true;
+        $robots['follow'] = true;
+    }
+
+    return $robots;
+});
