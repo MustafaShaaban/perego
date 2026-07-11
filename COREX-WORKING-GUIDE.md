@@ -1,0 +1,433 @@
+# Corex — Working Guide & Continuity Protocol
+
+**How to use this library, how to keep building it, and how any human or AI agent picks up where the last one left off.**
+
+> Read this together with `COREX-FRAMEWORK.md` (the architecture reference). That document explains *what* Corex is. This one explains *how to work on it and with it* — and how to never lose continuity.
+
+| | |
+|---|---|
+| **Audience** | Mustafa, the team, and any LLM (Claude Code, Codex, Cursor, Gemini) |
+| **Companion doc** | `COREX-FRAMEWORK.md` |
+| **Last updated** | 2026-06-07 |
+
+---
+
+## Part A — The Continuity Protocol (read this first)
+
+The single biggest risk in an AI-built project is **lost context**: a new session, a different LLM, or a new teammate starts cold and makes decisions that contradict earlier ones. This protocol prevents that.
+
+### A.1 — The source-of-truth hierarchy
+
+When anything conflicts, resolve in this order (top wins):
+
+1. **`specs/constitution.md`** — the non-negotiable rules.
+2. **`COREX-FRAMEWORK.md`** — the architecture reference.
+3. **The active spec** in `specs/` for the module being built.
+4. **`PROGRESS.md`** — what is done, in progress, and next.
+5. **The code** — the current implementation.
+
+If code contradicts the constitution, the code is wrong, not the constitution.
+
+### A.2 — Required files at the repo root (the agent entry points)
+
+Every agent reads these before doing anything. Keep them current.
+
+| File | Purpose | Who reads it |
+|---|---|---|
+| `CLAUDE.md` | Claude Code entry point — points to the docs below | Claude Code |
+| `AGENTS.md` | Generic agent entry point (Codex, Cursor, etc.) | All other LLMs |
+| `specs/constitution.md` | The rules | All agents |
+| `COREX-FRAMEWORK.md` | Architecture reference | All agents + humans |
+| `COREX-WORKING-GUIDE.md` | This file | All agents + humans |
+| `PROGRESS.md` | Live status + next steps | All agents + humans |
+| `DECISIONS.md` | Decision log (why we chose X over Y) | All agents + humans |
+
+`CLAUDE.md` and `AGENTS.md` should be near-identical and short — they just orient the agent and hand off to the real docs. Example content is in §A.5.
+
+### A.3 — The "always recommend next step" rule
+
+**Every agent, at the end of every response, must end with a `NEXT STEP` block.** This is mandatory and goes in the constitution. It is what makes the project resumable by anyone.
+
+The block has exactly this shape:
+
+```
+---
+NEXT STEP
+- Just completed: <one line>
+- Recommended next: <one specific, actionable step>
+- Why: <one line>
+- Alternatives: <optional — other valid directions>
+- Blockers/decisions needed from you: <optional>
+---
+```
+
+Because the agent always states the recommended next step, you (or the next LLM) never have to reconstruct where things stand — you read the last `NEXT STEP` and continue. Pair this with `PROGRESS.md` (§A.4), which records the same information durably.
+
+### A.4 — `PROGRESS.md` (the living status file)
+
+Updated at the end of every working session — by the agent, automatically. Structure:
+
+```markdown
+# Corex — Progress
+
+## Done
+- [x] corex-core: Boot.php + DI container
+- [x] corex-core: ControllerMap auto-discovery
+
+## In progress
+- [ ] QueryBuilder — where/orderBy done, eager loading (with) pending
+
+## Next (recommended order)
+1. Finish QueryBuilder eager loading + tests
+2. make:model generator
+3. Field driver abstraction (ACF-optional)
+
+## Open decisions
+- Logger: PSR-3 + which monitoring adapter? (see DECISIONS.md #7)
+
+## Last session summary
+2026-06-07 — built container + boot. Next: QueryBuilder.
+```
+
+A new session's first action is: **read `PROGRESS.md`, then continue from "Next."**
+
+### A.5 — Example `CLAUDE.md` / `AGENTS.md`
+
+```markdown
+# Corex — Agent Entry Point
+
+You are working on Corex, a Laravel-inspired WordPress framework.
+
+BEFORE doing anything:
+1. Read `specs/constitution.md` — the rules. They override everything.
+2. Read `PROGRESS.md` — current status and the recommended next step.
+3. Read the relevant spec in `specs/` for the module you're touching.
+4. Skim `COREX-FRAMEWORK.md` for the architecture if unfamiliar.
+
+WHILE working:
+- Follow the constitution exactly. If a request conflicts with it, say so.
+- Use the `wp corex make:*` generators rather than hand-writing boilerplate.
+- Keep controllers thin; logic goes in services; data access in repositories.
+- All styling via theme.json CSS variables. No hardcoded values. No CSS frameworks.
+
+AFTER producing any code:
+- Run the relevant guard skill on the diff ($wp-guard, $woo-guard,
+  $clean-code-guard, $test-guard, $docs-guard) before presenting.
+- Update `PROGRESS.md`.
+- Log any non-trivial decision in `DECISIONS.md`.
+- End your response with a NEXT STEP block (see constitution §"Next Step Rule").
+```
+
+### A.6 — `DECISIONS.md` (the decision log)
+
+Records *why*, so no future agent re-litigates a settled choice. One entry per decision:
+
+```markdown
+## #12 — No CSS framework in shipped output
+Date: 2026-06-07
+Decision: Drop Bootstrap/Tailwind from shipped CSS; use theme.json CSS vars.
+Why: HHEO proved build-time tokens block per-client theming + add page weight.
+Alternatives considered: Tailwind (rejected: build-time tokens), Bootstrap (rejected: weight).
+Status: Final.
+```
+
+### A.7 — Single Workspace / Agent Coordination Rule
+
+So that Claude, Codex, Cursor, Gemini, and any future agent all work from the same source of truth and never
+recreate or overwrite each other's work. This **extends, never replaces**, the source-of-truth hierarchy (§A.1),
+the Spec Kit flow (§D.2), and the multi-agent ownership rules (§D.3a).
+
+- **The active PR branch is the working source of truth.** While a feature PR is open, its branch is where all
+  work continues. Read `PROGRESS.md` for the latest pushed state and continue from the **latest commit on that
+  branch** — never restart completed work or branch off elsewhere.
+- **One checkout: the normal project root.** Work from the normal project root checkout only. Do **not** create or
+  work inside hidden/separate `git worktree` directories (e.g. `.worktrees/…`) by default — using one requires the
+  owner's **explicit** approval for that session. If a session finds itself in a non-root or worktree path, it
+  **stops**, reports that it is not the normal root, and names the correct root path before editing.
+- **Verify before editing (pre-flight).** Before changing any file, run and read:
+  ```bash
+  git rev-parse --show-toplevel   # confirm the normal project root
+  git branch --show-current       # confirm the active branch
+  git status --short              # confirm a known, clean-or-expected tree
+  git log --oneline -5            # confirm the latest pushed commit
+  git remote -v                   # confirm origin
+  git worktree list               # confirm a single, expected worktree
+  git fetch origin                # see remote state
+  ```
+- **Stop conditions.** Stop and report, making **no edits**, if any of these is true: you are on the **wrong
+  branch**; you are in the **wrong checkout** (not the normal root, or an unapproved worktree); or the tree has
+  **uncommitted changes you did not create** and cannot account for. Do not stash, discard, commit, or overwrite
+  unknown changes without owner direction.
+- **Continue, don't recreate.** Resume from the latest pushed commit on the active branch. Tasks already complete
+  (per `PROGRESS.md` and the spec's `tasks.md`) are not redone.
+- **Push discipline.** Commit and push only to the active PR branch while its PR is open. Never push to `main`;
+  never merge or mark a PR ready while blockers remain.
+- **End-of-session handoff (mandatory).** Every session ends with a handoff containing, in order: **SUMMARY**,
+  **WORKSPACE**, **SPEC KIT STATUS**, **VERIFICATION**, **BLOCKERS / DECISIONS NEEDED**, **RECOMMENDED NEXT STEP**,
+  and the **NEXT STEP** block (§A.3, unchanged and still mandatory as the final element). This makes the workspace
+  state and the resume point explicit for the next human or agent.
+
+---
+
+## Part B — Quality Gates (the guard skills)
+
+Adopt the [guard-skills](https://github.com/amElnagdy/guard-skills) as the enforcement layer for the constitution.
+
+**Auto-install rule (put in the constitution):** before running a guard, the agent checks whether it is installed. If it is not, the agent installs it first, then uses it. No diff ships without its guard — a missing guard is never an excuse to skip the gate.
+
+```bash
+# Install per agent (example: Claude Code)
+npx skills add amElnagdy/guard-skills --skill wp-guard --agent claude-code
+npx skills add amElnagdy/guard-skills --skill woo-guard --agent claude-code
+npx skills add amElnagdy/guard-skills --skill clean-code-guard --agent claude-code
+npx skills add amElnagdy/guard-skills --skill test-guard --agent claude-code
+npx skills add amElnagdy/guard-skills --skill docs-guard --agent claude-code
+
+# If a guard is missing when needed, the agent runs the matching line above
+# automatically before proceeding.
+```
+
+**When to run which guard:**
+
+| After the agent changed | Run |
+|---|---|
+| Any production code | `$clean-code-guard` |
+| WP plugin/theme/block/REST/AJAX/query | `$wp-guard` |
+| WooCommerce code | `$woo-guard` (on top of wp-guard) |
+| Test code | `$test-guard` |
+| Docs / README / docstrings | `$docs-guard` |
+
+**Definition of done** (put in the constitution): no diff is presented or merged until the relevant guard runs clean on it. The constitution is the law; the guards are the inspector.
+
+> Also worth knowing: `WordPress/agent-skills` is the broader build-time catalog. Use it to *build*, guard-skills to *check*.
+
+---
+
+## Part C — Using the Library (consumer workflow)
+
+For a developer *using* Corex to build a site (not building the framework itself).
+
+### C.1 — Start a project
+```bash
+composer create-project corex/framework my-site
+cd my-site
+wp corex init --namespace="Acme" --prefix="acme" --mode=fse
+npx wp-env start
+composer install && npm install && npm run build
+```
+
+### C.2 — Apply a client brand (the design intake — see Framework doc §10)
+1. Put the client's palette, fonts, and scale into `theme/theme.json`.
+2. For per-site variants, create `brand.json` with overrides.
+3. Self-host fonts (variable + unicode-range subset).
+4. Run `wp corex brand:apply`.
+
+### C.3 — Add a feature
+```bash
+wp corex make:model Product --cpt --rest --ability
+wp corex make:service ProductService
+wp corex make:controller ProductController
+wp corex make:block product-grid --dynamic
+```
+Declare fields on the model (works with or without ACF), implement the service, register a connector so editors bind blocks to fields.
+
+### C.4 — Enable optional modules
+```bash
+wp corex install corex/forms
+wp corex install corex/profile-manager
+```
+
+### C.5 — Ship
+```bash
+wp corex health:check       # audit before deploy
+# commit → PR → CI gates → merge → tag release
+```
+
+---
+
+## Part D — Developing the Library (contributor workflow)
+
+For working *on* Corex itself.
+
+### D.1 — Golden rules
+- Never put business logic in the theme.
+- Never instantiate dependencies inside methods — inject them.
+- Never hardcode a color, size, or font — use tokens.
+- Never load an asset globally — scope it to a block.
+- Never write a security check by hand — declare middleware.
+- Never make an optional plugin (ACF, Woo, WPML) a hard dependency.
+
+### D.2 — The spec-first loop (Spec Kit)
+```
+/constitution   → write/update the rules
+/specify        → describe the module's behavior
+/clarify        → resolve ambiguities
+/plan           → technical plan
+/tasks          → break into tasks
+/implement      → build one task, review, repeat
+```
+Write the spec before the code. The spec is the durable artifact.
+
+### D.3 — Per-task cycle
+1. Pick the next task from `PROGRESS.md`.
+2. Generate scaffolding with `wp corex make:*`.
+3. Implement following the constitution.
+4. Write tests (Pest unit, Playwright E2E).
+5. Run the relevant guard on the diff.
+6. Update `PROGRESS.md` + `DECISIONS.md`.
+7. End with a `NEXT STEP` block.
+8. PR into `develop` → green CI → merge.
+
+### D.3a - Multi-agent work ownership
+
+When more than one agent or human can touch the repo, every work unit starts with status and ownership:
+
+1. Run `git status --short --branch` before editing.
+2. Confirm the work branch is a feature branch, never `main`.
+3. Record the active spec path, task IDs, and files owned for the work unit.
+4. Do not overlap owned files with another active work unit unless a handoff explicitly transfers ownership.
+5. Before marking a work unit complete, attach verification evidence and the relevant guard results.
+6. Handoffs and final reports name branch, spec path, completed task IDs, files owned, verification,
+   guard status, and any files released for another agent.
+
+The release readiness gate models this as an agent work unit: `main` is invalid for active work, overlapping
+file ownership blocks completion, and missing guard evidence keeps a completed task from being accepted.
+
+### D.4 - Definition of done (per feature)
+
+- [ ] Follows the constitution
+- [ ] Generated via CLI where applicable
+- [ ] Unit + E2E tests, green
+- [ ] Relevant guard run clean
+- [ ] WCAG 2.2 AA for any UI
+- [ ] Strings translation-ready (i18n)
+- [ ] RTL verified
+- [ ] Docs updated **in the same change** per the rule in §D.5 (docs-guard checks drift)
+- [ ] `PROGRESS.md` updated
+
+### D.5 — The documentation-in-every-PR rule (mandatory)
+
+**Every feature PR updates its documentation in the same change — without being asked.** A feature is not done
+when the code works; it is done when the docs that describe it are true again. This rule exists because the
+2026-06-14 audit found shipped backends whose user-facing docs still claimed earlier (or no) capability — the
+root `README.md` still said "bootstrap stage, no framework code yet" long after the framework existed.
+
+**Surface ↔ change mapping** — for the change you made, update *every* surface that applies:
+
+| You changed | Update, in the same PR |
+|---|---|
+| A plugin/add-on's behavior, options, or public API | that plugin/add-on's `README.md` (what it does · what enabling gives · what disabling removes · required config/keys · related CLI commands · related docs · limitations) |
+| A user- or developer-facing capability | the matching `docs-app/src/content/docs/guides/*` guide |
+| Anything a newcomer/evaluator would see | the root `README.md` (kept honest — no overclaiming; backend-only means backend-only; env-gated means clearly env-gated) |
+| A CLI command or flag | `packages/cli/README.md` + the CLI guide |
+| Architecture | `COREX-FRAMEWORK.md` (its §26 rule) |
+| Agent-facing behavior or entry points | `AGENTS.md` / `CLAUDE.md` |
+| Status / what's done / what's next | `PROGRESS.md`; a non-trivial choice → `DECISIONS.md` |
+
+**Honesty clause.** Docs must not overclaim. State capability at the level it actually ships:
+*implemented and tested*, *backend-only (UI pending)*, or *env-gated (needs a browser/host to verify)* — never
+flatten those into "done/complete". A task checkbox is checked only when the code satisfies it.
+
+**Not your job to hand-edit:** the generated class reference under `docs-app/.../reference/*` is regenerated by
+`wp corex docs:generate`, never corrected by hand — re-run the generator instead.
+
+**Gate.** `docs-guard` runs clean on every changed doc before the diff ships (Part B). A docs-only omission
+fails the Definition of Done just like a failing test.
+
+---
+
+## Part E — How Any LLM Continues the Work
+
+This is the answer to "make sure any LLM can continue working on this."
+
+1. **Cold start sequence** for a fresh agent (state this in `AGENTS.md`):
+   read `constitution.md` → `PROGRESS.md` → active spec → continue from "Next."
+2. **Model-agnostic by design** — Spec Kit, the guard skills, and the entry files all work across Claude Code, Codex, Cursor, Gemini. Nothing is Claude-only.
+3. **Durable memory lives in files, not chat** — `PROGRESS.md`, `DECISIONS.md`, and the specs are the project's memory. Chat history is disposable; these files are not.
+4. **The NEXT STEP block** at the end of every response means the handoff point is always explicit.
+5. **The guards** mean a different LLM can't quietly violate the standards — the gate catches it.
+
+The test of success: a brand-new LLM, given only the repo, can read four files and correctly state what to build next — without you explaining anything.
+
+---
+
+## Part F — Maintenance
+
+- Update `PROGRESS.md` every session (agent does this automatically).
+- Log decisions in `DECISIONS.md` as they happen.
+- Update `COREX-FRAMEWORK.md` in the *same PR* as any architectural change.
+- Run `wp corex docs:generate` in CI to keep auto-derived docs from drifting.
+- Re-run `docs-guard` on doc changes before shipping.
+
+## Part G — Team-Safe Roles, Source Layout & Handoff (spec 061)
+
+CoreX is now used to build real client sites. To keep framework work and client work from colliding, every
+session — human or AI — runs through four gates in order:
+
+> **Role Gate** decides *where* you work · **Spec Kit** decides *what* to build · **Guard Gate** decides
+> *whether* code/docs are safe to ship · **UI/UX ProMax** decides *whether* visible UI/design is good enough.
+
+### G.1 — Source layout (where things live)
+
+- **Repo root is the source of truth.** The team develops in the repo. Git commits **source only**.
+- **Framework** source: `plugins/`, `addons/`, `packages/`, root `theme/`, root `specs/`, root `docs/`, `docs-app/`.
+- **Client/company-site** source: `sites/<client>/` —
+  ```text
+  sites/<client>/
+    <client>-site/     # the client plugin (app/business code)
+    <client>-theme/    # the client theme (presentation)
+    AGENTS.md  CLAUDE.md  README.md  PROGRESS.md  DECISIONS.md
+    specs/  docs/
+  ```
+- **Never edited as source** (runtime/build output): `wp/wp-content/` and `dist/`. `dist/` is generated by the
+  shared-host builder and is git-ignored — never committed. The server receives only the contents of `dist/`.
+
+### G.2 — The four modes (Role Gate)
+
+| Mode | Edits | Source-of-truth | Must not |
+|---|---|---|---|
+| **CoreX Framework** | `plugins/`,`addons/`,`packages/`,root `theme/`/`specs/`/`docs/`,`docs-app/`,`ROADMAP.md`,root `PROGRESS.md`, framework UI, release | root agent files, `specs/constitution.md`, this guide, `COREX-FRAMEWORK.md` | edit `sites/<client>/` (unless authorized) |
+| **Client Site** | `sites/<client>/` only | root files (global safety) + `sites/<client>/{AGENTS,CLAUDE,PROGRESS,DECISIONS}.md` + `sites/<client>/specs/` | continue the CoreX roadmap; edit framework dirs (unless authorized) |
+| **Deployment** | `dist` builder, `azure-pipelines.yml`, deploy/rollback scripts, runtime-file protection | this guide §G.4, deployment docs | client-design or framework-product changes beyond packaging |
+| **Docs/Planning** | docs, specs, roadmap, decisions, prompts, handoffs | the file being edited | ship runtime code (unless authorized) |
+
+Copy/paste start prompts for each mode: `docs/en/04-team-workflow/ai-agent-start-prompts.md`.
+
+### G.3 — Guard Gate & UI/UX ProMax
+
+- **Guard Gate** (run the relevant one on every diff before it ships): `clean-code-guard` (production code),
+  `wp-guard` (WP/plugin/theme/block/REST/AJAX/query), `woo-guard` (WooCommerce), `test-guard` (tests),
+  `docs-guard` (docs). Where a named guard skill has no executable command in the environment, the documented
+  fallback is this repo's real validation (`composer validate`, `php -l`, `vendor/bin/pest`, `npx jest`,
+  `npm run lint:css/js`, `npm run build`, docs-app build, `npm run verify:dependencies`, `git diff --check`).
+- **UI/UX ProMax** is required for all UI-facing work — framework (admin/login/dashboard/add-ons/docs app) and
+  client (homepage/inner pages/header-footer/blocks/templates/mobile/RTL/a11y/SEO/perf/keyboard/200%/brand).
+
+### G.4 — Deployment split
+
+`GitHub Actions = PR/code-quality gates` · `Azure Pipelines = build dist + deploy to hosting`. Build a flat
+artifact with `npm run build:dist` (→ `scripts/build-shared-host-dist.sh`); verify with
+`npm run verify:dist`. Azure deploys from release tags, with credentials in Azure secrets and production runtime
+files (`wp-config.php`, `.htaccess`, `uploads/`, `cache/`, `upgrade/`, `debug.log`) protected from overwrite.
+
+### G.5 — Required response/handoff format
+
+End every working response with:
+```text
+SUMMARY            - What was done.
+WORKSPACE          - Branch: / Repo root: / Git status: / Files changed:
+MODE               - Framework / Client Site / Deployment / Docs-Planning
+SPEC KIT STATUS    - Spec path: / Task IDs: / Completed: / Remaining:
+VERIFICATION       - Commands run: / Results: / Guards run:
+PRs / RELEASE      - PR numbers: / Merge status: / Release/tag status:
+BLOCKERS / DECISIONS NEEDED
+RECOMMENDED NEXT STEP
+---
+NEXT STEP
+- Just completed: / Recommended next: / Why: / Alternatives: / Blockers/decisions needed from you:
+---
+```
+
+---
+
+*Continuity is a feature. Treat these files as production code.*

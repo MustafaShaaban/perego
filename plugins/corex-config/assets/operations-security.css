@@ -1,0 +1,315 @@
+/* CoreX Operations & Security overview (spec 063, Phase 4). Real environment +
+   real WordPress hardening checks. Tokens + logical properties only; scoped to
+   this screen (Principle VI); status by class + text, never colour alone. */
+.corex-admin .corex-opsec__env {
+	margin-block-end: var(--corex-admin-space-lg);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-border);
+}
+
+.corex-admin .corex-opsec__env.is-success {
+	border-inline-start-color: var(--corex-admin-success);
+}
+
+.corex-admin .corex-opsec__env.is-warning {
+	border-inline-start-color: var(--corex-admin-warning);
+}
+
+.corex-admin .corex-opsec__env.is-info {
+	border-inline-start-color: var(--corex-admin-info);
+}
+
+.corex-admin .corex-opsec__detail,
+.corex-admin .corex-opsec__note-text {
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-opsec__checks {
+	margin-block-end: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-opsec__checks-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--corex-admin-space-sm);
+	margin-block-end: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-opsec__checks-head h2 {
+	margin: 0;
+}
+
+.corex-admin .corex-opsec__ok {
+	color: var(--corex-admin-success);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-opsec__warn {
+	color: var(--corex-admin-warning);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-opsec__list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	display: grid;
+	gap: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-opsec__check {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: var(--corex-admin-space-2xs) var(--corex-admin-space-sm);
+	padding: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	background: var(--corex-admin-surface);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+.corex-admin .corex-opsec__check.is-pass {
+	border-inline-start-color: var(--corex-admin-success);
+}
+
+.corex-admin .corex-opsec__check.is-warn {
+	border-inline-start-color: var(--corex-admin-warning);
+}
+
+.corex-admin .corex-opsec__check-label {
+	font-weight: 600;
+}
+
+.corex-admin .corex-opsec__check-status {
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+	text-transform: uppercase;
+	letter-spacing: var(--corex-admin-letter-wide);
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-opsec__check-detail {
+	grid-column: 1 / -1;
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-opsec__note-title {
+	margin: 0 0 var(--corex-admin-space-2xs);
+	color: var(--corex-admin-text);
+	font-family: var(--corex-admin-font-display);
+	font-weight: 600;
+}
+
+/* Operations Mode control (spec 065): capability + nonce-gated switch. */
+.corex-admin .corex-opsec__env.is-danger {
+	border-inline-start-color: var(--corex-admin-error);
+}
+
+.corex-admin .corex-opsec__warnings {
+	margin-block: var(--corex-admin-space-sm) 0;
+	padding-inline-start: var(--corex-admin-space-lg);
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+	display: flex;
+	flex-direction: column;
+	gap: var(--corex-admin-space-2xs);
+}
+
+.corex-admin .corex-opsec__mode-form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-sm);
+	margin-block-start: var(--corex-admin-space-md);
+	padding-block-start: var(--corex-admin-space-md);
+	border-block-start: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+}
+
+.corex-admin .corex-opsec__mode-label {
+	font-weight: 600;
+}
+
+.corex-admin .corex-opsec__mode-confirm {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--corex-admin-space-2xs);
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-opsec__audit-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--corex-admin-space-2xs);
+}
+
+.corex-admin .corex-opsec__audit-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--corex-admin-space-sm);
+	padding-block: var(--corex-admin-space-xs);
+	border-block-end: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+}
+
+.corex-admin .corex-opsec__audit-row:last-child {
+	border-block-end: 0;
+}
+
+.corex-admin .corex-opsec__audit-change code {
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+}
+
+.corex-admin .corex-opsec__audit-meta {
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+}
+
+/* Security Center client workspace (spec 068 T151/T152). */
+.corex-admin .corex-security {
+	display: grid;
+	gap: var(--corex-admin-space-lg);
+	margin-block-end: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-security__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+	gap: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-security__panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-security__head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--corex-admin-space-sm);
+	flex-wrap: wrap;
+}
+
+.corex-admin .corex-security__head h2,
+.corex-admin .corex-security__panel h2 {
+	margin: 0;
+}
+
+.corex-admin .corex-security__head > span,
+.corex-admin .corex-security__notice {
+	padding-block: var(--corex-admin-space-2xs);
+	padding-inline: var(--corex-admin-space-xs);
+	border-radius: var(--corex-admin-radius-pill);
+	background: var(--corex-admin-surface-alt);
+	color: var(--corex-admin-text-muted);
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+}
+
+.corex-admin .corex-security__head > span.is-ready,
+.corex-admin .corex-security__notice.is-success {
+	background: var(--corex-admin-success-soft);
+	color: var(--corex-admin-success);
+}
+
+.corex-admin .corex-security__head > span.is-warning,
+.corex-admin .corex-security__notice.is-error {
+	background: var(--corex-admin-warning-soft);
+	color: var(--corex-admin-warning);
+}
+
+.corex-admin .corex-security__checks,
+.corex-admin .corex-security__panel ul {
+	display: flex;
+	flex-direction: column;
+	gap: var(--corex-admin-space-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.corex-admin .corex-security__checks li,
+.corex-admin .corex-security__panel li {
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	padding: var(--corex-admin-space-sm);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+.corex-admin .corex-security__checks li.is-pass {
+	border-inline-start-color: var(--corex-admin-success);
+}
+
+.corex-admin .corex-security__checks li.is-review {
+	border-inline-start-color: var(--corex-admin-warning);
+}
+
+.corex-admin .corex-security__checks small,
+.corex-admin .corex-security__panel small,
+.corex-admin .corex-security__panel p {
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-security__mode-preview,
+.corex-admin .corex-security__policy {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+	gap: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-security__actions {
+	display: flex;
+	justify-content: flex-end;
+	margin-block-start: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-security__mode-preview label,
+.corex-admin .corex-security__policy label,
+.corex-admin .corex-security__confirm {
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	color: var(--corex-admin-text);
+	font-weight: 600;
+}
+
+.corex-admin .corex-security__confirm,
+.corex-admin .corex-security__policy label:has(input[type="checkbox"]) {
+	display: flex;
+	align-items: center;
+	gap: var(--corex-admin-space-xs);
+	font-weight: 500;
+}
+
+.corex-admin .corex-security__modal {
+	grid-column: 1 / -1;
+	display: grid;
+	gap: var(--corex-admin-space-sm);
+	padding: var(--corex-admin-space-md);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-warning);
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-warning-soft);
+}
+
+.corex-admin .corex-security__payload,
+.corex-admin .corex-security__panel code {
+	display: block;
+	padding: var(--corex-admin-space-sm);
+	overflow-x: auto;
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-surface-alt);
+	color: var(--corex-admin-text-muted);
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+}

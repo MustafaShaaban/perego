@@ -1,0 +1,9 @@
+/**
+ * {{ name }} theme front-end entry (assets/src/js/main.js). `npm run scripts` builds it to
+ * assets/js/main.js with a hashed assets/js/main.asset.php (cache-busting via the CoreX Script
+ * helper). Styles compile separately from assets/src/scss/ (`npm run styles`). Keep this small
+ * and dependency-free — progressive enhancement only.
+ */
+document.addEventListener( 'DOMContentLoaded', () => {
+	// Your front-end behaviour here.
+} );

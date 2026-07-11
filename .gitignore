@@ -1,29 +1,105 @@
-# Dependencies / build
-/vendor/
-/node_modules/
-/**/build/
-/**/dist/
+# ───────────────────────── Owner handoff (not committed) ─────────────────────────
+# Transient owner goal/handoff file — an instruction input, never a repo deliverable.
+/COREX-FINAL-PRE-SITE-GOAL.md
 
-# Environment / secrets (never commit)
+# ───────────────────────── Dependencies ─────────────────────────
+/vendor/
+**/vendor/
+/node_modules/
+**/node_modules/
+composer.phar
+
+# ───────────────────────── Build output ─────────────────────────
+# Compiled/minified assets are generated from source (SCSS, JS) — never committed.
+/build/
+**/build/
+/dist/
+**/dist/
+*.map
+**/*.css.map
+.cache/
+.parcel-cache/
+
+# ───────────────────────── Environment / secrets ────────────────
 .env
 .env.*
+!.env.example
+*.key
+*.pem
+auth.json
+
+# ───────────────────────── WordPress core & runtime ─────────────
+# Corex is the framework SOURCE (theme/ + plugins/*). A running WordPress install
+# (./wp) and any site runtime artifacts are NOT part of the framework and are not committed.
+/wp/
 wp-config.php
+wp-cli.local.yml
+/wp-cli.phar
+/wp-content/uploads/
+/wp-content/upgrade/
+/wp-content/cache/
+/wp-content/wflogs/
+/wp-content/uploads.bak/
+*.sql
+*.sql.gz
+*.log
+error_log
 
-# Local AI / agent history + cache (private — NOT committed; the project memory is)
-.corex/docs/
-.corex/cache/
-.corex/local-notes/
-.ai/
-.claude/local/
-.codex/local/
+# ───────────────────────── PHP tooling ──────────────────────────
+.phpunit.result.cache
+.phpunit.cache/
+.phpcs.cache
+.php-cs-fixer.cache
+.phpstan.cache/
 
-# OS / editor
+# ───────────────────────── JS / test tooling ────────────────────
+.wp-env.override.json
+coverage/
+.nyc_output/
+/tests/_output/
+/tests/_support/_generated/
+playwright-report/
+test-results/
+/playwright/.cache/
+npm-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ───────────────────────── Agent / editor state ─────────────────
+# Keep committed: .claude/skills/, .claude/commands/, .specify/
+# Ignore only local, machine-specific or secret-bearing agent state.
+.claude/settings.local.json
+.claude/.credentials.json
+.claude/projects/
+.claude/todos/
+.mcp.local.json
+/.worktrees/
+
+# ───────────────────────── OS / IDE noise ───────────────────────
 .DS_Store
 Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.history/
+*.swp
+*~
 
-# WordPress dev runtime — never committed, generated locally per DECISIONS.md
-/wp/
+# Playwright E2E saved auth state (storageState)
+tests/e2e/.auth/
 
+# Spec 060 render-verify throwaway output
+tests/e2e/baseline/
+tests/e2e/render-out/
+tests/e2e/after-*/
+tests/e2e/wide/
+tests/e2e/clip/
+tests/e2e/cur/
+tests/e2e/final/
+tests/e2e/fix*/
+
+# ───────────────────────── Perego-specific (this client site) ───
 # Raw design handoff reference (large binaries) — kept local, not shipped
 /_design_handoff/
 /Perego Creative Studio Final.zip

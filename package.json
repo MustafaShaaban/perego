@@ -1,0 +1,38 @@
+{
+    "name": "corex-framework",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Corex \u2014 WordPress framework monorepo (npm workspaces root).",
+    "license": "GPL-2.0-or-later",
+    "engines": {
+        "node": ">=20"
+    },
+    "workspaces": [
+        "packages/build-tools",
+        "plugins/corex-blocks",
+        "plugins/corex-forms",
+        "addons/corex-ui",
+        "addons/corex-careers",
+        "addons/corex-kit-portfolio",
+        "plugins/corex-config"
+    ],
+    "scripts": {
+        "build": "npm run build --workspaces --if-present",
+        "start": "npm run start --workspaces --if-present",
+        "lint:js": "wp-scripts lint-js",
+        "lint:css": "wp-scripts lint-style",
+        "test:js": "wp-scripts test-unit-js",
+        "test:e2e": "playwright test --config=tests/e2e/playwright.config.js",
+        "verify:dependencies": "node scripts/verify-dependency-security.mjs",
+        "build:dist": "node scripts/build-shared-host-dist.mjs",
+        "verify:dist": "node scripts/verify-shared-host-dist.mjs",
+        "format": "wp-scripts format",
+        "env:start": "wp-env start",
+        "env:stop": "wp-env stop"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.61.0",
+        "@wordpress/env": "^11.8.1",
+        "@wordpress/scripts": "^32.4.1"
+    }
+}

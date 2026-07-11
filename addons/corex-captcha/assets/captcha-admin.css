@@ -1,0 +1,28 @@
+/** CoreX captcha diagnostic control; scoped to the CoreX settings shell. */
+
+.corex-admin .corex-captcha-test {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-sm);
+	margin-block-start: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-captcha-test__result {
+	padding-block: var(--corex-admin-space-2xs);
+	padding-inline: var(--corex-admin-space-sm);
+	color: var(--corex-admin-text-muted);
+	background: var(--corex-admin-surface-alt);
+	border-radius: var(--corex-admin-radius-sm);
+	font-weight: 600;
+}
+
+.corex-admin .corex-captcha-test__result.is-ok {
+	color: var(--corex-admin-success);
+	background: var(--corex-admin-success-soft);
+}
+
+.corex-admin .corex-captcha-test__result.is-error {
+	color: var(--corex-admin-error);
+	background: var(--corex-admin-error-soft);
+}

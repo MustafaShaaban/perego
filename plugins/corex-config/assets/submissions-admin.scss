@@ -1,0 +1,421 @@
+/* CoreX Submissions Inbox (spec 068). Token-only, responsive, RTL-safe. */
+.corex-admin .corex-inbox {
+	display: grid;
+	gap: var(--corex-admin-space-lg);
+	min-inline-size: 0;
+}
+
+.corex-admin .corex-inbox__header,
+.corex-admin .corex-inbox-retention > header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-inbox__header h2,
+.corex-admin .corex-inbox-retention h2 {
+	margin-block: 0;
+	color: var(--corex-admin-text);
+	font-size: var(--corex-admin-font-xl);
+}
+
+.corex-admin .corex-inbox__header p,
+.corex-admin .corex-inbox-retention p {
+	margin-block: var(--corex-admin-space-2xs) 0;
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-inbox__eyebrow {
+	color: var(--corex-admin-action);
+	font-size: var(--corex-admin-font-xs);
+	font-weight: 700;
+	letter-spacing: var(--corex-admin-letter-wide);
+	text-transform: uppercase;
+}
+
+.corex-admin .corex-inbox__notice {
+	padding: var(--corex-admin-space-md);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-success);
+	border-radius: var(--corex-admin-radius-sm);
+	background: var(--corex-admin-surface);
+}
+
+.corex-admin .corex-inbox__notice.is-error {
+	border-inline-start-color: var(--corex-admin-error);
+}
+
+.corex-admin .corex-inbox__filters {
+	display: grid;
+	grid-template-columns: minmax(14rem, 2fr) repeat(5, minmax(8rem, 1fr));
+	gap: var(--corex-admin-space-sm);
+	padding: var(--corex-admin-space-md);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-surface);
+}
+
+.corex-admin .corex-inbox__filters label,
+.corex-admin .corex-inbox__drawer label,
+.corex-admin .corex-inbox__export-modal label,
+.corex-admin .corex-inbox-retention label {
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	color: var(--corex-admin-text);
+	font-size: var(--corex-admin-font-sm);
+	font-weight: 600;
+}
+
+.corex-admin .corex-inbox__filters .is-check {
+	display: flex;
+	align-items: center;
+	grid-column: 1 / -1;
+}
+
+.corex-admin .corex-inbox input:not([type="checkbox"]),
+.corex-admin .corex-inbox select,
+.corex-admin .corex-inbox textarea,
+.corex-admin .corex-inbox-retention input[type="number"] {
+	inline-size: 100%;
+	min-block-size: var(--corex-admin-control-height);
+	color: var(--corex-admin-text);
+	background: var(--corex-admin-surface);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-sm);
+}
+
+.corex-admin .corex-inbox textarea {
+	min-block-size: calc(var(--corex-admin-control-height) * 2);
+	resize: vertical;
+}
+
+.corex-admin .corex-inbox__bulk {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-sm);
+	padding: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	color: var(--corex-admin-text);
+	background: var(--corex-admin-surface-raised);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+.corex-admin .corex-inbox__bulk select,
+/* stylelint-disable-next-line no-descending-specificity */
+.corex-admin .corex-inbox__bulk input {
+	inline-size: auto;
+	min-inline-size: 9rem;
+}
+
+.corex-admin .corex-inbox__table-wrap {
+	overflow-x: auto;
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-surface);
+	box-shadow: var(--corex-admin-shadow-sm);
+}
+
+.corex-admin .corex-inbox__table {
+	inline-size: 100%;
+	border-collapse: collapse;
+	color: var(--corex-admin-text);
+}
+
+.corex-admin .corex-inbox__table th,
+.corex-admin .corex-inbox__table td {
+	padding: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	border-block-end: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	text-align: start;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.corex-admin .corex-inbox__table th {
+	color: var(--corex-admin-text-muted);
+	background: var(--corex-admin-surface-alt);
+	font-size: var(--corex-admin-font-xs);
+	text-transform: uppercase;
+}
+
+.corex-admin .corex-inbox__table tr.is-unread td {
+	background: color-mix(in srgb, var(--corex-admin-info) 6%, var(--corex-admin-surface));
+}
+
+.corex-admin .corex-inbox__row-button {
+	position: relative;
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	padding: 0;
+	padding-inline-start: var(--corex-admin-space-md);
+	color: var(--corex-admin-text);
+	background: transparent;
+	border: 0;
+	text-align: start;
+	cursor: pointer;
+}
+
+.corex-admin .corex-inbox__row-button small {
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-inbox__row-button em {
+	inline-size: fit-content;
+	padding-inline: var(--corex-admin-space-xs);
+	color: var(--corex-admin-warning);
+	background: var(--corex-admin-warning-soft);
+	border-radius: var(--corex-admin-radius-pill);
+	font-size: var(--corex-admin-font-xs);
+	font-style: normal;
+}
+
+.corex-admin .corex-inbox__unread {
+	position: absolute;
+	inset-block-start: var(--corex-admin-space-xs);
+	inset-inline-start: 0;
+	inline-size: var(--corex-admin-space-xs);
+	block-size: var(--corex-admin-space-xs);
+	background: var(--corex-admin-info);
+	border-radius: var(--corex-admin-radius-pill);
+}
+
+.corex-admin tr:not(.is-unread) .corex-inbox__unread {
+	display: none;
+}
+
+.corex-admin .corex-inbox__status {
+	display: inline-flex;
+	padding: var(--corex-admin-space-2xs) var(--corex-admin-space-xs);
+	color: var(--corex-admin-text);
+	background: var(--corex-admin-surface-raised);
+	border-radius: var(--corex-admin-radius-pill);
+	font-size: var(--corex-admin-font-xs);
+	font-weight: 700;
+}
+
+.corex-admin .corex-inbox__status.is-new,
+.corex-admin .corex-inbox__status.is-in_progress {
+	color: var(--corex-admin-info);
+	background: var(--corex-admin-info-soft);
+}
+
+.corex-admin .corex-inbox__status.is-replied,
+.corex-admin .corex-inbox__status.is-closed {
+	color: var(--corex-admin-success);
+	background: var(--corex-admin-success-soft);
+}
+
+.corex-admin .corex-inbox__status.is-spam {
+	color: var(--corex-admin-error);
+	background: var(--corex-admin-error-soft);
+}
+
+.corex-admin .corex-inbox__pagination,
+.corex-admin .corex-inbox__modal-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-inbox__pagination span {
+	margin-inline-end: auto;
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-inbox__state {
+	display: grid;
+	place-items: center;
+	gap: var(--corex-admin-space-sm);
+	min-block-size: 12rem;
+	padding: var(--corex-admin-space-xl);
+	text-align: center;
+	border: var(--corex-admin-border-width) dashed var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+.corex-admin .corex-inbox__drawer {
+	position: fixed;
+	z-index: var(--corex-admin-z-modal);
+	inset-block: 0;
+	inset-inline-end: 0;
+	overflow-y: auto;
+	inline-size: min(38rem, 100%);
+	padding: var(--corex-admin-space-lg);
+	color: var(--corex-admin-text);
+	background: var(--corex-admin-surface);
+	border-inline-start: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	box-shadow: var(--corex-admin-shadow-lg);
+}
+
+.corex-admin .corex-inbox__drawer > header,
+.corex-admin .corex-inbox__drawer-actions,
+.corex-admin .corex-inbox__assignment,
+.corex-admin .corex-inbox__drawer > footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--corex-admin-space-sm);
+}
+
+/* stylelint-disable-next-line no-descending-specificity */
+.corex-admin .corex-inbox__assignment input,
+.corex-admin .corex-inbox__assignment select {
+	flex: 1 1 10rem; /* corex-token-allow: structural assignment control basis */
+}
+
+.corex-admin .corex-inbox__drawer > section {
+	display: grid;
+	gap: var(--corex-admin-space-sm);
+	padding-block: var(--corex-admin-space-lg);
+	border-block-end: var(--corex-admin-border-width) solid var(--corex-admin-border);
+}
+
+.corex-admin .corex-inbox__drawer h3 {
+	margin: 0;
+	font-size: var(--corex-admin-font-md);
+}
+
+.corex-admin .corex-inbox__fields {
+	display: grid;
+	gap: var(--corex-admin-space-xs);
+	margin: 0;
+}
+
+.corex-admin .corex-inbox__fields > div {
+	display: grid;
+	grid-template-columns: minmax(8rem, 0.5fr) minmax(0, 1fr);
+	gap: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-inbox__fields dt {
+	color: var(--corex-admin-text-muted);
+	font-weight: 600;
+}
+
+.corex-admin .corex-inbox__fields dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.corex-admin .corex-inbox__timeline,
+.corex-admin .corex-inbox__export-history {
+	display: grid;
+	gap: var(--corex-admin-space-sm);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.corex-admin .corex-inbox__timeline li,
+.corex-admin .corex-inbox__export-history li {
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	padding-inline-start: var(--corex-admin-space-md);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-border);
+}
+
+.corex-admin .corex-inbox__timeline small,
+.corex-admin .corex-inbox__muted {
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-inbox__drawer pre {
+	overflow: auto;
+	padding: var(--corex-admin-space-sm);
+	background: var(--corex-admin-surface-alt);
+	border-radius: var(--corex-admin-radius-sm);
+}
+
+.corex-admin .corex-inbox__drawer > footer {
+	padding-block-start: var(--corex-admin-space-md);
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-xs);
+}
+
+.corex-admin .corex-inbox__export-modal fieldset {
+	display: grid;
+	gap: var(--corex-admin-space-xs);
+	margin-block: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-inbox__export-modal fieldset label,
+.corex-admin .corex-inbox__warning {
+	display: flex;
+	align-items: flex-start;
+}
+
+.corex-admin .corex-inbox__warning {
+	padding: var(--corex-admin-space-sm);
+	color: var(--corex-admin-warning);
+	background: var(--corex-admin-warning-soft);
+	border-radius: var(--corex-admin-radius-sm);
+}
+
+.corex-admin .corex-inbox-retention {
+	display: grid;
+	gap: var(--corex-admin-space-md);
+	margin-block-start: var(--corex-admin-space-xl);
+	padding: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-inbox-retention form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: end;
+	gap: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-inbox-retention__apply {
+	padding-block-start: var(--corex-admin-space-md);
+	border-block-start: var(--corex-admin-border-width) solid var(--corex-admin-border);
+}
+
+@media (max-width: 1200px) { /* corex-token-allow: approved desktop breakpoint */
+	.corex-admin .corex-inbox__filters {
+		grid-template-columns: repeat(3, minmax(9rem, 1fr));
+	}
+
+	.corex-admin .corex-inbox__filters .is-wide {
+		grid-column: span 2;
+	}
+}
+
+@media (max-width: 782px) { /* corex-token-allow: WordPress admin breakpoint */
+	.corex-admin .corex-inbox__filters {
+		grid-template-columns: 1fr 1fr;
+	}
+
+	.corex-admin .corex-inbox__filters .is-wide {
+		grid-column: 1 / -1;
+	}
+
+	.corex-admin .corex-inbox__drawer {
+		inline-size: 100%;
+		padding: var(--corex-admin-space-md);
+	}
+
+	.corex-admin .corex-inbox__fields > div {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 480px) { /* corex-token-allow: compact mobile breakpoint */
+	.corex-admin .corex-inbox__filters {
+		grid-template-columns: 1fr;
+	}
+
+	.corex-admin .corex-inbox__filters .is-wide {
+		grid-column: auto;
+	}
+
+	.corex-admin .corex-inbox__header,
+	.corex-admin .corex-inbox__bulk,
+	.corex-admin .corex-inbox-retention form {
+		align-items: stretch;
+		flex-direction: column;
+	}
+}

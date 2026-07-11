@@ -1,0 +1,17 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "corex/jobs",
+	"title": "Corex Jobs",
+	"category": "corex",
+	"icon": "businessperson",
+	"description": "A list of open positions as accessible cards (dynamic, bounded).",
+	"textdomain": "corex",
+	"attributes": {
+		"count": { "type": "number", "default": 10 }
+	},
+	"supports": { "html": false },
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"corex": { "renderer": "Corex\\Careers\\Block\\JobsRenderer" }
+}

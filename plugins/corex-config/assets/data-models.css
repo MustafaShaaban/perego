@@ -1,0 +1,321 @@
+/* CoreX Data Models catalog (spec 063, Phase 3). Truthful schema catalog over
+   the real registered data models. Tokens + logical properties only; scoped
+   to this screen (Principle VI). */
+.corex-admin .corex-data-models__summary {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+	gap: var(--corex-admin-space-md);
+	margin-block-end: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-data-models__summary-card {
+	padding: var(--corex-admin-space-md);
+	background: var(--corex-admin-surface);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+.corex-admin .corex-data-models__summary-label {
+	margin: 0;
+	color: var(--corex-admin-text-muted);
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+	text-transform: uppercase;
+	letter-spacing: var(--corex-admin-letter-wide);
+}
+
+.corex-admin .corex-data-models__summary-value {
+	margin: var(--corex-admin-space-xs) 0 0;
+	color: var(--corex-admin-text);
+	font-family: var(--corex-admin-font-display);
+	font-size: var(--corex-admin-font-lg);
+	font-weight: 600;
+}
+
+.corex-admin .corex-data-models__list {
+	display: grid;
+	gap: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-data-models__card-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: var(--corex-admin-space-sm);
+	margin-block-end: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-data-models__card-head h2 {
+	margin: 0;
+}
+
+.corex-admin .corex-data-models__key {
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-data-models__count {
+	margin-inline-start: auto;
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-data-models__fields {
+	inline-size: 100%;
+	border-collapse: collapse;
+	margin-block-end: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-data-models__fields th,
+.corex-admin .corex-data-models__fields td {
+	padding: var(--corex-admin-space-sm);
+	text-align: start;
+	border-block-end: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+}
+
+.corex-admin .corex-data-models__fields th {
+	color: var(--corex-admin-text-muted);
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+	text-transform: uppercase;
+	letter-spacing: var(--corex-admin-letter-wide);
+}
+
+.corex-admin .corex-data-models__note-title {
+	margin: 0 0 var(--corex-admin-space-2xs);
+	color: var(--corex-admin-text);
+	font-family: var(--corex-admin-font-display);
+	font-weight: 600;
+}
+
+.corex-admin .corex-data-models__note-text {
+	margin: 0;
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+}
+
+/* CSV import dry-run + migration overview (spec 065). */
+.corex-admin .corex-data-models__import {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-sm);
+	margin-block-start: var(--corex-admin-space-md);
+	padding-block-start: var(--corex-admin-space-md);
+	border-block-start: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+}
+
+.corex-admin .corex-data-models__import-label {
+	font-size: var(--corex-admin-font-sm);
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-data-models__import-preview {
+	margin-block-end: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-data-models__import-warn {
+	color: var(--corex-admin-warning);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-data-models__import-rejected summary {
+	cursor: pointer;
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-data-models__import-rejected ul {
+	margin-block-start: var(--corex-admin-space-sm);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-data-models__migrations {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--corex-admin-space-2xs);
+}
+
+.corex-admin .corex-data-models__migration {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--corex-admin-space-sm);
+	padding-block: var(--corex-admin-space-xs);
+}
+
+.corex-admin .corex-data-models__migration.is-ok span {
+	color: var(--corex-admin-success);
+}
+
+.corex-admin .corex-data-models__migration.is-pending span {
+	color: var(--corex-admin-warning);
+}
+
+/* Export tab rows (spec 067). */
+.corex-admin .corex-data-models__export-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--corex-admin-space-sm);
+	padding-block: var(--corex-admin-space-sm);
+	border-block-end: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+}
+
+.corex-admin .corex-data-models__export-row:last-child {
+	border-block-end: 0;
+}
+
+.corex-admin .corex-data-models__app {
+	display: grid;
+	gap: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-data-models__tabs {
+	display: flex;
+	gap: var(--corex-admin-space-xs);
+	overflow-x: auto;
+	border-block-end: var(--corex-admin-border-width) solid var(--corex-admin-border);
+}
+
+.corex-admin .corex-data-models__tabs button {
+	padding: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	color: var(--corex-admin-text-muted);
+	background: transparent;
+	border: 0;
+	border-block-end: var(--corex-admin-state-border) solid transparent;
+	font: inherit;
+	cursor: pointer;
+}
+
+.corex-admin .corex-data-models__tabs button.is-active {
+	color: var(--corex-admin-action);
+	border-block-end-color: var(--corex-admin-action);
+}
+
+.corex-admin .corex-data-models__card,
+.corex-admin .corex-data-models__workspace {
+	padding: var(--corex-admin-space-lg);
+}
+
+.corex-admin .corex-data-models__workspace {
+	display: grid;
+	gap: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-data-models__workspace > header h2,
+.corex-admin .corex-data-models__workspace > header p,
+.corex-admin .corex-data-models__migration-list h3 {
+	margin-block-start: 0;
+}
+
+.corex-admin .corex-data-models__access,
+/* stylelint-disable-next-line no-descending-specificity */
+.corex-admin .corex-data-models__capabilities span {
+	padding: var(--corex-admin-space-2xs) var(--corex-admin-space-sm);
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+	text-transform: capitalize;
+	background: var(--corex-admin-surface-alt);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-pill);
+}
+
+.corex-admin .corex-data-models__access.is-allowed {
+	color: var(--corex-admin-success);
+}
+
+.corex-admin .corex-data-models__access.is-denied {
+	color: var(--corex-admin-error);
+}
+
+.corex-admin .corex-data-models__capabilities,
+.corex-admin .corex-data-models__history-head,
+.corex-admin .corex-data-models__history li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-data-models__capabilities {
+	margin-block-start: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-data-models__table-scroll {
+	overflow-x: auto;
+}
+
+.corex-admin .corex-data-models__file {
+	display: grid;
+	gap: var(--corex-admin-space-xs);
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-data-models__run,
+.corex-admin .corex-data-models__migration-list article,
+.corex-admin .corex-data-models__commit,
+.corex-admin .corex-data-models__columns {
+	padding: var(--corex-admin-space-md);
+	background: var(--corex-admin-surface-alt);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+.corex-admin .corex-data-models__columns {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+	gap: var(--corex-admin-space-sm);
+}
+
+.corex-admin .corex-data-models__migration-list {
+	display: grid;
+	gap: var(--corex-admin-space-md);
+}
+
+.corex-admin .corex-data-models__history-head {
+	justify-content: space-between;
+}
+
+.corex-admin .corex-data-models__history {
+	display: grid;
+	gap: var(--corex-admin-space-xs);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.corex-admin .corex-data-models__history li {
+	justify-content: space-between;
+	padding-block: var(--corex-admin-space-xs);
+	border-block-end: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+}
+
+.corex-admin .corex-data-models__warning {
+	padding: var(--corex-admin-space-md);
+	color: var(--corex-admin-warning);
+	background: var(--corex-admin-surface-alt);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-warning);
+}
+
+.corex-admin .corex-data-models__empty {
+	padding: var(--corex-admin-space-lg);
+	color: var(--corex-admin-text-muted);
+	background: var(--corex-admin-surface-raised);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+/* corex-token-allow: responsive breakpoint */
+@media (max-width: 600px) { /* corex-token-allow: responsive breakpoint */
+
+	.corex-admin .corex-data-models__card,
+	.corex-admin .corex-data-models__workspace {
+		padding: var(--corex-admin-space-md);
+	}
+}

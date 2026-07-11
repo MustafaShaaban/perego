@@ -1,0 +1,21 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "corex/form",
+	"title": "Corex Form",
+	"category": "corex",
+	"icon": "feedback",
+	"description": "Renders a registered Corex form (server-rendered, secured submit).",
+	"textdomain": "corex",
+	"attributes": {
+		"source": { "type": "string", "default": "flow" },
+		"formSlug": { "type": "string", "default": "contact" },
+		"flowId": { "type": "integer", "default": 0 },
+		"flowSlug": { "type": "string", "default": "" }
+	},
+	"supports": { "html": false },
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"viewScript": "file:./view.js",
+	"corex": { "renderer": "Corex\\Forms\\Block\\FormBlockRenderer" }
+}

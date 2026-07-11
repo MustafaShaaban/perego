@@ -1,0 +1,10 @@
+/* Corex Badge — token-only, logical properties. */
+.corex-badge {
+	display: inline-block;
+	padding-block: var(--wp--preset--spacing--10);
+	padding-inline: var(--wp--preset--spacing--20);
+	border-radius: var(--wp--custom--radius--sm);
+	background: var(--wp--preset--color--primary);
+	color: var(--wp--preset--color--inverse);
+	font-size: var(--wp--preset--font-size--xs);
+}
