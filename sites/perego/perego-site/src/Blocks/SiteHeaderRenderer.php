@@ -51,8 +51,10 @@ final class SiteHeaderRenderer
     {
         $driver = $this->languageService->driver();
 
+        $context = esc_attr((string) wp_json_encode(['isScrolled' => false, 'isMenuOpen' => false]));
+
         $html = '<header class="perego-header" data-wp-interactive="perego/site-header" '
-            . "data-wp-context='" . wp_json_encode(['isScrolled' => false, 'isMenuOpen' => false]) . "' "
+            . "data-wp-context='" . $context . "' "
             . 'data-wp-class--is-scrolled="context.isScrolled" '
             . 'data-wp-class--is-menu-open="context.isMenuOpen" '
             . 'data-wp-init="callbacks.init">';

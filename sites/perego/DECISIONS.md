@@ -56,3 +56,24 @@ this client site.
 it exactly keeps client tests consistent with how the framework tests itself.
 
 **Status**: done. Run via `cd sites/perego/perego-site && php ../../../vendor/bin/pest`.
+
+## 2026-07-11 — Polylang installed + active; languages not yet configured
+
+**Context**: spec 001 T027 — attempt installing Polylang to validate `PolylangLanguageDriver`
+against the real plugin, not just Brain Monkey stubs.
+
+**Decision**: `wp plugin install polylang --activate` succeeded (v3.8.5). `LanguageService` correctly
+auto-detects it (`function_exists('pll_current_language')` is now true) and resolves
+`PolylangLanguageDriver` in the live environment — verified via `wp eval`. Polylang has **no
+languages configured yet** (`pll_current_language()` returns `false`, which our driver already
+handles by defaulting to `'en'`) — it exposes no simple public API for programmatic language setup
+(`PLL()->model` has no public `add_language()`); that's normally done through its own wp-admin setup
+wizard (Languages → Add New Language), not something to reverse-engineer via WP-CLI.
+
+**Why**: forcing Polylang's internal, undocumented setup path is riskier than just doing the one-time
+admin-UI step a real site owner would do anyway.
+
+**Status**: follow-up needed before real bilingual content authoring: visit `/wp-admin/admin.php?
+page=mlang` and add English (default) + Arabic. Not blocking for spec 001 — the language *mechanism*
+(driver resolution, toggle, persistence) is fully built and tested either way, per the driver's own
+graceful default.
