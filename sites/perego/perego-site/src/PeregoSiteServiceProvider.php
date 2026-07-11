@@ -15,6 +15,7 @@ use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ServiceHeroRenderer;
+use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
@@ -87,6 +88,15 @@ final class PeregoSiteServiceProvider
 
             $languageService = $this->languageService;
             $heroRenderer = new ServiceHeroRenderer();
+            $overviewRenderer = new ServicesOverviewRenderer();
+
+            register_block_type($this->blockDir('services-overview'), [
+                'render_callback' => static function () use ($overviewRenderer, $languageService): string {
+                    return $overviewRenderer->render(
+                        new ServiceContent($languageService->driver()->currentLocale())
+                    );
+                },
+            ]);
 
             register_block_type($this->blockDir('service-hero'), [
                 'render_callback' => static function () use ($heroRenderer, $languageService): string {
