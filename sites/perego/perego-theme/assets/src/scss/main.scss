@@ -68,7 +68,11 @@ html {
 
 body {
 	min-block-size: 100vh;
-	background: transparent;
+	// The gradient lives on both html and body: html alone with background-attachment:fixed can
+	// leave thin unpainted bands between full-bleed sections (root block-gap), which then flash
+	// the white canvas. body carries it too so any inter-section gap reads as the brand gradient.
+	background: var(--perego-gradient-bg);
+	background-attachment: fixed;
 }
 
 /* Reduced motion: decorative loops/parallax/auto-rotation are opt-out globally, matching

@@ -94,6 +94,40 @@ able to write to it, even by accident (wrong remote name typed, muscle memory fr
 **Status**: done. Verify with `git remote -v` — `upstream`'s push URL must always show the disabled
 placeholder, never a real one.
 
+## 2026-07-11 — M2 asset build pipeline (the blocks were never compiled)
+
+**Context**: M1 shipped the header/footer/preloader blocks with `block.json` referencing raw
+`style.scss` + an ESM `view.js` (Interactivity API). Browsers can't load either — so **no block CSS
+and no interactivity actually loaded**, and the theme's `main.scss`/`main.js` were never compiled to
+`assets/css/main.css` / `assets/js/main.js` at all. The site rendered unstyled server markup; that's
+the real reason M1's "visual fidelity unverified" gap existed. M2 (the first milestone with visible
+front-end that must look right) cannot ship without fixing this.
+
+**Decision**: stood up the compile step (Node 20+ is available; `@wordpress/scripts` + `sass` resolve
+from the repo-root `node_modules`):
+- **Blocks**: `wp-scripts build --experimental-modules --webpack-src-dir=src/Blocks
+  --output-path=build/Blocks` compiles each block's `style.scss → style-index.css` and, for the
+  Interactivity API blocks, `view.js →` a real script **module** with a `view.asset.php` declaring the
+  `@wordpress/interactivity` dependency (WP core provides that module + the import map). The
+  `--experimental-modules` flag is required in wp-scripts 32.x to build `viewScriptModule` fields.
+  Each source `block.json`'s `style` now points at the built `style-index.css` (create-block
+  convention). `register_block_type` resolves `build/Blocks/<name>` via a new
+  `PeregoSiteServiceProvider::blockDir()` helper, falling back to `src/Blocks/<name>` pre-build so
+  registration/markup still works (only the compiled assets are absent) until a build runs.
+- **Theme**: `sass main.scss → assets/css/main.css` (the `--perego-*` token :root that every block's
+  CSS depends on) + `wp-scripts build assets/src/js/main.js`.
+- **Committing**: compiled output is **gitignored** (`sites/perego/.gitignore` + the root's
+  `**/build/`), matching the repo's "compiled assets are generated, never committed" rule. Built for
+  local dev now; the M7 deploy pipeline (`dist/`) will build for production.
+
+**Why**: this is the standard WordPress block toolchain; using `--experimental-modules` keeps the
+Interactivity API code (the design doc's mandated approach) rather than rewriting all three blocks to
+plain view scripts. Verified end-to-end over HTTP: the homepage enqueues all block styles + the theme
+token base, the import map resolves `@wordpress/interactivity`, and all three view modules load.
+
+**Status**: done for M1+M2 blocks. Follow-up: wire `npm run build` (both packages) into the M7 deploy
+pipeline so production gets compiled assets without a manual step.
+
 ## 2026-07-11 — Jest for perego-site gets its own config, not a root jest.config.js edit
 
 **Context**: spec 001 T013/T023/T031 — the three Interactivity API blocks' `view.js` files had no

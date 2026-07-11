@@ -32,7 +32,9 @@
 	text-decoration: none;
 }
 
-.perego-header__nav ul {
+/* Direct child only — must not match the nested .perego-header__dropdown ul, or its
+   descendant specificity would override the dropdown's own display:none and force it open. */
+.perego-header__nav > ul {
 	display: flex;
 	align-items: center;
 	gap: 1.5rem;
@@ -134,7 +136,7 @@
 		transform: translateX(100%);
 		transition: transform var(--perego-dur-medium) var(--perego-ease);
 
-		ul {
+		> ul {
 			flex-direction: column;
 			align-items: stretch;
 		}
@@ -159,14 +161,16 @@
 	.perego-header__nav-item.is-open > .perego-header__dropdown {
 		display: block;
 	}
-}
 
-:root[dir='rtl'] .perego-header__nav {
-	inset-inline-end: auto;
-	inset-inline-start: 0;
-	transform: translateX(-100%);
-}
+	/* RTL mirrors the slide-in panel to come from the left — mobile-only, so it must stay inside
+	   this breakpoint (at desktop the nav is in flow and any transform mis-shifts it). */
+	:root[dir='rtl'] .perego-header__nav {
+		inset-inline-end: auto;
+		inset-inline-start: 0;
+		transform: translateX(-100%);
+	}
 
-:root[dir='rtl'] .perego-header.is-menu-open .perego-header__nav {
-	transform: translateX(0);
+	:root[dir='rtl'] .perego-header.is-menu-open .perego-header__nav {
+		transform: translateX(0);
+	}
 }

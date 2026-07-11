@@ -96,13 +96,46 @@ Site Mode). Run this site's JS tests via `npx jest --config sites/perego/perego-
   Nothing in this feature can be checked in an actual browser until this is done.
 - Configure Polylang's two languages (English default, Arabic) via `/wp-admin/admin.php?page=mlang`.
 
+## spec 002 — Home / M2 (2026-07-11)
+
+Branch `feature/002-home` (off `feature/001`). Full spec/plan/tasks at `specs/002-home/`. Two new
+dynamic FSE blocks + the asset build pipeline that was missing all along.
+
+**Shipped and verified live** (real browser, EN + AR/RTL + mobile):
+- `perego-theme/hero-slider` — rotating headline slides, dot tablist, prev/next + pause/play, aria-live
+  announcer; auto-advance 6.5s, hover + visibility pause, reduced-motion gate, stop-on-interaction
+  (WCAG 2.2.2). Interactivity API store. 9 Pest + 12 Jest.
+- `perego-theme/services-teaser` — four staggered service cards + See-All arrow link, pure-CSS hover.
+  7 Pest. Rebindable to the `service` CPT in M3.
+- `PeregoSite\Content\HomeContent` — locale-aware EN/AR copy (en fallback). 5 Pest.
+- `front-page.html` composes header → preloader → hero-slider → About (core glass panels) →
+  services-teaser → footer.
+- **Asset build pipeline** (DECISIONS.md — "M2 asset build pipeline"): the M1+M2 block SCSS/JS and the
+  theme `main.scss`/`main.js` are now actually compiled (`wp-scripts --experimental-modules` for the
+  Interactivity API modules; `sass` for the theme). This was the true cause of M1's "styling unverified"
+  gap — nothing was compiled, so nothing loaded. **Now fixed; M1's blocks are styled + interactive too.**
+- Full suite green: 53 Pest + 37 Jest. Guard Gate clean. Visual fidelity checked against the handoff
+  screenshots; 3 CSS bugs found + fixed (see spec 002 tasks.md).
+
+**Build commands** (run before serving/deploying — output is gitignored):
+`cd sites/perego/perego-site && npm run build` · `cd sites/perego/perego-theme && npm run build`.
+
 ## Next
 
+1. ~~Set up Jest for `perego-site`~~ — **done 2026-07-11**.
+2. ~~Visual fidelity check (M1/M2 homepage)~~ — **done 2026-07-11** via Playwright + host-resolver-rules
+   (no hosts-file edit needed; the vhost is reachable by mapping `perego.local`→127.0.0.1). Spec 001's
+   T040/T041 homepage portion is satisfied by the M2 check.
+3. **M3 (Services + Portfolio)** is the current milestone: `service` CPT + 4 singles; `project` CPT +
+   category taxonomy + `perego/portfolio-grid` + project single + `perego/project-gallery-lightbox`.
+4. Owner action items still open (not blocking): add `perego.local` to the hosts file + Polylang
+   language config (both need an elevated shell / wp-admin).
+
+<!-- superseded next block -->
+### (superseded) earlier Next
 1. Do the two owner action items above.
-2. ~~Set up Jest for `perego-site`/`perego-theme`~~ — **done 2026-07-11** (see "Closed since" above).
-3. Run the visual fidelity check against `_design_handoff/.../screenshots/*.png` once the site is
-   reachable in a browser. This is now the single remaining item before spec 001 can be considered
-   fully closed.
+2. Set up Jest — done.
+3. Visual fidelity check — done.
 4. Then `/specify` M2 (Home: hero slider + services tabs) using
    `docs/superpowers/specs/2026-07-11-perego-corex-design.md` as the input design (its environment
    section is superseded by this file; its content mapping/phasing still stands) — following the same
