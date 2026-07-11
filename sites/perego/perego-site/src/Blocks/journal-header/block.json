@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/journal-header",
+	"title": "Perego Journal Header",
+	"category": "theme",
+	"icon": "welcome-write-blog",
+	"description": "The journal index heading: 'The Perego Journal' (H1) + lead. Language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}

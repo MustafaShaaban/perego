@@ -13,6 +13,7 @@ defined('ABSPATH') || exit;
 use PeregoSite\Blocks\ExampleRenderer;
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
+use PeregoSite\Blocks\JournalHeaderRenderer;
 use PeregoSite\Blocks\LegalTocRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
@@ -112,6 +113,14 @@ final class PeregoSiteServiceProvider
                     return (new LegalTocRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render($queried instanceof \WP_Post ? $queried : null);
+                },
+            ]);
+
+            register_block_type($this->blockDir('journal-header'), [
+                'render_callback' => static function () use ($languageService): string {
+                    return (new JournalHeaderRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render();
                 },
             ]);
         });

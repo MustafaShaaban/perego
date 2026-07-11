@@ -1,0 +1,22 @@
+/**
+ * perego-theme/journal-header — the journal index heading. Tokens + logical properties.
+ */
+.journal-header {
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	padding-block: var(--wp--preset--spacing--section-y) clamp(24px, 3vw, 40px);
+	text-align: center;
+}
+.journal-header__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.05;
+	margin: 0 0 12px;
+}
+.journal-header__lead {
+	color: var(--perego-muted);
+	font-size: var(--wp--preset--font-size--lead);
+	max-inline-size: 60ch;
+	margin-inline: auto;
+}

@@ -47,6 +47,11 @@ final class GlobalContent
                 'tocTitle' => 'On this page',
                 'reviewNote' => 'This is a draft for design/layout purposes and must be reviewed by legal counsel before publication.',
             ],
+            'journal' => [
+                'h1' => 'The Perego Journal',
+                'lead' => 'Notes on video, motion, design and the web from the studio floor.',
+                'empty' => 'No articles published yet. Check back soon.',
+            ],
         ],
         'ar' => [
             'notFound' => [
@@ -70,8 +75,19 @@ final class GlobalContent
                 'tocTitle' => 'في هذه الصفحة',
                 'reviewNote' => 'هذه مسودة لأغراض التصميم والتنسيق، ويجب مراجعتها من قبل مستشار قانوني قبل النشر.',
             ],
+            'journal' => [
+                'h1' => 'مدونة بيريجو',
+                'lead' => 'ملاحظات في الفيديو والموشن والتصميم والويب من داخل الاستوديو.',
+                'empty' => 'لا توجد مقالات منشورة بعد. عُد قريبًا.',
+            ],
         ],
     ];
+
+    /** @return array<string, string> */
+    public function journal(): array
+    {
+        return self::COPY[$this->locale]['journal'];
+    }
 
     private readonly string $locale;
 
