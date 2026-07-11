@@ -30,10 +30,27 @@ spl_autoload_register(static function (string $class): void {
     }
 });
 
-// Boot the site provider, which wires the --starter example (REST + block + options page).
-// When you remove the example (see REMOVE-EXAMPLE.md), keep this boot — it's your site's entry.
+// Boot the site provider, which wires the --starter example (REST + block + options page)
+// and the spec-001 language service. When you remove the example (see REMOVE-EXAMPLE.md),
+// keep this boot — it's your site's entry.
 add_action('plugins_loaded', static function (): void {
-    $provider = new PeregoSite\PeregoSiteServiceProvider();
-    $provider->register();
-    $provider->boot();
+    perego_site(new PeregoSite\PeregoSiteServiceProvider());
+    perego_site()->register();
+    perego_site()->boot();
 });
+
+/**
+ * Site-level accessor for block render callbacks (site-header, site-footer, …) to reach the
+ * composition root without reaching into the framework's container — this is site-level wiring,
+ * not framework wiring. Set once, on `plugins_loaded`; reads before that point return null.
+ */
+function perego_site(?PeregoSite\PeregoSiteServiceProvider $set = null): ?PeregoSite\PeregoSiteServiceProvider
+{
+    static $provider = null;
+
+    if ($set !== null) {
+        $provider = $set;
+    }
+
+    return $provider;
+}

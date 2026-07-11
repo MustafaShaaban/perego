@@ -8,3 +8,5 @@
  */
 
 declare(strict_types=1);
+
+uses(\PeregoSite\Tests\TestCase::class)->in('.');
