@@ -13,6 +13,7 @@ defined('ABSPATH') || exit;
 use PeregoSite\Blocks\ExampleRenderer;
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
+use PeregoSite\Blocks\NotFoundRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ProjectHeroRenderer;
 use PeregoSite\Blocks\ServiceHeroRenderer;
@@ -20,6 +21,7 @@ use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
+use PeregoSite\Content\GlobalContent;
 use PeregoSite\Content\PortfolioContent;
 use PeregoSite\Content\ServiceContent;
 use PeregoSite\Controllers\ExampleController;
@@ -73,6 +75,26 @@ final class PeregoSiteServiceProvider
         $this->registerHomeBlocks();
         $this->registerPortfolio();
         $this->registerServices();
+        $this->registerGlobalSurfaces();
+    }
+
+    /**
+     * spec 004 (M4): language-aware blocks for the language-neutral FSE templates that carry editorial
+     * copy — currently the 404 composition. GlobalContent resolves EN/AR at render time.
+     */
+    private function registerGlobalSurfaces(): void
+    {
+        add_action('init', function (): void {
+            $languageService = $this->languageService;
+
+            register_block_type($this->blockDir('not-found'), [
+                'render_callback' => static function () use ($languageService): string {
+                    return (new NotFoundRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render();
+                },
+            ]);
+        });
     }
 
     /**

@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/not-found",
+	"title": "Perego 404",
+	"category": "theme",
+	"icon": "warning",
+	"description": "The 404 composition: code, title (H1), body, and Back-home / Contact actions. Server-rendered + language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}
