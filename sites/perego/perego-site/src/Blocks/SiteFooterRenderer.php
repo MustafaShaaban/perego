@@ -80,7 +80,26 @@ final class SiteFooterRenderer
     {
         return '<div class="perego-footer__careers">'
             . '<h2>' . esc_html__('Join us', 'perego-site') . '</h2>'
+            . $this->joinForm()
             . '</div>';
+    }
+
+    /**
+     * The live "Join us" / CV form, rendered through the registered perego-theme/join-form block so
+     * its enqueue/upload-lifecycle wiring applies. Falls back to the heading-only entry point when the
+     * block is unregistered (e.g. CoreX Careers inactive), keeping the footer non-fatal.
+     */
+    private function joinForm(): string
+    {
+        if (! function_exists('do_blocks') || ! class_exists('WP_Block_Type_Registry')) {
+            return '';
+        }
+
+        if (! \WP_Block_Type_Registry::get_instance()->is_registered('perego-theme/join-form')) {
+            return '';
+        }
+
+        return do_blocks('<!-- wp:perego-theme/join-form /-->');
     }
 
     private function renderBottomBar(): string

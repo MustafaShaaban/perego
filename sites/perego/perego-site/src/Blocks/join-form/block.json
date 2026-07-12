@@ -1,0 +1,14 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/join-form",
+	"title": "Perego Join Us Form",
+	"category": "perego",
+	"icon": "id",
+	"description": "The footer Join-us / CV submission form (secure upload to perego/v1/careers/apply).",
+	"textdomain": "perego-site",
+	"supports": { "html": false },
+	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js",
+	"style": "file:./style-index.css"
+}

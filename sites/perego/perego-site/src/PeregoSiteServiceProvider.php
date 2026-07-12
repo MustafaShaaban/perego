@@ -147,6 +147,11 @@ final class PeregoSiteServiceProvider
 
         // Branded comment-moderation email (replaces WordPress's plain native notifications).
         (new \PeregoSite\Email\PeregoCommentNotifier($mailer))->register();
+
+        // The "Join us" / CV submission endpoint (secure upload → store → branded emails).
+        add_action('rest_api_init', static function () use ($mailer): void {
+            (new \PeregoSite\Careers\PeregoCareersController($mailer))->register();
+        });
     }
 
     /**
@@ -208,6 +213,14 @@ final class PeregoSiteServiceProvider
             register_block_type($this->blockDir('journal-header'), [
                 'render_callback' => static function () use ($languageService): string {
                     return (new JournalHeaderRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render();
+                },
+            ]);
+
+            register_block_type($this->blockDir('join-form'), [
+                'render_callback' => static function () use ($languageService): string {
+                    return (new \PeregoSite\Blocks\JoinFormRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render();
                 },

@@ -200,6 +200,22 @@ nothing new to sync (full record in `docs/corex-baseline.md`).
   aria-current), zero PHP notices, seed idempotent. Fixed the previously-risky `ServicePostType` test.
 - Suite: **90 Pest + 54 Jest green**. wp-guard clean. Commits `114a0b4`, `c902fd5`, `5017611` pushed.
 
+**Phase 7 (Join-us / CV form) — DONE + built + guarded (2026-07-12):** the footer "Join us" form ships as
+the server-rendered `perego-theme/join-form` block posting to a new secure endpoint. Pieces:
+`PeregoCareersController` (`POST perego/v1/careers/apply`) — anonymous, honeypot + per-IP rate-limited, CV
+validated by `wp_check_filetype_and_ext` + `finfo` sniff under the pdf/doc/docx ≤ 5 MB policy, stored as a
+**private** attachment, recorded best-effort against a standing "Open Application" `corex_job` when
+`corex-careers` is active, and answered with branded EN/AR applicant + admin emails via the existing
+`PeregoMailer`. `JoinFormRenderer` (label-bound inputs, required markers, `aria-live` status, honeypot,
+no-JS-usable markup), `join-form` block (`index.js`/`view.js` upload lifecycle + `style.scss`), EN/AR copy in
+`GlobalContent::join()`, wired into `SiteFooterRenderer` (via `do_blocks`, guarded when unregistered) + the
+service provider (REST route + block). `scripts/seed-careers.php` idempotently seeds the standing job.
+**Fixed during the guard pass:** `join-form/index.js` was missing `import './style.scss'`, so `style-index.css`
+never built and the form would have rendered unstyled — added the import (matches every other block), rebuilt,
+CSS + RTL now emit. **Suite: 156 Pest + 65 Jest green** (incl. `JoinFormRenderTest` + `join-form/view.test.js`);
+`npm run build` clean; wp-guard + clean-code-guard clean. **Resolves DECISIONS Decision 7.** _(Live HTTP smoke +
+real email delivery remain env-gated — needs Apache + a mail transport.)_
+
 **Editor-canvas remediation note (audit §6):** service singles now use editor-canvas post-content for
 prose. The Home/portfolio surfaces still render prose from PHP providers (`HomeContent`,
 `PortfolioContent`) — dynamic + bilingual but not yet canvas-editable. Tracked as a remediation

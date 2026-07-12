@@ -52,6 +52,22 @@ final class GlobalContent
                 'lead' => 'Notes on video, motion, design and the web from the studio floor.',
                 'empty' => 'No articles published yet. Check back soon.',
             ],
+            'join' => [
+                'name' => 'Full name',
+                'email' => 'Email',
+                'portfolio' => 'Portfolio / website link',
+                'cv' => 'CV',
+                'cvHint' => 'PDF, DOC or DOCX — up to 5 MB.',
+                'submit' => 'Apply now',
+                'uploading' => 'Uploading your CV…',
+                'submitting' => 'Sending your application…',
+                'success' => 'Thanks! Your application is in — we\'ll be in touch if there\'s a fit.',
+                'invalid' => 'Please add your name, a valid email, and attach your CV.',
+                'wrong_type' => 'Please attach a PDF, DOC or DOCX file.',
+                'too_large' => 'That file is over 5 MB. Please attach a smaller CV.',
+                'rate_limit' => 'Too many attempts — please try again in a few minutes.',
+                'server_error' => 'Something went wrong on our end. Please try again shortly.',
+            ],
         ],
         'ar' => [
             'notFound' => [
@@ -79,6 +95,22 @@ final class GlobalContent
                 'h1' => 'مدونة بيريجو',
                 'lead' => 'ملاحظات في الفيديو والموشن والتصميم والويب من داخل الاستوديو.',
                 'empty' => 'لا توجد مقالات منشورة بعد. عُد قريبًا.',
+            ],
+            'join' => [
+                'name' => 'الاسم الكامل',
+                'email' => 'البريد الإلكتروني',
+                'portfolio' => 'رابط ملف الأعمال / الموقع',
+                'cv' => 'السيرة الذاتية',
+                'cvHint' => 'PDF أو DOC أو DOCX — حتى 5 ميجابايت.',
+                'submit' => 'قدّم الآن',
+                'uploading' => 'جارٍ رفع سيرتك الذاتية…',
+                'submitting' => 'جارٍ إرسال طلبك…',
+                'success' => 'شكرًا! تم استلام طلبك — سنتواصل معك إن كان هناك تناسب.',
+                'invalid' => 'يرجى إضافة اسمك وبريد إلكتروني صحيح وإرفاق سيرتك الذاتية.',
+                'wrong_type' => 'يرجى إرفاق ملف PDF أو DOC أو DOCX.',
+                'too_large' => 'حجم الملف يتجاوز 5 ميجابايت. يرجى إرفاق سيرة أصغر.',
+                'rate_limit' => 'محاولات كثيرة — يرجى المحاولة بعد بضع دقائق.',
+                'server_error' => 'حدث خطأ لدينا. يرجى المحاولة مرة أخرى بعد قليل.',
             ],
         ],
     ];
@@ -112,5 +144,11 @@ final class GlobalContent
     public function legal(): array
     {
         return self::COPY[$this->locale]['legal'];
+    }
+
+    /** @return array<string, string> */
+    public function join(): array
+    {
+        return self::COPY[$this->locale]['join'];
     }
 }

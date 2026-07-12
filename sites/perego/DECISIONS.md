@@ -232,7 +232,22 @@ guarded so the site degrades when `corex-forms` is inactive. The engine's defaul
 are shared across forms, so registering after boot still delivers. **Why**: this is client-site composition
 using a public accessor, not an edit to framework code (Role Gate: Client Site Mode).
 
-**Decision 7 (OPEN — needs owner) — Join-us CV upload + branded emails path.** The remaining Phase 7 items
+**Decision 7 (RESOLVED 2026-07-12) — Join-us CV upload + branded emails path.** Resolved with a
+platform-safe bespoke endpoint that does **not** hard-depend on the inactive add-ons. `PeregoCareersController`
+(`POST perego/v1/careers/apply`) validates the CV with WordPress's own `wp_check_filetype_and_ext` + a `finfo`
+content sniff (never trusting the browser MIME) under the exact CoreX Careers policy (pdf/doc/docx ≤ 5 MB),
+stores it as a **private** attachment via `wp_handle_upload`, and — **best-effort only** — records the
+application against a standing "Open Application" `corex_job` through `ApplicationStore` **when `corex-careers`
+is active** (guarded; the email is the primary record otherwise). The public form is anonymous, so it is gated
+by a honeypot + per-IP rate limit rather than a nonce (a `wp_rest` nonce cannot authenticate anonymous
+visitors). Branded EN/AR confirmation + admin-notification emails go through the already-shipped
+`PeregoMailer`/`PeregoEmailRenderer` seam (Phase 7/8 email commits), not the deferred `corex-email` wiring.
+**Why this over the earlier options:** it neither pulls in the full careers CPT/table footprint as a hard
+dependency (the option-a concern) nor reinvents upload security (the option-b concern) — it reuses core's
+upload/filetype APIs and degrades cleanly when either add-on is absent. `scripts/seed-careers.php` idempotently
+seeds the standing job when Careers is present. _Original open context preserved below for the record._
+
+**Decision 7 (superseded open context) — Join-us CV upload + branded emails path.** The remaining Phase 7 items
 depend on capabilities not currently active:
 - *Join-us / CV form*: `corex-forms` has no `file` field type (its `FieldTypeRegistry` built-ins stop at
   text/email/phone/select/…). Adding one is CoreX **Framework Mode** work, out of Client Site Mode.
