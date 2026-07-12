@@ -33,7 +33,7 @@
 - [X] T018 [US3] Run `npm run verify:model-routing`, validator tests, JSON/TOML/frontmatter checks, and available Codex/Claude diagnostics.
 - [X] T019 [US3] Execute bounded explicit-agent runtime smoke checks when authenticated sessions permit; document each environment-gated result honestly.
 - [X] T020 [US3] Run docs, clean-code, and test guards; run `git diff --check` and changed-file secret/path scans.
-- [ ] T021 [US4] Review the final diff, mark all completed tasks, commit, push only to `origin`, create/update a Perego PR, and inspect its CI.
+- [ ] T021 [US4] Review the final diff, mark all completed tasks, commit, push only to `origin`, create/update a Perego PR, and inspect its CI. **Blocked externally:** the active GitHub CLI token is invalid; commit `3386012` is pushed to Perego origin and awaits `gh auth login -h github.com`.
 
 ## Dependencies
 

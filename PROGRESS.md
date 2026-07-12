@@ -12,7 +12,7 @@
 - **Verified:** static validator passes; validator tests pass (3/3); `codex --strict-config doctor` is clean and reports Terra selected; `claude doctor` is clean. The Spec Kit prerequisite helper rejects the user-required `feature/...` branch naming convention, so cross-artifact consistency was completed manually against Spec 069 instead. No material spec/plan/tasks mismatch found.
 - **Environment-gated:** live provider-agent prompts were not run. A bounded explicit Claude read-only smoke probe was blocked by workspace data-export policy before execution. Therefore configured agent files and client diagnostics are verified, but automatic delegation, agent discovery in an interactive session, and runtime-confirmed child model identity are not claimed as passed.
 - **Final guard/hygiene:** docs-guard, clean-code-guard, and test-guard manual review passes found no shipping issue; `git diff --check`, Node syntax, JSON parsing, targeted changed-asset secret/placeholder review, and the static validator/test suite pass.
-- **Next:** review the final staged scope, then commit and push only this Perego branch and open/update a Perego PR.
+- **Git handoff:** committed `3386012` (`feat(tooling): add unified model routing`) and pushed only to `origin/feature/perego-unified-model-routing`. Perego PR creation is externally blocked: `gh auth status` reports the active `MustafaShaaban` GitHub token is invalid, and GitHub API access is denied. Re-authenticate with `gh auth login -h github.com`, then create a draft PR from this branch into the Perego default/integration branch and inspect CI.
 
 ---
 ## RESUME HERE (2026-07-11) -- Spec 068 MERGED to `main` (PR #98, merge commit `9d54ce0`, on upstream + origin). Post-merge security/UI fixes shipped.
