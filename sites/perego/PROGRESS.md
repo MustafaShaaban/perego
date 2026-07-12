@@ -307,6 +307,12 @@ Immediate queue:
    After a rewrite flush, `/ar/work/`, AR project singles, `/ar/المدونة/`, and AR post singles all
    resolve; **verify-visual is now 44 checks, 0 failures, 0 gaps** (every route in both languages). Copy
    is clearly-marked demo; owner swaps in real projects/articles before launch. (Clients AR: follow-up.)_
+- **Lighthouse audit + SEO/a11y fixes (Phase 9/10/11/13, 2026-07-12):** mobile Lighthouse on the home
+  page → **Performance 94 · Accessibility 100 · SEO 100 · Best-Practices 79**. Drove two real fixes:
+  `PeregoMeta` adds a dynamic EN/AR meta description + OG/Twitter tags (SEO 92→100, 5 unit tests), and
+  the slider dots/bullets gained WCAG 2.2 AA touch targets via transparent padding (a11y 97→100, visible
+  design unchanged). Best-Practices 79 = the HTTPS/redirect audits only (local-dev HTTP; passes on
+  production SSL). Command + scores in `docs/visual-acceptance.md`.
 4. ~~**Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
    404 repeated copy rendered language-aware inside the neutral FSE parts.~~ — **done (2026-07-12), see below.**
 5. Then: clients CPT + carousels (Swiper), journal, legal + TOC, search, 404, forms (footer/brief/join-us)

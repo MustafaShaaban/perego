@@ -149,7 +149,7 @@
 
 .clients-swiper__pagination {
 	display: flex;
-	gap: 8px;
+	gap: 16px;
 	justify-content: center;
 	margin-block-start: 18px;
 }
@@ -157,12 +157,17 @@
 .clients-swiper__pagination .swiper-pagination-bullet {
 	inline-size: 8px;
 	block-size: 8px;
+	/* Transparent padding gives a 24×24 touch target (WCAG 2.5.8) while background-clip
+	   keeps the visible bullet an 8px dot — the handoff design is unchanged. */
+	padding: 8px;
+	box-sizing: content-box;
+	background-clip: content-box;
 	border-radius: 50%;
-	background: var(--perego-glass-border, rgba(255, 255, 255, 0.3));
+	background-color: var(--perego-glass-border, rgba(255, 255, 255, 0.3));
 	border: 0;
 	cursor: pointer;
 }
 
 .clients-swiper__pagination .swiper-pagination-bullet-active {
-	background: var(--wp--preset--color--accent);
+	background-color: var(--wp--preset--color--accent);
 }

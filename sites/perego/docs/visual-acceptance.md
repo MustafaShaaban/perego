@@ -89,6 +89,27 @@ real `/ar/` anchor.
 > the hamburger (a sibling of `<nav>`) while the Escape handler was scoped to the nav. Fixed by moving
 > focus into the panel on open (making the focus trap real) — `view.js` + a covering Jest test.
 
+## Performance & best-practices (Phase 9/13 — Lighthouse)
+
+Mobile audit of the home page with Lighthouse 12.8 (Chromium via `CHROME_PATH`, host-resolver mapped):
+
+```bash
+CHROME_PATH="<playwright-chromium>/chrome.exe" node_modules/.bin/lighthouse "http://perego.local/" \
+  --form-factor=mobile --output=json --output-path=output/lh-home.json \
+  --chrome-flags="--headless=new --host-resolver-rules=MAP perego.local 127.0.0.1 --no-sandbox" --quiet
+```
+
+**Latest result (2026-07-12): Performance 94 · Accessibility 100 · SEO 100 · Best-Practices 79.**
+
+The audit drove two real fixes: a **missing meta description** (added `PeregoMeta` — dynamic EN/AR
+description + OG/Twitter tags → SEO 92→100) and **sub-size touch targets** on the slider dots/bullets
+(expanded the hit area to WCAG 2.2 AA via transparent padding, visible dots unchanged → a11y 97→100).
+
+> **Best-Practices 79 is a local-dev artifact, not a code defect:** the only failing audits are
+> `is-on-https` and `redirects-http` — the dev vhost serves plain HTTP. Both pass on production behind
+> SSL. Performance opportunities that remain (text compression, HTTP/2, cache-TTL) are Apache/server
+> config, not shipped code.
+
 ## Not yet automated (needs design baselines / heavier tooling)
 
 - Pixel-level visual regression against the handoff screenshots (Phase 12): baseline capture +

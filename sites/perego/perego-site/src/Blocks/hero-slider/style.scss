@@ -145,8 +145,9 @@
 	position: absolute;
 	z-index: 3;
 	inset-inline: 0;
-	inset-block-end: 40px;
+	inset-block-end: 34px;
 	display: flex;
+	align-items: center;
 	justify-content: center;
 	gap: 12px;
 }
@@ -154,16 +155,21 @@
 .hero__dot {
 	inline-size: 26px;
 	block-size: 8px;
+	/* Transparent vertical padding lifts the touch target to 24px (WCAG 2.5.8 AA) while
+	   background-clip keeps the visible bar at 26×8 — the handoff design is unchanged. Kept at
+	   24 (not 44) so the taller hit area does not obscure the adjacent slider controls. */
+	padding-block: 8px;
+	box-sizing: content-box;
+	background-clip: content-box;
 	border: 0;
-	padding: 0;
 	border-radius: var(--perego-radius-pill);
-	background: var(--perego-muted-2);
+	background-color: var(--perego-muted-2);
 	cursor: pointer;
 	transition: all var(--perego-dur-fast) var(--perego-ease);
 
 	&.is-active {
 		inline-size: 40px;
-		background: var(--wp--preset--color--accent);
+		background-color: var(--wp--preset--color--accent);
 		box-shadow: var(--perego-shadow-glow-accent);
 	}
 }
