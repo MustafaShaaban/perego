@@ -38,7 +38,10 @@ it('renders exactly four service tabs in fixed order with main + start-project C
         ->and(substr_count($html, 'svc-tab__cta'))->toBe(4)
         ->and($html)->toContain('/services/video-editing')
         ->and($html)->toContain('/services/website-making')
-        ->and($html)->toContain('/contact?service=');
+        // The CTA must carry the canonical service slug (what the brief-form chooser whitelists),
+        // not the localized service name — otherwise ?service= preselection never matches.
+        ->and($html)->toContain('/contact?service=video-editing')
+        ->and($html)->toContain('/contact?service=website-making');
 });
 
 it('marks only the current service tab active with aria-current', function () {

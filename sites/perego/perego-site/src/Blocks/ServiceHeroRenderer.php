@@ -51,7 +51,9 @@ final class ServiceHeroRenderer
             $isActive = $slug === $currentSlug;
             $classes = 'svc-tab' . ($isActive ? ' is-active' : '');
             $mainHref = esc_url(home_url('/services/' . $slug));
-            $ctaHref = esc_url(home_url('/contact?service=' . rawurlencode($content->name($slug))));
+            // Pass the canonical service slug (what ProjectBriefForm's chooser is keyed on and
+            // whitelists), not the localized name — so the contact form preselects this service.
+            $ctaHref = esc_url(home_url('/contact?service=' . rawurlencode($slug)));
             $aria = $isActive ? ' aria-current="page"' : '';
 
             $html .= '<div class="' . $classes . '">';
