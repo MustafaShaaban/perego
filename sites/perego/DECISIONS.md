@@ -337,3 +337,44 @@ prefixing `/ar/`, because Polylang Free de-duplicates AR slugs (the contact page
 the fix restores real AR routing for the content types with the platform's own mechanism, and the slug-aware
 verifier is a correct, reusable gate. Result: 24 checks, 0 hard failures; the only remaining items are honest
 content gaps (AR Work/Journal translations) surfaced informationally, not as defects.
+
+**Decision 13 (2026-07-12) — Client-side styling of server-rendered CoreX Forms (`.corex-form__*`).**
+The CoreX Forms engine renders the contact "Start a Project" brief and the footer "quick message" form as
+server-rendered `.corex-form__*` markup, but the framework ships those styles **only as a Gutenberg-block
+stylesheet** (loaded conditionally when the *block* renders) and against framework tokens (`--ink`/`--surface`/
+`--primary`) the Perego dark theme does not define — so on the client both forms rendered as raw, unstyled
+browser controls, including a **visible honeypot** input. Fixed in **Client Site Mode** by styling `.corex-form__*`
+in the client theme's `main.scss` with Perego tokens (12-col grid, underlined inputs, select/multi-select, submit
+via the shared `.perego-btn`, off-screen honeypot, error/status states), and setting `width:half` on the paired
+brief fields (a supported CoreX Forms field key) for the 2-column handoff layout. **Why**: the form's presentation
+is a legitimate client concern; we did not touch the framework. The service-chooser toggle-buttons in the handoff
+are adapted to the engine's native `<select multiple>` (a new field type would be framework scope).
+
+**Decision 14 (2026-07-12) — Resilient re-declaration of the h1/h2/h3 font-size presets.**
+WordPress 7.0.1 in this install **drops the `h1`/`h2`/`h3` font-size presets** from the CSS emitted by
+`wp_get_global_stylesheet()`, so `var(--wp--preset--font-size--h1)` resolved to empty and every heading using it
+fell back to 16px site-wide (legal title, services section titles, etc.). Verified deterministic, not a cache:
+`theme.json` is correct, `WP_Theme_JSON_Resolver::get_theme_data()`/`get_merged_data()` **settings** both contain
+the presets with the right clamp values, but the emitted stylesheet omits them (and core's `x-large`) while
+keeping core `medium`/`large`; survives `clean_cached_data()` + transient purge in a fresh process; corex's
+`wp_theme_json_data_theme` filter no-ops (no `brand.json`). Fixed by re-declaring the three presets in the theme's
+`:root` (`main.scss`) from the **same** theme.json clamp values. **Why**: it makes the theme resilient to the core
+quirk, keeps theme.json as the conceptual source of truth, and is harmless if a future core/build fix emits the
+presets. The core emission quirk itself is worth a separate framework-mode investigation.
+
+**Decision 15 (2026-07-12) — Locale-aware breadcrumbs on native FSE templates via tiny server blocks.**
+`single.html` (journal post) and the search page had no per-page PHP renderer, so a locale-aware breadcrumb could
+not be added as static FSE-template HTML without hardcoding English on the AR route. Added a small
+`perego-theme/post-breadcrumb` server block (`PostBreadcrumbRenderer`, mirroring `JournalHeaderRenderer`) and
+rendered the search breadcrumb inside `SearchResultsRenderer`, both language-aware via `GlobalContent`. **Why**:
+consistent with the established server-block pattern; avoids the "hardcoded English on AR" bug class on
+language-neutral templates.
+
+**Decision 16 (2026-07-12) — UI-string i18n deferred to its own slice (launch blocker, not a 004 fix).**
+Design-fidelity work surfaced that every AR route renders the header nav, form labels, and buttons in **English**:
+there are no `.po`/`.mo` files and no `pll_register_string` calls for the `perego-site`/theme text domains, and
+`SiteHeaderRenderer`'s nav labels are hardcoded English (not `__()`-wrapped). This is pre-existing (present on the
+already-accepted AR home) and the handoff is English-only, so it is **not a deviation from the handoff** and is out
+of spec 004's scope. **Decision**: track it as the top bilingual-launch blocker for a dedicated i18n slice rather
+than absorb a large cross-cutting change into per-route design work; the approach (gettext `.po`/`.mo` vs Polylang
+string translations) is an owner call. Recorded in `specs/004-design-fidelity/content-manifest.md`.

@@ -76,6 +76,36 @@ No visual reinterpretation is authorized: every correction must make Perego matc
    - **(content) AR legal section bodies + `sample-page` demo copy** are unseeded/WP-default placeholder;
      Phase-5 launch-content cleanup.
 
+4. **Phase 4 complete; Phase 5 docs done; Phase 6 verification done (2026-07-12).**
+   - **T017** (portfolio/provider prose → canvas): verified satisfied by the body of work — case
+     studies, service narratives, and home About are all `wp:post-content`; residual provider strings
+     are archive chrome + a deliberate demo marker (see `tasks.md`).
+   - **T018** (per-route acceptance recording): done — every route-matrix row carries status + evidence.
+   - **T019 + T021** (content manifest + launch-blocker audit): done — [specs/004-design-fidelity/content-manifest.md](specs/004-design-fidelity/content-manifest.md).
+   - **T020** (replace with owner content): **BLOCKED on owner material** (real clients/photography/legal
+     copy/articles); the idempotent seed workflow is proven and ready.
+   - **T022** (full suite): **Pest 195 · Jest 67 · route-health 72/0 · a11y 12/0 (0 serious-critical) ·
+     interactions 4/4** — all green.
+   - **T023** (guards): new/changed PHP self-checked against wp-guard (escaping, i18n, no raw request
+     output, ABSPATH, no SQL) and clean-code-guard (reused `.post-card`/`.perego-btn`, removed dead CSS).
+
+   **T024 — spec 001–003 reconciliation (final status).** The "open" boxes in the older specs are stale;
+   spec 004's delivery closed them:
+   - **002-home**: 15/15 — complete.
+   - **003-services-portfolio T015–T017** (service CPT, service single, services archive): **delivered** —
+     services routes are design-complete (evidence/services.md); `ServicePostType` + templates ship.
+   - **003 T013** (project single template): **delivered** (`single-perego_project.html` = project-hero +
+     `wp:post-content`); **T012/T014** (gallery-lightbox block + gallery meta): **deliberately deferred** —
+     `ProjectGalleryLightboxRenderer` exists in source but unregistered (evidence/work.md).
+   - **001-global-foundation T029/T036** (Jest): **delivered** — 67 Jest tests pass (site-header/
+     language-toggle/preloader/hero/carousel/gallery/portfolio). **T040** (live header/footer/preloader
+     comparison): **delivered** via evidence/home.md. **T041** ("branch not finished"): **superseded** by
+     the 004 branch, which is the active delivery source of truth.
+
+   **Remaining before launch**: (a) the UI-string i18n slice (owner decides approach), (b) T020 owner
+   content, (c) T025 PR (open once the above are agreed). Spec 004 Phases 1–4 + the Phase-5 docs +
+   Phase-6 verification are complete and shippable as the design-fidelity feature.
+
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
 
 Shipped, each tested + guarded + pushed to `origin/feature/002-home`:
