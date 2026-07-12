@@ -285,6 +285,12 @@ Immediate queue:
   (Example model/repo/service/controller/renderer/options/block + test + the doc) and unwired it from the
   provider. Site still boots (home + `/ar/` 200), the `perego/v1/example` route is gone, 176 Pest + 65 Jest
   green, build clean.
+- **Interaction states + keyboard-bug fix (Phase 12, 2026-07-12):** `scripts/verify-interactions.mjs`
+  drives the live header — sticky-on-scroll, mobile hamburger open + scroll-lock, Escape-close + focus
+  restore, AR pill = real `/ar/` anchor. It **caught a real keyboard bug**: Escape didn't close the
+  mobile nav because focus stayed on the hamburger while the Escape handler is scoped to the `<nav>`.
+  Fixed by moving focus into the panel on open (the focus trap is now real) — `view.js` + a covering Jest
+  test. **4/4 interaction checks pass; 176 Pest + 66 Jest green.**
 
 ### Still remaining (implementable — continues from here)
 3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). **Language switcher: DONE +

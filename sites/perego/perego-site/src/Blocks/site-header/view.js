@@ -60,6 +60,15 @@ const { actions } = store( 'perego/site-header', {
 			if ( context.isMenuOpen ) {
 				lastFocusedBeforeMenuOpen = document.activeElement;
 				document.body.style.overflow = 'hidden';
+				// Move focus into the panel so the focus trap works AND a keyboard user can press
+				// Escape to close it — the Escape/Tab handler is scoped to the nav, so it only fires
+				// when focus is inside the panel (it never is if focus stays on the hamburger, which
+				// was the bug the interaction verification caught).
+				const header = ref.closest?.( '.perego-header' ) || ref;
+				const firstFocusable = header.querySelector?.(
+					'.perego-header__nav a[href], .perego-header__nav button:not([disabled])'
+				);
+				firstFocusable?.focus?.();
 			} else {
 				document.body.style.overflow = '';
 				( lastFocusedBeforeMenuOpen || ref ).focus?.();

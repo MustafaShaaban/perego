@@ -65,9 +65,26 @@ AR), 0 violations of any impact.** Evidence: `output/verify-a11y.json` (git-igno
 _Automated coverage only — manual keyboard-operation checks (focus order, mobile-nav trap/restore,
 dialog/lightbox semantics, slider announcements) remain a recommended follow-up per Phase 11._
 
+## Interaction states (Phase 12)
+
+Regenerate with:
+
+```bash
+node sites/perego/perego-site/scripts/verify-interactions.mjs
+```
+
+Drives the live header's Interactivity-API behaviour in Chromium. **Latest result (2026-07-12): 4
+checks, 0 failures** — sticky `is-scrolled` on scroll; mobile hamburger opens the panel + locks body
+scroll; **Escape closes the panel and restores focus to the hamburger**; the AR language pill is a
+real `/ar/` anchor.
+
+> This pass **caught a real keyboard bug**: Escape didn't close the mobile nav because focus stayed on
+> the hamburger (a sibling of `<nav>`) while the Escape handler was scoped to the nav. Fixed by moving
+> focus into the panel on open (making the focus trap real) — `view.js` + a covering Jest test.
+
 ## Not yet automated (needs design baselines / heavier tooling)
 
 - Pixel-level visual regression against the handoff screenshots (Phase 12): baseline capture +
   per-component diff is a larger harness; this pass covers structural/behavioural acceptance.
-- Header scrolled state, dropdown/mobile-nav/dialog/lightbox interaction states, and Lighthouse
-  performance budgets (Phase 9) — planned follow-ups.
+- Dropdown / dialog / gallery-lightbox interaction states and Lighthouse performance budgets
+  (Phase 9) — planned follow-ups.
