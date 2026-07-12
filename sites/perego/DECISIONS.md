@@ -223,3 +223,25 @@ around with any Pro-only or hacky mechanism. All translation data/config is comp
 **Status**: services surface (singles) + Polylang EN/AR configuration + bilingual service seeding shipped,
 verified live, committed (`114a0b4`, `c902fd5`, `5017611`, `edd1f12`, `31b07ea`) and pushed. Remaining
 scope tracked in `PROGRESS.md` "Next".
+
+**Decision 6 — Client forms register into CoreX Forms via the app container.** `corex-forms` exposes no
+filter/hook for third-party form registration and its `FormsServiceProvider::registerForms()` hardcodes the
+example form. Perego forms (`QuickMessageForm`, `ProjectBriefForm`) therefore register into the shared
+`FormRegistry` singleton resolved through the public `\Corex\Boot::app()->container()` accessor, on `init`,
+guarded so the site degrades when `corex-forms` is inactive. The engine's default listeners (store + email)
+are shared across forms, so registering after boot still delivers. **Why**: this is client-site composition
+using a public accessor, not an edit to framework code (Role Gate: Client Site Mode).
+
+**Decision 7 (OPEN — needs owner) — Join-us CV upload + branded emails path.** The remaining Phase 7 items
+depend on capabilities not currently active:
+- *Join-us / CV form*: `corex-forms` has no `file` field type (its `FieldTypeRegistry` built-ins stop at
+  text/email/phone/select/…). Adding one is CoreX **Framework Mode** work, out of Client Site Mode.
+  `corex-careers` ships the intended secure upload path (`UploadValidator` spec 012 + `ApplicationService`)
+  but is job-centric and inactive. Options: (a) activate + adapt `corex-careers` (general "open application"
+  job) — spec-preferred but pulls in the careers CPT/table/status-flow footprint; (b) a bespoke client-side
+  upload endpoint — reinvents platform security (discouraged by wp-guard); (c) request a CoreX Framework
+  Mode task to add a first-class `file` field to `corex-forms`.
+- *Six EN/AR branded emails*: need `corex-email` activated and wired to the `RoutedMailer`/
+  `MailTemplateCatalog` seam (the `SendEmailListener` already routes `forms.<slug>.submitted`); until then
+  the engine uses the `wp_mail` fallback to the admin address.
+Both change the site's active-plugin footprint and/or mail behaviour — **held for owner direction.**

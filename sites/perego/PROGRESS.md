@@ -2,6 +2,38 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
+
+Shipped, each tested + guarded + pushed to `origin/feature/002-home`:
+
+- **M6 clients carousel** (`7f1c441`): `perego_client` CPT + `perego_client_type` taxonomy;
+  server-rendered `perego-theme/clients-carousel` block (Corporate + Individual, EN/AR, cards
+  reachable without JS, modular Swiper enhancement); idempotent demo seed (8 marked-demo clients).
+  Tests: ClientsContent/ClientPostType/ClientsCarouselRenderer (Pest) + Swiper view (Jest).
+- **Phase 7 form 1 — footer quick-message** (`4d9f281`): `PeregoSite\Forms\QuickMessageForm`
+  registered into the shared CoreX Forms registry via `\Corex\Boot::app()->container()` (client
+  composition, not a framework edit); embedded in the footer's quick-message column through the
+  registered `corex/form` block. Live-verified: nonce + honeypot + fields + aria-live status.
+- **Phase 7 form 2 — Start-a-Project brief + /contact page** (`e56f438`, `d980a68`):
+  `ProjectBriefForm` (handoff fields verbatim + limits: name/email/phone/company/budget/subject/
+  message + a service chooser queried from the service CPT, keyed by canonical slug, honouring
+  `?service=` with a spoof-proof whitelist). Editor-managed `/contact` page (EN + AR linked) hosts
+  it; the service-hero CTA now passes the canonical slug. Live-verified end-to-end preselection.
+
+Suites: **136 Pest + 58 Jest green**. `corex-email`, `corex-captcha`, `corex-careers` are NOT
+active (only core + forms/ui/kit/media).
+
+### Decision needed before the rest of Phase 7 (join-us CV + branded emails)
+
+- **Join-us / CV form** needs a file-upload field. `corex-forms` has no `file` field type (adding
+  one is CoreX **Framework Mode** work, out of Client Site Mode). `corex-careers` *does* ship a
+  secure `UploadValidator` + `ApplicationService`, but is job-centric and inactive. Path choice +
+  activating `corex-careers` (plugin-footprint change) is an owner decision.
+- **Six branded EN/AR emails** need `corex-email` activated + wired to the `RoutedMailer`/
+  `MailTemplateCatalog` seam (until then the engine uses the `wp_mail` fallback to admin).
+
+
+
 ## Environment bootstrap (2026-07-11)
 
 - **This repo IS a CoreX framework checkout** (`origin` = `MustafaShaaban/perego`, `upstream` =
