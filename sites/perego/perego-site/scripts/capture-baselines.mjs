@@ -70,6 +70,42 @@ const ROUTES = [
 		liveEN: `${ BASE }/behind-the-scenes-of-a-brand-film-example/`,
 		liveAR: `${ BASE }/ar/%D9%85%D9%86-%D9%83%D9%88%D8%A7%D9%84%D9%8A%D8%B3-%D9%81%D9%8A%D9%84%D9%85-%D8%B9%D9%84%D8%A7%D9%85%D8%A9-%D8%AA%D8%AC%D8%A7%D8%B1%D9%8A%D8%A9-%D9%85%D8%AB%D8%A7%D9%84/`,
 	},
+	{
+		label: 'contact',
+		handoffFile: 'contact.html',
+		liveEN: `${ BASE }/contact/`,
+		liveAR: `${ BASE }/ar/contact-2/`,
+	},
+	{
+		label: 'legal-terms',
+		handoffFile: 'terms.html',
+		liveEN: `${ BASE }/terms/`,
+		liveAR: `${ BASE }/ar/terms-2/`,
+	},
+	{
+		label: 'legal-privacy',
+		handoffFile: 'privacy.html',
+		liveEN: `${ BASE }/privacy/`,
+		liveAR: `${ BASE }/ar/privacy-2/`,
+	},
+	{
+		label: 'search',
+		handoffFile: 'search.html',
+		liveEN: `${ BASE }/?s=video`,
+		liveAR: `${ BASE }/ar/?s=video`,
+	},
+	{
+		label: 'notfound',
+		handoffFile: '404.html',
+		liveEN: `${ BASE }/this-route-does-not-exist/`,
+		liveAR: `${ BASE }/ar/this-route-does-not-exist/`,
+	},
+	{
+		label: 'page',
+		handoffFile: 'page.html',
+		liveEN: `${ BASE }/sample-page/`,
+		liveAR: `${ BASE }/sample-page/`,
+	},
 ];
 
 const browser = await chromium.launch( {

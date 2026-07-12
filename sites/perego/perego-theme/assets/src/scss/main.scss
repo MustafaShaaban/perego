@@ -54,6 +54,18 @@
 	--perego-z-skip-link: var(--wp--custom--perego--z--skip-link);
 	--perego-z-lightbox: var(--wp--custom--perego--z--lightbox);
 	--perego-z-preloader: var(--wp--custom--perego--z--preloader);
+
+	/* Heading font-size presets — resilient re-declaration. WordPress 7.0.1 in this install drops
+	   the h1/h2/h3 font-size presets from `wp_get_global_stylesheet()`'s emitted CSS variables,
+	   verified deterministic (present in theme.json + get_merged_data settings, absent from the
+	   emitted stylesheet; survives clean_cached_data/transient purge; no data_theme filter touches
+	   them — brand.json is absent so corex's filter no-ops). Without this, every heading using these
+	   presets falls back to 16px. Values mirror theme.json settings.typography.fontSizes exactly, so
+	   this stays consistent with the single source of truth and is harmless if a future core/build
+	   fix emits the presets. See specs/004-design-fidelity/evidence/legal.md. */
+	--wp--preset--font-size--h1: clamp(34px, 4vw, 56px);
+	--wp--preset--font-size--h2: clamp(28px, 3vw, 40px);
+	--wp--preset--font-size--h3: clamp(20px, 1.8vw, 26px);
 }
 
 /* Arabic pages swap the font stack (Interactivity API sets lang/dir on <html>; this just follows it) */
@@ -126,7 +138,8 @@ body {
    ============================================================ */
 
 /* Button (handoff `.btn` / `.btn--accent`). */
-.perego-btn {
+.perego-btn,
+.corex-form__submit {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -145,7 +158,8 @@ body {
 		background var(--perego-dur-fast) var(--perego-ease);
 }
 
-.perego-btn--accent {
+.perego-btn--accent,
+.corex-form__submit {
 	background: var(--wp--preset--color--accent);
 	color: var(--wp--preset--color--cta-text-on-accent);
 
@@ -364,6 +378,167 @@ body {
 .post-single__tags a:hover {
 	border-color: var(--wp--preset--color--accent);
 	color: var(--wp--preset--color--text);
+}
+
+/* ===================================================================
+ * CoreX Forms engine (spec 004 T016) — the shared .corex-form__* markup for BOTH the contact
+ * "Start a Project" brief and the footer "Send a quick message" form. The framework ships these
+ * styles only as a Gutenberg-block stylesheet (loads with the editor block, not the server-rendered
+ * forms) and against framework tokens (--ink/--surface/--primary) the Perego dark theme does not
+ * define — so on the client both forms rendered as raw, unstyled browser controls. These rules port
+ * the handoff form treatment (`.field`/`.field-row` underlined inputs) onto Perego tokens, logical
+ * properties, RTL-safe. The 12-column grid mirrors the framework block's own grid so the schema's
+ * per-field `width` (half/third/…) lays out identically to the block context.
+ * =================================================================== */
+.corex-form {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: 22px 24px;
+	text-align: start;
+}
+
+.corex-form__field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	grid-column: span 12;
+}
+
+.corex-form__field--half {
+	grid-column: span 6;
+}
+
+.corex-form__field--third {
+	grid-column: span 4;
+}
+
+.corex-form__field--two-thirds {
+	grid-column: span 8;
+}
+
+.corex-form__field--quarter {
+	grid-column: span 3;
+}
+
+@media (max-width: 600px) {
+	.corex-form__field {
+		grid-column: span 12;
+	}
+}
+
+.corex-form__label {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--wp--preset--color--text);
+}
+
+.corex-form__required {
+	color: var(--wp--preset--color--accent);
+}
+
+.corex-form__input {
+	inline-size: 100%;
+	padding: 10px 4px;
+	color: var(--wp--preset--color--text);
+	background: transparent;
+	border: 0;
+	border-block-end: 1.5px solid var(--perego-glass-border);
+	border-radius: 0;
+	font: inherit;
+	font-size: 15px;
+}
+
+.corex-form__input::placeholder {
+	color: var(--perego-muted-2);
+}
+
+.corex-form__input:focus-visible {
+	outline: none;
+	border-block-end-color: var(--wp--preset--color--accent);
+}
+
+select.corex-form__input {
+	cursor: pointer;
+}
+
+/* The service chooser is a native multi-select (a framework field type) — give it a comfortable
+   height and readable options on the dark canvas; the handoff's toggle-button styling is a separate
+   enhancement (see evidence). */
+select.corex-form__input[multiple] {
+	min-block-size: 140px;
+	padding-inline: 4px;
+}
+
+select.corex-form__input option {
+	padding: 6px 4px;
+	color: var(--wp--preset--color--text);
+	background: var(--wp--preset--color--panel-overlay);
+}
+
+textarea.corex-form__input {
+	min-block-size: 120px;
+	resize: vertical;
+}
+
+/* Honeypot — the framework hides this off-screen in its block stylesheet (which the server-rendered
+   forms don't load), so without this it renders as a visible raw input and defeats the spam trap.
+   Same off-screen technique as core's .screen-reader-text (literal offset is functional a11y
+   plumbing, not a design value). */
+.corex-form__hp {
+	position: absolute;
+	inset-inline-start: -9999px;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+}
+
+.corex-form__submit {
+	justify-self: start;
+	grid-column: span 12;
+	margin-block-start: 4px;
+}
+
+.corex-form__status {
+	grid-column: span 12;
+	margin-block-start: 4px;
+	color: var(--perego-muted);
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.corex-form__status.is-error {
+	color: var(--wp--preset--color--error);
+}
+
+.corex-form__status.is-success {
+	color: var(--wp--preset--color--success);
+}
+
+.corex-form__error {
+	color: var(--wp--preset--color--error);
+	font-size: 12.5px;
+	min-block-size: 1em;
+}
+
+.corex-form__error:empty {
+	display: none;
+}
+
+.corex-form__input[aria-invalid="true"] {
+	border-block-end-color: var(--wp--preset--color--error);
+}
+
+/* Contact "Start a Project" brief — the handoff wraps this form in a glass card
+   (`.contact-form-wrap`); the footer quick-message form is inline (no card). Target the brief form
+   specifically via its stable data attribute. */
+.corex-form[data-corex-form="perego-project-brief"] {
+	background: var(--perego-glass-panel-fill);
+	backdrop-filter: blur(12px);
+	border: 1px solid var(--perego-glass-border);
+	border-radius: var(--perego-radius-card);
+	padding: clamp(28px, 3vw, 44px);
 }
 
 /* ===================================================================
@@ -773,6 +948,9 @@ body {
 /* Legal pages (M4) — the constrained title + TOC-aside / body columns */
 .legal {
 	padding-block: var(--wp--preset--spacing--section-y);
+	/* Same defensive full-canvas background applied to every route: the body's fixed-attachment
+	   gradient leaves a white gap under a short page otherwise. */
+	background: var(--wp--preset--color--bg-deep);
 }
 .legal__title {
 	font-size: var(--wp--preset--font-size--h1);
