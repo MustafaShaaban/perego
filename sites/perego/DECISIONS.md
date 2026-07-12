@@ -260,3 +260,23 @@ depend on capabilities not currently active:
   `MailTemplateCatalog` seam (the `SendEmailListener` already routes `forms.<slug>.submitted`); until then
   the engine uses the `wp_mail` fallback to the admin address.
 Both change the site's active-plugin footprint and/or mail behaviour — **held for owner direction.**
+
+**Decision 8 (2026-07-12) — `perego_section`, not `perego_global_section`, for the global-content CPT.**
+The implementation prompt suggests `perego_global_section` (its "such as" wording allows latitude), but
+WordPress hard-limits `register_post_type` names to **20 characters** and `perego_global_section` is 21 —
+the CPT registered as a silent no-op (no error, no post type). We renamed it to **`perego_section`** (14
+chars), keeping the `perego_` prefix and the meaning, and added a unit test asserting the name stays ≤ 20 so
+it cannot regress. **Why**: a 21-char name is not a style choice, it is a WordPress constraint; the shorter
+name is the only correct option. Roles are carried in `_perego_section_role` meta (not slugs), and the `404`
+role key is stored as `not-found` because a purely-numeric array key (`'404'`) coerces to int in PHP and
+would break string role comparisons.
+
+**Decision 9 (2026-07-12) — Polylang-Free translatable CPT via `pll_get_post_types`; strict no-mix render.**
+`perego_section` is declared translatable through Polylang's **Free** `pll_get_post_types` filter (a public
+WordPress.org API — no Pro dependency), so linked EN/AR records resolve by language and the editor gets the
+normal language + translation-linking UI. The `GlobalSectionRenderer` enforces a hard **no-language-mixing**
+rule: a role renders only from a record in the *exact* current locale — a missing translation shows an inline
+notice to editors and **nothing** to visitors, never the other language's copy. This satisfies the prompt's
+"fallbacks that do not mix interface languages" and "missing translations must be visible to administrators
+and covered by tests" without any Pro-only synchronization/duplication feature. Verified live: the header
+EN/AR pair links `{"en":72,"ar":73}` and the block renders per-language content correctly.

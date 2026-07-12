@@ -216,6 +216,25 @@ CSS + RTL now emit. **Suite: 156 Pest + 65 Jest green** (incl. `JoinFormRenderTe
 `npm run build` clean; wp-guard + clean-code-guard clean. **Resolves DECISIONS Decision 7.** _(Live HTTP smoke +
 real email delivery remain env-gated — needs Apache + a mail transport.)_
 
+**Phase 5 (global sections) — DONE + verified live (2026-07-12):** the editor-managed, Polylang-linked
+`perego_section` CPT + `perego-theme/global-section` block now source the site's repeated global copy
+(header, standard/contact footers, global CTA, contact details, 404 editorial) from canvas-authored,
+translatable records inside the language-neutral FSE parts. Pieces: `GlobalSectionPostType`
+(private-but-editor-visible, `show_in_rest`, `_perego_section_role` meta; declared translatable via the
+Free `pll_get_post_types` filter), a pure `GlobalSectionResolver` (role+locale → post id with a strict
+**no-language-mixing** rule + deterministic lowest-id singleton pick), `GlobalSectionRenderer` (renders the
+current-language record's blocks; admin-visible "missing translation" notice; nothing for visitors when a
+translation is absent), the `global-section` block (role selector in the sidebar — structural only — server
+render), and `scripts/seed-global-sections.php` (idempotent EN/AR seed from the approved handoff copy, links
+translations, never overwrites editor changes). **Bug caught + fixed via a guard test:** the intended
+`perego_global_section` name is 21 chars and WordPress silently rejects post-type names over 20, so the CPT
+never registered — renamed to `perego_section` (14). **Verified live on http://perego.local:** CPT registers,
+`is_translated_post_type: yes`, 12 records seeded (6 roles × EN/AR), header pair linked `{"en":72,"ar":73}`,
+and the block renders EN "Start a Project" vs AR "ابدأ مشروعك" for the same role. **169 Pest + 65 Jest green**
+(13 new: resolver 4, CPT 5, renderer 4); build clean; wp-guard + clean-code-guard clean. **Decision 8 logged.**
+_(Wiring the block into the header/footer template parts + migrating the remaining GlobalContent chrome strings
+is the natural follow-up.)_
+
 **Editor-canvas remediation note (audit §6):** service singles now use editor-canvas post-content for
 prose. The Home/portfolio surfaces still render prose from PHP providers (`HomeContent`,
 `PortfolioContent`) — dynamic + bilingual but not yet canvas-editable. Tracked as a remediation
@@ -248,8 +267,8 @@ Immediate queue:
 ### Still remaining (implementable — continues from here)
 3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). Remaining: link AR for
    translations idempotently; add the Navigation Language Switcher. (Biggest acceptance gap.)
-4. **Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
-   404 repeated copy rendered language-aware inside the neutral FSE parts.
+4. ~~**Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
+   404 repeated copy rendered language-aware inside the neutral FSE parts.~~ — **done (2026-07-12), see below.**
 5. Then: clients CPT + carousels (Swiper), journal, legal + TOC, search, 404, forms (footer/brief/join-us)
    + CoreX Email templates, SEO/schema, a11y + responsive audit, image pipeline, batched visual regression.
 

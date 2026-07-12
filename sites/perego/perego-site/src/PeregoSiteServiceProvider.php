@@ -25,13 +25,16 @@ use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
+use PeregoSite\Blocks\GlobalSectionRenderer;
 use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\GlobalContent;
+use PeregoSite\Content\GlobalSectionResolver;
 use PeregoSite\Content\PortfolioContent;
 use PeregoSite\Content\ServiceContent;
 use PeregoSite\Controllers\ExampleController;
 use PeregoSite\Options\ExampleOptions;
 use PeregoSite\PostTypes\ClientPostType;
+use PeregoSite\PostTypes\GlobalSectionPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Repositories\ExampleRepository;
@@ -83,6 +86,7 @@ final class PeregoSiteServiceProvider
         $this->registerPortfolio();
         $this->registerServices();
         $this->registerGlobalSurfaces();
+        $this->registerGlobalSections();
         $this->registerClients();
         $this->registerForms();
 
@@ -151,6 +155,39 @@ final class PeregoSiteServiceProvider
         // The "Join us" / CV submission endpoint (secure upload → store → branded emails).
         add_action('rest_api_init', static function () use ($mailer): void {
             (new \PeregoSite\Careers\PeregoCareersController($mailer))->register();
+        });
+    }
+
+    /**
+     * spec Phase 5: the editor-managed, Polylang-translatable perego_global_section CPT and the
+     * perego-theme/global-section block that renders a role's current-language record inside the
+     * language-neutral FSE template parts. The CPT is declared translatable through Polylang's
+     * public `pll_get_post_types` filter (a Free-edition API — no Pro dependency), so linked EN/AR
+     * records resolve by language; the filter is inert when Polylang is inactive.
+     */
+    private function registerGlobalSections(): void
+    {
+        add_filter('pll_get_post_types', static function ($types) {
+            if (is_array($types)) {
+                $types[GlobalSectionPostType::POST_TYPE] = GlobalSectionPostType::POST_TYPE;
+            }
+
+            return $types;
+        }, 10, 1);
+
+        add_action('init', function (): void {
+            (new GlobalSectionPostType())->register();
+
+            $languageService = $this->languageService;
+
+            register_block_type($this->blockDir('global-section'), [
+                'render_callback' => static function (array $attributes) use ($languageService): string {
+                    return (new GlobalSectionRenderer(
+                        $languageService->driver()->currentLocale(),
+                        new GlobalSectionResolver(),
+                    ))->render($attributes);
+                },
+            ]);
         });
     }
 
