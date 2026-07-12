@@ -1,13 +1,10 @@
 /**
- * Jest — perego/site-header language toggle (spec 001 T023, US2, FR-008). Covers
- * actions.switchLanguage (applies lang/dir, persists a cookie, reloads) and callbacks.init
- * re-applying a previously persisted locale on mount. General header interactivity (sticky
- * scroll, mobile menu, focus trap) is covered in view.test.js.
- *
- * jsdom's `window.location` and `location.reload` are both non-configurable, so the real
- * reload() runs and jsdom logs its "Not implemented: navigation" console.error — that's
- * expected here (a real browser would actually reload the page) and is asserted explicitly via
- * `toHaveErrored()` rather than silenced, so an unrelated console.error would still fail the test.
+ * Jest — perego/site-header language switcher (spec Phase 5). The switcher is now real navigation:
+ * server-rendered anchors to each locale's actual URL. The view-script's only job is client-side
+ * state in the *fallback* (non-URL-managed) mode — mirror the persisted choice into <html> on load
+ * and persist each switch-link click into the cookie so the choice carries across pages. In
+ * URL-managed mode (Polylang, whose URLs already carry the language) the script stays out of it and
+ * must never apply a stale cookie. General header interactivity is covered in view.test.js.
  */
 
 function loadStore( { context, element } ) {
@@ -20,18 +17,26 @@ function loadStore( { context, element } ) {
 	return wpInteractivity.__getStore( 'perego/site-header' );
 }
 
-function buildHeader() {
+function buildHeader( { urlManaged = false } = {} ) {
 	document.body.innerHTML = `
 		<div class="perego-header">
 			<div class="perego-header__nav-backdrop"></div>
 			<nav class="perego-header__nav"></nav>
-			<div class="perego-header__lang">
-				<button data-locale="en" aria-pressed="true">EN</button>
-				<button data-locale="ar" aria-pressed="false">AR</button>
+			<div class="perego-language-toggle" data-lang-url-managed="${ urlManaged ? '1' : '0' }">
+				<span aria-current="true" lang="en">EN</span>
+				<a class="perego-language-toggle__link" data-locale="ar" hreflang="ar" href="#ar">AR</a>
 			</div>
 		</div>`;
 
 	return document.querySelector( '.perego-header' );
+}
+
+function initHeader( ref ) {
+	const { callbacks } = loadStore( {
+		context: { isMenuOpen: false, isScrolled: false },
+		element: { ref },
+	} );
+	callbacks.init();
 }
 
 beforeEach( () => {
@@ -43,86 +48,50 @@ beforeEach( () => {
 	window.matchMedia = jest.fn().mockReturnValue( { matches: false } );
 } );
 
-describe( 'actions.switchLanguage', () => {
-	test( 'switching to Arabic flips lang/dir, adds the RTL class, persists a cookie, and reloads', () => {
-		const ref = buildHeader();
-		const { actions } = loadStore( {
-			context: { isMenuOpen: false, isScrolled: false },
-			element: { ref },
-		} );
-		const button = ref.querySelector( '[data-locale="ar"]' );
+describe( 'fallback (non-URL-managed) mode', () => {
+	test( 're-applies a previously persisted Arabic cookie to <html> on init', () => {
+		document.cookie = 'perego_lang=ar; path=/';
 
-		actions.switchLanguage( { target: button } );
+		initHeader( buildHeader( { urlManaged: false } ) );
 
 		expect( document.documentElement.lang ).toBe( 'ar' );
 		expect( document.documentElement.dir ).toBe( 'rtl' );
-		expect(
-			document.documentElement.classList.contains( 'lang-ar' )
-		).toBe( true );
-		expect( document.cookie ).toContain( 'perego_lang=ar' );
-		expect( console ).toHaveErrored();
+		expect( document.documentElement.classList.contains( 'lang-ar' ) ).toBe( true );
 	} );
 
-	test( 'switching back to English clears the RTL state', () => {
-		document.documentElement.lang = 'ar';
-		document.documentElement.dir = 'rtl';
-		document.documentElement.classList.add( 'lang-ar' );
-		const ref = buildHeader();
-		const { actions } = loadStore( {
-			context: { isMenuOpen: false, isScrolled: false },
-			element: { ref },
-		} );
-		const button = ref.querySelector( '[data-locale="en"]' );
-
-		actions.switchLanguage( { target: button } );
+	test( 'leaves <html> untouched when no cookie is persisted', () => {
+		initHeader( buildHeader( { urlManaged: false } ) );
 
 		expect( document.documentElement.lang ).toBe( 'en' );
 		expect( document.documentElement.dir ).toBe( 'ltr' );
-		expect(
-			document.documentElement.classList.contains( 'lang-ar' )
-		).toBe( false );
-		expect( document.cookie ).toContain( 'perego_lang=en' );
-		expect( console ).toHaveErrored();
 	} );
 
-	test( 'is a no-op when the click target has no data-locale (never reaches reload)', () => {
-		const ref = buildHeader();
-		const { actions } = loadStore( {
-			context: { isMenuOpen: false, isScrolled: false },
-			element: { ref },
-		} );
+	test( 'persists the cookie when a switch link is clicked (choice carries across pages)', () => {
+		const ref = buildHeader( { urlManaged: false } );
+		initHeader( ref );
 
-		actions.switchLanguage( { target: ref } );
+		ref.querySelector( 'a[data-locale="ar"]' ).click();
 
-		expect( document.cookie ).not.toContain( 'perego_lang=' );
+		expect( document.cookie ).toContain( 'perego_lang=ar' );
 	} );
 } );
 
-describe( 'callbacks.init — persisted language on mount', () => {
-	test( 're-applies a previously persisted Arabic cookie', () => {
+describe( 'URL-managed mode (Polylang)', () => {
+	test( 'ignores a stale cookie on init — the URL is authoritative', () => {
 		document.cookie = 'perego_lang=ar; path=/';
-		const ref = buildHeader();
-		const { callbacks } = loadStore( {
-			context: { isMenuOpen: false, isScrolled: false },
-			element: { ref },
-		} );
 
-		callbacks.init();
-
-		expect( document.documentElement.lang ).toBe( 'ar' );
-		expect( document.documentElement.dir ).toBe( 'rtl' );
-	} );
-
-	test( 'leaves lang/dir untouched when no cookie is persisted', () => {
-		const ref = buildHeader();
-		const { callbacks } = loadStore( {
-			context: { isMenuOpen: false, isScrolled: false },
-			element: { ref },
-		} );
-
-		callbacks.init();
+		initHeader( buildHeader( { urlManaged: true } ) );
 
 		expect( document.documentElement.lang ).toBe( 'en' );
 		expect( document.documentElement.dir ).toBe( 'ltr' );
+	} );
+
+	test( 'does not persist a cookie when a switch link is clicked', () => {
+		const ref = buildHeader( { urlManaged: true } );
+		initHeader( ref );
+
+		ref.querySelector( 'a[data-locale="ar"]' ).click();
+
+		expect( document.cookie ).not.toContain( 'perego_lang=ar' );
 	} );
 } );

@@ -38,4 +38,11 @@ interface LanguageDriver
      * The URL that switches the current page to the given locale.
      */
     public function urlFor(string $locale): string;
+
+    /**
+     * Whether the driver's own URLs fully carry the language (so switching is real navigation and
+     * the client must NOT persist/override the language). True for Polylang (directory URLs like
+     * /ar/…); false for the cookie/query fallback, which relies on client-side persistence.
+     */
+    public function managesLanguageViaUrl(): bool;
 }

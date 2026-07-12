@@ -280,3 +280,18 @@ notice to editors and **nothing** to visitors, never the other language's copy. 
 "fallbacks that do not mix interface languages" and "missing translations must be visible to administrators
 and covered by tests" without any Pro-only synchronization/duplication feature. Verified live: the header
 EN/AR pair links `{"en":72,"ar":73}` and the block renders per-language content correctly.
+
+**Decision 10 (2026-07-12) — Language switcher is real navigation, not a JS toggle.** The prototype's
+JS-only language toggle (swap `lang`/`dir`, persist a cookie, `window.location.reload()` the same URL) is
+explicitly forbidden by the implementation prompt, and it never reached the translated entity. The header
+switcher now renders **server-side anchors to `LanguageDriver::urlFor($locale)`**: under Polylang each is the
+real translated URL (`/ar/…` via `pll_the_languages(raw)`), so switching is genuine navigation that works with
+no JavaScript; the current locale is a non-link `aria-current` marker. A new driver-contract method
+`managesLanguageViaUrl()` (Polylang `true`, fallback `false`) drives a `data-lang-url-managed` flag: the
+view-script now touches language state **only** in the fallback mode (mirror the cookie into `<html>` on load,
+persist each switch click for cross-page memory) and never applies a stale cookie under Polylang. To make the
+no-Polylang fallback switch without JS too, `FallbackLanguageDriver::currentLocale()` now honors a `?lang=`
+query var (authoritative for the request) ahead of the cookie. **Why**: it satisfies the prompt's "correct
+current-language URLs / switch to the translated entity / no JS-only toggle / no Pro dependency" with real
+Polylang Free URLs, degrades gracefully (a missing translation link falls back to home, never a mixed/broken
+URL), and keeps EN/AR fully working when Polylang is absent. Verified live: `/ar/` → `<html dir="rtl" lang="ar">`.

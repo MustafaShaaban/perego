@@ -78,11 +78,22 @@ it('renders a hamburger control for the mobile menu', function () {
     expect(renderHeader())->toContain('perego-header__hamburger');
 });
 
-it('renders a language toggle reflecting the current locale', function () {
-    $html = renderHeader();
+it('renders the current locale as a non-link marked aria-current, and the other as a real switch link', function () {
+    $html = renderHeader(); // fallback driver, current locale = en
 
+    // The current language (EN) is not a link — it is the current-state marker.
     expect($html)->toContain('perego-language-toggle')
-        ->and($html)->toContain('data-wp-interactive="perego/site-header"');
+        ->and($html)->toMatch('/<span[^>]*aria-current="true"[^>]*>EN<\/span>/');
+
+    // The other language (AR) is a real anchor to its switch URL — never a JS-only button.
+    expect($html)->toMatch('/<a [^>]*href="[^"]*lang=ar[^"]*"[^>]*>AR<\/a>/')
+        ->and($html)->toContain('data-locale="ar"')
+        ->and($html)->not->toContain('data-wp-on--click="actions.switchLanguage"');
+});
+
+it('declares whether the language driver manages language via URL (client persistence flag)', function () {
+    // Fallback driver → not URL-managed → the client must persist the choice.
+    expect(renderHeader())->toContain('data-lang-url-managed="0"');
 });
 
 it('declares the initial Interactivity API context', function () {

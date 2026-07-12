@@ -28,6 +28,23 @@ it('ignores a cookie value that is not an offered locale', function () {
     expect($driver->currentLocale())->toBe('en');
 });
 
+it('reads the current locale from a ?lang query var, which beats the cookie', function () {
+    $driver = new FallbackLanguageDriver(cookie: ['perego_lang' => 'en'], requestUri: '/work?lang=ar');
+
+    expect($driver->currentLocale())->toBe('ar')
+        ->and($driver->isRtl())->toBeTrue();
+});
+
+it('ignores a ?lang query var that is not an offered locale and falls back to the cookie', function () {
+    $driver = new FallbackLanguageDriver(cookie: ['perego_lang' => 'ar'], requestUri: '/work?lang=fr');
+
+    expect($driver->currentLocale())->toBe('ar');
+});
+
+it('reports that it does NOT manage language through the URL (needs client-side persistence)', function () {
+    expect((new FallbackLanguageDriver(cookie: []))->managesLanguageViaUrl())->toBeFalse();
+});
+
 it('lists English then Arabic as the available locales', function () {
     $driver = new FallbackLanguageDriver(cookie: []);
 

@@ -118,22 +118,53 @@ final class SiteHeaderRenderer
         return $html;
     }
 
+    /**
+     * The language switcher as real navigation (spec Phase 5 — never the prototype's JS-only toggle):
+     * the current language is a non-link aria-current marker; each other language is an anchor to that
+     * locale's actual URL (Polylang's real translated URL, or the fallback's `?lang=` switch). The
+     * `data-lang-url-managed` flag tells the view-script whether the driver's URLs already carry the
+     * language (Polylang → the client stays out of it) or the choice needs client-side persistence.
+     */
     private function renderLanguageToggle(string $currentLocale): string
     {
-        $html = '<div class="perego-language-toggle" data-wp-interactive="perego/site-header">';
+        $driver = $this->languageService->driver();
+        $urlManaged = $driver->managesLanguageViaUrl() ? '1' : '0';
 
-        foreach ($this->languageService->driver()->availableLocales() as $locale) {
-            $isCurrent = $locale === $currentLocale;
-            $html .= '<button type="button" class="' . ($isCurrent ? 'is-current' : '') . '" '
-                . 'data-wp-on--click="actions.switchLanguage" '
+        $html = '<div class="perego-language-toggle" data-wp-interactive="perego/site-header" '
+            . 'data-lang-url-managed="' . $urlManaged . '">';
+
+        foreach ($driver->availableLocales() as $locale) {
+            $label = esc_html(strtoupper($locale));
+
+            if ($locale === $currentLocale) {
+                $html .= '<span class="perego-language-toggle__current is-current" '
+                    . 'aria-current="true" lang="' . esc_attr($locale) . '">' . $label . '</span>';
+                continue;
+            }
+
+            $html .= '<a class="perego-language-toggle__link" '
+                . 'href="' . esc_url($this->switchUrl($locale)) . '" '
                 . 'data-locale="' . esc_attr($locale) . '" '
-                . 'aria-pressed="' . ($isCurrent ? 'true' : 'false') . '">'
-                . esc_html(strtoupper($locale)) . '</button>';
+                . 'hreflang="' . esc_attr($locale) . '" lang="' . esc_attr($locale) . '">'
+                . $label . '</a>';
         }
 
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * The switch URL for a locale, degrading to the home page if the driver cannot resolve one
+     * (e.g. Polylang has no translation for the current entity) — never a broken or mixed link.
+     */
+    private function switchUrl(string $locale): string
+    {
+        try {
+            return $this->languageService->driver()->urlFor($locale);
+        } catch (\Throwable) {
+            return (string) home_url('/');
+        }
     }
 
     private function isActive(string $href, string $currentPath): bool

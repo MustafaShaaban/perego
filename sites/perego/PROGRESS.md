@@ -265,17 +265,16 @@ Immediate queue:
 - Suite now **112 Pest + 54 Jest**, all green; wp-guard clean on every increment.
 
 ### Still remaining (implementable — continues from here)
-3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). Remaining: link AR for
-   translations idempotently; add the Navigation Language Switcher. (Biggest acceptance gap.)
-   **▶ NEXT — diagnosed 2026-07-12:** `SiteHeaderRenderer::renderLanguageToggle()` + the header view.js
-   `actions.switchLanguage` are the prototype's **forbidden JS-only toggle** (applies lang/dir, persists the
-   `perego_lang` cookie, `window.location.reload()`) — it never navigates to the real translated URL. Fix:
-   render the switcher as server-side **anchor links to `LanguageDriver::urlFor($locale)`** (Polylang returns
-   the true translated URL via `pll_the_languages(raw)`; the fallback driver returns `?lang=`), styled as the
-   existing pills. Note the cross-driver seam: the fallback `urlFor()` emits `?lang=xx` but `currentLocale()`
-   reads the cookie — reconcile (read the query param, or keep the JS swap only for the no-Polylang fallback).
-   Update `language-toggle.test.js` (it asserts the reload behavior). Verify in a browser after a Polylang
-   rewrite flush (Settings → Permalinks → Save, DECISIONS #5) that a pill navigates to the `/ar/` URL.
+3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). **Language switcher: DONE +
+   verified live (2026-07-12)** — the header switcher is now **real navigation** (Decision 10): server-rendered
+   anchors to `LanguageDriver::urlFor()`, current locale a non-link `aria-current` marker, no JS-only toggle.
+   Added `managesLanguageViaUrl()` to the driver contract (Polylang true / fallback false); the fallback
+   `currentLocale()` now honors `?lang=` so no-JS switching works there too; the view.js now only persists the
+   cookie in fallback mode (never a stale-cookie override under Polylang). **Verified live:** `/` 200 →
+   `<a href="http://perego.local/ar/" hreflang="ar">AR</a>`; `/ar/` 200 renders `<html dir="rtl" lang="ar">`
+   with AR as the current marker. **174 Pest + 65 Jest green** (rewrite rules already flushed — no manual step
+   needed this run). _Remaining under #3: idempotent AR **content** translation-linking for the remaining CPTs
+   (services/legal done; projects/clients/journal pending real owner data)._
 4. ~~**Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
    404 repeated copy rendered language-aware inside the neutral FSE parts.~~ — **done (2026-07-12), see below.**
 5. Then: clients CPT + carousels (Swiper), journal, legal + TOC, search, 404, forms (footer/brief/join-us)
