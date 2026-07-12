@@ -111,6 +111,7 @@ final class PeregoSiteServiceProvider
 
             $registry = $container->make(\Corex\Forms\FormRegistry::class);
             $registry->register(new \PeregoSite\Forms\QuickMessageForm());
+            $registry->register(new \PeregoSite\Forms\ProjectBriefForm());
         }, 20);
     }
 
