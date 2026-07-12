@@ -84,8 +84,34 @@ final class PeregoSiteServiceProvider
         $this->registerServices();
         $this->registerGlobalSurfaces();
         $this->registerClients();
+        $this->registerForms();
 
         (new StructuredData())->register();
+    }
+
+    /**
+     * spec Phase 7: register Perego's site forms into the shared CoreX Forms registry. This is
+     * client-site composition — resolving the framework's already-bound FormRegistry singleton
+     * through the public application accessor, not editing framework code. Runs on `init` (after
+     * the framework has booted on plugins_loaded) and only when CoreX Forms is active, so the site
+     * degrades gracefully when the plugin is absent. The engine's default submission listeners
+     * (store + email) are shared across forms, so registering here — after boot — still delivers.
+     */
+    private function registerForms(): void
+    {
+        add_action('init', static function (): void {
+            if (! class_exists(\Corex\Boot::class) || ! class_exists(\Corex\Forms\FormRegistry::class)) {
+                return;
+            }
+
+            $container = \Corex\Boot::app()->container();
+            if (! $container->has(\Corex\Forms\FormRegistry::class)) {
+                return;
+            }
+
+            $registry = $container->make(\Corex\Forms\FormRegistry::class);
+            $registry->register(new \PeregoSite\Forms\QuickMessageForm());
+        }, 20);
     }
 
     /**

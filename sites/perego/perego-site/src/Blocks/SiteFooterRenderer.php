@@ -8,13 +8,16 @@ declare(strict_types=1);
 
 namespace PeregoSite\Blocks;
 
+use PeregoSite\Forms\QuickMessageForm;
+
 defined('ABSPATH') || exit;
 
 /**
  * Server-renders the perego/site-footer block: the standard 3-column layout (contact / quick-
- * message form entry point / careers form entry point) + a bottom bar, or the flat 2-column
- * variant used on the contact page (spec 001 FR-005). Real form submission wiring is M4 — this
- * renders the structural entry points only.
+ * message form / careers form entry point) + a bottom bar, or the flat 2-column variant used on
+ * the contact page (spec 001 FR-005). The quick-message column embeds the live CoreX form
+ * (spec Phase 7, form 1) — the framework runtime drives its default/invalid/submitting/success/
+ * server-error states — degrading to the heading-only entry point when CoreX Forms is inactive.
  */
 final class SiteFooterRenderer
 {
@@ -49,7 +52,28 @@ final class SiteFooterRenderer
     {
         return '<div class="perego-footer__quick-message">'
             . '<h2>' . esc_html__('Send a quick message', 'perego-site') . '</h2>'
+            . $this->quickMessageForm()
             . '</div>';
+    }
+
+    /**
+     * The live quick-message form, rendered through the registered CoreX form block so the block's
+     * enqueue/nonce/honeypot/aria-live wiring applies. Falls back to nothing (heading-only entry
+     * point) when CoreX Forms — and thus the block — is inactive, keeping the footer non-fatal.
+     */
+    private function quickMessageForm(): string
+    {
+        if (! function_exists('do_blocks') || ! class_exists('WP_Block_Type_Registry')) {
+            return '';
+        }
+
+        if (! \WP_Block_Type_Registry::get_instance()->is_registered('corex/form')) {
+            return '';
+        }
+
+        return do_blocks(
+            '<!-- wp:corex/form {"formSlug":"' . QuickMessageForm::SLUG . '"} /-->'
+        );
     }
 
     private function renderCareersColumn(): string
