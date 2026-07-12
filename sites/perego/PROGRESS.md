@@ -57,7 +57,21 @@ No visual reinterpretation is authorized: every correction must make Perego matc
    failing color-contrast against the bright accent background site-wide — fixed by matching the same
    token `.perego-btn--accent` already uses correctly. Final state: **72-check visual + 12-page a11y (0
    violations) + 4/4 interaction + 188 Pest + 67 Jest, all green.**
-   **Remaining for Phase 3**: T012 (migrate Home editorial prose to editor-canvas content).
+
+   **➡ RESUME HERE.** Remaining for Phase 3: **T012** — migrate the About Us/Our Mission prose from
+   `HomeContent`/`HomeAboutRenderer` (PHP provider) to WordPress editor-canvas content, per FR-005. Verified
+   via Polylang's own `PLL_Frontend_Static_Pages`/`PLL_Static_Pages::get_translation()` source that this
+   will localize correctly: the static front page (`page_on_front`) is already translated per-language
+   automatically from the existing page 42 (EN) ↔ 97 (AR) translation link — no extra Polylang config
+   needed. The open design question is **how** to compose it: `home-about` is currently one atomic
+   server-rendered block (background image absolutely-positioned behind the text panels); making the
+   panels editor-canvas content means either (a) converting `home-about` to an InnerBlocks-enabled block
+   so `<!-- wp:post-content -->` can nest inside its own wrapper, or (b) splitting the section in
+   `front-page.html` into a small dynamic background-image block as a sibling before a plain
+   `wp:group > wp:post-content`, using CSS to lay the image behind via `position: absolute` within a
+   shared relatively-positioned parent. Decide the approach with the owner before implementing — this was
+   explicitly deferred (owner call, 2026-07-12) rather than built, since it's a real architecture decision,
+   not a continuation of the visual-parity bug fixes above.
 3. Complete each remaining route family (Phase 4, T014-T018) through the same evidence gate.
 
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
