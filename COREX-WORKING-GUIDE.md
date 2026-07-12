@@ -364,7 +364,7 @@ The test of success: a brand-new LLM, given only the repo, can read four files a
 CoreX is now used to build real client sites. To keep framework work and client work from colliding, every
 session — human or AI — runs through four gates in order:
 
-> **Role Gate** decides *where* you work · **Spec Kit** decides *what* to build · **Guard Gate** decides
+> **Role Gate** decides *where* you work · **Model Routing Gate** decides *capability and provider adapter* · **Spec Kit** decides *what* to build · **Guard Gate** decides
 > *whether* code/docs are safe to ship · **UI/UX ProMax** decides *whether* visible UI/design is good enough.
 
 ### G.1 — Source layout (where things live)

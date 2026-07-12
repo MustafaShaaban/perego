@@ -4,6 +4,17 @@
 > Updated at the end of every working session.
 
 ---
+## RESUME HERE (2026-07-12) -- Spec 069 unified model routing in verification
+
+- **Branch:** `feature/perego-unified-model-routing`, tracking Perego `origin/feature/002-home`; do not use or push to the CoreX upstream remote for this work.
+- **Scope:** Docs/Planning and Developer Tooling only. Spec 069 adds one provider-neutral Model Routing Gate for Codex and Claude Code. It changes no WordPress/CoreX/Perego product runtime, generated `dist/`, or `wp/wp-content/` source.
+- **Implemented:** shared L/M/H/V policy; Codex Terra/medium default with Luna/Terra/Sol route agents and maximum three threads/depth one; Claude Sonnet/medium default with Haiku/Sonnet/Opus route agents; explicit sole-writer/no-worktree/cross-provider-handoff/override/rollback rules; English workflow docs with a concise Arabic mirror; deterministic `npm run verify:model-routing` plus fixture-driven Node tests.
+- **Verified:** static validator passes; validator tests pass (3/3); `codex --strict-config doctor` is clean and reports Terra selected; `claude doctor` is clean. The Spec Kit prerequisite helper rejects the user-required `feature/...` branch naming convention, so cross-artifact consistency was completed manually against Spec 069 instead. No material spec/plan/tasks mismatch found.
+- **Environment-gated:** live provider-agent prompts were not run. A bounded explicit Claude read-only smoke probe was blocked by workspace data-export policy before execution. Therefore configured agent files and client diagnostics are verified, but automatic delegation, agent discovery in an interactive session, and runtime-confirmed child model identity are not claimed as passed.
+- **Final guard/hygiene:** docs-guard, clean-code-guard, and test-guard manual review passes found no shipping issue; `git diff --check`, Node syntax, JSON parsing, targeted changed-asset secret/placeholder review, and the static validator/test suite pass.
+- **Git handoff:** commits `3386012` and `299c781` are pushed only to `origin/feature/perego-unified-model-routing`. Draft Perego PR [#9](https://github.com/MustafaShaaban/perego/pull/9) targets `feature/002-home`; remote diff inspection confirms only the 36 intended routing files. GitHub currently reports no checks configured for this branch, so there is no CI result to await.
+
+---
 ## RESUME HERE (2026-07-11) -- Spec 068 MERGED to `main` (PR #98, merge commit `9d54ce0`, on upstream + origin). Post-merge security/UI fixes shipped.
 
 - **PR #98 merged.** Spec 068 product functional completion (Phases 1–12) plus the post-audit fixes are on
