@@ -156,6 +156,17 @@ body {
 	}
 }
 
+.perego-btn--dark {
+	background: var(--wp--preset--color--bg-deep);
+	color: var(--wp--preset--color--text);
+
+	&:hover,
+	&:focus-visible {
+		transform: translateY(-2px);
+		box-shadow: 0 0 22px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--wp--preset--color--accent);
+	}
+}
+
 /* ===================================================================
  * spec 004 T012 — Home "About Us" section (editable post content)
  * The editorial About Us / Our mission prose is authored on the editor

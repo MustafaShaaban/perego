@@ -33,8 +33,8 @@ final class NotFoundRenderer
         $html .= '<h1 class="notfound__title" id="notfound-title">' . esc_html($c['title']) . '</h1>';
         $html .= '<p class="notfound__text">' . esc_html($c['text']) . '</p>';
         $html .= '<div class="notfound__actions">';
-        $html .= '<a class="btn btn--accent" href="' . esc_url(home_url('/')) . '">' . esc_html($c['backHome']) . '</a>';
-        $html .= '<a class="btn btn--dark" href="' . esc_url(home_url('/contact')) . '">' . esc_html($c['contact']) . '</a>';
+        $html .= '<a class="perego-btn perego-btn--accent" href="' . esc_url(home_url('/')) . '">' . esc_html($c['backHome']) . '</a>';
+        $html .= '<a class="perego-btn perego-btn--dark" href="' . esc_url(home_url('/contact')) . '">' . esc_html($c['contact']) . '</a>';
         $html .= '</div>';
         $html .= '</section>';
 

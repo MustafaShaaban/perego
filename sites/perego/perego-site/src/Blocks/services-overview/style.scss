@@ -1,108 +1,223 @@
 /**
  * perego-theme/services-overview — the services archive. Tokens + logical properties (RTL-safe).
- * The .svc-process step styling is shared from the theme's global stylesheet; this file styles the
- * intro, the service-card grid, and the closing CTA.
+ * `.svc-whatwedo`/`.svc-process` are shared from the theme's global stylesheet (also used by service
+ * singles' canvas "What we do" prose); this file styles the hero + tabs, the archive-specific
+ * whatwedo grid/media, and the closing CTA.
  */
 
-.services-overview {
-	--_content: var(--wp--style--global--content-size, 1240px);
-}
-
-.services-overview__intro {
-	max-inline-size: var(--_content);
-	margin-inline: auto;
-	padding-inline: var(--wp--preset--spacing--gutter);
-	padding-block: var(--wp--preset--spacing--section-y);
+/* --- hero: background image + H1 + service tabs --- */
+.svc-hero {
+	position: relative;
+	overflow: hidden;
 	text-align: center;
+	min-block-size: 92vh;
+	display: flex;
+	align-items: center;
+	padding-block-end: clamp(48px, 6vw, 90px);
+	background: var(--wp--preset--color--bg-deep);
 }
 
-.services-overview__h1 {
+.svc-hero__bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		object-position: center top;
+		opacity: 0.95;
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			180deg,
+			rgba(12, 0, 32, 0.25) 0%,
+			rgba(12, 0, 32, 0.4) 45%,
+			rgba(12, 0, 32, 0.9) 100%
+		);
+	}
+}
+
+.svc-hero__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	padding-block-start: clamp(70px, 9vw, 120px);
+}
+
+.svc-hero__title {
 	font-size: var(--wp--preset--font-size--hero);
 	font-weight: 700;
-	line-height: 1.05;
-	margin: 0 0 14px;
+	line-height: 1.02;
+	text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+	margin: 0;
 }
 
-.services-overview__eyebrow {
-	color: var(--wp--preset--color--accent-soft);
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	margin: 0 0 18px;
-}
-
-.services-overview__lead {
-	color: var(--perego-muted);
-	font-size: var(--wp--preset--font-size--lead);
-	max-inline-size: 68ch;
-	margin-inline: auto;
-	margin-block-end: 14px;
-}
-
-.services-overview__cards {
-	max-inline-size: var(--_content);
-	margin-inline: auto;
-	padding-inline: var(--wp--preset--spacing--gutter);
-	padding-block-end: var(--wp--preset--spacing--section-y);
+.svc-tabs {
 	display: grid;
 	grid-template-columns: repeat(4, 1fr);
-	gap: clamp(16px, 2vw, 26px);
+	gap: clamp(16px, 1.8vw, 26px);
+	margin-block-start: clamp(40px, 6vw, 76px);
+	max-inline-size: 1120px;
+	margin-inline: auto;
 }
 
-.svc-overview-card {
+.svc-tab {
+	position: relative;
+	z-index: 1;
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
-	padding: clamp(20px, 2.4vw, 30px);
-	border-radius: var(--perego-radius-card, 20px);
-	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
-	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
-	color: var(--wp--preset--color--text, #fff);
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	color: var(--wp--preset--color--text);
+	backdrop-filter: blur(var(--perego-glass-blur));
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 20px 50px rgba(0, 0, 0, 0.35);
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		background var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease),
+		border-color var(--perego-dur-fast) var(--perego-ease);
+
+	&:hover,
+	&:focus-within {
+		z-index: 5;
+		background: linear-gradient(155deg, #e98bf7 0%, var(--wp--preset--color--accent) 52%, #c24fe0 100%);
+		border-color: rgba(255, 255, 255, 0.55);
+		transform: translateY(-6px);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 16px 26px -14px rgba(216, 106, 243, 0.45),
+			0 10px 22px rgba(0, 0, 0, 0.42);
+
+		.svc-tab__label,
+		.svc-tab__cta {
+			color: var(--wp--preset--color--cta-text-on-accent);
+		}
+
+		.svc-tab__cta {
+			max-block-size: 60px;
+			opacity: 1;
+			padding: 15px 12px;
+		}
+	}
+}
+
+.svc-tab__main {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 20px;
+	inline-size: 100%;
+	flex: 1;
+	color: inherit;
 	text-decoration: none;
-	transition: transform var(--perego-dur-fast, 0.2s) var(--perego-ease, ease),
-		border-color var(--perego-dur-fast, 0.2s) var(--perego-ease, ease);
 }
 
-.svc-overview-card:hover {
-	transform: translateY(-4px);
-	border-color: var(--wp--preset--color--accent);
-}
-
-.svc-overview-card__label {
+.svc-tab__label {
 	font-weight: 700;
-	font-size: var(--wp--preset--font-size--h3);
+	font-size: clamp(15px, 1.3vw, 21px);
 	text-transform: uppercase;
 	letter-spacing: 0.02em;
+	text-align: center;
+	line-height: 1.2;
 }
 
-.svc-overview-card__sub {
-	color: var(--perego-muted);
-	font-size: var(--wp--preset--font-size--small);
+.svc-tab__cta {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	inline-size: 100%;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--wp--preset--color--text);
+	max-block-size: 0;
+	opacity: 0;
+	padding-block: 0;
+	padding-inline: 12px;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.22);
+	text-decoration: none;
+	transition: max-block-size var(--perego-dur-fast) var(--perego-ease),
+		opacity var(--perego-dur-fast) var(--perego-ease),
+		padding var(--perego-dur-fast) var(--perego-ease);
 }
 
-.services-overview__cta {
-	max-inline-size: var(--_content);
+/* --- what-we-do: extends the shared .svc-whatwedo look with an archive-only media column --- */
+.services-overview__whatwedo-grid {
+	position: relative;
+	z-index: 1;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
 	margin-inline: auto;
 	padding-inline: var(--wp--preset--spacing--gutter);
-	padding-block: var(--wp--preset--spacing--section-y);
-	text-align: center;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: clamp(30px, 5vw, 72px);
+	align-items: center;
 }
 
-.services-overview__cta .btn {
+.services-overview__whatwedo-media {
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	box-shadow: var(--perego-shadow-featured);
+	transform: rotate(-1.2deg);
+
+	img {
+		inline-size: 100%;
+		block-size: auto;
+		display: block;
+	}
+}
+
+/* --- closing CTA --- */
+.services-overview__cta {
+	position: relative;
+	padding-block: var(--wp--preset--spacing--section-y);
+	text-align: center;
+	/* Explicit, full-bleed background: this section has no image/gradient of its own, and (unlike
+	   Home, where every section is packed edge-to-edge) it sits after .svc-process with nothing
+	   behind it — don't rely on body's own background painting correctly here. */
+	background: var(--wp--preset--color--bg-deep);
+}
+
+.services-overview__cta-inner {
+	max-inline-size: 820px;
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+}
+
+.services-overview__cta .perego-btn {
 	margin-block-start: 18px;
 }
 
 @media (max-width: 900px) {
-	.services-overview__cards {
+	.services-overview__whatwedo-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.svc-tabs {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
 
 @media (prefers-reduced-motion: reduce) {
-	.svc-overview-card {
+	.svc-tab {
 		transition: none;
 	}
 
-	.svc-overview-card:hover {
+	.svc-tab:hover,
+	.svc-tab:focus-within {
 		transform: none;
 	}
 }

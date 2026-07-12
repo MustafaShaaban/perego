@@ -90,7 +90,7 @@ final class SearchResultsRenderer
             . '<label class="screen-reader-text" for="perego-search-field">' . esc_html($s['h1']) . '</label>'
             . '<input type="search" id="perego-search-field" name="s" value="' . esc_attr($query) . '" '
             . 'placeholder="' . esc_attr($s['placeholder']) . '" />'
-            . '<button type="submit" class="btn btn--accent">' . esc_html($s['button']) . '</button>'
+            . '<button type="submit" class="perego-btn perego-btn--accent">' . esc_html($s['button']) . '</button>'
             . '</form>';
     }
 }

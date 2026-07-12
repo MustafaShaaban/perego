@@ -34,6 +34,12 @@ const ROUTES = [
 		liveEN: `${ BASE }/`,
 		liveAR: `${ BASE }/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/`,
 	},
+	{
+		label: 'services-archive',
+		handoffFile: 'services.html',
+		liveEN: `${ BASE }/services/`,
+		liveAR: `${ BASE }/ar/services/`,
+	},
 ];
 
 const browser = await chromium.launch( {
