@@ -39,12 +39,26 @@ it('defines exactly the four service categories in the CONTENT_MODEL enum order'
 });
 
 it('calls register_post_type and register_taxonomy on register()', function () {
-    Functions\expect('register_post_type')->once()->with(ProjectPostType::POST_TYPE, Mockery::type('array'));
-    Functions\expect('register_taxonomy')->once()->with(
-        ProjectPostType::TAXONOMY,
-        ProjectPostType::POST_TYPE,
-        Mockery::type('array')
-    );
+    $captured = [];
+    Functions\expect('register_post_type')
+        ->once()
+        ->andReturnUsing(function ($slug, $args) use (&$captured) {
+            $captured['pt'] = ['slug' => $slug, 'args' => $args];
+
+            return null;
+        });
+    Functions\expect('register_taxonomy')
+        ->once()
+        ->andReturnUsing(function ($tax, $object, $args) use (&$captured) {
+            $captured['tax'] = ['tax' => $tax, 'object' => $object, 'args' => $args];
+
+            return null;
+        });
 
     (new ProjectPostType())->register();
+
+    expect($captured['pt']['slug'])->toBe(ProjectPostType::POST_TYPE)
+        ->and($captured['pt']['args'])->toBeArray()
+        ->and($captured['tax']['tax'])->toBe(ProjectPostType::TAXONOMY)
+        ->and($captured['tax']['object'])->toBe(ProjectPostType::POST_TYPE);
 });

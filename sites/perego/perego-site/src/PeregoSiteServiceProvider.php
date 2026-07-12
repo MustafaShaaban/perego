@@ -13,6 +13,7 @@ defined('ABSPATH') || exit;
 use PeregoSite\Blocks\ExampleRenderer;
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
+use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
 use PeregoSite\Blocks\LegalTocRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
@@ -24,11 +25,13 @@ use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
+use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\GlobalContent;
 use PeregoSite\Content\PortfolioContent;
 use PeregoSite\Content\ServiceContent;
 use PeregoSite\Controllers\ExampleController;
 use PeregoSite\Options\ExampleOptions;
+use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Repositories\ExampleRepository;
@@ -80,8 +83,30 @@ final class PeregoSiteServiceProvider
         $this->registerPortfolio();
         $this->registerServices();
         $this->registerGlobalSurfaces();
+        $this->registerClients();
 
         (new StructuredData())->register();
+    }
+
+    /**
+     * spec M6: the client CPT (+ type taxonomy) and the perego-theme/clients-carousel block that
+     * renders the homepage Corporate + Individual carousels (server-rendered cards + modular Swiper).
+     */
+    private function registerClients(): void
+    {
+        add_action('init', function (): void {
+            (new ClientPostType())->register();
+
+            $languageService = $this->languageService;
+
+            register_block_type($this->blockDir('clients-carousel'), [
+                'render_callback' => static function () use ($languageService): string {
+                    return (new ClientsCarouselRenderer(
+                        new ClientsContent($languageService->driver()->currentLocale())
+                    ))->render();
+                },
+            ]);
+        });
     }
 
     /**
