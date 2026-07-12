@@ -22,7 +22,7 @@ run output is written to `output/verify-visual.json` (git-ignored — regenerabl
 
 ## Latest result (2026-07-12)
 
-**24 checks, 0 hard failures.**
+**44 checks across 11 route types × EN/AR × mobile + desktop, 0 hard failures.**
 
 | Route | EN | AR | AR URL |
 | --- | --- | --- | --- |
@@ -31,6 +31,11 @@ run output is written to `output/verify-visual.json` (git-ignored — regenerabl
 | Work archive `/work/` | ✅ | ⚠️ gap | — (no AR project content yet) |
 | Journal `/journal/` | ✅ | ⚠️ gap | — (no AR journal page yet) |
 | Contact `/contact/` | ✅ | ✅ | `/ar/contact-2/` |
+| Single service `/services/website-making/` | ✅ | ✅ | `/ar/services/website-making-2/` |
+| Single project `/work/…/` | ✅ | ⚠️ gap | — (no AR project content yet) |
+| Single post `/…/` | ✅ | ⚠️ gap | — (no AR post yet) |
+| Legal `/terms/` | ✅ | ✅ | `/ar/terms-2/` |
+| Search `/?s=video` | ✅ | ✅ | `/ar/?s=video` |
 | 404 (unknown route) | ✅ | ✅ | `/ar/<unknown>/` |
 
 All checked pages: **no horizontal overflow, no JS errors, exactly one `<h1>`, correct `lang`/`dir`**
@@ -59,8 +64,9 @@ node sites/perego/perego-site/scripts/verify-a11y.mjs
 Injects **axe-core 4.12** into each page and audits against the `wcag2a/2aa`, `wcag21a/21aa`, and
 `wcag22aa` rule tags. Serious/critical violations are hard failures.
 
-**Latest result (2026-07-12): 7 pages audited (home/services/work/journal/contact EN + home/contact
-AR), 0 violations of any impact.** Evidence: `output/verify-a11y.json` (git-ignored).
+**Latest result (2026-07-12): 12 pages audited (home, services + single service, work + single
+project, journal + single post, contact, legal, search — EN; home + contact — AR), 0 violations of
+any impact.** Evidence: `output/verify-a11y.json` (git-ignored).
 
 _Automated coverage only — manual keyboard-operation checks (focus order, mobile-nav trap/restore,
 dialog/lightbox semantics, slider announcements) remain a recommended follow-up per Phase 11._

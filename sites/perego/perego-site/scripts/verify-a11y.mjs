@@ -24,6 +24,11 @@ const URLS = [
 	{ url: `${ BASE }/work/`, label: 'work archive (en)' },
 	{ url: `${ BASE }/journal/`, label: 'journal (en)' },
 	{ url: `${ BASE }/contact/`, label: 'contact (en)' },
+	{ url: `${ BASE }/services/website-making/`, label: 'single service (en)' },
+	{ url: `${ BASE }/work/landing-page-microsite/`, label: 'single project (en)' },
+	{ url: `${ BASE }/behind-the-scenes-of-a-brand-film-example/`, label: 'single post (en)' },
+	{ url: `${ BASE }/terms/`, label: 'legal (en)' },
+	{ url: `${ BASE }/?s=video`, label: 'search (en)' },
 	{ url: `${ BASE }/ar/`, label: 'home (ar)' },
 	{ url: `${ BASE }/ar/contact-2/`, label: 'contact (ar)' },
 ];

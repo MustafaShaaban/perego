@@ -27,6 +27,11 @@ const ROUTES = [
 	{ path: '/work/', label: 'work-archive' },
 	{ path: '/journal/', label: 'journal' },
 	{ path: '/contact/', label: 'contact' },
+	{ path: '/services/website-making/', label: 'single-service' },
+	{ path: '/work/landing-page-microsite/', label: 'single-project' },
+	{ path: '/behind-the-scenes-of-a-brand-film-example/', label: 'single-post' },
+	{ path: '/terms/', label: 'legal' },
+	{ path: '/?s=video', label: 'search' },
 	{ path: '/this-route-does-not-exist/', label: '404', is404: true },
 ];
 
