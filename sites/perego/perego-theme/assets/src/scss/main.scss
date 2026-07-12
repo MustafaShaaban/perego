@@ -292,6 +292,80 @@ body {
 	}
 }
 
+/* Single journal post (single.html) — the native WP query/post blocks used theme-default class
+   names (post-single*) with no CSS anywhere, same gap as the journal archive before this pass. */
+.post-single {
+	max-inline-size: 820px;
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--wp--preset--color--bg-deep);
+	text-align: center;
+}
+
+.post-single__cat {
+	display: inline-block;
+	white-space: nowrap;
+	padding: 6px 16px;
+	border-radius: var(--perego-radius-pill);
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	color: var(--wp--preset--color--accent-soft);
+	font-size: 12.5px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.post-single__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.08;
+	margin: 20px 0 0;
+}
+
+.post-single__meta {
+	justify-content: center;
+	gap: 10px 22px;
+	margin-block-start: 22px;
+	color: var(--perego-muted);
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.post-single .wp-block-post-featured-image {
+	max-inline-size: 1000px;
+	margin: clamp(24px, 4vw, 42px) auto 0;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	box-shadow: var(--perego-shadow-featured);
+}
+
+.post-single .entry-content,
+.post-single > .wp-block-post-terms {
+	text-align: start;
+	margin-block-start: clamp(28px, 4vw, 44px);
+}
+
+/* Post tags — the handoff renders each tag as a pill (`.post-tag`). The native wp:post-terms block
+   for post_tag emits the "Tags: " prefix + anchors inside `.post-single__tags`. */
+.post-single__tags a {
+	display: inline-block;
+	margin-inline-end: 8px;
+	margin-block-start: 8px;
+	padding: 7px 15px;
+	border-radius: var(--perego-radius-pill);
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted);
+	text-decoration: none;
+}
+
+.post-single__tags a:hover {
+	border-color: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--text);
+}
+
 /* ===================================================================
  * spec 004 T012 — Home "About Us" section (editable post content)
  * The editorial About Us / Our mission prose is authored on the editor

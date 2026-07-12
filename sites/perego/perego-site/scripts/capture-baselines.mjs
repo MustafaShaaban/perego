@@ -64,6 +64,12 @@ const ROUTES = [
 		liveEN: `${ BASE }/journal/`,
 		liveAR: `${ BASE }/ar/%D8%A7%D9%84%D9%85%D8%AF%D9%88%D9%86%D8%A9/`,
 	},
+	{
+		label: 'single-post',
+		handoffFile: 'single-post.html',
+		liveEN: `${ BASE }/behind-the-scenes-of-a-brand-film-example/`,
+		liveAR: `${ BASE }/ar/%D9%85%D9%86-%D9%83%D9%88%D8%A7%D9%84%D9%8A%D8%B3-%D9%81%D9%8A%D9%84%D9%85-%D8%B9%D9%84%D8%A7%D9%85%D8%A9-%D8%AA%D8%AC%D8%A7%D8%B1%D9%8A%D8%A9-%D9%85%D8%AB%D8%A7%D9%84/`,
+	},
 ];
 
 const browser = await chromium.launch( {

@@ -18,6 +18,8 @@
 Re-verified: **72-check route-health, 12-page a11y (0 violations), 195 Pest** all green. EN + AR + mobile
 captures confirm correct RTL mirroring.
 
-## Not yet checked in this pass
+## Single journal post
 
-Single journal post (`single-post.html` → representative post) — next.
+Done in the same pass — see [single-post.md](./single-post.md). Same gap pattern (native post blocks
+had zero CSS), plus a real data bug (all posts had `post_author = 0`, so the byline silently rendered
+nothing).
