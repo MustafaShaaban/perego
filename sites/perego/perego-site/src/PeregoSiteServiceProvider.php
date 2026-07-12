@@ -144,6 +144,9 @@ final class PeregoSiteServiceProvider
             \Corex\Forms\Submission\FormSubmittedEvent::class,
             new \PeregoSite\Email\PeregoFormMailListener($mailer),
         );
+
+        // Branded comment-moderation email (replaces WordPress's plain native notifications).
+        (new \PeregoSite\Email\PeregoCommentNotifier($mailer))->register();
     }
 
     /**
