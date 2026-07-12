@@ -127,6 +127,12 @@ final class GlobalContent
         return self::COPY[$this->locale]['journal'];
     }
 
+    /** The localized "Home" breadcrumb root label (handoff `ui.breadcrumbHome`). */
+    public function uiHome(): string
+    {
+        return $this->locale === 'ar' ? 'الرئيسية' : 'Home';
+    }
+
     private readonly string $locale;
 
     public function __construct(string $locale = self::DEFAULT_LOCALE)

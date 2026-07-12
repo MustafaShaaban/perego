@@ -186,8 +186,109 @@ body {
 		}
 	}
 
-	span {
+	/* Only the "/" separator dims — the current-page label (aria-current) needs full contrast. */
+	span[aria-hidden] {
 		opacity: 0.5;
+	}
+
+	span[aria-current="page"] {
+		color: var(--wp--preset--color--text);
+	}
+}
+
+/* Universal card grid + card (handoff `.blog-grid`/`.post-card`) — shared by the portfolio-grid
+   block (its own stylesheet also adds .post-cards.portfolio-grid's specific column count) and the
+   journal archive's native WP query-loop blocks, which don't load any custom block's stylesheet. */
+.blog-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: clamp(20px, 2.4vw, 30px);
+}
+
+.post-card {
+	display: flex;
+	flex-direction: column;
+	border-radius: 16px;
+	overflow: hidden;
+	background: var(--wp--preset--color--card-surface-1);
+	border: 1px solid var(--perego-glass-border);
+	text-decoration: none;
+	color: var(--wp--preset--color--text);
+	transition: transform var(--perego-dur-medium) var(--perego-ease),
+		box-shadow var(--perego-dur-medium) var(--perego-ease),
+		border-color var(--perego-dur-fast) var(--perego-ease);
+
+	&:hover {
+		transform: translateY(-6px);
+		box-shadow: var(--perego-shadow-featured);
+		border-color: var(--wp--preset--color--accent);
+	}
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.post-card__media {
+	aspect-ratio: 16 / 10;
+	overflow: hidden;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		transition: transform var(--perego-dur-medium) var(--perego-ease);
+	}
+}
+
+.post-card:hover .post-card__media img {
+	transform: scale(1.06);
+}
+
+.post-card__body {
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	flex: 1;
+}
+
+.post-card__cat {
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--wp--preset--color--accent-soft);
+}
+
+.post-card__title {
+	font-size: var(--wp--preset--font-size--h3);
+	font-weight: 700;
+	line-height: 1.25;
+	margin: 0;
+}
+
+.post-card__excerpt {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted);
+	line-height: 1.6;
+	margin: 0;
+}
+
+.post-card__meta {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2);
+}
+
+@media (max-width: 900px) {
+	.blog-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 560px) {
+	.blog-grid {
+		grid-template-columns: 1fr;
 	}
 }
 

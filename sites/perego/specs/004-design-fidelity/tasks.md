@@ -34,7 +34,7 @@
 
 - [x] T014 [US2] Complete Services archive and all service-single comparisons against `site/services.html` and `site/service-*.html`. See evidence/services.md: hero image, whatwedo split+media, and a site-wide button-class bug fixed; "Selected work" teaser deliberately deferred (no real project thumbnails yet).
 - [~] T015 [US2] Complete Work archive and project-single comparisons against `site/portfolio.html` and `site/project.html`, including gallery/lightbox states. See evidence/work.md: archive breadcrumb/demo-note/AR-filter-bug fixed, real demo featured images seeded, project-single hero image + background-gap bugs fixed. Gallery/lightbox, prev/next nav, and related-projects deliberately deferred as a separate feature slice (ProjectGalleryLightboxRenderer already exists in source, unregistered).
-- [ ] T016 [US2] Complete Journal, search, 404, contact, legal, and page comparisons against their matching handoff templates.
+- [~] T016 [US2] Complete Journal, search, 404, contact, legal, and page comparisons against their matching handoff templates. Journal done (see evidence/journal.md — cards were completely unstyled, now fixed). Search/404/contact/legal/page still open.
 - [ ] T017 [US2] Migrate portfolio prose and any remaining visible provider prose to canvas-managed content.
 - [ ] T018 [US2] Record per-route EN/AR visual, accessibility, interaction, and responsive acceptance results in `route-matrix.md`.
 
