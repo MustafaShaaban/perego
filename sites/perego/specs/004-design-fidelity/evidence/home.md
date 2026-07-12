@@ -4,8 +4,8 @@
 **Live**: EN `http://perego.local/` · AR `http://perego.local/ar/الرئيسية/`
 **Captures** (gitignored, regenerate with `node scripts/capture-baselines.mjs`):
 `output/baselines/home-{mobile,desktop}.png`, `output/live/home-{en,ar}-{mobile,desktop}.png`.
-**Breakpoints**: mobile 375, desktop 1280. **Status**: In review — 10 of 13 rows resolved; 3 rows remain
-(2 are content gaps, not visual-system bugs; 1 is a larger layout rebuild).
+**Breakpoints**: mobile 375, desktop 1280. **Status**: In review — 11 of 13 rows resolved; 1 row remains
+(clients layout rebuild + AR content, a genuinely larger separate slice).
 
 ## Material differences (baseline vs live)
 
@@ -24,13 +24,13 @@ Severity: **P1** = breaks the approved visual system; **P2** = notable but local
 | 8 | Header CTA | Filled pill, uppercase "START A PROJECT" | **Resolved** — CTA now reuses the shared `.perego-btn.perego-btn--accent` primitive |
 | 9 | Lang toggle | "AR EN" with the active language in a filled pill | **Resolved** — fixed dead CSS (selector targeted `button`, markup uses `span`/`a`) |
 | 10 | Hero controls | Dot tablist only (desktop) | **Kept** — WCAG 2.2.2 pausable-carousel requirement (build note), not a defect |
-| 11 | Typography | Section headings large + heavy | **Open** — a token/scale audit spanning every block, not Home-specific; separate slice |
+| 11 | Typography | Section headings large + heavy, in Open Sans/Cairo | **Resolved** — root cause was a missing font load (theme.json declared Open Sans/Cairo but no `@font-face`/webfont was ever enqueued, so every route silently fell back to `system-ui`); the size *tokens* already matched the handoff exactly |
 | 12 | About copy (AR) | Arabic body renders on the AR page | **Resolved** — `HomeContent::about()` locale-aware, mirrors the hero/services pattern |
 | 13 | Footer social | Row of social icons (IG/FB/LinkedIn/YouTube/WhatsApp) | **Resolved** — CSS mask-image icons keyed by network, handoff's own placeholder destinations |
 
 ## Resolution notes (2026-07-12)
 
-**10 of 13 rows resolved** this session, re-verified via fresh baseline/live capture (EN + AR, desktop +
+**11 of 13 rows resolved** this session, re-verified via fresh baseline/live capture (EN + AR, desktop +
 mobile) after every change, plus the full 72-check `verify-visual.mjs` route-health run and the full Pest
 suite (186 tests). Work included:
 
@@ -56,6 +56,16 @@ suite (186 tests). Work included:
 - New Pest coverage: `HomeAboutRenderTest.php` (4 tests); `SiteFooterRenderTest.php` extended for the new
   constructor signature and contact-channel assertions; `HeroSliderRenderTest`/`ServicesTeaserRenderTest`
   updated for the added `get_stylesheet_directory_uri()` dependency.
+- **Row 11 root-caused, not patched**: the font-size *tokens* in `theme.json` already matched the handoff's
+  `--fs-*` clamp expressions byte-for-byte — the "smaller/lighter" impression was never a size mismatch.
+  The real cause: `theme.json` declares Open Sans (Latin) / Cairo (Arabic) as the brand typefaces, but no
+  `functions.php` code ever loaded the font files, so every route silently rendered the browser's
+  `system-ui` fallback at the same declared px size — a different, thinner typeface reads smaller even at
+  an identical font-size. Fixed by enqueuing the same Google Fonts request the handoff itself uses
+  (`wp_enqueue_style` + `wp_resource_hints` preconnect filter — core APIs, not hand-echoed `<link>` tags),
+  confirmed visually on both EN (Open Sans Bold) and AR (Cairo) captures. This affects every route, not just
+  Home, since it's a single site-wide `functions.php` enqueue — likely closes part of row 11's equivalent on
+  every other route family too, though each should still be visually re-checked in its own slice.
 
 ## Remaining open rows
 
@@ -65,9 +75,6 @@ suite (186 tests). Work included:
   `perego_client` CPT is already Polylang-translatable (`registerTranslatablePostTypes`) but has no AR posts
   seeded, so the AR clients section renders blank — a tracked content gap (PROGRESS.md already flags "Clients
   AR: follow-up"), not a code defect. Both need their own scoped slice.
-- **Row 11 (typography scale)**: headings read smaller/lighter across every section versus the handoff. This
-  looks like a `--wp--preset--font-size--*`/weight token audit that affects every block on every route, not
-  something to fix inside the Home slice alone — tracked as its own cross-cutting pass.
 
 ## RTL / accessibility notes
 
@@ -78,7 +85,8 @@ suite (186 tests). Work included:
 
 ## Next
 
-Rows 5 and 11 are the remaining Home work; both are more accurately framed as their own slices (content
-seeding and a cross-block typography pass) than a continuation of this visual-difference row list. Re-run
-this file's comparison procedure once those land, then move to Phase 4 (US2, other route families) per
-`tasks.md`.
+Row 5 (clients layout rebuild + AR content seeding) is the remaining Home work — a separately-scoped slice
+(content seeding + layout rebuild), not a continuation of this visual-difference row list. Re-run this
+file's comparison procedure once it lands, then move to Phase 4 (US2, other route families) per `tasks.md`.
+Since the font-loading fix is a site-wide `functions.php` enqueue, spot-check the font actually renders on
+a non-Home route (e.g. `/services/`) before assuming row-11-equivalent gaps are closed everywhere.

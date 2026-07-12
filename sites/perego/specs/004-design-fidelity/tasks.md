@@ -23,7 +23,7 @@
 **Goal**: Finalize the home page against `site/index.html` and its supplied screenshots.
 
 - [x] T009 [US1] Capture matched EN/AR home baselines and live renders at required breakpoints in the feature evidence directory.
-- [~] T010 [US1] Correct documented home/header/footer/preloader/hero/services/about/client differences in `sites/perego/perego-theme/` and `sites/perego/perego-site/src/Blocks/`. **10/13 differences resolved** (see evidence/home.md); open: clients layout + AR content, typography scale.
+- [~] T010 [US1] Correct documented home/header/footer/preloader/hero/services/about/client differences in `sites/perego/perego-theme/` and `sites/perego/perego-site/src/Blocks/`. **11/13 differences resolved** (see evidence/home.md); open: clients layout + AR content (row 5).
 - [~] T011 [US1] Replace home/client placeholder media only with approved handoff or owner-supplied assets through `sites/perego/perego-site/scripts/` and WordPress media records. Hero/about/service-card/logo images wired from the approved handoff set; client-carousel media still open (depends on row 5).
 - [ ] T012 [US1] Migrate home editorial prose to canvas-managed content where it is still provider-rendered.
 - [~] T013 [US1] Run and record visual, interaction, a11y, RTL, and relevant Pest/Jest evidence for the approved home slice. Visual (72-check route-health + baseline/live capture) and unit (186 Pest) done; a11y/interaction re-run against the corrected markup still open.
