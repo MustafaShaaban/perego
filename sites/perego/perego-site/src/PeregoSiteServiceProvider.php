@@ -91,6 +91,7 @@ final class PeregoSiteServiceProvider
         $this->registerForms();
 
         (new StructuredData())->register();
+        (new \PeregoSite\Seo\PeregoAgentReadiness())->register();
     }
 
     /**

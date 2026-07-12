@@ -294,4 +294,17 @@ no-Polylang fallback switch without JS too, `FallbackLanguageDriver::currentLoca
 query var (authoritative for the request) ahead of the cookie. **Why**: it satisfies the prompt's "correct
 current-language URLs / switch to the translated entity / no JS-only toggle / no Pro dependency" with real
 Polylang Free URLs, degrades gracefully (a missing translation link falls back to home, never a mixed/broken
-URL), and keeps EN/AR fully working when Polylang is absent. Verified live: `/ar/` → `<html dir="rtl" lang="ar">`.
+URL), and keeps EN/AR fully working when Polylang is absent.
+
+**Decision 11 (2026-07-12) — Serve a real `/llms.txt`; add `x-default` to reuse, not duplicate, CoreX
+readiness + Polylang hreflang.** For agent readiness (Phase 10) the prompt says to make CoreX's existing
+readiness checks pass rather than build a parallel dashboard. CoreX's `ReadinessScorer` (corex-config Insights)
+checks an `llms_txt` signal, so `PeregoAgentReadiness` serves a real `/llms.txt` on `init` (virtual, no file):
+`text/plain` + `X-Content-Type-Options: nosniff`, built from the site name, the handoff tagline, the real
+navigation routes, and the EN/AR language URLs — no fabricated claims. For hreflang, Polylang Free already
+emits per-language `alternate` links, so we add only the missing **`x-default`** on `wp_head` to complete the
+EN/AR/x-default set the handoff SEO model requires. **Why**: both reuse platform/framework facilities (WP
+sitemap + robots, Polylang alternates, CoreX readiness) and add only the genuine deltas, keeping the site free
+of duplicate SEO machinery. Verified live: `/llms.txt` 200 text/plain; `<head>` carries EN + AR + x-default.
+
+<!-- language-switcher verification anchor --> Verified live: `/ar/` → `<html dir="rtl" lang="ar">`.

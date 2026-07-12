@@ -263,6 +263,11 @@ Immediate queue:
 - **SEO** (`01fd9f0`, `af56600`): `noindex,follow` on search/404, default `page.html`, and JSON-LD
   (Organization/WebSite/Service/Article/CreativeWork/BreadcrumbList — no fabricated claims).
 - Suite now **112 Pest + 54 Jest**, all green; wp-guard clean on every increment.
+- **Agent readiness + hreflang (Phase 10, 2026-07-12):** `PeregoAgentReadiness` serves a real `/llms.txt`
+  (`text/plain`, `nosniff`) built from the site name/tagline + real routes + EN/AR language URLs — satisfying
+  the `llms_txt` signal CoreX's own `ReadinessScorer` checks (no duplicate dashboard) — and emits the
+  `x-default` hreflang that completes Polylang's EN/AR alternates. Verified live: `/llms.txt` 200 text/plain;
+  head now carries EN + AR + **x-default**. Pure builders unit-tested (3 new). Decision 11.
 
 ### Still remaining (implementable — continues from here)
 3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). **Language switcher: DONE +
