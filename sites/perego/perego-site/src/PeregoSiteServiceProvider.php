@@ -112,7 +112,38 @@ final class PeregoSiteServiceProvider
             $registry = $container->make(\Corex\Forms\FormRegistry::class);
             $registry->register(new \PeregoSite\Forms\QuickMessageForm());
             $registry->register(new \PeregoSite\Forms\ProjectBriefForm());
+
+            self::registerFormEmail($container);
         }, 20);
+    }
+
+    /**
+     * spec Phase 7/8: wire the branded submitter-confirmation emails. When the CoreX Mail engine is
+     * active, register a listener on the shared FormSubmittedEvent that renders the exact handoff
+     * email (PeregoEmailRenderer) and sends it through the CoreX Mailer (PeregoMailer). The submitter
+     * is not a recipient of the engine's own SendEmailListener (which notifies the admin inbox), so
+     * this adds the user-facing confirmation without duplicating the internal notification.
+     */
+    private static function registerFormEmail(\Corex\Container\ContainerInterface $container): void
+    {
+        if (! $container->has(\Corex\Mail\Mailer::class) || ! $container->has(\Corex\Events\ListenerProvider::class)) {
+            return;
+        }
+
+        $logoUrl = function_exists('plugins_url')
+            ? plugins_url('assets/email/logo-full.png', dirname(__DIR__) . '/perego-site.php')
+            : '';
+        $siteUrl = function_exists('home_url') ? (string) home_url('/') : 'https://perego.local';
+
+        $mailer = new \PeregoSite\Email\PeregoMailer(
+            $container->make(\Corex\Mail\Mailer::class),
+            new \PeregoSite\Email\PeregoEmailRenderer(rtrim($siteUrl, '/'), $logoUrl),
+        );
+
+        $container->make(\Corex\Events\ListenerProvider::class)->listen(
+            \Corex\Forms\Submission\FormSubmittedEvent::class,
+            new \PeregoSite\Email\PeregoFormMailListener($mailer),
+        );
     }
 
     /**
