@@ -19,8 +19,16 @@ state what to build next — without anyone explaining. Do this, in order:
 4. `PROGRESS.md`  5. the code. If code contradicts the constitution, the code is wrong.
 
 ## Role Gate — classify the session BEFORE editing (spec 061)
-> Role Gate decides **where** you work · Spec Kit decides **what** to build · Guard Gate decides **whether**
+> Role Gate decides **where** you work · Model Routing Gate decides **capability and provider adapter** · Spec Kit decides **what** to build · Guard Gate decides **whether**
 > it is safe to ship · UI/UX ProMax decides **whether** visible UI is good enough.
+
+## Model Routing Gate — classify capability BEFORE broad exploration or editing (spec 069)
+
+After the Role Gate and before Spec Kit, classify L (read-only exploration), M (routine), H (complex/high-risk sole writer), or V (critical read-only verification) using [the shared policy](docs/en/04-team-workflow/model-routing.md). Declare:
+
+`MODEL ROUTE — <provider> · <L|M|H|V> · <parent-or-agent> · <configured model/effort> · <reason>`
+
+Declare evidence-based changes with `MODEL ROUTE CHANGE — <old> → <new> · <specific trigger>`. Use the lowest reliable route; do not claim the parent model changed, report whether a child was actually spawned, and distinguish configured from runtime-confirmed values. Never run Codex and Claude as simultaneous writers, never assign duplicate work, keep one production writer, and keep delegation at one level. Route H is the sole writer; Route V is read-only. See the shared policy for escalation, overrides, handoff, and rollback.
 
 Pick exactly one mode and stay inside it (full detail: COREX-WORKING-GUIDE.md §F; prompts:
 `docs/en/04-team-workflow/ai-agent-start-prompts.md`):

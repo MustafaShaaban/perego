@@ -10,3 +10,5 @@ stability: stable
 > [`_translation-memory.md`](../../_translation-memory.md)).
 
 > English source: [`en/04-team-workflow/ai-agent-start-prompts.md`](../../en/04-team-workflow/ai-agent-start-prompts.md)
+
+> The English canonical prompts now require the Model Routing Gate declaration before Spec Kit; see [Model Routing Gate](./model-routing.md) for the bilingual routing policy.

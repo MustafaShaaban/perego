@@ -55,6 +55,17 @@ No diff is presented, committed, or merged until the relevant guard skill runs c
 
 The guards are run by the coding agent on each diff; CI enforcement is planned.
 
+## Model routing
+
+Before broad exploration or editing, apply the Role Gate and then the shared [Model Routing Gate](docs/en/04-team-workflow/model-routing.md). Declare the selected L/M/H/V route, keep routine work in the balanced parent when possible, and never run simultaneous Codex and Claude writers. Validate committed routing assets without provider credentials:
+
+```bash
+npm run verify:model-routing
+npm run test:model-routing
+```
+
+Configured model and effort values are not proof of runtime selection; record provider diagnostics and environment-gated smoke checks honestly.
+
 ## Running the tests
 
 ```bash
