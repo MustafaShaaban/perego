@@ -11,7 +11,7 @@
 | `service-motion-graphics.html` | `/services/motion-graphics/` / `single-perego_service.html` | EN+AR, desktop+mobile; hero, tabs, canvas content, CTA | Perego delivery | Design-complete — shares the fixed renderer/template with video-editing (slug corrected: real route is `/services/motion-graphics/`, not `2d-motion-graphics`) |
 | `service-graphic-design.html` | `/services/graphic-design/` / `single-perego_service.html` | EN+AR, desktop+mobile; hero, tabs, canvas content, CTA | Perego delivery | Design-complete — shares the fixed renderer/template with video-editing |
 | `service-website-making.html` | `/services/website-making/` / `single-perego_service.html` | EN+AR, desktop+mobile; hero, tabs, canvas content, CTA | Perego delivery | Design-complete — shares the fixed renderer/template with video-editing |
-| `portfolio.html` | `/work/` / `archive-perego_project.html` | EN+AR, desktop+mobile; filters, empty state, cards | Perego delivery | Not accepted |
+| `portfolio.html` | `/work/` / `archive-perego_project.html` | EN+AR, desktop+mobile; filters, empty state, cards | Perego delivery | Design-complete — breadcrumb + demo-note added, AR category-label/filter bug fixed (see [evidence/work.md](./evidence/work.md)); real project thumbnails are an owner-content gap (FR-006) |
 | `project.html` | representative `/work/<project>/` / `single-perego_project.html` | EN+AR, desktop+mobile; gallery/lightbox, case-study content | Perego delivery | Not accepted |
 | `archive.html` | `/journal/` / `home.html` | EN+AR, desktop+mobile; archive cards and pagination | Perego delivery | Not accepted |
 | `single-post.html` | representative post / `single.html` | EN+AR, desktop+mobile; comments and share/content layout | Perego delivery | Not accepted |

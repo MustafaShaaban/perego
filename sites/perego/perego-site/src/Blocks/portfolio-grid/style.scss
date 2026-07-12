@@ -35,6 +35,17 @@
 	margin: 0;
 }
 
+.portfolio__head .page-crumb {
+	justify-content: center;
+	margin-block-end: 14px;
+}
+
+.portfolio__demo-note {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2);
+	margin: 6px 0 0;
+}
+
 /* Service filter chips. */
 .portfolio-filters {
 	display: flex;

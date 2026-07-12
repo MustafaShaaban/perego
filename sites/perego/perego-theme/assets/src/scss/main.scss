@@ -167,6 +167,30 @@ body {
 	}
 }
 
+/* Universal page breadcrumb (handoff `.page-crumb`) — used site-wide wherever a route needs a
+   "Home / Section" trail, not owned by any one block. */
+.page-crumb {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2);
+
+	a {
+		color: var(--perego-muted);
+		text-decoration: none;
+
+		&:hover {
+			color: var(--wp--preset--color--accent-soft);
+		}
+	}
+
+	span {
+		opacity: 0.5;
+	}
+}
+
 /* ===================================================================
  * spec 004 T012 — Home "About Us" section (editable post content)
  * The editorial About Us / Our mission prose is authored on the editor

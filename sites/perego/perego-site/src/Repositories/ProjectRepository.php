@@ -14,6 +14,7 @@ use PeregoSite\Content\PortfolioContent;
 use PeregoSite\PostTypes\ProjectPostType;
 use WP_Post;
 use WP_Query;
+use WP_Term;
 
 /**
  * Reads `perego_project` posts for the portfolio grid (spec 003 / M3). Keeps the WP_Query + meta +
@@ -51,7 +52,7 @@ final class ProjectRepository
     public function toGridCard(WP_Post $post, PortfolioContent $content): array
     {
         $terms    = get_the_terms($post->ID, ProjectPostType::TAXONOMY);
-        $category = (is_array($terms) && $terms !== []) ? $terms[0]->slug : '';
+        $category = (is_array($terms) && $terms !== []) ? $this->canonicalCategorySlug($terms[0]) : '';
 
         $client   = (string) get_post_meta($post->ID, '_perego_client', true);
         $year     = (string) get_post_meta($post->ID, '_perego_year', true);
@@ -70,6 +71,30 @@ final class ProjectRepository
             'thumbUrl' => $thumbUrl,
             'thumbAlt' => $thumbAlt !== '' ? $thumbAlt : get_the_title($post),
         ];
+    }
+
+    /**
+     * Resolve the fixed, canonical category slug (`ProjectPostType::CATEGORIES`) for a term that may
+     * be a Polylang per-language variant. Polylang gives every language its own term — the English
+     * `video` term and a separate Arabic `video-ar` term, linked as translations — so an AR project's
+     * own term slug is never one of the four canonical slugs the filter buttons and `categoryLabel()`
+     * are keyed on. Without this, AR cards showed the literal term slug ("video-ar") as their category
+     * badge, and the filter buttons (which filter by canonical slug) never matched any AR card.
+     */
+    private function canonicalCategorySlug(WP_Term $term): string
+    {
+        if (isset(ProjectPostType::CATEGORIES[$term->slug])) {
+            return $term->slug;
+        }
+
+        if (! function_exists('pll_get_term')) {
+            return $term->slug;
+        }
+
+        $enTermId = (int) pll_get_term($term->term_id, 'en');
+        $enTerm   = $enTermId ? get_term($enTermId, ProjectPostType::TAXONOMY) : null;
+
+        return ($enTerm instanceof WP_Term) ? $enTerm->slug : $term->slug;
     }
 
     private function buildExcerpt(WP_Post $post, PortfolioContent $content, string $client, string $year): string
