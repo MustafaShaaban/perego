@@ -180,6 +180,61 @@ foreach ($postAr as $enSlug => $arTitle) {
     $postsDone++;
 }
 
+// ── Clients (perego_client) ──────────────────────────────────────────────────
+$clientTypeAr = ['corporate' => 'شركات', 'individual' => 'أفراد'];
+foreach ($clientTypeAr as $slug => $name) {
+    $ensureArTerm(\PeregoSite\PostTypes\ClientPostType::TAXONOMY, $slug, $name);
+}
+
+// EN client title => AR title (generic demo labels — no real business names).
+$clientAr = [
+    'Sample Corporate Client A' => 'عميل مؤسسي تجريبي أ',
+    'Sample Corporate Client B' => 'عميل مؤسسي تجريبي ب',
+    'Sample Corporate Client C' => 'عميل مؤسسي تجريبي ج',
+    'Sample Corporate Client D' => 'عميل مؤسسي تجريبي د',
+    'Sample Creator One' => 'منشئ محتوى تجريبي ١',
+    'Sample Creator Two' => 'منشئ محتوى تجريبي ٢',
+    'Sample Creator Three' => 'منشئ محتوى تجريبي ٣',
+    'Sample Creator Four' => 'منشئ محتوى تجريبي ٤',
+];
+
+$clientsDone = 0;
+foreach (get_posts(['post_type' => \PeregoSite\PostTypes\ClientPostType::POST_TYPE, 'numberposts' => 50]) as $enClient) {
+    $enId = (int) $enClient->ID;
+    if (pll_get_post($enId, 'ar')) {
+        continue;
+    }
+    $arTitle = $clientAr[$enClient->post_title] ?? ($enClient->post_title . ' (AR)');
+
+    $arId = wp_insert_post([
+        'post_type' => \PeregoSite\PostTypes\ClientPostType::POST_TYPE,
+        'post_status' => 'publish',
+        'post_title' => $arTitle,
+        'post_content' => get_post_field('post_content', $enId),
+    ], true);
+    if (is_wp_error($arId)) {
+        WP_CLI::warning("AR client {$enClient->post_title}: " . $arId->get_error_message());
+        continue;
+    }
+    $arId = (int) $arId;
+
+    // Mirror the stat meta + assign the AR type term.
+    $stat = get_post_meta($enId, '_perego_client_stat', true);
+    if ($stat !== '') {
+        update_post_meta($arId, '_perego_client_stat', $stat);
+    }
+    $enType = wp_get_object_terms($enId, \PeregoSite\PostTypes\ClientPostType::TAXONOMY, ['fields' => 'slugs']);
+    if ($enType !== [] && ! is_wp_error($enType)) {
+        $enTypeTerm = get_term_by('slug', $enType[0], \PeregoSite\PostTypes\ClientPostType::TAXONOMY);
+        $arType = ($enTypeTerm && function_exists('pll_get_term')) ? pll_get_term((int) $enTypeTerm->term_id, 'ar') : 0;
+        if ($arType) {
+            wp_set_object_terms($arId, [(int) $arType], \PeregoSite\PostTypes\ClientPostType::TAXONOMY);
+        }
+    }
+    $linkPosts($enId, $arId);
+    $clientsDone++;
+}
+
 // ── Journal + Home pages (so /ar/journal/ resolves as the AR posts page) ─────
 $pagesAr = ['journal' => 'المدونة', 'home' => 'الرئيسية'];
 $pagesDone = 0;
@@ -206,4 +261,4 @@ foreach ($pagesAr as $enSlug => $arTitle) {
     $pagesDone++;
 }
 
-WP_CLI::success("AR content seeded — projects: {$projectsDone}, posts: {$postsDone}, pages: {$pagesDone} (idempotent).");
+WP_CLI::success("AR content seeded — projects: {$projectsDone}, posts: {$postsDone}, clients: {$clientsDone}, pages: {$pagesDone} (idempotent).");
