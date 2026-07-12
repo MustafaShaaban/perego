@@ -1,5 +1,21 @@
 # Perego — Decision Log
 
+## 2026-07-12 — Final handoff is the locked visual authority; design-fidelity recovery is the active work
+
+**Decision**: `_design_handoff/Perego-Creative-Studio-Final-Handoff/site/` is the single binding visual,
+responsive, interaction, content, and asset reference for Perego. The active client feature is
+`sites/perego/specs/004-design-fidelity/` on branch `feature/004-design-fidelity`.
+
+**Why**: The delivery audit established that substantial functionality exists, but specs, progress records,
+and exact visual acceptance are out of sync. Existing route-health and accessibility checks are valuable but
+do not prove pixel-level parity with the handoff. Future UI work must be evidence-led, route-scoped, and
+compared with the handoff before it can be marked complete.
+
+**Consequences**: No redesign, substitute styling, invented imagery, or new interaction may be introduced.
+Missing owner-supplied business content, production assets, or legally approved copy is a launch blocker, not
+permission to invent a substitute. Older status notes remain historical evidence; the authoritative delivery
+queue is `PROGRESS.md`'s recovery section and Spec 004's task register.
+
 Record each non-trivial decision (context · decision · why · status).
 
 ## 2026-07-11 — This repo is a CoreX checkout with the client site nested at sites/perego/

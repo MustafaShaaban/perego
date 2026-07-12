@@ -2,6 +2,41 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## Authoritative recovery status (2026-07-12)
+
+**This section supersedes every older “Latest”, “Next”, and “superseded” block below.** The older
+chronological notes are retained as evidence only and must not be used to decide what to build next.
+
+The current delivery branch is `feature/004-design-fidelity`, based on `feature/002-home` at `579565a`.
+The final, binding visual reference is `_design_handoff/Perego-Creative-Studio-Final-Handoff/site/`.
+No visual reinterpretation is authorized: every correction must make Perego match that handoff.
+
+### What is implemented
+
+- FSE shell, home, services, work/projects, clients, journal, legal, search, 404, contact, EN/AR routing,
+  major forms, SEO, and baseline accessibility/route-health checks are implemented in the client source.
+- The latest recorded route-health run covers **72** EN/AR desktop/mobile checks across all 16 mapped
+  handoff templates with no hard failures (spec 004 T007 extended the earlier 44-check pass). One
+  informational content gap: the representative standard page `/sample-page/` has no Arabic translation.
+
+### What is not accepted or launch-ready
+
+- Pixel-level, state-by-state visual fidelity is not accepted for all 16 handoff templates.
+- Placeholder/demo media and content remain in public-facing surfaces; legal content remains draft/review-only.
+- Gallery/lightbox completion, editor-canvas remediation for Home/portfolio prose, manual keyboard coverage,
+  and production-like mail/HTTPS verification remain outstanding.
+- Specs 001-003 contain stale task state and do not represent the later delivery history accurately.
+
+### Next
+
+1. ~~Execute T004-T008 in `specs/004-design-fidelity/tasks.md`: build the route matrix and deterministic comparison process.~~
+   **Done (2026-07-12).** T004/T005 (route-matrix + quickstart), T006 (env/build verification recorded in
+   quickstart), T007 (verify-visual extended to all 16 templates — 72 checks/0 failures), T008
+   (visual-difference review procedure in `docs/visual-acceptance.md`) all complete. Evidence gate is ready.
+2. **Start Phase 3 (US1) — T009-T013:** finalize Home as the first complete visual slice against
+   `site/index.html`; do not begin another feature while it has material differences.
+3. Complete each remaining route family (Phase 4, T014-T018) through the same evidence gate.
+
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
 
 Shipped, each tested + guarded + pushed to `origin/feature/002-home`:

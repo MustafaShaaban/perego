@@ -22,24 +22,35 @@ run output is written to `output/verify-visual.json` (git-ignored — regenerabl
 
 ## Latest result (2026-07-12)
 
-**44 checks across 11 route types × EN/AR × mobile + desktop, 0 hard failures.**
+**72 checks across all 16 mapped handoff templates × EN/AR × mobile + desktop, 0 hard failures.**
+(Extended in spec 004 T007 from the earlier 11-route/44-check pass so every route-matrix row has
+automated route-health evidence.)
 
 | Route | EN | AR | AR URL |
 | --- | --- | --- | --- |
-| Home `/` | ✅ | ✅ | `/ar/` |
+| Home `/` | ✅ | ✅ | `/ar/الرئيسية/` |
 | Services archive `/services/` | ✅ | ✅ | `/ar/services/` |
-| Work archive `/work/` | ✅ | ✅ | `/ar/work/` |
-| Journal `/journal/` | ✅ | ✅ | `/ar/المدونة/` |
-| Contact `/contact/` | ✅ | ✅ | `/ar/contact-2/` |
+| Single service `/services/video-editing/` | ✅ | ✅ | `/ar/services/video-editing-2/` |
+| Single service `/services/motion-graphics/` | ✅ | ✅ | `/ar/services/motion-graphics-2/` |
+| Single service `/services/graphic-design/` | ✅ | ✅ | `/ar/services/graphic-design-2/` |
 | Single service `/services/website-making/` | ✅ | ✅ | `/ar/services/website-making-2/` |
+| Work archive `/work/` | ✅ | ✅ | `/ar/work/` |
 | Single project `/work/…/` | ✅ | ✅ | `/ar/work/صفحة-هبوط…/` |
+| Journal `/journal/` | ✅ | ✅ | `/ar/المدونة/` |
 | Single post `/…/` | ✅ | ✅ | `/ar/من-كواليس…/` |
+| Contact `/contact/` | ✅ | ✅ | `/ar/contact-2/` |
 | Legal `/terms/` | ✅ | ✅ | `/ar/terms-2/` |
-| Search `/?s=video` | ✅ | ✅ | `/ar/?s=video` |
+| Legal `/privacy/` | ✅ | ✅ | `/ar/privacy-2/` |
+| Representative page `/sample-page/` | ✅ | ⛔ | *no AR translation (content gap)* |
+| Search populated `/?s=video` | ✅ | ✅ | `/ar/?s=video` |
+| Search empty `/?s=zznotarealquery` | ✅ | ✅ | `/ar/?s=zznotarealquery` |
+| Search no-query `/?s=` | ✅ | ✅ | `/ar/?s=` |
 | 404 (unknown route) | ✅ | ✅ | `/ar/<unknown>/` |
 
 All checked pages: **no horizontal overflow, no JS errors, exactly one `<h1>`, correct `lang`/`dir`**
-at both breakpoints in both languages.
+at both breakpoints in both languages. The one ⛔ is the representative standard page: `/sample-page/`
+has no Polylang AR translation, reported as an informational content gap (owner supplies a real
+translated standard page before launch), not a template defect.
 
 ### Content status
 
@@ -110,9 +121,61 @@ description + OG/Twitter tags → SEO 92→100) and **sub-size touch targets** o
 > SSL. Performance opportunities that remain (text compression, HTTP/2, cache-TTL) are Apache/server
 > config, not shipped code.
 
+## Visual-difference review procedure (spec 004 T008)
+
+The checks above prove a route is **structurally healthy** (loads, one `<h1>`, no overflow, right
+`lang`/`dir`). They are **not** visual acceptance. A route is only design-complete when its live render
+has been compared, state by state, against the locked handoff at
+`_design_handoff/Perego-Creative-Studio-Final-Handoff/site/` and every material difference is resolved.
+Run this procedure per route-matrix row before flipping its status from `Not accepted` to `Accepted`.
+
+**1. Pick the target.** One row + one state from
+[`specs/004-design-fidelity/route-matrix.md`](../specs/004-design-fidelity/route-matrix.md) — e.g.
+`portfolio.html` → `/work/`, EN, desktop, "all-filter" state.
+
+**2. Capture the deterministic handoff baseline.** Render the matching static handoff page (or the
+supplied screenshot when one exists) at the exact viewport in headless Chromium and screenshot the full
+page. Use the supplied screenshot verbatim where available; otherwise the static render *is* the baseline.
+Freeze motion (`prefers-reduced-motion`, or pause carousels/preloader) so the capture is repeatable.
+
+```bash
+# Baseline from the static handoff file (file:// — no server needed):
+#   handoff = _design_handoff/Perego-Creative-Studio-Final-Handoff/site/<template>.html
+# Live render reaches the WAMP vhost via the same host-resolver mapping the verify scripts use:
+#   --host-resolver-rules="MAP perego.local 127.0.0.1"
+```
+
+**3. Capture the matching live render.** Same viewport, same language (use the **real** AR URL from the
+page's `hreflang="ar"` alternate — never a hand-built `/ar/` guess for translated posts), same seeded
+content, same frozen state, fonts fully loaded (`waitUntil: 'networkidle'`).
+
+**4. Compare.** Overlay baseline vs live and inspect, in order: section hierarchy, box dimensions,
+spacing/rhythm, typography (family, size, weight, line-height, tracking), color/gradient tokens, borders,
+radii, shadows, imagery and its treatment, **RTL mirroring** for AR, responsive reflow, and the
+interaction state. A per-pixel diff (e.g. `pixelmatch`) may assist, but browser font rasterization
+differences are **not** defects — a difference counts only when it changes layout, token, content, or
+behaviour.
+
+**5. Record before editing.** Log the reference file + viewport, both capture paths, and every material
+difference with a resolution task/commit id into that route's evidence fields in `route-matrix.md`
+(fields 1–6 of "Evidence fields required for each acceptance row"). Do not start editing until the
+difference list is written down.
+
+**6. Correct only the documented difference,** using existing `theme.json` tokens — no new styling or
+interactions. Re-run the focused checks (`verify-visual.mjs` for the route, plus `verify-a11y.mjs` /
+`verify-interactions.mjs` and relevant Pest/Jest where the change touches behaviour). Mark the row
+**Accepted** only when every material difference is resolved and EN+AR evidence exists at both
+breakpoints; mark it **Blocked on owner material** when only missing approved assets/copy/legal remain.
+
+**Evidence storage.** Keep generated baseline/live/diff PNGs out of committed production assets — write
+them under the gitignored `perego-site/output/` (e.g. `output/baselines/`, `output/live/`, `output/diff/`).
+Commit only the concise matrices, findings, and the reproducible scripts that regenerate the captures.
+
 ## Not yet automated (needs design baselines / heavier tooling)
 
-- Pixel-level visual regression against the handoff screenshots (Phase 12): baseline capture +
-  per-component diff is a larger harness; this pass covers structural/behavioural acceptance.
+- A **fully automated** pixel-level visual-regression harness (baseline capture + per-component diff on
+  every route/state in CI) is not built yet. The manual/semi-automated equivalent is now defined above
+  under "Visual-difference review procedure" and is the accepted gate for spec 004; the automated
+  harness remains a later enhancement.
 - Dropdown / dialog / gallery-lightbox interaction states and Lighthouse performance budgets
   (Phase 9) — planned follow-ups.

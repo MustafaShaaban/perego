@@ -21,17 +21,32 @@ import { writeFileSync, mkdirSync } from 'node:fs';
 const BASE = 'http://perego.local';
 const OVERFLOW_TOLERANCE = 2; // px — sub-pixel rounding only.
 
+// Every route mapped in specs/004-design-fidelity/route-matrix.md (all 16 handoff templates).
+// The Arabic URL is discovered per-route from the page's own hreflang="ar" alternate (see below),
+// except where noted: 404 and search-query URLs are not translated posts, so their AR counterpart is
+// the explicit /ar/ prefix (arPrefix) rather than an hreflang link.
 const ROUTES = [
 	{ path: '/', label: 'home' },
 	{ path: '/services/', label: 'services-archive' },
+	// All four service singles share single-perego_service.html; the matrix lists each as its own row.
+	{ path: '/services/video-editing/', label: 'single-service:video-editing' },
+	{ path: '/services/motion-graphics/', label: 'single-service:motion-graphics' },
+	{ path: '/services/graphic-design/', label: 'single-service:graphic-design' },
+	{ path: '/services/website-making/', label: 'single-service:website-making' },
 	{ path: '/work/', label: 'work-archive' },
-	{ path: '/journal/', label: 'journal' },
-	{ path: '/contact/', label: 'contact' },
-	{ path: '/services/website-making/', label: 'single-service' },
 	{ path: '/work/landing-page-microsite/', label: 'single-project' },
+	{ path: '/journal/', label: 'journal' },
 	{ path: '/behind-the-scenes-of-a-brand-film-example/', label: 'single-post' },
-	{ path: '/terms/', label: 'legal' },
-	{ path: '/?s=video', label: 'search' },
+	{ path: '/contact/', label: 'contact' },
+	{ path: '/terms/', label: 'legal:terms' },
+	{ path: '/privacy/', label: 'legal:privacy' },
+	// Representative standard page.html (distinct from the contact/legal pages that also use it).
+	{ path: '/sample-page/', label: 'page' },
+	// Search states from the matrix: populated, empty, and no-query. Search URLs have no hreflang
+	// alternate, so their AR counterpart is the /ar/ prefix.
+	{ path: '/?s=video', label: 'search:populated', arPrefix: true },
+	{ path: '/?s=zznotarealquery', label: 'search:empty', arPrefix: true },
+	{ path: '/?s=', label: 'search:no-query', arPrefix: true },
 	{ path: '/this-route-does-not-exist/', label: '404', is404: true },
 ];
 
@@ -122,10 +137,14 @@ for ( const route of ROUTES ) {
 		const en = await checkUrl( `${ BASE }${ route.path }`, 'en', 'ltr', bp, { is404: route.is404 } );
 		record( en, `en ${ bp.name } ${ route.label }` );
 
-		// Arabic: a 404 has no translation link — use the /ar/ prefix; otherwise follow the page's
-		// own hreflang="ar" alternate (the real, possibly slug-de-duplicated, Polylang URL).
+		// Arabic: a 404 or a search-query URL has no translation link — use the /ar/ prefix (expecting
+		// 404 or 200 respectively); otherwise follow the page's own hreflang="ar" alternate (the real,
+		// possibly slug-de-duplicated, Polylang URL).
 		if ( route.is404 ) {
 			const ar = await checkUrl( `${ BASE }/ar${ route.path }`, 'ar', 'rtl', bp, { is404: true } );
+			record( ar, `ar ${ bp.name } ${ route.label }` );
+		} else if ( route.arPrefix ) {
+			const ar = await checkUrl( `${ BASE }/ar${ route.path }`, 'ar', 'rtl', bp );
 			record( ar, `ar ${ bp.name } ${ route.label }` );
 		} else if ( en.arAlternate ) {
 			const ar = await checkUrl( en.arAlternate, 'ar', 'rtl', bp );
