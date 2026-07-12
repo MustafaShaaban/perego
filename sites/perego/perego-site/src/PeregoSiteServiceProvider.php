@@ -85,6 +85,7 @@ final class PeregoSiteServiceProvider
         $this->registerHomeBlocks();
         $this->registerPortfolio();
         $this->registerServices();
+        $this->registerTranslatablePostTypes();
         $this->registerGlobalSurfaces();
         $this->registerGlobalSections();
         $this->registerClients();
@@ -160,22 +161,38 @@ final class PeregoSiteServiceProvider
     }
 
     /**
-     * spec Phase 5: the editor-managed, Polylang-translatable perego_global_section CPT and the
-     * perego-theme/global-section block that renders a role's current-language record inside the
-     * language-neutral FSE template parts. The CPT is declared translatable through Polylang's
-     * public `pll_get_post_types` filter (a Free-edition API — no Pro dependency), so linked EN/AR
-     * records resolve by language; the filter is inert when Polylang is inactive.
+     * spec Phase 5/10: declare every Perego custom post type translatable through Polylang's public
+     * `pll_get_post_types` filter (a Free-edition API — no Pro dependency), so linked EN/AR records
+     * resolve by language AND their `/ar/…` single + archive URLs route correctly (verified defect:
+     * without this the AR service/work archives 404). The filter is inert when Polylang is inactive.
      */
-    private function registerGlobalSections(): void
+    private function registerTranslatablePostTypes(): void
     {
-        add_filter('pll_get_post_types', static function ($types) {
+        $postTypes = [
+            GlobalSectionPostType::POST_TYPE,
+            ServicePostType::POST_TYPE,
+            ProjectPostType::POST_TYPE,
+            ClientPostType::POST_TYPE,
+        ];
+
+        add_filter('pll_get_post_types', static function ($types) use ($postTypes) {
             if (is_array($types)) {
-                $types[GlobalSectionPostType::POST_TYPE] = GlobalSectionPostType::POST_TYPE;
+                foreach ($postTypes as $postType) {
+                    $types[$postType] = $postType;
+                }
             }
 
             return $types;
         }, 10, 1);
+    }
 
+    /**
+     * spec Phase 5: the editor-managed, Polylang-translatable perego_global_section CPT and the
+     * perego-theme/global-section block that renders a role's current-language record inside the
+     * language-neutral FSE template parts.
+     */
+    private function registerGlobalSections(): void
+    {
         add_action('init', function (): void {
             (new GlobalSectionPostType())->register();
 

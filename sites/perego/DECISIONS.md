@@ -308,3 +308,16 @@ sitemap + robots, Polylang alternates, CoreX readiness) and add only the genuine
 of duplicate SEO machinery. Verified live: `/llms.txt` 200 text/plain; `<head>` carries EN + AR + x-default.
 
 <!-- language-switcher verification anchor --> Verified live: `/ar/` → `<html dir="rtl" lang="ar">`.
+
+**Decision 12 (2026-07-12) — All Perego CPTs are Polylang-translatable; verification is headless + slug-aware.**
+A headless verification pass (`scripts/verify-visual.mjs`, Chromium via Playwright) found `/ar/services/` and
+`/ar/work/` returning **404**: `perego_service`, `perego_project`, and `perego_client` were never declared
+translatable, so Polylang produced no `/ar/…` archive routes for them. Fixed by generalizing the
+`pll_get_post_types` filter (`PeregoSiteServiceProvider::registerTranslatablePostTypes`) to register all four
+Perego CPTs — a Polylang **Free** API, no Pro dependency — after which a rewrite flush made the AR archives
+resolve 200. The verifier derives each Arabic URL from the page's own `hreflang="ar"` alternate rather than
+prefixing `/ar/`, because Polylang Free de-duplicates AR slugs (the contact page's AR translation is
+`/ar/contact-2/`, not `/ar/contact/`) — a naïve prefix tests the wrong URL and reports false failures. **Why**:
+the fix restores real AR routing for the content types with the platform's own mechanism, and the slug-aware
+verifier is a correct, reusable gate. Result: 24 checks, 0 hard failures; the only remaining items are honest
+content gaps (AR Work/Journal translations) surfaced informationally, not as defects.

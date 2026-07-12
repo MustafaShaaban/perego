@@ -268,6 +268,16 @@ Immediate queue:
   the `llms_txt` signal CoreX's own `ReadinessScorer` checks (no duplicate dashboard) — and emits the
   `x-default` hreflang that completes Polylang's EN/AR alternates. Verified live: `/llms.txt` 200 text/plain;
   head now carries EN + AR + **x-default**. Pure builders unit-tested (3 new). Decision 11.
+- **Headless verification pass + AR-archive fix (Phases 11/13, 2026-07-12):** new
+  `scripts/verify-visual.mjs` drives Chromium over the primary routes × EN/AR × mobile+desktop,
+  asserting no horizontal overflow, no JS errors / broken resources, one `<h1>`, and correct
+  `lang`/`dir` (AR URLs resolved from each page's own `hreflang="ar"` alternate — Polylang Free
+  de-duplicates AR slugs, e.g. `/ar/contact-2/`). **It found a real bug:** `/ar/services/` + `/ar/work/`
+  404'd because `perego_service`/`perego_project`/`perego_client` were **not** Polylang-translatable —
+  fixed via a generalized `pll_get_post_types` filter (`registerTranslatablePostTypes`); after a rewrite
+  flush both AR archives now 200. **Result: 24 checks, 0 hard failures.** Remaining as honest content
+  gaps (not defects): AR Work + Journal translations (need real project/post content, item #3). Evidence:
+  `docs/visual-acceptance.md` (+ git-ignored `output/verify-visual.json`). Decision 12.
 
 ### Still remaining (implementable — continues from here)
 3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). **Language switcher: DONE +
