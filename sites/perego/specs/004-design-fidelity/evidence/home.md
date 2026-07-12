@@ -4,8 +4,9 @@
 **Live**: EN `http://perego.local/` · AR `http://perego.local/ar/الرئيسية/`
 **Captures** (gitignored, regenerate with `node scripts/capture-baselines.mjs`):
 `output/baselines/home-{mobile,desktop}.png`, `output/live/home-{en,ar}-{mobile,desktop}.png`.
-**Breakpoints**: mobile 375, desktop 1280. **Status**: In review — 11 of 13 rows resolved; 1 row remains
-(clients layout rebuild + AR content, a genuinely larger separate slice).
+**Breakpoints**: mobile 375, desktop 1280. **Status**: In review — 12 of 13 rows resolved; 1 row partially
+open (clients layout rebuild against the handoff's exact gallery/lightbox mechanic — the AR-content half of
+this row is now also fixed).
 
 ## Material differences (baseline vs live)
 
@@ -18,7 +19,7 @@ Severity: **P1** = breaks the approved visual system; **P2** = notable but local
 | 2 | About image | Hooded-figure image + "بيريجو" watermark (`about-hooded.png`) | **Resolved** — new `perego-theme/home-about` block renders the image + gradient overlay |
 | 3 | Service cards | Each staggered card contains a real app-screenshot (`card-*.png`) | **Resolved** — real `<img>` per card via `HomeContent::services()['image']` |
 | 4 | Clients bg | Section on the dark site gradient | **Resolved** — `.clients` now uses the existing `--wp--preset--color--bg-deep` token |
-| 5 | Clients layout + AR content | Corporate = dense logo-tile grid; Individual = wide video-review cards | **Open** — layout rebuild + AR client posts are a genuinely bigger, separately-scoped slice (see below) |
+| 5 | Clients layout + AR content | Corporate = repeated icon-tile buttons opening a drag-scroll gallery/lightbox; Individual = wide video-review cards with a real YouTube embed | **Partially resolved** — AR content half fixed (see below); the gallery/lightbox layout rebuild itself is a separate, larger slice |
 | 6 | Footer contact | "Contact us" lists emails + phone numbers | **Resolved** — real contact channels + blurb wired via `SiteFooterRenderer`/`GlobalContent::footer()` |
 | 7 | Header logo | Logo mark image + "Perego بيريجو" wordmark (`logo-full.png`) | **Resolved** — real logo image (46px), `aria-label` preserves the accessible name |
 | 8 | Header CTA | Filled pill, uppercase "START A PROJECT" | **Resolved** — CTA now reuses the shared `.perego-btn.perego-btn--accent` primitive |
@@ -30,9 +31,9 @@ Severity: **P1** = breaks the approved visual system; **P2** = notable but local
 
 ## Resolution notes (2026-07-12)
 
-**11 of 13 rows resolved** this session, re-verified via fresh baseline/live capture (EN + AR, desktop +
+**12 of 13 rows resolved** this session, re-verified via fresh baseline/live capture (EN + AR, desktop +
 mobile) after every change, plus the full 72-check `verify-visual.mjs` route-health run and the full Pest
-suite (186 tests). Work included:
+suite (187 tests). Work included:
 
 - Copied the approved handoff image set into `perego-theme/assets/images/` (41 files).
 - New `perego-theme/home-about` block (`HomeAboutRenderer` + `HomeContent::about()`) replacing the static,
@@ -66,15 +67,24 @@ suite (186 tests). Work included:
   confirmed visually on both EN (Open Sans Bold) and AR (Cairo) captures. This affects every route, not just
   Home, since it's a single site-wide `functions.php` enqueue — likely closes part of row 11's equivalent on
   every other route family too, though each should still be visually re-checked in its own slice.
+- **Row 5 AR-content half fixed — was a real query bug, not a missing-seed gap**: PROGRESS.md's older
+  "Clients AR: follow-up" note assumed the AR client posts hadn't been seeded yet. They actually already
+  existed (`seed-ar-content.php` had already run) and were correctly tagged with their own Polylang-linked
+  AR taxonomy terms (`corporate-ar`/`individual-ar`) — but `ClientsCarouselRenderer::query()` always
+  queried the *English* term slug regardless of the current language, so the AR carousels matched zero
+  posts. Fixed by resolving the taxonomy term for the current locale via `pll_get_term()` (falling back to
+  the English term when Polylang is inactive, per constitution IX). Confirmed live: `/ar/الرئيسية/` now
+  renders all 8 AR client cards. New regression test in `ClientsCarouselRenderTest.php`.
 
-## Remaining open rows
+## Remaining open row
 
-- **Row 5 (clients layout + AR content)**: the current implementation is a 4-card Swiper of demo
-  placeholders on both Corporate/Individual rails; the handoff uses a dense logo-tile grid for Corporate and
-  wide video-review cards for Individual — a real layout rebuild, not a token/CSS tweak. Separately, the
-  `perego_client` CPT is already Polylang-translatable (`registerTranslatablePostTypes`) but has no AR posts
-  seeded, so the AR clients section renders blank — a tracked content gap (PROGRESS.md already flags "Clients
-  AR: follow-up"), not a code defect. Both need their own scoped slice.
+- **Row 5, gallery/lightbox layout**: reading the handoff's own `js/main.js` shows the "Corporate Clients"
+  section is not real distinct client logos at all — it's 20 repeated generic icon-buttons
+  (`corp-icon.png`) that each open a drag-scroll gallery/lightbox mixing placeholder images and a YouTube
+  embed. "Individual Clients" cards embed real YouTube videos with a custom play-button lightbox. Matching
+  this exactly means building a new interactive gallery/lightbox feature (drag-scroll track, keyboard nav,
+  mixed image/video modal), not a CSS or content change — a properly separate, larger slice. The project
+  already has a `project-gallery-lightbox` block (spec 003 US2) that may be adaptable as a starting point.
 
 ## RTL / accessibility notes
 
@@ -85,8 +95,6 @@ suite (186 tests). Work included:
 
 ## Next
 
-Row 5 (clients layout rebuild + AR content seeding) is the remaining Home work — a separately-scoped slice
-(content seeding + layout rebuild), not a continuation of this visual-difference row list. Re-run this
+The clients gallery/lightbox layout (row 5) is the only remaining Home work — a properly separate feature
+slice (new interactive component), not a continuation of this visual-difference row list. Re-run this
 file's comparison procedure once it lands, then move to Phase 4 (US2, other route families) per `tasks.md`.
-Since the font-loading fix is a site-wide `functions.php` enqueue, spot-check the font actually renders on
-a non-Home route (e.g. `/services/`) before assuming row-11-equivalent gaps are closed everywhere.

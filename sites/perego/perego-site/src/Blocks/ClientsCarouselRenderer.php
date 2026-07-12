@@ -25,8 +25,10 @@ final class ClientsCarouselRenderer
 {
     private const PER_TYPE = 12;
 
-    public function __construct(private readonly ClientsContent $content)
-    {
+    public function __construct(
+        private readonly ClientsContent $content,
+        private readonly string $locale = 'en'
+    ) {
     }
 
     public function render(): string
@@ -100,8 +102,8 @@ final class ClientsCarouselRenderer
             'ignore_sticky_posts' => true,
             'tax_query' => [[
                 'taxonomy' => ClientPostType::TAXONOMY,
-                'field' => 'slug',
-                'terms' => $type,
+                'field' => 'term_id',
+                'terms' => $this->termIdForCurrentLocale($type),
             ]],
         ]);
 
@@ -110,5 +112,27 @@ final class ClientsCarouselRenderer
         wp_reset_postdata();
 
         return $posts;
+    }
+
+    /**
+     * Resolve the `perego_client_type` term id for the *current* language. Polylang gives every
+     * language its own term (e.g. `corporate` for en, a separate `corporate-ar` term for ar, linked as
+     * translations) — querying by the English slug alone only ever matches English-tagged posts, so
+     * the Arabic carousels rendered empty even though AR client posts existed and carried the AR term.
+     */
+    private function termIdForCurrentLocale(string $enSlug): int
+    {
+        $enTerm = get_term_by('slug', $enSlug, ClientPostType::TAXONOMY);
+        if (! $enTerm) {
+            return 0;
+        }
+
+        if (! function_exists('pll_get_term')) {
+            return (int) $enTerm->term_id;
+        }
+
+        $localized = pll_get_term((int) $enTerm->term_id, $this->locale);
+
+        return $localized ? (int) $localized : (int) $enTerm->term_id;
     }
 }

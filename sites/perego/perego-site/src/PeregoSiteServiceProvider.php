@@ -203,9 +203,9 @@ final class PeregoSiteServiceProvider
 
             register_block_type($this->blockDir('clients-carousel'), [
                 'render_callback' => static function () use ($languageService): string {
-                    return (new ClientsCarouselRenderer(
-                        new ClientsContent($languageService->driver()->currentLocale())
-                    ))->render();
+                    $locale = $languageService->driver()->currentLocale();
+
+                    return (new ClientsCarouselRenderer(new ClientsContent($locale), $locale))->render();
                 },
             ]);
         });

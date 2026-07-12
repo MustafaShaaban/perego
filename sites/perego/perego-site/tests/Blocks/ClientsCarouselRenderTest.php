@@ -20,8 +20,8 @@ if (! class_exists('WP_Post')) {
     }
 }
 
-// A headless WP_Query stub: the renderer only reads ->posts. It resolves the requested client type
-// from the tax_query term and returns whatever the current test staged in $GLOBALS.
+// A headless WP_Query stub: the renderer only reads ->posts. It resolves the requested (locale-
+// specific) term id from the tax_query and returns whatever the current test staged in $GLOBALS.
 if (! class_exists('WP_Query')) {
     class WP_Query
     {
@@ -30,11 +30,17 @@ if (! class_exists('WP_Query')) {
 
         public function __construct(array $args = [])
         {
-            $type = $args['tax_query'][0]['terms'] ?? '';
-            $this->posts = $GLOBALS['__perego_clients_by_type'][$type] ?? [];
+            $termId = $args['tax_query'][0]['terms'] ?? 0;
+            $this->posts = $GLOBALS['__perego_clients_by_term_id'][$termId] ?? [];
         }
     }
 }
+
+// EN term ids for 'corporate'/'individual', and their AR Polylang-translation counterparts.
+const PEREGO_TEST_CORP_EN = 30;
+const PEREGO_TEST_INDIV_EN = 32;
+const PEREGO_TEST_CORP_AR = 72;
+const PEREGO_TEST_INDIV_AR = 74;
 
 function perego_client_post(int $id): WP_Post
 {
@@ -42,6 +48,12 @@ function perego_client_post(int $id): WP_Post
     $post->ID = $id;
 
     return $post;
+}
+
+/** A minimal stdClass term stub carrying only the property the renderer reads: term_id. */
+function perego_term_stub(int $termId): object
+{
+    return (object) ['term_id' => $termId];
 }
 
 beforeEach(function () {
@@ -58,19 +70,43 @@ beforeEach(function () {
     ][$post->ID] ?? '');
     Functions\when('get_post_meta')->alias(fn (int $id, string $key) => $id === 21 && $key === '_perego_client_stat' ? 'Example stat' : '');
 
-    $GLOBALS['__perego_clients_by_type'] = [
-        'corporate' => [perego_client_post(11), perego_client_post(12)],
-        'individual' => [perego_client_post(21)],
+    // perego_client_type EN terms, each with an AR Polylang-translation counterpart.
+    Functions\when('get_term_by')->alias(fn (string $field, string $slug) => match ($slug) {
+        'corporate' => perego_term_stub(PEREGO_TEST_CORP_EN),
+        'individual' => perego_term_stub(PEREGO_TEST_INDIV_EN),
+        default => false,
+    });
+    Functions\when('pll_get_term')->alias(function (int $termId, string $locale) {
+        if ($locale !== 'ar') {
+            return $termId;
+        }
+
+        if ($termId === PEREGO_TEST_CORP_EN) {
+            return PEREGO_TEST_CORP_AR;
+        }
+
+        if ($termId === PEREGO_TEST_INDIV_EN) {
+            return PEREGO_TEST_INDIV_AR;
+        }
+
+        return $termId;
+    });
+
+    $GLOBALS['__perego_clients_by_term_id'] = [
+        PEREGO_TEST_CORP_EN => [perego_client_post(11), perego_client_post(12)],
+        PEREGO_TEST_INDIV_EN => [perego_client_post(21)],
+        PEREGO_TEST_CORP_AR => [perego_client_post(31)],
+        PEREGO_TEST_INDIV_AR => [perego_client_post(32)],
     ];
 });
 
 afterEach(function () {
-    unset($GLOBALS['__perego_clients_by_type']);
+    unset($GLOBALS['__perego_clients_by_term_id']);
 });
 
 function renderClients(string $locale = 'en'): string
 {
-    return (new ClientsCarouselRenderer(new ClientsContent($locale)))->render();
+    return (new ClientsCarouselRenderer(new ClientsContent($locale), $locale))->render();
 }
 
 it('renders one #clients section with the two carousels and no competing H1', function () {
@@ -108,7 +144,7 @@ it('renders the swiper navigation controls and pagination for a populated carous
 });
 
 it('omits the swiper shell for a client type with no posts, keeping the heading', function () {
-    $GLOBALS['__perego_clients_by_type'] = ['corporate' => [], 'individual' => []];
+    $GLOBALS['__perego_clients_by_term_id'] = [PEREGO_TEST_CORP_EN => [], PEREGO_TEST_INDIV_EN => []];
 
     $html = renderClients();
 
@@ -122,4 +158,12 @@ it('localizes the section into Arabic', function () {
 
     expect($html)->toContain('عملاء الشركات')
         ->and($html)->toContain('عملاء أفراد');
+});
+
+it('queries the Arabic-language taxonomy term, not the English one, on the Arabic route', function () {
+    // Regression test: the renderer used to hardcode the English term slug in every locale, so the
+    // Arabic carousels always queried zero posts even when AR-tagged client posts existed.
+    $html = renderClients('ar');
+
+    expect(substr_count($html, 'client-card__name'))->toBe(2);
 });
