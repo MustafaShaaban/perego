@@ -48,6 +48,23 @@ at both breakpoints in both languages.
   `perego_project`, and `perego_client` were not declared Polylang-translatable. They are now
   registered via the `pll_get_post_types` filter (Free-edition API), and the AR archives resolve 200.
 
+## Accessibility (Phase 11 — WCAG 2.2 AA)
+
+Regenerate with:
+
+```bash
+node sites/perego/perego-site/scripts/verify-a11y.mjs
+```
+
+Injects **axe-core 4.12** into each page and audits against the `wcag2a/2aa`, `wcag21a/21aa`, and
+`wcag22aa` rule tags. Serious/critical violations are hard failures.
+
+**Latest result (2026-07-12): 7 pages audited (home/services/work/journal/contact EN + home/contact
+AR), 0 violations of any impact.** Evidence: `output/verify-a11y.json` (git-ignored).
+
+_Automated coverage only — manual keyboard-operation checks (focus order, mobile-nav trap/restore,
+dialog/lightbox semantics, slider announcements) remain a recommended follow-up per Phase 11._
+
 ## Not yet automated (needs design baselines / heavier tooling)
 
 - Pixel-level visual regression against the handoff screenshots (Phase 12): baseline capture +
