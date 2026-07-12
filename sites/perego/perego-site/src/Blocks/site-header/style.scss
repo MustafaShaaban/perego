@@ -114,6 +114,9 @@
 
 .perego-language-toggle__current {
 	background: var(--wp--preset--color--accent);
+	/* Same token the accent button uses for text-on-accent contrast (WCAG AA) — plain --color--text
+	   (white) fails color-contrast against this bright accent background. */
+	color: var(--wp--preset--color--cta-text-on-accent);
 	box-shadow: var(--perego-shadow-glow-accent);
 }
 

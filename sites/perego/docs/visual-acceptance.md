@@ -76,9 +76,16 @@ node sites/perego/perego-site/scripts/verify-a11y.mjs
 Injects **axe-core 4.12** into each page and audits against the `wcag2a/2aa`, `wcag21a/21aa`, and
 `wcag22aa` rule tags. Serious/critical violations are hard failures.
 
-**Latest result (2026-07-12): 12 pages audited (home, services + single service, work + single
-project, journal + single post, contact, legal, search — EN; home + contact — AR), 0 violations of
-any impact.** Evidence: `output/verify-a11y.json` (git-ignored).
+**Latest result (2026-07-12, re-run after spec 004 T010): 12 pages audited (home, services + single
+service, work + single project, journal + single post, contact, legal, search — EN; home + contact —
+AR), 0 violations of any impact.** Evidence: `output/verify-a11y.json` (git-ignored).
+
+_Re-run caught a real regression from spec 004's Home visual-fidelity pass: restyling the header
+language-toggle's active pill (`.perego-language-toggle__current`) reused the generic
+`--wp--preset--color--text` (white) instead of the theme's dedicated `--wp--preset--color--
+cta-text-on-accent` token, failing color-contrast against the bright accent background on every
+route. Fixed by switching to the same text-on-accent token the `.perego-btn--accent` primitive
+already uses correctly — confirmed back to 0 violations before moving on._
 
 _Automated coverage only — manual keyboard-operation checks (focus order, mobile-nav trap/restore,
 dialog/lightbox semantics, slider announcements) remain a recommended follow-up per Phase 11._

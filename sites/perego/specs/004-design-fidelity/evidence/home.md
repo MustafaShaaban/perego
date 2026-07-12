@@ -114,9 +114,20 @@ Confirmed live on EN + AR, desktop + mobile: both card types render correctly, m
 - Route-health for all 16 mapped templates × EN/AR × mobile/desktop: **72 checks, 0 failures** (includes the
   regression found and fixed this session).
 
+## T013 — a11y/interaction re-run (2026-07-12)
+
+Re-ran `verify-a11y.mjs` and `verify-interactions.mjs` against the corrected markup. The a11y run **caught
+a real regression** from this session's own T010 work: the language-toggle restyle (row 9) used the
+generic `--wp--preset--color--text` (white) for the active pill's text instead of the theme's dedicated
+`--wp--preset--color--cta-text-on-accent` token, failing color-contrast against the bright accent
+background on every route (12 pages, 1 serious violation each). Fixed by switching to the same
+text-on-accent token `.perego-btn--accent` already uses correctly. Re-verified: **12 pages / 0 violations**,
+**4/4 interaction checks**, and the full **72-check route-health + 188 Pest + 67 Jest** suites all still
+green after the fix.
+
 ## Next
 
-Home's visual-difference row list is fully closed. Remaining Home tasks per `tasks.md`: T012 (migrate
-editorial prose to editor-canvas content — currently PHP-provider-rendered, matching the established
-hero/services/about pattern) and the a11y/interaction re-run (T013) against the corrected markup. After
-those, move to Phase 4 (US2, other route families).
+Home's visual-difference row list is fully closed and T009/T010/T011/T013 are done. The only remaining
+Phase 3 task is **T012** (migrate editorial prose to editor-canvas content — currently PHP-provider-rendered
+via `HomeContent`, matching the established hero/services/about pattern; the service-single canvas
+migration from spec 003 is the template to follow). After that, move to Phase 4 (US2, other route families).

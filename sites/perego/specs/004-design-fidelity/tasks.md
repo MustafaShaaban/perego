@@ -26,7 +26,7 @@
 - [x] T010 [US1] Correct documented home/header/footer/preloader/hero/services/about/client differences in `sites/perego/perego-theme/` and `sites/perego/perego-site/src/Blocks/`. **13/13 differences closed** (see evidence/home.md) — the clients-layout row was closed via an explicit owner scope decision (re-skin the existing accessible carousel rather than build a new drag-scroll+lightbox+video feature for placeholder content).
 - [x] T011 [US1] Replace home/client placeholder media only with approved handoff or owner-supplied assets through `sites/perego/perego-site/scripts/` and WordPress media records. Hero/about/service-card/logo/client-tile images wired from the approved handoff set.
 - [ ] T012 [US1] Migrate home editorial prose to canvas-managed content where it is still provider-rendered.
-- [~] T013 [US1] Run and record visual, interaction, a11y, RTL, and relevant Pest/Jest evidence for the approved home slice. Visual (72-check route-health + baseline/live capture) and unit (188 Pest + 67 Jest) done; a11y/interaction re-run against the corrected markup still open.
+- [x] T013 [US1] Run and record visual, interaction, a11y, RTL, and relevant Pest/Jest evidence for the approved home slice. Visual (72-check route-health + baseline/live capture), a11y (12 pages/0 violations — caught + fixed a real color-contrast regression from the T010 language-toggle restyle), interaction (4/4), and unit (188 Pest + 67 Jest) all green.
 
 ## Phase 4: User Story 2 - Approved content-route experience (P1)
 
