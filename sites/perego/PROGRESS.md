@@ -48,10 +48,33 @@ No visual reinterpretation is authorized: every correction must make Perego matc
    Jest, all green.** Home is design-complete; **blocked on owner material** for launch only by its
    placeholder client-carousel content (Sample Corporate/Individual Client names — FR-006).
 
-   **➡ RESUME HERE.** Start Phase 4 (US2) — content-route slices, one family at a time, same evidence
-   gate as Home: T014 (services archive + singles), T015 (work archive + project singles, incl.
-   gallery/lightbox states), T016 (journal/search/404/contact/legal/page), T017 (portfolio prose to
-   canvas), T018 (per-route acceptance recording in `route-matrix.md`). See `tasks.md` for full detail.
+3. **Phase 4 (US2) — content-route slices. T014, T015, T016 DONE (2026-07-12).**
+   - **T014 services** (`fc52992`): hero image, whatwedo split+media, site-wide `.btn`→`.perego-btn` bug.
+   - **T015 work** (`687d4a9`, `c764444`): archive breadcrumb/demo-note, AR-filter canonical-slug bug,
+     project-single hero image + background-gap; gallery/lightbox + related-projects deferred.
+   - **T016 journal/single-post/search/404/contact/legal/page** (`58d5998`, `30d3bf4`, `058d4ce`):
+     journal + single-post (unstyled cards + empty author byline `post_author=0`), contact (the CoreX
+     Forms brief **and** the site-wide footer form were completely unstyled — block-only stylesheet
+     never loads for server-rendered forms; ported onto `.corex-form__*` + 2-col grid + honeypot/submit
+     fixes), legal (a **site-wide** WP 7.0.1 quirk dropped the h1/h2/h3 font-size presets → 16px headings
+     everywhere; resilient `:root` re-declaration; + white-gap), search (plain list → `.post-card` grid +
+     breadcrumb + pagination), 404 + page verified. Evidence: `evidence/{journal,single-post,contact,
+     legal,search-404-page}.md`. **All gates green: 72 route-health / 12-page a11y / 4 interactions / 195 Pest.**
+
+   **➡ RESUME HERE.** Remaining Phase 4: **T017** (migrate portfolio prose + any provider prose to
+   editor-canvas content) and **T018** (per-route EN/AR acceptance recording — largely captured in the
+   `evidence/*.md` + `route-matrix.md` already). Then Phase 5 (T019-T021 launch content) and Phase 6
+   (T022-T025 release evidence, guards, specs 001-003 reconcile, PR).
+
+   **⚠ TWO CROSS-CUTTING ITEMS SURFACED IN T016 — need owner attention:**
+   - **(launch blocker) UI-string i18n is unwired.** On every AR route the header nav, form field
+     labels, and button text render in **English** — no `.po`/`.mo` and no `pll_register_string` for the
+     `perego-site`/theme domains, and the nav labels in `SiteHeaderRenderer` are hardcoded English (not
+     even `__()`-wrapped). Pre-existing (present on the accepted AR home). The handoff is English-only so
+     it's not a deviation *from the handoff*, but it blocks a real bilingual launch. Needs its own i18n
+     slice (wrap strings + author translations, or Polylang string translations) — not a per-route fix.
+   - **(content) AR legal section bodies + `sample-page` demo copy** are unseeded/WP-default placeholder;
+     Phase-5 launch-content cleanup.
 
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
 
