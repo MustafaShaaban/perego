@@ -21,14 +21,29 @@
 	z-index: 0;
 	overflow: hidden;
 	pointer-events: none;
-	// Decorative luminous wash; the real prism artwork lands with the M7 asset pipeline.
-	background: radial-gradient(
-		120% 80% at 72% 6%,
-		var(--perego-glass-border),
-		transparent 55%
-	);
-	opacity: 0.5;
-	animation: perego-hero-pulse 8s ease-in-out infinite;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		object-position: center;
+		animation: perego-hero-drift 26s ease-in-out infinite;
+	}
+
+	// Luminous wash over the artwork, matching the handoff's `.hero::after`.
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		z-index: 1;
+		background: radial-gradient(
+			120% 80% at 72% 6%,
+			var(--perego-glass-border),
+			transparent 55%
+		);
+		opacity: 0.5;
+		animation: perego-hero-pulse 8s ease-in-out infinite;
+	}
 }
 
 .hero__inner {
@@ -188,8 +203,19 @@
 	}
 }
 
+@keyframes perego-hero-drift {
+	0%,
+	100% {
+		transform: scale(1.06) translate(0, 0);
+	}
+	50% {
+		transform: scale(1.1) translate(-1.2%, -1.4%);
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
-	.hero__prism {
+	.hero__prism img,
+	.hero__prism::after {
 		animation: none;
 	}
 	.hero__slide {

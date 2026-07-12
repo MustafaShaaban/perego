@@ -18,6 +18,7 @@ beforeEach(function () {
     Functions\when('esc_url')->returnArg();
     Functions\when('__')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
+    Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
 });
 
 function renderServicesTeaser(string $locale = 'en'): string
@@ -60,12 +61,12 @@ it('labels each card with the localized service name', function () {
         ->and($html)->toContain('Website Making');
 });
 
-it('gives each card an accessible label region and a decorative media placeholder', function () {
+it('gives each card an accessible label region and an alt-described image', function () {
     $html = renderServicesTeaser();
 
     expect($html)->toContain('service-card__label')
-        ->and($html)->toContain('service-card__media')
-        ->and($html)->toContain('service-card__overlay');
+        ->and($html)->toContain('service-card__overlay')
+        ->and($html)->toMatch('/<img [^>]*alt="Video editing timeline"/');
 });
 
 it('exposes the heading via aria-labelledby for the section landmark', function () {

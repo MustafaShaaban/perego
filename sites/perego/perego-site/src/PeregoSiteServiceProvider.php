@@ -11,6 +11,7 @@ namespace PeregoSite;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\HeroSliderRenderer;
+use PeregoSite\Blocks\HomeAboutRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
@@ -360,7 +361,7 @@ final class PeregoSiteServiceProvider
                 },
             ]);
 
-            $footerRenderer = new SiteFooterRenderer();
+            $footerRenderer = new SiteFooterRenderer($this->languageService);
             register_block_type($this->blockDir('site-footer'), [
                 'render_callback' => static function (array $attributes) use ($footerRenderer): string {
                     return $footerRenderer->render((bool) ($attributes['flat'] ?? false));
@@ -388,6 +389,11 @@ final class PeregoSiteServiceProvider
             $teaserRenderer = new ServicesTeaserRenderer($this->languageService);
             register_block_type($this->blockDir('services-teaser'), [
                 'render_callback' => static fn (): string => $teaserRenderer->render(),
+            ]);
+
+            $aboutRenderer = new HomeAboutRenderer($this->languageService);
+            register_block_type($this->blockDir('home-about'), [
+                'render_callback' => static fn (): string => $aboutRenderer->render(),
             ]);
         });
     }

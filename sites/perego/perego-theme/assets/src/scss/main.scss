@@ -156,62 +156,6 @@ body {
 	}
 }
 
-/* Glass panel (handoff `.glass-panel`). */
-.glass-panel {
-	border: 1px solid var(--perego-glass-border);
-	border-radius: var(--perego-radius-card);
-	background: var(--perego-glass-panel-fill);
-	backdrop-filter: blur(var(--perego-glass-blur));
-	padding: clamp(26px, 3vw, 44px);
-	box-shadow: var(--perego-shadow-glass-panel-inset);
-}
-
-.panel-title {
-	font-size: var(--wp--preset--font-size--h2);
-	font-weight: 700;
-	line-height: 1.08;
-	margin: 0 0 0.6em;
-}
-
-/* Home "About Us" section — two glass panels, right-aligned column (RTL mirrors to the left). */
-.home-about {
-	position: relative;
-	overflow: hidden;
-	padding-block: var(--wp--preset--spacing--section-y);
-	background: var(--perego-gradient-bg);
-}
-
-.home-about__inner {
-	position: relative;
-	z-index: 2;
-	inline-size: 100%;
-	max-inline-size: var(--wp--style--global--content-size, 1240px);
-	margin-inline: auto;
-	padding-inline: var(--wp--preset--spacing--gutter);
-	display: grid;
-	grid-template-columns: 1fr minmax(0, 620px);
-}
-
-.home-about__panels {
-	grid-column: 2;
-	display: flex;
-	flex-direction: column;
-	gap: clamp(18px, 2.4vw, 30px);
-}
-
-[dir="rtl"] .home-about__panels {
-	grid-column: 1;
-}
-
-@media (max-width: 900px) {
-	.home-about__inner {
-		grid-template-columns: 1fr;
-	}
-	.home-about__panels {
-		grid-column: 1;
-	}
-}
-
 /* ===================================================================
  * spec 003 / M3 US3 — Service single (editable post content) + archive
  * The editorial "What we do" / "Our Process" prose is authored on the

@@ -60,8 +60,11 @@ final class SiteHeaderRenderer
             . 'data-wp-init="callbacks.init">';
 
         $html .= '<div class="perego-header__bar">';
-        $html .= '<a class="perego-header__logo" href="' . esc_url(home_url('/')) . '">'
-            . esc_html__('Perego', 'perego-site') . '</a>';
+        $html .= '<a class="perego-header__logo" href="' . esc_url(home_url('/')) . '" '
+            . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" '
+            . 'alt="" />'
+            . '</a>';
 
         $html .= '<div class="perego-header__nav-backdrop"></div>';
         $html .= '<nav id="perego-mobile-nav" class="perego-header__nav" '
@@ -70,7 +73,7 @@ final class SiteHeaderRenderer
         $html .= '<ul>' . $this->renderNavItems($currentPath) . '</ul>';
         $html .= '</nav>';
 
-        $html .= '<a class="perego-header__cta" href="' . esc_url(home_url('/contact')) . '">'
+        $html .= '<a class="perego-btn perego-btn--accent perego-header__cta" href="' . esc_url(home_url('/contact')) . '">'
             . esc_html__('Start a Project', 'perego-site') . '</a>';
 
         $html .= $this->renderLanguageToggle($driver->currentLocale());

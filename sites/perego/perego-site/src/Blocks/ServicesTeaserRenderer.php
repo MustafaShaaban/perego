@@ -36,8 +36,9 @@ final class ServicesTeaserRenderer
 
         $html = '<section class="services-teaser" id="services" aria-labelledby="' . self::HEADING_ID . '">';
 
-        // Decorative wavy backdrop; the real artwork lands with the M7 asset pipeline.
-        $html .= '<div class="wavy-bg" aria-hidden="true"></div>';
+        $html .= '<div class="wavy-bg" aria-hidden="true">'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" />'
+            . '</div>';
 
         $html .= '<div class="services-teaser__inner">';
 
@@ -69,11 +70,8 @@ final class ServicesTeaserRenderer
     {
         $href = esc_url(home_url('/services/' . $service['slug']));
 
-        // The card media is a token-driven gradient placeholder keyed by slug for now; the real
-        // image (data-image) drops in with the M7 asset pipeline without changing this markup.
-        $media = '<span class="service-card__media" data-service="' . esc_attr($service['slug']) . '" '
-            . 'data-image="' . esc_attr($service['image']) . '" '
-            . 'role="img" aria-label="' . esc_attr($service['alt']) . '"></span>';
+        $imageUrl = get_stylesheet_directory_uri() . '/assets/images/' . $service['image'] . '.png';
+        $media    = '<img src="' . esc_url($imageUrl) . '" alt="' . esc_attr($service['alt']) . '" loading="lazy" />';
 
         return '<a class="service-card" href="' . $href . '">'
             . $media

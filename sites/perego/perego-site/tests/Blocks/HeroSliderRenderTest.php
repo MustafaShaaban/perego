@@ -19,6 +19,7 @@ beforeEach(function () {
     Functions\when('__')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
     Functions\when('wp_json_encode')->alias('json_encode');
+    Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
 });
 
 function renderHero(string $locale = 'en'): string

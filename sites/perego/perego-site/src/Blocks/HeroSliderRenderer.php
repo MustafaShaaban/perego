@@ -52,7 +52,9 @@ final class HeroSliderRenderer
             . 'data-wp-on--mouseleave="actions.resume" '
             . 'data-wp-init="callbacks.init">';
 
-        $html .= '<div class="hero__prism" aria-hidden="true"></div>';
+        $html .= '<div class="hero__prism" aria-hidden="true">'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/hero-bg.png') . '" alt="" />'
+            . '</div>';
 
         $html .= '<div class="hero__inner">';
         $html .= '<div class="hero__content">';

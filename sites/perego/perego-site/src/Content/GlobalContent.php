@@ -52,6 +52,9 @@ final class GlobalContent
                 'lead' => 'Notes on video, motion, design and the web from the studio floor.',
                 'empty' => 'No articles published yet. Check back soon.',
             ],
+            'footer' => [
+                'blurb' => 'We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.',
+            ],
             'join' => [
                 'name' => 'Full name',
                 'email' => 'Email',
@@ -95,6 +98,9 @@ final class GlobalContent
                 'h1' => 'مدونة بيريجو',
                 'lead' => 'ملاحظات في الفيديو والموشن والتصميم والويب من داخل الاستوديو.',
                 'empty' => 'لا توجد مقالات منشورة بعد. عُد قريبًا.',
+            ],
+            'footer' => [
+                'blurb' => 'يسعدنا التواصل معك لتقديم حلول تقنية إبداعية والمساعدة والتوصيات المخصصة التي تناسب احتياجاتك على أفضل وجه.',
             ],
             'join' => [
                 'name' => 'الاسم الكامل',
@@ -150,5 +156,11 @@ final class GlobalContent
     public function join(): array
     {
         return self::COPY[$this->locale]['join'];
+    }
+
+    /** @return array<string, string> */
+    public function footer(): array
+    {
+        return self::COPY[$this->locale]['footer'];
     }
 }

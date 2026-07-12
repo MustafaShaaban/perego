@@ -6,7 +6,10 @@
  */
 
 .clients {
+	position: relative;
+	overflow: hidden;
 	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--wp--preset--color--bg-deep);
 }
 
 .clients__inner {

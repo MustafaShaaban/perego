@@ -33,8 +33,19 @@ No visual reinterpretation is authorized: every correction must make Perego matc
    **Done (2026-07-12).** T004/T005 (route-matrix + quickstart), T006 (env/build verification recorded in
    quickstart), T007 (verify-visual extended to all 16 templates — 72 checks/0 failures), T008
    (visual-difference review procedure in `docs/visual-acceptance.md`) all complete. Evidence gate is ready.
-2. **Start Phase 3 (US1) — T009-T013:** finalize Home as the first complete visual slice against
-   `site/index.html`; do not begin another feature while it has material differences.
+2. ~~Start Phase 3 (US1) — T009-T013: finalize Home as the first complete visual slice.~~ **In progress
+   (2026-07-12).** T009 done (EN/AR baselines + live captures in `specs/004-design-fidelity/evidence/home.md`).
+   T010/T011 **10 of 13 logged differences resolved**: hero background image, About-section image +
+   locale-aware copy (new `perego-theme/home-about` block — fixes a real bug where the AR route rendered
+   English About/mission prose because it was hardcoded in the language-neutral `front-page.html`), real
+   service-card images, clients-section background token, real footer contact/social details, header
+   logo image, header CTA + language-toggle styling. Copied the 41 approved handoff images into
+   `perego-theme/assets/images/`. A real regression was introduced and caught by the route-health
+   gate — reusing a shared button class on the header CTA created a cross-stylesheet specificity tie
+   that showed the desktop CTA on mobile (149px overflow on all 16 templates) — fixed and re-verified
+   at 72 checks / 0 failures. 186 Pest green (10 new/updated tests). Remaining open: clients-section
+   layout rebuild + AR client-post content (row 5), a cross-block typography/scale audit (row 11) —
+   see `specs/004-design-fidelity/evidence/home.md` for full detail before continuing T010/T013.
 3. Complete each remaining route family (Phase 4, T014-T018) through the same evidence gate.
 
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
