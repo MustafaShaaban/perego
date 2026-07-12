@@ -244,10 +244,191 @@ body {
  * The editorial "What we do" / "Our Process" prose is authored on the
  * editor canvas (post content) inside .svc-whatwedo / .svc-process groups;
  * these rules give those groups the approved dark/gradient section look.
+ *
+ * spec 004 T014/T015 — .svc-hero/.svc-tabs live here (not in either the
+ * services-overview or service-hero block's own stylesheet) because both
+ * the archive and every service single render them, and a block's own
+ * compiled stylesheet only loads on pages using that specific block —
+ * duplicating this ruleset per block risks the two drifting apart.
  * =================================================================== */
 
 .svc-single__body {
 	--wp--style--block-gap: 0;
+}
+
+.svc-hero {
+	position: relative;
+	overflow: hidden;
+	text-align: center;
+	min-block-size: 92vh;
+	display: flex;
+	align-items: center;
+	padding-block-end: clamp(48px, 6vw, 90px);
+	background: var(--wp--preset--color--bg-deep);
+}
+
+.svc-hero__bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		object-position: center top;
+		opacity: 0.95;
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			180deg,
+			rgba(12, 0, 32, 0.25) 0%,
+			rgba(12, 0, 32, 0.4) 45%,
+			rgba(12, 0, 32, 0.9) 100%
+		);
+	}
+}
+
+.svc-hero__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	padding-block-start: clamp(70px, 9vw, 120px);
+}
+
+.svc-hero__eyebrow {
+	margin: 0 0 10px;
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--wp--preset--color--accent-soft);
+}
+
+.svc-hero__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.02;
+	text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+	margin: 0;
+}
+
+.svc-tabs {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: clamp(16px, 1.8vw, 26px);
+	margin-block-start: clamp(40px, 6vw, 76px);
+	max-inline-size: 1120px;
+	margin-inline: auto;
+}
+
+.svc-tab {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	color: var(--wp--preset--color--text);
+	backdrop-filter: blur(var(--perego-glass-blur));
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 20px 50px rgba(0, 0, 0, 0.35);
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		background var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease),
+		border-color var(--perego-dur-fast) var(--perego-ease);
+
+	&:hover,
+	&:focus-within,
+	&.is-active {
+		z-index: 5;
+		background: linear-gradient(155deg, #e98bf7 0%, var(--wp--preset--color--accent) 52%, #c24fe0 100%);
+		border-color: rgba(255, 255, 255, 0.55);
+		transform: translateY(-6px);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 16px 26px -14px rgba(216, 106, 243, 0.45),
+			0 10px 22px rgba(0, 0, 0, 0.42);
+
+		.svc-tab__label,
+		.svc-tab__cta {
+			color: var(--wp--preset--color--cta-text-on-accent);
+		}
+
+		.svc-tab__cta {
+			max-block-size: 60px;
+			opacity: 1;
+			padding: 15px 12px;
+		}
+	}
+}
+
+.svc-tab__main {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 20px;
+	inline-size: 100%;
+	flex: 1;
+	color: inherit;
+	text-decoration: none;
+}
+
+.svc-tab__label {
+	font-weight: 700;
+	font-size: clamp(15px, 1.3vw, 21px);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	text-align: center;
+	line-height: 1.2;
+}
+
+.svc-tab__cta {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	inline-size: 100%;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--wp--preset--color--text);
+	max-block-size: 0;
+	opacity: 0;
+	padding-block: 0;
+	padding-inline: 12px;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.22);
+	text-decoration: none;
+	transition: max-block-size var(--perego-dur-fast) var(--perego-ease),
+		opacity var(--perego-dur-fast) var(--perego-ease),
+		padding var(--perego-dur-fast) var(--perego-ease);
+}
+
+@media (max-width: 900px) {
+	.svc-tabs {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.svc-tab {
+		transition: none;
+	}
+
+	.svc-tab:hover,
+	.svc-tab:focus-within {
+		transform: none;
+	}
 }
 
 .section-title,
@@ -279,6 +460,39 @@ body {
 		color: var(--perego-muted);
 		font-size: var(--wp--preset--font-size--lead);
 		margin-block-end: 16px;
+	}
+}
+
+/* Two-column "what we do" layout: text beside a media image. Used by both the archive
+   (ServicesOverviewRenderer) and every service single's canvas content (seed-services.php). */
+.svc-whatwedo__grid {
+	position: relative;
+	z-index: 1;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: clamp(30px, 5vw, 72px);
+	align-items: center;
+}
+
+.svc-whatwedo__media {
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	box-shadow: var(--perego-shadow-featured);
+	transform: rotate(-1.2deg);
+
+	img {
+		inline-size: 100%;
+		block-size: auto;
+		display: block;
+	}
+}
+
+@media (max-width: 900px) {
+	.svc-whatwedo__grid {
+		grid-template-columns: 1fr;
 	}
 }
 

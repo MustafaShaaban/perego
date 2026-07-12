@@ -15,6 +15,7 @@ beforeEach(function () {
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_url')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
+    Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
 });
 
 function renderServiceHero(string $currentSlug = 'video-editing', string $locale = 'en'): string
@@ -27,6 +28,7 @@ it('renders the eyebrow, the current service full name as the single H1, and no 
 
     expect($html)->toContain('svc-hero__eyebrow')
         ->and($html)->toContain('Our Services')
+        ->and($html)->toMatch('/<img [^>]*svc-hero-bg\.png/')
         ->and($html)->toMatch('/<h1 class="svc-hero__title">Video Editing &amp; Post-Production|<h1 class="svc-hero__title">Video Editing & Post-Production/')
         ->and(substr_count($html, '<h1'))->toBe(1);
 });

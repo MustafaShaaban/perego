@@ -38,17 +38,42 @@ if (! $pllReady) {
 }
 
 /**
+ * Handoff's own per-service "what we do" UI mockup image (website-making has no dedicated mockup in
+ * the handoff itself — it reuses graphic-design's, verbatim).
+ *
+ * @var array<string, string>
+ */
+$whatWeDoImage = [
+    'video-editing' => 'ui-video-editing',
+    'motion-graphics' => 'ui-motion-graphics',
+    'graphic-design' => 'ui-graphic-design',
+    'website-making' => 'ui-graphic-design',
+];
+
+/**
  * Build the editable block-editor post_content for one service from its seed copy.
  */
-$buildContent = static function (ServiceContent $content, string $slug): string {
+$buildContent = static function (ServiceContent $content, string $slug) use ($whatWeDoImage): string {
     [$p1, $p2] = $content->intro($slug);
+    $imageUrl = get_stylesheet_directory_uri() . '/assets/images/' . ($whatWeDoImage[$slug] ?? 'ui-video-editing') . '.png';
 
     $blocks = '<!-- wp:group {"align":"full","className":"svc-whatwedo","layout":{"type":"constrained"}} -->' . "\n";
     $blocks .= '<div class="wp-block-group alignfull svc-whatwedo">' . "\n";
+    $blocks .= '<!-- wp:group {"className":"svc-whatwedo__grid","layout":{"type":"default"}} -->' . "\n";
+    $blocks .= '<div class="wp-block-group svc-whatwedo__grid">' . "\n";
+    $blocks .= '<!-- wp:group {"className":"svc-whatwedo__text","layout":{"type":"default"}} -->' . "\n";
+    $blocks .= '<div class="wp-block-group svc-whatwedo__text">' . "\n";
     $blocks .= '<!-- wp:heading --><h2 class="wp-block-heading">' . esc_html($content->label('whatWeDo')) . '</h2><!-- /wp:heading -->' . "\n";
     $blocks .= '<!-- wp:paragraph --><p><strong>' . esc_html($content->subline($slug)) . '</strong></p><!-- /wp:paragraph -->' . "\n";
     $blocks .= '<!-- wp:paragraph --><p>' . esc_html($p1) . '</p><!-- /wp:paragraph -->' . "\n";
     $blocks .= '<!-- wp:paragraph --><p>' . esc_html($p2) . '</p><!-- /wp:paragraph -->' . "\n";
+    $blocks .= '</div>' . "\n" . '<!-- /wp:group -->' . "\n";
+    $blocks .= '<!-- wp:group {"className":"svc-whatwedo__media","layout":{"type":"default"}} -->' . "\n";
+    $blocks .= '<div class="wp-block-group svc-whatwedo__media">' . "\n";
+    $blocks .= '<!-- wp:image {"sizeSlug":"large"} --><figure class="wp-block-image size-large">'
+        . '<img src="' . esc_url($imageUrl) . '" alt="' . esc_attr($content->name($slug)) . '" loading="lazy"/></figure><!-- /wp:image -->' . "\n";
+    $blocks .= '</div>' . "\n" . '<!-- /wp:group -->' . "\n";
+    $blocks .= '</div>' . "\n" . '<!-- /wp:group -->' . "\n";
     $blocks .= '</div>' . "\n";
     $blocks .= '<!-- /wp:group -->' . "\n\n";
 

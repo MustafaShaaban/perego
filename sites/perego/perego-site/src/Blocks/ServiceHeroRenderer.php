@@ -19,8 +19,7 @@ use PeregoSite\Content\ServiceContent;
  * the contact page with the service pre-selected). Ported faithfully from the handoff `.svc-hero` /
  * `.svc-tabs`. Structural navigation only — the editorial service prose lives in the post content.
  *
- * The current service is marked `.is-active` + `aria-current="page"`. The decorative background
- * artwork lands with the asset pipeline; the band renders correctly without it.
+ * The current service is marked `.is-active` + `aria-current="page"`.
  */
 final class ServiceHeroRenderer
 {
@@ -30,7 +29,9 @@ final class ServiceHeroRenderer
         $title = $currentSlug !== '' ? $content->fullName($currentSlug) : $eyebrow;
 
         $html = '<section class="svc-hero">';
-        $html .= '<div class="svc-hero__bg" aria-hidden="true"></div>';
+        $html .= '<div class="svc-hero__bg" aria-hidden="true">'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/svc-hero-bg.png') . '" alt="" />'
+            . '</div>';
         $html .= '<div class="svc-hero__inner">';
         $html .= '<p class="svc-hero__eyebrow">' . esc_html($eyebrow) . '</p>';
         $html .= '<h1 class="svc-hero__title">' . esc_html($title) . '</h1>';

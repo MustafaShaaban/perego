@@ -40,6 +40,12 @@ const ROUTES = [
 		liveEN: `${ BASE }/services/`,
 		liveAR: `${ BASE }/ar/services/`,
 	},
+	{
+		label: 'single-service-video-editing',
+		handoffFile: 'service-video-editing.html',
+		liveEN: `${ BASE }/services/video-editing/`,
+		liveAR: `${ BASE }/ar/services/video-editing-2/`,
+	},
 ];
 
 const browser = await chromium.launch( {

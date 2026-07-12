@@ -32,7 +32,7 @@
 
 **Goal**: Finalize one complete route family at a time against its matching handoff template.
 
-- [ ] T014 [US2] Complete Services archive and all service-single comparisons against `site/services.html` and `site/service-*.html`.
+- [x] T014 [US2] Complete Services archive and all service-single comparisons against `site/services.html` and `site/service-*.html`. See evidence/services.md: hero image, whatwedo split+media, and a site-wide button-class bug fixed; "Selected work" teaser deliberately deferred (no real project thumbnails yet).
 - [ ] T015 [US2] Complete Work archive and project-single comparisons against `site/portfolio.html` and `site/project.html`, including gallery/lightbox states.
 - [ ] T016 [US2] Complete Journal, search, 404, contact, legal, and page comparisons against their matching handoff templates.
 - [ ] T017 [US2] Migrate portfolio prose and any remaining visible provider prose to canvas-managed content.

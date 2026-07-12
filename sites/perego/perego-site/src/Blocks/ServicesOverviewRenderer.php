@@ -69,27 +69,28 @@ final class ServicesOverviewRenderer
     }
 
     /**
-     * Reuses the shared `.svc-whatwedo` look (dark gradient, heading/subline/paragraph treatment —
-     * also used by service singles' canvas "What we do" prose); `.services-overview__whatwedo` adds
-     * only the archive-specific two-column grid with a media image, which singles don't have.
+     * Reuses the shared `.svc-whatwedo` look (dark gradient, heading/subline/paragraph treatment) and
+     * the shared `.svc-whatwedo__grid`/`__media` two-column layout — both also used by service
+     * singles' canvas "What we do" prose (`scripts/seed-services.php`), so they live theme-wide in
+     * main.scss rather than in this block's own stylesheet.
      *
      * @param array<string, mixed> $o
      */
     private function renderWhatWeDo(array $o): string
     {
-        $html = '<section class="svc-whatwedo services-overview__whatwedo">';
-        $html .= '<div class="services-overview__whatwedo-grid">';
-        $html .= '<div class="services-overview__whatwedo-text">';
+        $html = '<section class="svc-whatwedo">';
+        $html .= '<div class="svc-whatwedo__grid">';
+        $html .= '<div class="svc-whatwedo__text">';
         $html .= '<h2 class="wp-block-heading">' . esc_html($o['introTitle']) . '</h2>';
         $html .= '<p><strong>' . esc_html($o['introSubline']) . '</strong></p>';
         $html .= '<p>' . esc_html($o['introP1']) . '</p>';
         $html .= '<p>' . esc_html($o['introP2']) . '</p>';
         $html .= '</div>';
-        $html .= '<div class="services-overview__whatwedo-media">'
+        $html .= '<div class="svc-whatwedo__media">'
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/ui-video-editing.png') . '" '
             . 'alt="' . esc_attr($o['h1']) . '" loading="lazy" />'
             . '</div>';
-        $html .= '</div>'; // .services-overview__whatwedo-grid
+        $html .= '</div>'; // .svc-whatwedo__grid
         $html .= '</section>';
 
         return $html;
