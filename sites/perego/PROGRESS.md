@@ -301,8 +301,12 @@ Immediate queue:
    cookie in fallback mode (never a stale-cookie override under Polylang). **Verified live:** `/` 200 →
    `<a href="http://perego.local/ar/" hreflang="ar">AR</a>`; `/ar/` 200 renders `<html dir="rtl" lang="ar">`
    with AR as the current marker. **174 Pest + 65 Jest green** (rewrite rules already flushed — no manual step
-   needed this run). _Remaining under #3: idempotent AR **content** translation-linking for the remaining CPTs
-   (services/legal done; projects/clients/journal pending real owner data)._
+   needed this run). _AR **content** translation-linking: services/legal done; **projects + journal now
+   done too** (2026-07-12) via `scripts/seed-ar-content.php` — idempotent, Polylang-linked AR demo
+   translations of the 9 projects, 3 journal posts, their taxonomy terms, and the Journal/Home pages.
+   After a rewrite flush, `/ar/work/`, AR project singles, `/ar/المدونة/`, and AR post singles all
+   resolve; **verify-visual is now 44 checks, 0 failures, 0 gaps** (every route in both languages). Copy
+   is clearly-marked demo; owner swaps in real projects/articles before launch. (Clients AR: follow-up.)_
 4. ~~**Global sections** — `perego_global_section` CPT + `perego/global-section` block for header/footer/
    404 repeated copy rendered language-aware inside the neutral FSE parts.~~ — **done (2026-07-12), see below.**
 5. Then: clients CPT + carousels (Swiper), journal, legal + TOC, search, 404, forms (footer/brief/join-us)

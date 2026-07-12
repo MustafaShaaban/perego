@@ -28,12 +28,12 @@ run output is written to `output/verify-visual.json` (git-ignored — regenerabl
 | --- | --- | --- | --- |
 | Home `/` | ✅ | ✅ | `/ar/` |
 | Services archive `/services/` | ✅ | ✅ | `/ar/services/` |
-| Work archive `/work/` | ✅ | ⚠️ gap | — (no AR project content yet) |
-| Journal `/journal/` | ✅ | ⚠️ gap | — (no AR journal page yet) |
+| Work archive `/work/` | ✅ | ✅ | `/ar/work/` |
+| Journal `/journal/` | ✅ | ✅ | `/ar/المدونة/` |
 | Contact `/contact/` | ✅ | ✅ | `/ar/contact-2/` |
 | Single service `/services/website-making/` | ✅ | ✅ | `/ar/services/website-making-2/` |
-| Single project `/work/…/` | ✅ | ⚠️ gap | — (no AR project content yet) |
-| Single post `/…/` | ✅ | ⚠️ gap | — (no AR post yet) |
+| Single project `/work/…/` | ✅ | ✅ | `/ar/work/صفحة-هبوط…/` |
+| Single post `/…/` | ✅ | ✅ | `/ar/من-كواليس…/` |
 | Legal `/terms/` | ✅ | ✅ | `/ar/terms-2/` |
 | Search `/?s=video` | ✅ | ✅ | `/ar/?s=video` |
 | 404 (unknown route) | ✅ | ✅ | `/ar/<unknown>/` |
@@ -41,11 +41,12 @@ run output is written to `output/verify-visual.json` (git-ignored — regenerabl
 All checked pages: **no horizontal overflow, no JS errors, exactly one `<h1>`, correct `lang`/`dir`**
 at both breakpoints in both languages.
 
-### Known content gaps (not defects)
+### Content status
 
-- **AR translations for the Work archive and Journal** are not yet created, so those routes have no
-  `hreflang="ar"` alternate. This is content/owner-data work (real projects + journal posts), tracked
-  in `PROGRESS.md` item #3. The English routes and the AR home/services/contact/404 are complete.
+- **AR demo translations are now seeded and Polylang-linked** for the projects (Work), Journal posts,
+  their taxonomy terms, and the Journal/Home pages (`scripts/seed-ar-content.php`) — so every route
+  above resolves in both languages. The copy is clearly-marked demo (mirroring the EN placeholders);
+  the owner replaces it with real projects/articles before launch (no invented business claims).
 
 ### Fixed by this pass
 
