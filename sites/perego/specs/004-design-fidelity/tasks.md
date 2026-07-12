@@ -23,10 +23,10 @@
 **Goal**: Finalize the home page against `site/index.html` and its supplied screenshots.
 
 - [x] T009 [US1] Capture matched EN/AR home baselines and live renders at required breakpoints in the feature evidence directory.
-- [~] T010 [US1] Correct documented home/header/footer/preloader/hero/services/about/client differences in `sites/perego/perego-theme/` and `sites/perego/perego-site/src/Blocks/`. **12/13 differences resolved** (see evidence/home.md); open: clients gallery/lightbox layout (row 5) — a separate feature slice.
-- [~] T011 [US1] Replace home/client placeholder media only with approved handoff or owner-supplied assets through `sites/perego/perego-site/scripts/` and WordPress media records. Hero/about/service-card/logo images wired from the approved handoff set; client-carousel media still open (depends on row 5).
+- [x] T010 [US1] Correct documented home/header/footer/preloader/hero/services/about/client differences in `sites/perego/perego-theme/` and `sites/perego/perego-site/src/Blocks/`. **13/13 differences closed** (see evidence/home.md) — the clients-layout row was closed via an explicit owner scope decision (re-skin the existing accessible carousel rather than build a new drag-scroll+lightbox+video feature for placeholder content).
+- [x] T011 [US1] Replace home/client placeholder media only with approved handoff or owner-supplied assets through `sites/perego/perego-site/scripts/` and WordPress media records. Hero/about/service-card/logo/client-tile images wired from the approved handoff set.
 - [ ] T012 [US1] Migrate home editorial prose to canvas-managed content where it is still provider-rendered.
-- [~] T013 [US1] Run and record visual, interaction, a11y, RTL, and relevant Pest/Jest evidence for the approved home slice. Visual (72-check route-health + baseline/live capture) and unit (186 Pest) done; a11y/interaction re-run against the corrected markup still open.
+- [~] T013 [US1] Run and record visual, interaction, a11y, RTL, and relevant Pest/Jest evidence for the approved home slice. Visual (72-check route-health + baseline/live capture) and unit (188 Pest + 67 Jest) done; a11y/interaction re-run against the corrected markup still open.
 
 ## Phase 4: User Story 2 - Approved content-route experience (P1)
 

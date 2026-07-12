@@ -60,6 +60,8 @@ beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_attr__')->returnArg();
+    Functions\when('esc_url')->returnArg();
+    Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
     Functions\when('has_post_thumbnail')->justReturn(false);
     Functions\when('get_the_post_thumbnail')->justReturn('');
     Functions\when('wp_reset_postdata')->justReturn(null);
@@ -119,11 +121,19 @@ it('renders one #clients section with the two carousels and no competing H1', fu
         ->and($html)->toContain('Individual Clients');
 });
 
-it('renders a card per client with the name and a placeholder when there is no thumbnail', function () {
+it('renders a corporate card as an icon tile labelled by the client name', function () {
     $html = renderClients();
 
-    expect(substr_count($html, 'client-card__name'))->toBe(3)
-        ->and($html)->toContain('Sample Corporate Client A')
+    expect(substr_count($html, 'client-card--corporate'))->toBe(2)
+        ->and($html)->toContain('aria-label="Sample Corporate Client A"')
+        ->and($html)->toContain('client-card__icon')
+        ->and($html)->not->toContain('>Sample Corporate Client A<');
+});
+
+it('renders an individual card with a visible name and a thumbnail placeholder when there is none', function () {
+    $html = renderClients();
+
+    expect(substr_count($html, 'client-card__name'))->toBe(1)
         ->and($html)->toContain('Sample Creator One')
         ->and($html)->toContain('client-card__media--placeholder');
 });
@@ -165,5 +175,6 @@ it('queries the Arabic-language taxonomy term, not the English one, on the Arabi
     // Arabic carousels always queried zero posts even when AR-tagged client posts existed.
     $html = renderClients('ar');
 
-    expect(substr_count($html, 'client-card__name'))->toBe(2);
+    expect(substr_count($html, 'client-card--corporate'))->toBe(1)
+        ->and(substr_count($html, 'client-card--individual'))->toBe(1);
 });

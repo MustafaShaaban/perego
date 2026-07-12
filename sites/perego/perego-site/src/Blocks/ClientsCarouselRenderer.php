@@ -56,10 +56,10 @@ final class ClientsCarouselRenderer
             return $html . '</div>';
         }
 
-        $html .= '<div class="swiper clients-swiper" data-clients-swiper>';
+        $html .= '<div class="swiper clients-swiper clients-swiper--' . esc_attr($type) . '" data-clients-swiper>';
         $html .= '<div class="swiper-wrapper">';
         foreach ($clients as $client) {
-            $html .= $this->card($client);
+            $html .= $type === 'corporate' ? $this->corporateCard($client) : $this->individualCard($client);
         }
         $html .= '</div>'; // .swiper-wrapper
         $html .= '<button type="button" class="swiper-button-prev clients-swiper__prev" aria-label="' . esc_attr__('Previous', 'perego-site') . '"></button>';
@@ -70,22 +70,47 @@ final class ClientsCarouselRenderer
         return $html . '</div>';
     }
 
-    private function card(\WP_Post $client): string
+    /**
+     * Corporate: a small square tile (handoff `.corp-card`) — icon/logo only, no visible name. The
+     * client name stays available to assistive tech via aria-label.
+     */
+    private function corporateCard(\WP_Post $client): string
+    {
+        $title = (string) get_the_title($client);
+        $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => '']) : '';
+
+        $html = '<div class="swiper-slide client-card client-card--corporate" role="img" aria-label="' . esc_attr($title) . '">';
+        $html .= $thumb !== ''
+            ? '<div class="client-card__media">' . $thumb . '</div>'
+            : '<img class="client-card__icon" src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/corp-icon.png') . '" alt="" />';
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * Individual: a wide info-plus-thumbnail card (handoff `.indiv-card`) — name/stat text beside a
+     * thumbnail. No play-button overlay: unlike the handoff's demo, real cards here have no video to
+     * play, and a decorative play icon on a non-interactive card would be a misleading affordance.
+     */
+    private function individualCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
         $stat = (string) get_post_meta($client->ID, '_perego_client_stat', true);
-        $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => $title]) : '';
+        $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => '']) : '';
 
-        $html = '<div class="swiper-slide client-card">';
-        if ($thumb !== '') {
-            $html .= '<div class="client-card__media">' . $thumb . '</div>';
-        } else {
-            $html .= '<div class="client-card__media client-card__media--placeholder" role="img" aria-label="' . esc_attr($title) . '"></div>';
-        }
+        $html = '<div class="swiper-slide client-card client-card--individual">';
+        $html .= '<div class="client-card__info">';
         $html .= '<p class="client-card__name">' . esc_html($title) . '</p>';
         if ($stat !== '') {
             $html .= '<p class="client-card__stat">' . esc_html($stat) . '</p>';
         }
+        $html .= '</div>'; // .client-card__info
+
+        $html .= '<div class="client-card__thumb">';
+        $html .= $thumb !== '' ? $thumb : '<div class="client-card__media--placeholder" aria-hidden="true"></div>';
+        $html .= '</div>'; // .client-card__thumb
+
         $html .= '</div>';
 
         return $html;

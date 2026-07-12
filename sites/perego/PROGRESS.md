@@ -33,27 +33,27 @@ No visual reinterpretation is authorized: every correction must make Perego matc
    **Done (2026-07-12).** T004/T005 (route-matrix + quickstart), T006 (env/build verification recorded in
    quickstart), T007 (verify-visual extended to all 16 templates — 72 checks/0 failures), T008
    (visual-difference review procedure in `docs/visual-acceptance.md`) all complete. Evidence gate is ready.
-2. ~~Start Phase 3 (US1) — T009-T013: finalize Home as the first complete visual slice.~~ **In progress
-   (2026-07-12).** T009 done (EN/AR baselines + live captures in `specs/004-design-fidelity/evidence/home.md`).
-   T010/T011 **12 of 13 logged differences resolved**: hero background image, About-section image +
+2. ~~Start Phase 3 (US1) — T009-T013: finalize Home as the first complete visual slice.~~ **T009-T011 done
+   (2026-07-12).** T009: EN/AR baselines + live captures in `specs/004-design-fidelity/evidence/home.md`.
+   T010/T011: **all 13 logged differences closed** — hero background image, About-section image +
    locale-aware copy (new `perego-theme/home-about` block — fixes a real bug where the AR route rendered
    English About/mission prose because it was hardcoded in the language-neutral `front-page.html`), real
    service-card images, clients-section background token, real footer contact/social details, header
    logo image, header CTA + language-toggle styling, site-wide font loading (theme.json declared
    Open Sans/Cairo but no font file was ever enqueued, so every route silently rendered the browser's
-   `system-ui` fallback — fixed via `wp_enqueue_style` + `wp_resource_hints`, confirmed on both a Home and
-   a non-Home route), and the AR-clients query bug (`ClientsCarouselRenderer` always queried the English
-   taxonomy term regardless of locale, so the AR carousels matched zero posts even though AR client posts
-   already existed and were correctly Polylang-linked — PROGRESS's older "Clients AR: follow-up" note was
-   a wrong diagnosis; fixed by resolving the term via `pll_get_term()` for the current locale). Copied the
-   41 approved handoff images into `perego-theme/assets/images/`. A real regression was introduced and
-   caught by the route-health gate along the way — reusing a shared button class on the header CTA created
-   a cross-stylesheet specificity tie that showed the desktop CTA on mobile (149px overflow on all 16
-   templates) — fixed and re-verified at 72 checks / 0 failures. 187 Pest green (11 new/updated tests).
-   **Remaining open**: the clients section's gallery/lightbox layout — the handoff's "Corporate Clients"
-   is actually 20 repeated icon-buttons opening a drag-scroll gallery/lightbox (not distinct logos), and
-   "Individual" cards embed real YouTube videos — a new interactive component, not a CSS/content change;
-   see `specs/004-design-fidelity/evidence/home.md` for full detail before continuing T010/T013.
+   `system-ui` fallback — fixed via `wp_enqueue_style` + `wp_resource_hints`), the AR-clients query bug
+   (`ClientsCarouselRenderer` always queried the English taxonomy term regardless of locale, so the AR
+   carousels matched zero posts even though AR client posts already existed and were correctly
+   Polylang-linked — PROGRESS's older "Clients AR: follow-up" note was a wrong diagnosis; fixed by
+   resolving the term via `pll_get_term()`), and the clients-card visual layout (owner decision: re-skin
+   the existing accessible Swiper carousel to the handoff's icon-tile/info-card shapes, rather than build
+   a new drag-scroll+lightbox+video feature for content everyone agrees is placeholder). Copied the 41
+   approved handoff images into `perego-theme/assets/images/`. A real regression was introduced and caught
+   by the route-health gate along the way — reusing a shared button class on the header CTA created a
+   cross-stylesheet specificity tie that showed the desktop CTA on mobile (149px overflow on all 16
+   templates) — fixed and re-verified at 72 checks / 0 failures. **188 Pest + 67 Jest green.**
+   **Remaining for Phase 3**: T012 (migrate Home editorial prose to editor-canvas content) and T013's
+   a11y/interaction re-run against the corrected markup.
 3. Complete each remaining route family (Phase 4, T014-T018) through the same evidence gate.
 
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)

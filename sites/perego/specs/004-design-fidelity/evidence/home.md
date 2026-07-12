@@ -4,9 +4,8 @@
 **Live**: EN `http://perego.local/` · AR `http://perego.local/ar/الرئيسية/`
 **Captures** (gitignored, regenerate with `node scripts/capture-baselines.mjs`):
 `output/baselines/home-{mobile,desktop}.png`, `output/live/home-{en,ar}-{mobile,desktop}.png`.
-**Breakpoints**: mobile 375, desktop 1280. **Status**: In review — 12 of 13 rows resolved; 1 row partially
-open (clients layout rebuild against the handoff's exact gallery/lightbox mechanic — the AR-content half of
-this row is now also fixed).
+**Breakpoints**: mobile 375, desktop 1280. **Status**: All 13 rows closed — 12 fully resolved, 1 resolved by
+an explicit, owner-approved scope decision (see row 5).
 
 ## Material differences (baseline vs live)
 
@@ -19,7 +18,7 @@ Severity: **P1** = breaks the approved visual system; **P2** = notable but local
 | 2 | About image | Hooded-figure image + "بيريجو" watermark (`about-hooded.png`) | **Resolved** — new `perego-theme/home-about` block renders the image + gradient overlay |
 | 3 | Service cards | Each staggered card contains a real app-screenshot (`card-*.png`) | **Resolved** — real `<img>` per card via `HomeContent::services()['image']` |
 | 4 | Clients bg | Section on the dark site gradient | **Resolved** — `.clients` now uses the existing `--wp--preset--color--bg-deep` token |
-| 5 | Clients layout + AR content | Corporate = repeated icon-tile buttons opening a drag-scroll gallery/lightbox; Individual = wide video-review cards with a real YouTube embed | **Partially resolved** — AR content half fixed (see below); the gallery/lightbox layout rebuild itself is a separate, larger slice |
+| 5 | Clients layout + AR content | Corporate = repeated icon-tile buttons opening a drag-scroll gallery/lightbox; Individual = wide video-review cards with a real YouTube embed | **Resolved by scope decision** — visual shape re-skinned onto the existing accessible carousel (see below); the drag-scroll+lightbox+video mechanic itself was explicitly descoped by the owner |
 | 6 | Footer contact | "Contact us" lists emails + phone numbers | **Resolved** — real contact channels + blurb wired via `SiteFooterRenderer`/`GlobalContent::footer()` |
 | 7 | Header logo | Logo mark image + "Perego بيريجو" wordmark (`logo-full.png`) | **Resolved** — real logo image (46px), `aria-label` preserves the accessible name |
 | 8 | Header CTA | Filled pill, uppercase "START A PROJECT" | **Resolved** — CTA now reuses the shared `.perego-btn.perego-btn--accent` primitive |
@@ -31,9 +30,9 @@ Severity: **P1** = breaks the approved visual system; **P2** = notable but local
 
 ## Resolution notes (2026-07-12)
 
-**12 of 13 rows resolved** this session, re-verified via fresh baseline/live capture (EN + AR, desktop +
-mobile) after every change, plus the full 72-check `verify-visual.mjs` route-health run and the full Pest
-suite (187 tests). Work included:
+**All 13 rows closed** this session, re-verified via fresh baseline/live capture (EN + AR, desktop +
+mobile) after every change, plus the full 72-check `verify-visual.mjs` route-health run and the full
+Pest (188) + Jest (67) suites. Work included:
 
 - Copied the approved handoff image set into `perego-theme/assets/images/` (41 files).
 - New `perego-theme/home-about` block (`HomeAboutRenderer` + `HomeContent::about()`) replacing the static,
@@ -76,15 +75,37 @@ suite (187 tests). Work included:
   the English term when Polylang is inactive, per constitution IX). Confirmed live: `/ar/الرئيسية/` now
   renders all 8 AR client cards. New regression test in `ClientsCarouselRenderTest.php`.
 
-## Remaining open row
+## Row 5 — clients layout, scope decision and resolution
 
-- **Row 5, gallery/lightbox layout**: reading the handoff's own `js/main.js` shows the "Corporate Clients"
-  section is not real distinct client logos at all — it's 20 repeated generic icon-buttons
-  (`corp-icon.png`) that each open a drag-scroll gallery/lightbox mixing placeholder images and a YouTube
-  embed. "Individual Clients" cards embed real YouTube videos with a custom play-button lightbox. Matching
-  this exactly means building a new interactive gallery/lightbox feature (drag-scroll track, keyboard nav,
-  mixed image/video modal), not a CSS or content change — a properly separate, larger slice. The project
-  already has a `project-gallery-lightbox` block (spec 003 US2) that may be adaptable as a starting point.
+Reading the handoff's own `js/main.js` shows the "Corporate Clients" section is not real distinct client
+logos at all — it's 20 repeated generic icon-buttons (`corp-icon.png`) that each open a drag-scroll
+gallery/lightbox mixing placeholder images and a YouTube embed. "Individual Clients" cards embed real
+YouTube videos with a custom play-button lightbox. Matching this exactly would mean building a new
+interactive gallery/lightbox feature (drag-scroll track, keyboard nav, mixed image/video modal) for content
+everyone agrees is temporary placeholder.
+
+**Owner decision**: re-skin the existing, already-accessible Swiper carousel to match the handoff's visual
+shape, rather than build the full custom drag-scroll+lightbox+video mechanic. Implemented:
+
+- **Corporate** cards are now small square icon tiles (`.client-card--corporate`, handoff `.corp-card`
+  proportions/gradient) showing the client's real thumbnail if set, else the approved `corp-icon.png`
+  glyph. The client name moved from visible text to `aria-label` (matching the handoff, which shows no
+  name on these tiles either) — still available to assistive tech.
+- **Individual** cards are now wide info+thumbnail cards (`.client-card--individual`, handoff `.indiv-card`
+  proportions) with the name/stat text beside a thumbnail. Deliberately **omitted** the handoff's
+  decorative play-button overlay: unlike the handoff's demo, these cards have no real video to play, and a
+  fake play affordance on a non-interactive card would be a misleading UI signal — a smaller, deliberate
+  accessibility improvement over a literal copy.
+- Swiper `slidesPerView`/breakpoints now differ per carousel (`clients-swiper--corporate` / `--individual`
+  modifier classes) — dense tiles for Corporate, a few wide cards for Individual — instead of one shared
+  density for both.
+- The existing accessible carousel mechanism (keyboard nav, ARIA, Swiper a11y module, no-JS scroll
+  fallback) is unchanged and untouched by the re-skin.
+- New/updated tests: `ClientsCarouselRenderTest.php` (corporate icon-tile + individual info-card
+  assertions) and `clients-carousel/view.test.js` (per-type Swiper sizing).
+
+Confirmed live on EN + AR, desktop + mobile: both card types render correctly, mirror in RTL, and the
+72-check route-health suite stays at 0 failures.
 
 ## RTL / accessibility notes
 
@@ -95,6 +116,7 @@ suite (187 tests). Work included:
 
 ## Next
 
-The clients gallery/lightbox layout (row 5) is the only remaining Home work — a properly separate feature
-slice (new interactive component), not a continuation of this visual-difference row list. Re-run this
-file's comparison procedure once it lands, then move to Phase 4 (US2, other route families) per `tasks.md`.
+Home's visual-difference row list is fully closed. Remaining Home tasks per `tasks.md`: T012 (migrate
+editorial prose to editor-canvas content — currently PHP-provider-rendered, matching the established
+hero/services/about pattern) and the a11y/interaction re-run (T013) against the corrected markup. After
+those, move to Phase 4 (US2, other route families).
