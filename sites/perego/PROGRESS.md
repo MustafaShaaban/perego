@@ -278,6 +278,13 @@ Immediate queue:
   flush both AR archives now 200. **Result: 24 checks, 0 hard failures.** Remaining as honest content
   gaps (not defects): AR Work + Journal translations (need real project/post content, item #3). Evidence:
   `docs/visual-acceptance.md` (+ git-ignored `output/verify-visual.json`). Decision 12.
+- **A11y (Phase 11, 2026-07-12):** `scripts/verify-a11y.mjs` injects axe-core 4.12 and audits WCAG
+  2.0/2.1/2.2 A+AA across 7 EN/AR pages — **0 violations of any impact**. Manual keyboard checks remain
+  a follow-up. Recorded in `docs/visual-acceptance.md`.
+- **Cleanup (Phase 14, 2026-07-12):** removed the `--starter` example scaffolding per REMOVE-EXAMPLE.md
+  (Example model/repo/service/controller/renderer/options/block + test + the doc) and unwired it from the
+  provider. Site still boots (home + `/ar/` 200), the `perego/v1/example` route is gone, 176 Pest + 65 Jest
+  green, build clean.
 
 ### Still remaining (implementable — continues from here)
 3. **Polylang Free EN/AR** — languages configured + services/legal linked (done). **Language switcher: DONE +
