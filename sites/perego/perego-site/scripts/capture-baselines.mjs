@@ -52,6 +52,12 @@ const ROUTES = [
 		liveEN: `${ BASE }/work/`,
 		liveAR: `${ BASE }/ar/work/`,
 	},
+	{
+		label: 'single-project',
+		handoffFile: 'project.html',
+		liveEN: `${ BASE }/work/landing-page-microsite/`,
+		liveAR: `${ BASE }/ar/work/%D8%B5%D9%81%D8%AD%D8%A9-%D9%87%D8%A8%D9%88%D8%B7-%D9%88%D9%85%D9%88%D9%82%D8%B9-%D9%85%D8%B5%D8%BA%D9%91%D8%B1/`,
+	},
 ];
 
 const browser = await chromium.launch( {

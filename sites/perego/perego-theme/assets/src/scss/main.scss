@@ -280,6 +280,14 @@ body {
 	--wp--style--block-gap: 0;
 }
 
+/* Project single's free-form prose has no enclosing colored section of its own (unlike service
+   singles' .svc-whatwedo/.svc-process groups) — give it an explicit background rather than rely on
+   body's (broken, see spec 004 T014 evidence) page-wide background. */
+.project-single__body {
+	background: var(--wp--preset--color--bg-deep);
+	padding-block: var(--wp--preset--spacing--section-y);
+}
+
 .svc-hero {
 	position: relative;
 	overflow: hidden;

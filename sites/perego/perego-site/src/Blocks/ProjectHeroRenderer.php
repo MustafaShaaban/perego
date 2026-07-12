@@ -48,6 +48,12 @@ final class ProjectHeroRenderer
 
         $html .= '<h1 class="project-hero__title">' . esc_html(get_the_title($project)) . '</h1>';
 
+        if (has_post_thumbnail($project->ID)) {
+            $html .= '<div class="project-hero__featured">'
+                . get_the_post_thumbnail($project->ID, 'large', ['loading' => 'eager'])
+                . '</div>';
+        }
+
         $html .= '<dl class="project-hero__meta">';
         $html .= $this->metaItem($labels['clientLabel'], (string) get_post_meta($project->ID, '_perego_client', true));
         $html .= $this->metaItem($labels['yearLabel'], (string) get_post_meta($project->ID, '_perego_year', true));
