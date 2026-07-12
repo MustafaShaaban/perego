@@ -5,7 +5,7 @@
 
 | Handoff template | Perego route / template | Required evidence | Owner | Current status |
 | --- | --- | --- | --- | --- |
-| `index.html` | `/` / `front-page.html` | EN+AR, desktop+mobile; header, preloader, hero, about, services, clients, footer | Perego delivery | Visual differences closed (13/13); a11y/interaction/route-health re-verified green (see [evidence/home.md](./evidence/home.md)); T012 editor-canvas migration still open before full acceptance |
+| `index.html` | `/` / `front-page.html` | EN+AR, desktop+mobile; header, preloader, hero, about, services, clients, footer | Perego delivery | **Design-complete** — 13/13 visual differences closed, editor-canvas migration (T012) done, a11y/interaction/route-health/unit all green (see [evidence/home.md](./evidence/home.md)). **Blocked on owner material** for launch: the clients section still shows placeholder demo names (FR-006) |
 | `services.html` | `/services/` / `archive-perego_service.html` | EN+AR, desktop+mobile; cards, CTA, navigation | Perego delivery | Not accepted |
 | `service-video-editing.html` | `/services/video-editing/` / `single-perego_service.html` | EN+AR, desktop+mobile; hero, tabs, canvas content, CTA | Perego delivery | Not accepted |
 | `service-motion-graphics.html` | `/services/2d-motion-graphics/` / `single-perego_service.html` | EN+AR, desktop+mobile; hero, tabs, canvas content, CTA | Perego delivery | Not accepted |

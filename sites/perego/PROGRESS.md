@@ -21,10 +21,12 @@ No visual reinterpretation is authorized: every correction must make Perego matc
 
 ### What is not accepted or launch-ready
 
-- Pixel-level, state-by-state visual fidelity is not accepted for all 16 handoff templates.
-- Placeholder/demo media and content remain in public-facing surfaces; legal content remains draft/review-only.
-- Gallery/lightbox completion, editor-canvas remediation for Home/portfolio prose, manual keyboard coverage,
-  and production-like mail/HTTPS verification remain outstanding.
+- Pixel-level, state-by-state visual fidelity is design-complete for Home only; the other 15 handoff
+  templates have not yet been through the same evidence gate (Phase 4, not started).
+- Placeholder/demo media and content remain in public-facing surfaces (Home's client carousel; other
+  routes as their turn comes); legal content remains draft/review-only.
+- Gallery/lightbox completion for project singles, editor-canvas remediation for portfolio prose, manual
+  keyboard coverage, and production-like mail/HTTPS verification remain outstanding.
 - Specs 001-003 contain stale task state and do not represent the later delivery history accurately.
 
 ### Next
@@ -33,46 +35,23 @@ No visual reinterpretation is authorized: every correction must make Perego matc
    **Done (2026-07-12).** T004/T005 (route-matrix + quickstart), T006 (env/build verification recorded in
    quickstart), T007 (verify-visual extended to all 16 templates — 72 checks/0 failures), T008
    (visual-difference review procedure in `docs/visual-acceptance.md`) all complete. Evidence gate is ready.
-2. ~~Start Phase 3 (US1) — T009-T013: finalize Home as the first complete visual slice.~~ **T009-T011 and
-   T013 done (2026-07-12).** T009: EN/AR baselines + live captures in `specs/004-design-fidelity/evidence/home.md`.
-   T010/T011: **all 13 logged differences closed** — hero background image, About-section image +
-   locale-aware copy (new `perego-theme/home-about` block — fixes a real bug where the AR route rendered
-   English About/mission prose because it was hardcoded in the language-neutral `front-page.html`), real
-   service-card images, clients-section background token, real footer contact/social details, header
-   logo image, header CTA + language-toggle styling, site-wide font loading (theme.json declared
-   Open Sans/Cairo but no font file was ever enqueued, so every route silently rendered the browser's
-   `system-ui` fallback — fixed via `wp_enqueue_style` + `wp_resource_hints`), the AR-clients query bug
-   (`ClientsCarouselRenderer` always queried the English taxonomy term regardless of locale, so the AR
-   carousels matched zero posts even though AR client posts already existed and were correctly
-   Polylang-linked — PROGRESS's older "Clients AR: follow-up" note was a wrong diagnosis; fixed by
-   resolving the term via `pll_get_term()`), and the clients-card visual layout (owner decision: re-skin
-   the existing accessible Swiper carousel to the handoff's icon-tile/info-card shapes, rather than build
-   a new drag-scroll+lightbox+video feature for content everyone agrees is placeholder). Copied the 41
-   approved handoff images into `perego-theme/assets/images/`. A real regression was introduced and caught
-   by the route-health gate along the way — reusing a shared button class on the header CTA created a
-   cross-stylesheet specificity tie that showed the desktop CTA on mobile (149px overflow on all 16
-   templates) — fixed and re-verified at 72 checks / 0 failures. T013's a11y re-run caught a **second**
-   real regression from the same T010 work — the language-toggle's active-pill text used the generic
-   white `--color--text` token instead of the theme's dedicated `--color--cta-text-on-accent` token,
-   failing color-contrast against the bright accent background site-wide — fixed by matching the same
-   token `.perego-btn--accent` already uses correctly. Final state: **72-check visual + 12-page a11y (0
-   violations) + 4/4 interaction + 188 Pest + 67 Jest, all green.**
+2. ~~Phase 3 (US1) — finalize Home as the first complete visual slice.~~ **Done (2026-07-12), T009-T013
+   all closed.** All 13 logged visual differences resolved (hero/about/service-card images, clients
+   background + card layout, footer contact/social, header logo/CTA/language-toggle, site-wide font
+   loading, AR-clients query bug — full detail in `specs/004-design-fidelity/evidence/home.md`), the
+   About Us/Our mission prose migrated to real editor-canvas content on the front page (T012 —
+   `perego-theme/home-about-bg` block + `wp:post-content`, seeded via `scripts/seed-home-about.php`,
+   verified against Polylang's own static-front-page translation source before building on it), and
+   a11y/interaction/route-health all re-verified green after two regressions this session's own changes
+   introduced and its own gates caught (a mobile CTA-overflow specificity bug, a color-contrast failure).
+   Final state: **72-check route-health + 12-page a11y (0 violations) + 4/4 interaction + 186 Pest + 67
+   Jest, all green.** Home is design-complete; **blocked on owner material** for launch only by its
+   placeholder client-carousel content (Sample Corporate/Individual Client names — FR-006).
 
-   **➡ RESUME HERE.** Remaining for Phase 3: **T012** — migrate the About Us/Our Mission prose from
-   `HomeContent`/`HomeAboutRenderer` (PHP provider) to WordPress editor-canvas content, per FR-005. Verified
-   via Polylang's own `PLL_Frontend_Static_Pages`/`PLL_Static_Pages::get_translation()` source that this
-   will localize correctly: the static front page (`page_on_front`) is already translated per-language
-   automatically from the existing page 42 (EN) ↔ 97 (AR) translation link — no extra Polylang config
-   needed. The open design question is **how** to compose it: `home-about` is currently one atomic
-   server-rendered block (background image absolutely-positioned behind the text panels); making the
-   panels editor-canvas content means either (a) converting `home-about` to an InnerBlocks-enabled block
-   so `<!-- wp:post-content -->` can nest inside its own wrapper, or (b) splitting the section in
-   `front-page.html` into a small dynamic background-image block as a sibling before a plain
-   `wp:group > wp:post-content`, using CSS to lay the image behind via `position: absolute` within a
-   shared relatively-positioned parent. Decide the approach with the owner before implementing — this was
-   explicitly deferred (owner call, 2026-07-12) rather than built, since it's a real architecture decision,
-   not a continuation of the visual-parity bug fixes above.
-3. Complete each remaining route family (Phase 4, T014-T018) through the same evidence gate.
+   **➡ RESUME HERE.** Start Phase 4 (US2) — content-route slices, one family at a time, same evidence
+   gate as Home: T014 (services archive + singles), T015 (work archive + project singles, incl.
+   gallery/lightbox states), T016 (journal/search/404/contact/legal/page), T017 (portfolio prose to
+   canvas), T018 (per-route acceptance recording in `route-matrix.md`). See `tasks.md` for full detail.
 
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
 

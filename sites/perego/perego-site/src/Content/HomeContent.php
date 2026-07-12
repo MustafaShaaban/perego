@@ -41,19 +41,12 @@ final class HomeContent
     /**
      * @var array<string, array{
      *   hero: array{slides: list<array{title: string, text: string}>, cta: string},
-     *   about: array{title: string, body: string, missionTitle: string, missionBody: string},
      *   servicesTeaser: array{title: string, seeAll: string},
      *   services: array<string, string>
      * }>
      */
     private const COPY = [
         'en' => [
-            'about' => [
-                'title' => 'About Us',
-                'body' => 'Perego is a leading creative agency specializing in advertising and digital production, serving a diverse client base across the Arab region. We offer a wide range of innovative services, including brand identity design, motion graphics with full storyboard development, diverse video editing solutions, and much more all crafted to elevate your business or digital presence.',
-                'missionTitle' => 'Our mission',
-                'missionBody' => 'deliver impactful marketing results that meet your specific needs with exceptional quality and reliable, on-time delivery.',
-            ],
             'hero' => [
                 'slides' => [
                     [
@@ -83,12 +76,6 @@ final class HomeContent
             ],
         ],
         'ar' => [
-            'about' => [
-                'title' => 'من نحن',
-                'body' => 'بيريجو وكالة إبداعية رائدة متخصصة في الإعلان والإنتاج الرقمي، تخدم قاعدة عملاء متنوعة في جميع أنحاء المنطقة العربية. نقدم مجموعة واسعة من الخدمات المبتكرة، تشمل تصميم الهوية التجارية، والموشن جرافيك مع تطوير كامل للستوري بورد، وحلول متنوعة لمونتاج الفيديو، وغير ذلك الكثير — كل ذلك مصمم للارتقاء بأعمالك أو حضورك الرقمي.',
-                'missionTitle' => 'مهمتنا',
-                'missionBody' => 'تحقيق نتائج تسويقية مؤثرة تلبي احتياجاتك الخاصة، بجودة استثنائية وتسليم موثوق في الموعد المحدد.',
-            ],
             'hero' => [
                 'slides' => [
                     [
@@ -137,14 +124,6 @@ final class HomeContent
     public function heroCta(): string
     {
         return self::COPY[$this->locale]['hero']['cta'];
-    }
-
-    /**
-     * @return array{title: string, body: string, missionTitle: string, missionBody: string}
-     */
-    public function about(): array
-    {
-        return self::COPY[$this->locale]['about'];
     }
 
     public function servicesTeaserTitle(): string

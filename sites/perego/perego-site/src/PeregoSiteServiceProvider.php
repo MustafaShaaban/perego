@@ -11,7 +11,7 @@ namespace PeregoSite;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\HeroSliderRenderer;
-use PeregoSite\Blocks\HomeAboutRenderer;
+use PeregoSite\Blocks\HomeAboutBgRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
@@ -391,9 +391,9 @@ final class PeregoSiteServiceProvider
                 'render_callback' => static fn (): string => $teaserRenderer->render(),
             ]);
 
-            $aboutRenderer = new HomeAboutRenderer($this->languageService);
-            register_block_type($this->blockDir('home-about'), [
-                'render_callback' => static fn (): string => $aboutRenderer->render(),
+            $aboutBgRenderer = new HomeAboutBgRenderer();
+            register_block_type($this->blockDir('home-about-bg'), [
+                'render_callback' => static fn (): string => $aboutBgRenderer->render(),
             ]);
         });
     }

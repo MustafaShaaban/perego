@@ -125,9 +125,38 @@ text-on-accent token `.perego-btn--accent` already uses correctly. Re-verified: 
 **4/4 interaction checks**, and the full **72-check route-health + 188 Pest + 67 Jest** suites all still
 green after the fix.
 
+## T012 — editor-canvas migration (2026-07-12)
+
+Migrated the About Us / Our mission prose from `HomeContent::about()` (PHP provider) to real,
+editor-editable WordPress content, closing FR-005 for Home:
+
+- Split the `home-about` block in two: `perego-theme/home-about-bg` (new — renders only the
+  background image, decorative chrome) and the panels, now authored as real blocks in the static front
+  page's own `post_content` via `<!-- wp:post-content -->`, restructured in `front-page.html` as
+  `wp:group.home-about` > [`home-about-bg` block, `wp:group.home-about__inner` >
+  `wp:group.home-about__panels` > `wp:post-content`].
+- **Verified the localization mechanism before building on it**, not assumed: read Polylang's own
+  `PLL_Frontend_Static_Pages`/`PLL_Static_Pages::get_translation()` source, which confirms the static
+  front page (`page_on_front`) is translated automatically per-language from the existing post
+  translation link — no extra Polylang configuration needed. Confirmed live: `/ar/` renders the AR
+  page's own content (page 97), `/` renders the EN page's (page 42).
+- New idempotent seed script `scripts/seed-home-about.php` writes the exact same copy `HomeContent::about()`
+  used to hardcode into page 42 (EN, `page_on_front`) and its already-linked AR translation (page 97) —
+  only when a page's content is empty, never overwriting later editor changes.
+- Also set an explicit `post_excerpt` on both pages: `PeregoMeta`'s SEO description now sources a
+  singular page's own excerpt, and the auto-generated one (WordPress concatenating the "About Us"
+  heading directly into the body paragraph with no separator) read awkwardly. An explicit excerpt using
+  the body text alone reads naturally when truncated at 160 characters.
+- Removed `HomeAboutRenderer`/the old `home-about` block/`HomeContent::about()` entirely — dead code
+  after the split, not deprecated in place.
+- Visual output confirmed byte-for-byte identical to before the migration (fresh EN/AR desktop capture)
+  — this was a structural move, not a visual change.
+
+Re-verified after the migration: **72-check route-health, 12-page a11y (0 violations), 4/4 interaction,
+186 Pest (2 new in `HomeAboutBgRenderTest.php`, replacing the removed `HomeAboutRenderTest.php`), 67
+Jest** — all green.
+
 ## Next
 
-Home's visual-difference row list is fully closed and T009/T010/T011/T013 are done. The only remaining
-Phase 3 task is **T012** (migrate editorial prose to editor-canvas content — currently PHP-provider-rendered
-via `HomeContent`, matching the established hero/services/about pattern; the service-single canvas
-migration from spec 003 is the template to follow). After that, move to Phase 4 (US2, other route families).
+Home's visual-fidelity slice (T009-T013) is fully done, including the editor-canvas migration (T012).
+Move to Phase 4 (US2, other route families) per `tasks.md`.
