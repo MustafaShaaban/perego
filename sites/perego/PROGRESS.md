@@ -22,6 +22,12 @@ server-rendered client blocks. English desktop evidence reduced the Work diff fr
 233,288 pixels and the project diff from roughly 616,244 to 479,258. Neither route is accepted; gallery,
 navigation, pagination, media mapping, AR, responsive, state, and manual-review evidence remain open.
 
+Latest Journal increment (2026-07-13): the journal archive and single-post templates now use the locked
+archive/article container, post hero, featured-media, prose, grid, and pagination classes while preserving
+the dynamic Query Loop and native post content. English desktop evidence reduced Journal from roughly
+507,037 to 461,995 pixels and the representative post from roughly 915,120 to 529,609. Neither route is
+accepted; card data, tags, comments, related posts, AR, responsive, state, and manual-review evidence remain open.
+
 The existing non-engineering owner material remains required for launch: approved client identities/logos,
 production project and journal content/media, counsel-reviewed English legal copy, and professional Arabic
 legal translation. The idempotent seed workflow is documented and proven ready; see

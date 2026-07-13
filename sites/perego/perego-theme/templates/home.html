@@ -1,11 +1,12 @@
 <!-- wp:template-part {"slug":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"journal-archive","layout":{"type":"default"}} -->
-<main id="main" tabindex="-1" class="wp-block-group journal-archive">
-	<!-- wp:perego-theme/journal-header /-->
+<main id="main" tabindex="-1">
+	<section class="page-section">
+		<div class="container">
+			<!-- wp:perego-theme/journal-header /-->
 
 	<!-- wp:query {"queryId":0,"query":{"inherit":true,"perPage":9},"className":"journal-archive__inner","layout":{"type":"default"}} -->
-	<div class="wp-block-query journal-archive__inner">
+	<div class="wp-block-query journal-archive__inner" style="margin-top:clamp(32px,4vw,52px);">
 		<!-- wp:post-template {"className":"blog-grid","layout":{"type":"default"}} -->
 			<!-- wp:group {"tagName":"article","className":"post-card","layout":{"type":"constrained"}} -->
 			<article class="wp-block-group post-card">
@@ -26,10 +27,10 @@
 			<!-- /wp:group -->
 		<!-- /wp:post-template -->
 
-		<!-- wp:query-pagination {"layout":{"type":"flex","justifyContent":"center"}} -->
-			<!-- wp:query-pagination-previous /-->
+		<!-- wp:query-pagination {"className":"pagination","layout":{"type":"flex","justifyContent":"center"}} -->
+			<!-- wp:query-pagination-previous {"label":"Prev"} /-->
 			<!-- wp:query-pagination-numbers /-->
-			<!-- wp:query-pagination-next /-->
+			<!-- wp:query-pagination-next {"label":"Next"} /-->
 		<!-- /wp:query-pagination -->
 
 		<!-- wp:query-no-results -->
@@ -37,9 +38,10 @@
 			<p class="has-text-align-center">No articles published yet. Check back soon.</p>
 			<!-- /wp:paragraph -->
 		<!-- /wp:query-no-results -->
-	</div>
-	<!-- /wp:query -->
+			</div>
+			<!-- /wp:query -->
+		</div>
+	</section>
 </main>
-<!-- /wp:group -->
 
 <!-- wp:template-part {"slug":"footer"} /-->

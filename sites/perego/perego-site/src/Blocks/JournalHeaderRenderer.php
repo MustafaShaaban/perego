@@ -27,15 +27,15 @@ final class JournalHeaderRenderer
     {
         $j = $this->content->journal();
 
-        $html = '<header class="journal-header">';
-        $html .= '<nav class="page-crumb" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
+        $html = '<div class="post-hero__inner" style="text-align:center;">';
+        $html .= '<nav class="page-crumb" style="justify-content:center;" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
         $html .= '<a href="' . esc_url(home_url('/')) . '">' . esc_html($this->content->uiHome()) . '</a>';
         $html .= '<span aria-hidden="true">/</span>';
         $html .= '<span aria-current="page">' . esc_html($j['h1']) . '</span>';
         $html .= '</nav>';
-        $html .= '<h1 class="journal-header__title">' . esc_html($j['h1']) . '</h1>';
-        $html .= '<p class="journal-header__lead">' . esc_html($j['lead']) . '</p>';
-        $html .= '</header>';
+        $html .= '<h1 class="post-title" style="font-size:clamp(34px,4.5vw,60px);margin-top:14px;">' . esc_html($j['h1']) . '</h1>';
+        $html .= '<p class="section-lead">' . esc_html($j['lead']) . '</p>';
+        $html .= '</div>';
 
         return $html;
     }

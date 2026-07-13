@@ -29,7 +29,7 @@ final class PostBreadcrumbRenderer
     {
         $title = $post instanceof WP_Post ? get_the_title($post) : '';
 
-        $html = '<nav class="page-crumb" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
+        $html = '<nav class="page-crumb" style="justify-content:center;" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
         $html .= '<a href="' . esc_url(home_url('/')) . '">' . esc_html($this->content->uiHome()) . '</a>';
         $html .= '<span aria-hidden="true">/</span>';
         $html .= '<a href="' . esc_url(home_url('/journal')) . '">' . esc_html($this->content->journal()['h1']) . '</a>';
