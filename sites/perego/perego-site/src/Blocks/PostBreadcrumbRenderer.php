@@ -32,8 +32,10 @@ final class PostBreadcrumbRenderer
         $html = '<nav class="page-crumb" style="justify-content:center;" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
         $html .= '<a href="' . esc_url(home_url('/')) . '">' . esc_html($this->content->uiHome()) . '</a>';
         $html .= '<span aria-hidden="true">/</span>';
-        $html .= '<a href="' . esc_url(home_url('/journal')) . '">' . esc_html($this->content->journal()['h1']) . '</a>';
-        $html .= '<span aria-hidden="true">/</span>';
+        if (! (function_exists('is_page') && is_page())) {
+            $html .= '<a href="' . esc_url(home_url('/journal')) . '">' . esc_html($this->content->journal()['h1']) . '</a>';
+            $html .= '<span aria-hidden="true">/</span>';
+        }
         $html .= '<span aria-current="page">' . esc_html($title) . '</span>';
         $html .= '</nav>';
 

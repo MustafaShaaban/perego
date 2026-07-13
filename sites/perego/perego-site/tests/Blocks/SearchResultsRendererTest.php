@@ -28,11 +28,11 @@ it('renders the no-query state (breadcrumb + title + form + hint) without runnin
 
     expect($html)
         ->toContain('class="page-crumb"')                       // breadcrumb present
-        ->toContain('search-page__title')                       // heading present
-        ->toContain('search-page__form')                        // search form present
+        ->toContain('class="post-title"')                      // handoff heading contract
+        ->toContain('class="search-bar"')                      // handoff form contract
         ->toContain('Check your spelling or use more general keywords.') // the emptyHint
-        ->not->toContain('search-page__results')                // no result grid on a blank query
-        ->not->toContain('search-page__summary');               // no "N matches" summary
+        ->not->toContain('class="blog-grid"')                  // no result grid on a blank query
+        ->not->toContain('&mdash; 0 matches found');             // no fabricated result summary
 });
 
 it('localizes the no-query state on the AR route', function () {

@@ -1,8 +1,6 @@
 <?php
 
-/**
- * @package PeregoSite
- */
+/** @package PeregoSite */
 
 declare(strict_types=1);
 
@@ -14,9 +12,7 @@ if (! class_exists('WP_Post')) {
     class WP_Post
     {
         public int $ID = 0;
-
         public string $post_name = '';
-
         public string $post_content = '';
     }
 }
@@ -25,8 +21,6 @@ beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('wp_strip_all_tags')->returnArg();
-    Functions\when('get_post_meta')->justReturn('July 1, 2026');
-    // Two anchored H2 headings + one unanchored (skipped) + a nested one.
     Functions\when('parse_blocks')->justReturn([
         ['blockName' => 'core/heading', 'attrs' => ['level' => 2, 'anchor' => 's1'], 'innerHTML' => '<h2>1. Acceptance</h2>', 'innerBlocks' => []],
         ['blockName' => 'core/paragraph', 'attrs' => [], 'innerHTML' => '<p>x</p>', 'innerBlocks' => []],
@@ -48,21 +42,19 @@ it('returns empty output with no page', function () {
     expect((new LegalTocRenderer(new GlobalContent('en')))->render(null))->toBe('');
 });
 
-it('builds the TOC from anchored H2 headings only, plus review note and last-updated', function () {
+it('builds the handoff TOC from anchored H2 headings only', function () {
     $html = renderLegalToc();
 
-    expect($html)->toContain('legal-toc__note')
-        ->and($html)->toContain('must be reviewed by legal counsel')
-        ->and($html)->toContain('Last updated: July 1, 2026')
+    expect($html)->toContain('<aside class="legal-toc"')
+        ->and($html)->toContain('<h2>On this page</h2>')
         ->and($html)->toContain('href="#s1"')
         ->and($html)->toContain('href="#s2"')
-        ->and($html)->not->toContain('No anchor')            // unanchored heading skipped
+        ->and($html)->not->toContain('No anchor')
         ->and(substr_count($html, '<li>'))->toBe(2);
 });
 
-it('localizes the review note and TOC title into Arabic', function () {
+it('uses the localized TOC title', function () {
     $html = renderLegalToc('ar');
 
-    expect($html)->toContain('يجب مراجعتها من قبل مستشار قانوني')
-        ->and($html)->toContain('في هذه الصفحة');
+    expect($html)->toContain((new GlobalContent('ar'))->legal()['tocTitle']);
 });

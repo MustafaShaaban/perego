@@ -1,10 +1,27 @@
 <!-- wp:template-part {"slug":"header"} /-->
 
-<!-- wp:group {"tagName":"main","className":"default-page","layout":{"type":"constrained"}} -->
-<main id="main" tabindex="-1" class="wp-block-group default-page">
-	<!-- wp:post-title {"level":1,"className":"default-page__title"} /-->
-	<!-- wp:post-featured-image {"aspectRatio":"16/9"} /-->
-	<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
+<!-- wp:group {"tagName":"main","layout":{"type":"default"}} -->
+<main id="main" tabindex="-1" class="wp-block-group">
+	<!-- wp:group {"className":"page-section","layout":{"type":"default"}} -->
+	<section class="wp-block-group page-section">
+		<!-- wp:group {"className":"container","layout":{"type":"default"}} -->
+		<div class="wp-block-group container">
+			<!-- wp:group {"className":"post-hero__inner","layout":{"type":"default"}} -->
+			<div class="wp-block-group post-hero__inner" style="text-align:center">
+				<!-- wp:perego-theme/post-breadcrumb /-->
+				<!-- wp:post-title {"level":1,"className":"post-title"} /-->
+			</div>
+			<!-- /wp:group -->
+			<!-- wp:group {"className":"prose","layout":{"type":"default"}} -->
+			<div class="wp-block-group prose" style="margin-top:clamp(30px,4vw,48px)">
+				<!-- wp:post-featured-image {"aspectRatio":"16/9"} /-->
+				<!-- wp:post-content {"layout":{"type":"default"}} /-->
+			</div>
+			<!-- /wp:group -->
+		</div>
+		<!-- /wp:group -->
+	</section>
+	<!-- /wp:group -->
 </main>
 <!-- /wp:group -->
 

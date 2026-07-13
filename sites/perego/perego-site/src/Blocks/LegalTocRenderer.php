@@ -33,26 +33,14 @@ final class LegalTocRenderer
 
         $legal = $this->content->legal();
         $items = $this->headings($page->post_content);
-        $lastUpdated = (string) get_post_meta($page->ID, '_perego_last_updated', true);
-
         $html = '<aside class="legal-toc" aria-label="' . esc_attr($legal['tocTitle']) . '">';
 
-        $html .= '<p class="legal-toc__note" role="note">' . esc_html($legal['reviewNote']) . '</p>';
-
-        if ($lastUpdated !== '') {
-            $html .= '<p class="legal-toc__updated">' . esc_html($legal['lastUpdated'])
-                . ': ' . esc_html($lastUpdated) . '</p>';
-        }
-
         if ($items !== []) {
-            $html .= '<nav aria-labelledby="legal-toc-title">';
-            $html .= '<h2 class="legal-toc__title" id="legal-toc-title">' . esc_html($legal['tocTitle']) . '</h2>';
-            $html .= '<ol class="legal-toc__list">';
+            $html .= '<h2>' . esc_html($legal['tocTitle']) . '</h2><ol>';
             foreach ($items as $item) {
                 $html .= '<li><a href="#' . esc_attr($item['anchor']) . '">' . esc_html($item['text']) . '</a></li>';
             }
             $html .= '</ol>';
-            $html .= '</nav>';
         }
 
         $html .= '</aside>';
