@@ -39,11 +39,11 @@ Classification key:
 
 ## Launch blockers (ranked)
 
-1. **UI-string i18n unwired (bilingual-launch blocker).** Header nav, form field labels, and buttons
-   render in **English on every AR route** — no `.po`/`.mo`, no `pll_register_string`, and
-   `SiteHeaderRenderer` nav labels are hardcoded English (not `__()`-wrapped). Needs its own i18n slice
-   (approach is an owner call: gettext vs Polylang string translations). Detail:
-   [evidence/contact.md](./evidence/contact.md).
+1. ~~**UI-string i18n unwired (bilingual-launch blocker).**~~ **RESOLVED in spec 005** (gettext
+   `.po`/`.mo`; constitution-aligned, no Polylang dependency). The `perego-site` textdomain now loads a
+   `perego-site-ar.mo`, the header nav labels are `__()`-wrapped, and the framework (`corex`) form
+   submit/status strings are localized via a client `gettext_corex` filter. AR routes render Arabic
+   nav + form labels + buttons + status; EN unchanged. See `../005-i18n-strings/`.
 2. **Clients carousel placeholder names (FR-006).** Public home section shows fabricated client names.
 3. **Legal copy is draft** (Terms/Privacy) — needs counsel review; AR legal section bodies are unseeded.
 4. **Demo project/journal content** — example case studies + articles + demo photography must be

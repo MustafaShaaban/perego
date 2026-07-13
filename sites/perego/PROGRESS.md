@@ -102,9 +102,18 @@ No visual reinterpretation is authorized: every correction must make Perego matc
      comparison): **delivered** via evidence/home.md. **T041** ("branch not finished"): **superseded** by
      the 004 branch, which is the active delivery source of truth.
 
-   **Remaining before launch**: (a) the UI-string i18n slice (owner decides approach), (b) T020 owner
-   content, (c) T025 PR (open once the above are agreed). Spec 004 Phases 1–4 + the Phase-5 docs +
-   Phase-6 verification are complete and shippable as the design-fidelity feature.
+   **Remaining before launch**: (a) ~~the UI-string i18n slice~~ **DONE — spec 005**, (b) T020 owner
+   content. Spec 004 Phases 1–4 + the Phase-5 docs + Phase-6 verification shipped as PR #10.
+
+5. **Spec 005 — UI-string i18n (EN/AR gettext). DONE (2026-07-13), branch `feature/005-i18n-strings`.**
+   Closed the top launch blocker with the constitution-aligned approach (gettext `.po`/`.mo`, no Polylang
+   dependency): loaded the `perego-site` textdomain, `__()`-wrapped the hardcoded header nav labels
+   (const → `navItems()` method), authored `perego-site-ar.mo` for every public UI string (nav/forms/
+   buttons/aria/slider), and localized the framework (`corex`) form submit/status strings via a client
+   `gettext_corex` filter (`I18n/FrameworkFormStrings`, unit-tested). **AR routes now render Arabic UI
+   chrome; EN unchanged. Pest 200 · Jest 67 · route-health 72/0 · a11y 12/0 · interactions 4/4.** See
+   `specs/005-i18n-strings/`. **Only launch item left: T020 owner content** (real clients/photography/
+   legal copy/articles) — the idempotent seed workflow is ready.
 
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
 

@@ -1,0 +1,685 @@
+# Copyright (C) 2026 Perego
+# This file is distributed under the GPL-2.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Perego Site 0.1.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/perego-site\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-07-13T08:14:37+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.12.0\n"
+"X-Domain: perego-site\n"
+
+#. Plugin Name of the plugin
+#: perego-site.php:4
+msgid "Perego Site"
+msgstr ""
+
+#. Description of the plugin
+#: perego-site.php:5
+msgid "Application code for the Perego website (a Corex client site, with the --starter example)."
+msgstr ""
+
+#. Author of the plugin
+#: perego-site.php:9
+#: src/Blocks/SiteFooterRenderer.php:191
+msgid "Perego"
+msgstr ""
+
+#: src/Blocks/ClientsCarouselRenderer.php:65
+msgid "Previous"
+msgstr ""
+
+#: src/Blocks/ClientsCarouselRenderer.php:66
+#: src/Blocks/SearchResultsRenderer.php:148
+msgid "Next"
+msgstr ""
+
+#. translators: 1: section role key, 2: language locale
+#: src/Blocks/GlobalSectionRenderer.php:107
+#, php-format
+msgid "Missing “%1$s” global section for the “%2$s” language. Add and link a translation."
+msgstr ""
+
+#: src/Blocks/HeroSliderRenderer.php:43
+#, php-format
+msgid "Slide %1$s of %2$s"
+msgstr ""
+
+#: src/Blocks/HeroSliderRenderer.php:44
+#: src/Blocks/HeroSliderRenderer.php:115
+msgid "Pause slideshow"
+msgstr ""
+
+#: src/Blocks/HeroSliderRenderer.php:45
+msgid "Play slideshow"
+msgstr ""
+
+#: src/Blocks/HeroSliderRenderer.php:48
+msgid "Introduction"
+msgstr ""
+
+#: src/Blocks/HeroSliderRenderer.php:111
+msgid "Previous slide"
+msgstr ""
+
+#: src/Blocks/HeroSliderRenderer.php:122
+msgid "Next slide"
+msgstr ""
+
+#: src/Blocks/HeroSliderRenderer.php:132
+msgid "Hero slides"
+msgstr ""
+
+#. translators: %d: slide number
+#: src/Blocks/HeroSliderRenderer.php:139
+#, php-format
+msgid "Slide %d"
+msgstr ""
+
+#: src/Blocks/JournalHeaderRenderer.php:31
+#: src/Blocks/PortfolioGridRenderer.php:47
+#: src/Blocks/PostBreadcrumbRenderer.php:32
+#: src/Blocks/SearchResultsRenderer.php:163
+msgid "Breadcrumb"
+msgstr ""
+
+#: src/Blocks/PreloaderRenderer.php:29
+msgid "Loading…"
+msgstr ""
+
+#: src/Blocks/SearchResultsRenderer.php:147
+msgid "Prev"
+msgstr ""
+
+#: src/Blocks/SearchResultsRenderer.php:156
+msgid "Search results pages"
+msgstr ""
+
+#: src/Blocks/ServicesOverviewRenderer.php:60
+msgid "Start your project"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:81
+#: src/Blocks/SiteHeaderRenderer.php:71
+msgid "Perego — home"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:85
+msgid "Contact us"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:112
+msgid "Social media"
+msgstr ""
+
+#. translators: %s: social network name
+#: src/Blocks/SiteFooterRenderer.php:117
+#, php-format
+msgid "Perego on %s"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:135
+msgid "Send a quick message"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:163
+msgid "Join us"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:192
+msgid "Legal"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:193
+msgid "Terms & Conditions"
+msgstr ""
+
+#: src/Blocks/SiteFooterRenderer.php:194
+msgid "Privacy Policy"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:38
+msgid "Home"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:39
+msgid "About Us"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:41
+#: src/PostTypes/ProjectPostType.php:74
+#: src/PostTypes/ServicePostType.php:47
+#: src/PostTypes/ServicePostType.php:51
+msgid "Services"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:44
+msgid "Video Editing & Post-Production"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:45
+msgid "2D Motion Graphics & Animation"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:46
+msgid "Graphic Design & Brand Identity"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:47
+msgid "Website Making"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:50
+msgid "Work"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:51
+msgid "Journal"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:52
+#: src/PostTypes/ClientPostType.php:41
+#: src/PostTypes/ClientPostType.php:45
+msgid "Clients"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:53
+msgid "Contact Us"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:78
+msgid "Primary"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:84
+msgid "Start a Project"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:92
+msgid "Menu"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:37
+msgid "Start a project"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:50
+msgid "Full name"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:51
+msgid "Put your name here"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:57
+msgid "E-mail"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:58
+msgid "Put your E-mail here"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:64
+msgid "Phone"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:65
+msgid "Best number to reach you"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:71
+msgid "Company"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:72
+msgid "Your brand or company"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:78
+msgid "Estimated budget"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:85
+msgid "Message Subject"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:86
+msgid "What is this about?"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:91
+msgid "Your message"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:92
+msgid "Tell us about your project."
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:97
+msgid "Choose your service"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:112
+msgid "Under $1,000"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:113
+msgid "$1,000 – $5,000"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:114
+msgid "$5,000 – $15,000"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:115
+msgid "$15,000+"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:116
+msgid "Not sure yet"
+msgstr ""
+
+#: src/Forms/QuickMessageForm.php:30
+msgid "Quick message"
+msgstr ""
+
+#: src/Forms/QuickMessageForm.php:42
+msgid "Your name"
+msgstr ""
+
+#: src/Forms/QuickMessageForm.php:47
+msgid "Email address"
+msgstr ""
+
+#: src/Forms/QuickMessageForm.php:52
+msgid "How can we help?"
+msgstr ""
+
+#: src/PostTypes/ClientPostType.php:42
+msgid "Client"
+msgstr ""
+
+#: src/PostTypes/ClientPostType.php:43
+msgid "Add New Client"
+msgstr ""
+
+#: src/PostTypes/ClientPostType.php:44
+msgid "Edit Client"
+msgstr ""
+
+#: src/PostTypes/ClientPostType.php:61
+msgid "Client Types"
+msgstr ""
+
+#: src/PostTypes/ClientPostType.php:62
+msgid "Client Type"
+msgstr ""
+
+#: src/PostTypes/GlobalSectionPostType.php:59
+#: src/PostTypes/GlobalSectionPostType.php:63
+msgid "Global Sections"
+msgstr ""
+
+#: src/PostTypes/GlobalSectionPostType.php:60
+msgid "Global Section"
+msgstr ""
+
+#: src/PostTypes/GlobalSectionPostType.php:61
+msgid "Add New Global Section"
+msgstr ""
+
+#: src/PostTypes/GlobalSectionPostType.php:62
+msgid "Edit Global Section"
+msgstr ""
+
+#: src/PostTypes/ProjectPostType.php:52
+msgid "Projects"
+msgstr ""
+
+#: src/PostTypes/ProjectPostType.php:53
+msgid "Project"
+msgstr ""
+
+#: src/PostTypes/ProjectPostType.php:54
+msgid "Add New Project"
+msgstr ""
+
+#: src/PostTypes/ProjectPostType.php:55
+msgid "Edit Project"
+msgstr ""
+
+#: src/PostTypes/ProjectPostType.php:56
+msgid "Portfolio"
+msgstr ""
+
+#: src/PostTypes/ProjectPostType.php:75
+#: src/PostTypes/ServicePostType.php:48
+msgid "Service"
+msgstr ""
+
+#: src/PostTypes/ServicePostType.php:49
+msgid "Add New Service"
+msgstr ""
+
+#: src/PostTypes/ServicePostType.php:50
+msgid "Edit Service"
+msgstr ""
+
+#: src/Blocks/clients-carousel/index.js:11
+msgid "Clients carousels (Corporate + Individual). Rendered by ClientsCarouselRenderer."
+msgstr ""
+
+#: src/Blocks/global-section/index.js:16
+msgid "— Select a role —"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:17
+msgid "Header content"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:18
+msgid "Standard footer"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:19
+msgid "Contact (flat) footer"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:20
+msgid "Global project CTA"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:21
+msgid "Global contact details"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:22
+msgid "404 editorial"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:30
+msgid "No role selected"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:35
+msgid "Global section"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:37
+msgid "Role"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:41
+msgid "Which global record renders here, in the current language."
+msgstr ""
+
+#: src/Blocks/global-section/index.js:49
+msgid "Global section:"
+msgstr ""
+
+#: src/Blocks/global-section/index.js:52
+msgid "Edit the copy in the matching Global Section record; it renders here per language."
+msgstr ""
+
+#: src/Blocks/hero-slider/index.js:12
+msgid "Hero slider — rotating homepage headlines. Rendered by HeroSliderRenderer."
+msgstr ""
+
+#: src/Blocks/home-about-bg/index.js:12
+msgid "Home About Background — the About section’s background image. Rendered by HomeAboutBgRenderer."
+msgstr ""
+
+#: src/Blocks/join-form/index.js:14
+msgid "Join-us / CV form — rendered on the front end."
+msgstr ""
+
+#: src/Blocks/journal-header/index.js:10
+msgid "Journal header. Rendered by JournalHeaderRenderer."
+msgstr ""
+
+#: src/Blocks/legal-toc/index.js:11
+msgid "Legal TOC (generated from the page headings). Rendered by LegalTocRenderer."
+msgstr ""
+
+#: src/Blocks/not-found/index.js:11
+msgid "404 composition. Rendered by NotFoundRenderer."
+msgstr ""
+
+#: src/Blocks/portfolio-grid/index.js:12
+msgid "Portfolio grid — filterable project cards. Rendered by PortfolioGridRenderer."
+msgstr ""
+
+#: src/Blocks/post-breadcrumb/index.js:10
+msgid "Post breadcrumb. Rendered by PostBreadcrumbRenderer."
+msgstr ""
+
+#: src/Blocks/preloader/index.js:11
+msgid "Preloader — shown on first homepage visit per session. Rendered by PreloaderRenderer."
+msgstr ""
+
+#: src/Blocks/project-gallery-lightbox/index.js:12
+msgid "Project gallery lightbox — thumbnails that open an accessible dialog. Rendered by ProjectGalleryLightboxRenderer."
+msgstr ""
+
+#: src/Blocks/project-hero/index.js:12
+msgid "Project hero — breadcrumb, category, title (H1), and meta. Rendered by ProjectHeroRenderer."
+msgstr ""
+
+#: src/Blocks/search-results/index.js:11
+msgid "Search results. Rendered by SearchResultsRenderer."
+msgstr ""
+
+#: src/Blocks/service-hero/index.js:13
+msgid "Service hero — eyebrow, service name (H1), and the four-service tabs. Rendered by ServiceHeroRenderer."
+msgstr ""
+
+#: src/Blocks/services-overview/index.js:12
+msgid "Services overview — Our Services intro, four cards, process, CTA. Rendered by ServicesOverviewRenderer."
+msgstr ""
+
+#: src/Blocks/services-teaser/index.js:12
+msgid "Services teaser — the four home service cards. Rendered by ServicesTeaserRenderer."
+msgstr ""
+
+#: src/Blocks/site-footer/index.js:11
+msgid "Site footer — rendered on the front end by SiteFooterRenderer."
+msgstr ""
+
+#: src/Blocks/site-header/index.js:11
+msgid "Site header — rendered on the front end by SiteHeaderRenderer."
+msgstr ""
+
+#: src/Blocks/clients-carousel/block.json
+msgctxt "block title"
+msgid "Perego Clients Carousel"
+msgstr ""
+
+#: src/Blocks/clients-carousel/block.json
+msgctxt "block description"
+msgid "The homepage Corporate + Individual client carousels. Cards are server-rendered (work without JS); Swiper (modular: Navigation, Pagination, Keyboard, A11y) enhances them. Language-aware."
+msgstr ""
+
+#: src/Blocks/global-section/block.json
+msgctxt "block title"
+msgid "Perego Global Section"
+msgstr ""
+
+#: src/Blocks/global-section/block.json
+msgctxt "block description"
+msgid "Renders a language-aware perego_global_section record (header, footer, CTA, contact details, 404) resolved by role for the current Polylang language."
+msgstr ""
+
+#: src/Blocks/hero-slider/block.json
+msgctxt "block title"
+msgid "Perego Hero Slider"
+msgstr ""
+
+#: src/Blocks/hero-slider/block.json
+msgctxt "block description"
+msgid "The homepage hero: a rotating set of headline slides with dot tabs, prev/next and pause/play controls, an aria-live announcer, and a CTA. Auto-advances (6.5s), pauses on hover and when the tab is hidden, and never auto-advances under reduced motion. Server-rendered; interactivity via view.js."
+msgstr ""
+
+#: src/Blocks/home-about-bg/block.json
+msgctxt "block title"
+msgid "Perego Home About Background"
+msgstr ""
+
+#: src/Blocks/home-about-bg/block.json
+msgctxt "block description"
+msgid "The homepage About section's full-bleed background image, absolutely positioned behind the editor-canvas panel content. Server-rendered; no view script."
+msgstr ""
+
+#: src/Blocks/join-form/block.json
+msgctxt "block title"
+msgid "Perego Join Us Form"
+msgstr ""
+
+#: src/Blocks/join-form/block.json
+msgctxt "block description"
+msgid "The footer Join-us / CV submission form (secure upload to perego/v1/careers/apply)."
+msgstr ""
+
+#: src/Blocks/journal-header/block.json
+msgctxt "block title"
+msgid "Perego Journal Header"
+msgstr ""
+
+#: src/Blocks/journal-header/block.json
+msgctxt "block description"
+msgid "The journal index heading: 'The Perego Journal' (H1) + lead. Language-aware."
+msgstr ""
+
+#: src/Blocks/legal-toc/block.json
+msgctxt "block title"
+msgid "Perego Legal TOC"
+msgstr ""
+
+#: src/Blocks/legal-toc/block.json
+msgctxt "block description"
+msgid "The legal page aside: draft/review notice, last-updated line, and a table of contents generated from the page's own H2 anchors. Language-aware."
+msgstr ""
+
+#: src/Blocks/not-found/block.json
+msgctxt "block title"
+msgid "Perego 404"
+msgstr ""
+
+#: src/Blocks/not-found/block.json
+msgctxt "block description"
+msgid "The 404 composition: code, title (H1), body, and Back-home / Contact actions. Server-rendered + language-aware."
+msgstr ""
+
+#: src/Blocks/portfolio-grid/block.json
+msgctxt "block title"
+msgid "Perego Portfolio Grid"
+msgstr ""
+
+#: src/Blocks/portfolio-grid/block.json
+msgctxt "block description"
+msgid "The work/portfolio grid: a service-filter chip row and a masonry grid of project cards queried from the project CPT, with a no-results state. Server-rendered; the client-side filter is wired via view.js."
+msgstr ""
+
+#: src/Blocks/post-breadcrumb/block.json
+msgctxt "block title"
+msgid "Perego Post Breadcrumb"
+msgstr ""
+
+#: src/Blocks/post-breadcrumb/block.json
+msgctxt "block description"
+msgid "The single-post breadcrumb: Home / Journal / <post title>. Language-aware."
+msgstr ""
+
+#: src/Blocks/preloader/block.json
+msgctxt "block title"
+msgid "Perego Preloader"
+msgstr ""
+
+#: src/Blocks/preloader/block.json
+msgctxt "block description"
+msgid "Branded first-visit-per-session preload overlay for the homepage only. Reduced-motion-safe; hides itself with a hard 2.5s safety timeout regardless of asset load."
+msgstr ""
+
+#: src/Blocks/project-gallery-lightbox/block.json
+msgctxt "block title"
+msgid "Perego Project Gallery Lightbox"
+msgstr ""
+
+#: src/Blocks/project-gallery-lightbox/block.json
+msgctxt "block description"
+msgid "A project's gallery: a thumbnail grid that opens an accessible lightbox dialog (focus trap, counter, prev/next). Server-rendered; interaction via view.js."
+msgstr ""
+
+#: src/Blocks/project-hero/block.json
+msgctxt "block title"
+msgid "Perego Project Hero"
+msgstr ""
+
+#: src/Blocks/project-hero/block.json
+msgctxt "block description"
+msgid "The case-study hero: breadcrumb, service category, project title (H1), and the client/year/role/deliverables meta. Server-rendered from the queried project."
+msgstr ""
+
+#: src/Blocks/search-results/block.json
+msgctxt "block title"
+msgid "Perego Search Results"
+msgstr ""
+
+#: src/Blocks/search-results/block.json
+msgctxt "block description"
+msgid "The search page: title (H1), search form, results-for summary, server-rendered result list, and empty state. Language-aware."
+msgstr ""
+
+#: src/Blocks/service-hero/block.json
+msgctxt "block title"
+msgid "Perego Service Hero"
+msgstr ""
+
+#: src/Blocks/service-hero/block.json
+msgctxt "block description"
+msgid "The service single hero: an eyebrow, the current service's name as H1, and the shared four-service tabs (main link + Start-your-project CTA). Server-rendered; tab hover/active is pure CSS."
+msgstr ""
+
+#: src/Blocks/services-overview/block.json
+msgctxt "block title"
+msgid "Perego Services Overview"
+msgstr ""
+
+#: src/Blocks/services-overview/block.json
+msgctxt "block description"
+msgid "The services archive: Our Services intro, four service cards, the shared process, and a closing CTA. Server-rendered + language-aware."
+msgstr ""
+
+#: src/Blocks/services-teaser/block.json
+msgctxt "block title"
+msgid "Perego Services Teaser"
+msgstr ""
+
+#: src/Blocks/services-teaser/block.json
+msgctxt "block description"
+msgid "The homepage services teaser: a heading, a See All Services link, and the four service cards (staggered offsets + hover lift). Server-rendered; hover is pure CSS (no view script)."
+msgstr ""
+
+#: src/Blocks/site-footer/block.json
+msgctxt "block title"
+msgid "Perego Site Footer"
+msgstr ""
+
+#: src/Blocks/site-footer/block.json
+msgctxt "block description"
+msgid "The global site footer: contact / quick-message / careers columns + bottom bar, or the flat 2-column variant on the contact page."
+msgstr ""
+
+#: src/Blocks/site-header/block.json
+msgctxt "block title"
+msgid "Perego Site Header"
+msgstr ""
+
+#: src/Blocks/site-header/block.json
+msgctxt "block description"
+msgid "The global site header: logo, primary nav with Services dropdown, Start a Project CTA, language toggle, mobile hamburger. Server-rendered; interactivity via view.js."
+msgstr ""
