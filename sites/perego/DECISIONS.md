@@ -378,3 +378,16 @@ already-accepted AR home) and the handoff is English-only, so it is **not a devi
 of spec 004's scope. **Decision**: track it as the top bilingual-launch blocker for a dedicated i18n slice rather
 than absorb a large cross-cutting change into per-route design work; the approach (gettext `.po`/`.mo` vs Polylang
 string translations) is an owner call. Recorded in `specs/004-design-fidelity/content-manifest.md`.
+
+**Decision 17 (2026-07-13) — Single-post reading time as a locale-aware server block.** The handoff
+single-post meta row (`single-post.html:71`, plus the `readTime` string in `content/{en,ar}.json`) shows a
+"6 min read" estimate that no native WP block emits. Added `perego-theme/post-reading-time`
+(`PostReadingTimeRenderer`), mirroring the Decision-15 breadcrumb pattern: it estimates from the post body
+at 200 wpm (floored to 1 minute, unicode-aware word split so Arabic counts correctly) and renders the
+localized label via `GlobalContent::readTime()` (EN "N min read" / AR "N دقيقة للقراءة"). **Why**: closes a
+real 004 fidelity gap that was previously listed as a deferred "meta embellishment", using the established
+server-block-for-locale-aware-native-templates pattern rather than a plugin. The label lives in
+`GlobalContent` (locale-keyed array, like the other neutral-template strings), so it needs no `.po`/`.mo`
+entry; the block's admin-only title/description follow the existing convention of being POT-tracked but not
+AR-translated. The remaining meta embellishments (author avatar, "By" prefix, separator dots) stay deferred
+as cosmetic.

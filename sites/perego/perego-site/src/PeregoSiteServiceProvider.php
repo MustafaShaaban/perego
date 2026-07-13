@@ -14,6 +14,7 @@ use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\HomeAboutBgRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PostBreadcrumbRenderer;
+use PeregoSite\Blocks\PostReadingTimeRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
 use PeregoSite\Blocks\LegalTocRenderer;
@@ -260,6 +261,16 @@ final class PeregoSiteServiceProvider
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
 
                     return (new PostBreadcrumbRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render($queried instanceof \WP_Post ? $queried : null);
+                },
+            ]);
+
+            register_block_type($this->blockDir('post-reading-time'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+
+                    return (new PostReadingTimeRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render($queried instanceof \WP_Post ? $queried : null);
                 },

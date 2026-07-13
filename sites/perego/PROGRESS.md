@@ -18,6 +18,10 @@ No visual reinterpretation is authorized: every correction must make Perego matc
 - The latest recorded route-health run covers **72** EN/AR desktop/mobile checks across all 16 mapped
   handoff templates with no hard failures (spec 004 T007 extended the earlier 44-check pass). One
   informational content gap: the representative standard page `/sample-page/` has no Arabic translation.
+- Single-post fidelity closure (2026-07-13): added the locale-aware `perego-theme/post-reading-time`
+  block ("N min read" / "N دقيقة للقراءة"), the last handoff meta element that was still deferred. Gates
+  after the change: Pest **212**, Jest **67**, route-health **72/0**, a11y **12/0**, interactions **4/0**,
+  debug.log clean; live EN + AR single posts verified. See DECISIONS #17.
 
 ### What is not accepted or launch-ready
 

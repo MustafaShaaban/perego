@@ -10,12 +10,7 @@ use Brain\Monkey\Functions;
 use PeregoSite\Blocks\PostBreadcrumbRenderer;
 use PeregoSite\Content\GlobalContent;
 
-if (! class_exists('WP_Post')) {
-    class WP_Post
-    {
-        public int $ID = 0;
-    }
-}
+// WP_Post double comes from tests/bootstrap.php (shared, #[AllowDynamicProperties] + post_content).
 
 beforeEach(function () {
     Functions\when('esc_attr__')->returnArg(1);
