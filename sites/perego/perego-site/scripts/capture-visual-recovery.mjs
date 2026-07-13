@@ -15,7 +15,21 @@ import { chromium } from 'playwright';
 const STATIC_BASE = process.env.PEREGO_HANDOFF_BASE ?? 'http://127.0.0.1:8777';
 const LIVE_BASE = process.env.PEREGO_LIVE_BASE ?? 'http://perego.local';
 const OUTPUT_ROOT = join('sites', 'perego', 'output', 'visual-recovery');
-const VIEWPORT = { width: 1440, height: 900 };
+const VIEWPORTS = [
+	{ id: '320', width: 320, height: 900 },
+	{ id: '375', width: 375, height: 900 },
+	{ id: '430', width: 430, height: 900 },
+	{ id: '768', width: 768, height: 900 },
+	{ id: '1024', width: 1024, height: 900 },
+	{ id: '1280', width: 1280, height: 900 },
+	{ id: '1440', width: 1440, height: 900 },
+	{ id: 'wide', width: 1920, height: 1080 },
+];
+const requestedViewports = ( process.env.PEREGO_VIEWPORT_IDS ?? VIEWPORTS.map( ( viewport ) => viewport.id ).join( ',' ) )
+	.split( ',' )
+	.map( ( id ) => VIEWPORTS.find( ( viewport ) => viewport.id === id.trim() ) )
+	.filter( Boolean );
+const requestedLocales = ( process.env.PEREGO_LOCALES ?? 'en,ar' ).split( ',' ).map( ( locale ) => locale.trim() );
 
 const CAPTURES = [
 	{ route: 'home', state: 'hero-default', staticPath: 'index.html', livePath: '/', landmark: '#hero' },
@@ -49,15 +63,32 @@ const freezeMotion = `
 	.reveal, .js .reveal { opacity: 1 !important; transform: none !important; }
 `;
 
-async function capture(page, url, landmark, outputPath) {
+async function capture(page, url, landmark, outputPath, locale) {
 	await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 	await page.addStyleTag({ content: freezeMotion });
+	if ( locale === 'ar' ) {
+		await page.evaluate(() => {
+			document.documentElement.lang = 'ar';
+			document.documentElement.dir = 'rtl';
+		});
+	}
 	await page.evaluate(async (selector) => {
 		await document.fonts.ready;
 		document.querySelector(selector)?.scrollIntoView({ block: 'start' });
 	}, landmark);
 	await page.waitForTimeout(150);
 	await page.screenshot({ path: outputPath });
+}
+
+async function alternateLanguageUrl(page, englishUrl, locale) {
+	await page.goto(englishUrl, { waitUntil: 'networkidle', timeout: 30000});
+	const alternate = page.locator(`link[rel="alternate"][hreflang="${ locale }"]`);
+
+	if (await alternate.count() === 0) {
+		return null;
+	}
+
+	return alternate.first().getAttribute('href');
 }
 
 function pixelDifference(baselinePath, actualPath, diffPath) {
@@ -129,36 +160,63 @@ mkdirSync(join(OUTPUT_ROOT, 'diff'), { recursive: true });
 const browser = await chromium.launch({
 	args: ['--host-resolver-rules=MAP perego.local 127.0.0.1'],
 });
-const baselinePage = await browser.newPage({ viewport: VIEWPORT });
-const actualPage = await browser.newPage({ viewport: VIEWPORT });
+const baselinePage = await browser.newPage();
+const actualPage = await browser.newPage();
 const diffPage = await browser.newPage();
 const records = [];
 
 try {
-	for (const captureState of CAPTURES) {
-		const filename = `${captureState.route}-en-1440-${captureState.state}.png`;
-		const baselinePath = join(OUTPUT_ROOT, 'baseline', filename);
-		const actualPath = join(OUTPUT_ROOT, 'actual', filename);
-		const diffPath = join(OUTPUT_ROOT, 'diff', filename);
+	for (const viewport of requestedViewports) {
+		await baselinePage.setViewportSize(viewport);
+		await actualPage.setViewportSize(viewport);
 
-		await capture(baselinePage, `${STATIC_BASE}/${captureState.staticPath}`, captureState.landmark, baselinePath);
-		await capture(actualPage, `${LIVE_BASE}${captureState.livePath}`, captureState.landmark, actualPath);
-		const difference = await createDiff(diffPage, pixelDifference(baselinePath, actualPath, diffPath));
-		records.push({
-			route: captureState.route,
-			language: 'en',
-			viewport: VIEWPORT,
-			state: captureState.state,
-			baseline: baselinePath.replaceAll('\\', '/'),
-			actual: actualPath.replaceAll('\\', '/'),
-			diff: difference.error ? null : diffPath.replaceAll('\\', '/'),
-			status: 'unreviewed',
-			...difference,
-		});
+		for (const captureState of CAPTURES) {
+			const staticUrl = `${STATIC_BASE}/${captureState.staticPath}`;
+			const englishUrl = `${LIVE_BASE}${captureState.livePath}`;
+
+			for (const locale of requestedLocales) {
+				const liveUrl = locale === 'en'
+					? englishUrl
+					: await alternateLanguageUrl(actualPage, englishUrl, locale);
+
+				if ( ! liveUrl ) {
+					records.push({
+						route: captureState.route,
+						language: locale,
+						viewport,
+						state: captureState.state,
+						status: 'unavailable',
+						reason: `No hreflang ${locale} alternate is published by the live route.`,
+					});
+					continue;
+				}
+
+				const filename = `${captureState.route}-${locale}-${viewport.id}-${captureState.state}.png`;
+				const baselinePath = join(OUTPUT_ROOT, 'baseline', filename);
+				const actualPath = join(OUTPUT_ROOT, 'actual', filename);
+				const diffPath = join(OUTPUT_ROOT, 'diff', filename);
+
+				await capture(baselinePage, staticUrl, captureState.landmark, baselinePath, locale);
+				await capture(actualPage, liveUrl, captureState.landmark, actualPath, locale);
+				const difference = await createDiff(diffPage, pixelDifference(baselinePath, actualPath, diffPath));
+				records.push({
+					route: captureState.route,
+					language: locale,
+					viewport,
+					state: captureState.state,
+					baseline: baselinePath.replaceAll('\\', '/'),
+					actual: actualPath.replaceAll('\\', '/'),
+					diff: difference.error ? null : diffPath.replaceAll('\\', '/'),
+					baselineKind: locale === 'en' ? 'locked-handoff' : 'rtl-layout-surrogate',
+					status: 'unreviewed',
+					...difference,
+				});
+			}
+		}
 	}
 } finally {
 	await browser.close();
 }
 
-writeFileSync(join(OUTPUT_ROOT, 'en-1440-manifest.json'), JSON.stringify({ records }, null, 2));
+writeFileSync(join(OUTPUT_ROOT, 'manifest.json'), JSON.stringify({ records }, null, 2));
 console.log(JSON.stringify({ records }, null, 2));

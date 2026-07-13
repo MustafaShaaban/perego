@@ -11,12 +11,16 @@ Status: recovery in progress; no route has visual acceptance.
 
 The shell captures prove that importing the handoff stylesheet alone is insufficient: WordPress block markup and existing block styles can still change the resulting layout. They are diagnostic artefacts, not acceptance evidence.
 
-`sites/perego/perego-site/scripts/capture-visual-recovery.mjs` now captures all 16 locked English
-handoff templates at 1440px (plus the five Home landmarks) against their mapped Perego routes. It freezes
-presentation-only motion, waits for fonts, writes baseline/current/red-pixel-diff PNGs, and records every
-result as `unreviewed` in `sites/perego/output/visual-recovery/en-1440-manifest.json`. The runner is a
-partial T001 implementation, not an acceptance gate: AR, the required responsive widths, and interaction/
-form states remain to be captured and every result requires manual review.
+`sites/perego/perego-site/scripts/capture-visual-recovery.mjs` now supports the complete required viewport
+matrix (320, 375, 430, 768, 1024, 1280, 1440, and wide desktop) plus EN/AR capture selection through
+`PEREGO_VIEWPORT_IDS` and `PEREGO_LOCALES`. It freezes presentation-only motion, waits for fonts, writes
+baseline/current/red-pixel-diff PNGs, and records every result as `unreviewed` in
+`sites/perego/output/visual-recovery/manifest.json`. English uses the locked handoff baseline. Because the
+handoff has no Arabic rendered templates, Arabic records deliberately identify their baseline as an
+`rtl-layout-surrogate`; they prove route resolution and RTL layout for review, but cannot be pixel-parity
+acceptance for translated prose. Missing Polylang alternates are recorded as `unavailable`, not silently
+skipped. The runner remains a partial T001 implementation: the full matrix and interaction/form states
+remain to be captured and every result requires manual review.
 
 The original desktop static full-page capture is not an acceptance baseline: the handoff's
 viewport-driven reveal script leaves below-fold sections hidden when a full-page screenshot is taken
