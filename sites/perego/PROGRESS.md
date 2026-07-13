@@ -11,6 +11,11 @@ Spec 008 is rebuilding the Perego client rendering layer from the authoritative 
 markup. No route may be called design-complete until deterministic baseline, actual, diff, manual review,
 responsive EN/AR, and state evidence exists.
 
+Latest recovery increment (2026-07-13): the 404 route now restores the locked handoff's isolated DOM,
+inline CSS, and decorative pointer interaction through the Perego FSE block boundary. The English 1440
+default runner reports 0 changed pixels; this is evidence only, not acceptance. Arabic, responsive,
+interaction-state, and manual visual review remain required by Spec 008 T001.
+
 The existing non-engineering owner material remains required for launch: approved client identities/logos,
 production project and journal content/media, counsel-reviewed English legal copy, and professional Arabic
 legal translation. The idempotent seed workflow is documented and proven ready; see

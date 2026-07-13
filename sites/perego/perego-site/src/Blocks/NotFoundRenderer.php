@@ -28,15 +28,18 @@ final class NotFoundRenderer
     {
         $c = $this->content->notFound();
 
-        $html = '<section class="notfound" aria-labelledby="notfound-title">';
-        $html .= '<p class="notfound__code" aria-hidden="true">' . esc_html($c['code']) . '</p>';
-        $html .= '<h1 class="notfound__title" id="notfound-title">' . esc_html($c['title']) . '</h1>';
-        $html .= '<p class="notfound__text">' . esc_html($c['text']) . '</p>';
-        $html .= '<div class="notfound__actions">';
-        $html .= '<a class="perego-btn perego-btn--accent" href="' . esc_url(home_url('/')) . '">' . esc_html($c['backHome']) . '</a>';
-        $html .= '<a class="perego-btn perego-btn--dark" href="' . esc_url(home_url('/contact')) . '">' . esc_html($c['contact']) . '</a>';
-        $html .= '</div>';
-        $html .= '</section>';
+        $html = '<main class="error-page">';
+        $html .= '<a class="logo error-logo" href="' . esc_url(home_url('/')) . '" aria-label="' . esc_attr(__('Perego — home', 'perego-site')) . '">'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" alt="' . esc_attr(__('Perego بيريجو', 'perego-site')) . '" /></a>';
+        $html .= '<div class="error-page__bg" aria-hidden="true"><img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/hero-bg.png') . '" alt="" /></div>';
+        $html .= '<div class="error-grid" aria-hidden="true"></div><div class="error-orbs" aria-hidden="true">'
+            . '<span class="orb orb--1"></span><span class="orb orb--2"></span><span class="orb orb--3"></span><span class="orb orb--4"></span></div>';
+        $html .= '<div class="error-page__inner" id="main" tabindex="-1">';
+        $html .= '<p class="error-code" aria-hidden="true">' . esc_html($c['code']) . '</p>';
+        $html .= '<h1 class="error-title">' . esc_html($c['title']) . '</h1>';
+        $html .= '<p class="error-text">' . esc_html($c['text']) . '</p><div class="error-actions">';
+        $html .= '<a class="btn btn--accent" href="' . esc_url(home_url('/')) . '">' . esc_html($c['backHome']) . '</a>';
+        $html .= '<a class="btn btn--dark" href="' . esc_url(home_url('/contact')) . '">' . esc_html($c['contact']) . '</a></div></div></main>';
 
         return $html;
     }
