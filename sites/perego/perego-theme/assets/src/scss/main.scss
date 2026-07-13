@@ -1131,3 +1131,59 @@ textarea.corex-form__input {
 	transform: translateY(-2px);
 	box-shadow: var(--perego-shadow-glow-accent);
 }
+/* Locked handoff typefaces, served locally so typography is deterministic and no route depends on Google Fonts. */
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-300-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Cairo';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../fonts/cairo-arabic-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Cairo';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('../fonts/cairo-arabic-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Cairo';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('../fonts/cairo-arabic-700-normal.woff2') format('woff2');
+}

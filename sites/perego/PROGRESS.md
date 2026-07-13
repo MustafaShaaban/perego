@@ -2,6 +2,26 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## Authoritative delivery closure (2026-07-13)
+
+**This section supersedes all older recovery, PR, and Next blocks below.** The implemented Perego design
+fidelity and UI-string i18n work is merged through PR #12 into the Perego default/trunk line. The full
+client verification suite was recorded green: Pest 218, Jest 67, route-health 72/0, a11y 12/0, interactions
+4/0, and a clean debug log. No further engineering task is currently open.
+
+The only unresolved launch work is non-engineering owner material: approved client identities/logos,
+production project and journal content/media, counsel-reviewed English legal copy, and professional Arabic
+legal translation. The idempotent seed workflow is documented and proven ready; see
+`LAUNCH-CHECKLIST.md` and `specs/004-design-fidelity/content-manifest.md`.
+
+### Post-closure regression fix: local handoff fonts (Spec 006)
+
+The current 72-route browser gate surfaced one shared broken resource on every non-404 route: the remote
+Google Fonts request. Spec 006 replaced it with local Open Sans (300/400/600/700) and Cairo
+(400/600/700) WOFF2 assets in `perego-theme/assets/fonts/`, preserving the handoff font families while
+removing both remote preconnect hints. Current evidence: Pest 218/615 assertions, Jest 67, route-health
+72/0, a11y 12/0 serious-critical, and interactions 4/4. This closes the last executable regression.
+
 ## Integration status (2026-07-13)
 
 Specs 004 (design fidelity) and 005 (UI-string i18n) are **merged and integrated**:

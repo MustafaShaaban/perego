@@ -1,5 +1,18 @@
 # Perego — Decision Log
 
+## 2026-07-13 — Serve the locked handoff fonts locally
+
+**Decision**: Perego serves Open Sans weights 300/400/600/700 and Cairo weights 400/600/700 from
+`perego-theme/assets/fonts/`, rather than enqueueing Google Fonts or its preconnect hints.
+
+**Why**: The full browser matrix exposed one external Google Fonts request as a broken resource on every
+normal route when external network access was denied. The locked handoff requires those families but does
+not include font files; the open-licensed Fontsource packages provide the exact required WOFF2 assets.
+
+**Status**: verified: the local fonts preserve the theme's existing font-family tokens and the full
+72-route EN/AR matrix now has zero broken resources. This is a client-theme asset change only; no CoreX
+framework code changed.
+
 ## 2026-07-12 — Final handoff is the locked visual authority; design-fidelity recovery is the active work
 
 **Decision**: `_design_handoff/Perego-Creative-Studio-Final-Handoff/site/` is the single binding visual,

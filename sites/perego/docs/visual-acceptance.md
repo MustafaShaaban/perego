@@ -1,5 +1,17 @@
 # Perego — Visual & Behavioural Acceptance Evidence
 
+## Local font delivery (2026-07-13)
+
+The locked handoff specifies **Open Sans** for English and **Cairo** for Arabic. The handoff uses a
+Google Fonts request, but its absence made every normal route report a broken resource in the isolated
+browser gate. Perego now serves the required WOFF2 weights from
+`perego-theme/assets/fonts/` through `@font-face` declarations in `assets/src/scss/main.scss`; the
+remote stylesheet and both Google preconnect hints were removed from `perego-theme/functions.php`.
+
+Current verification after the change: **Pest 218/615 assertions**, **Jest 67**, **route-health 72/0**,
+**a11y 12 pages/0 serious-critical**, and **interactions 4/4**. The 72-route browser matrix confirms
+no broken resources while running with external network access denied.
+
 Automated headless verification of the live site (`http://perego.local`) against the handoff's hard
 rules. Regenerate any time with:
 

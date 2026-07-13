@@ -4,6 +4,14 @@ Consolidated, actionable next steps. The engineering work is **done and verified
 human merge decision and owner-supplied content. Canonical status lives in `PROGRESS.md`; the launch
 audit in `specs/004-design-fidelity/content-manifest.md`.
 
+## Current integrated state (2026-07-13)
+
+**This section supersedes the historical PR-merge instructions below.** PR #11 (UI-string i18n) merged
+into PR #10's delivery line; PR #10 (design fidelity) then merged into `feature/002-home`; finally PR #12
+merged `feature/002-home` into the Perego default/trunk line (`feature/001-global-foundation`). The current
+Perego delivery history is therefore integrated. The only remaining launch blockers are owner-supplied
+production content/assets and professionally reviewed EN/AR legal copy, listed in sections 2–4.
+
 ## Verified state (2026-07-13)
 
 - **Spec 004** (design fidelity, all 16 routes) → PR #10 (`feature/004-design-fidelity` → `feature/002-home`).
