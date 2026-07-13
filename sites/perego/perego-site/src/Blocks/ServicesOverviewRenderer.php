@@ -96,16 +96,39 @@ final class ServicesOverviewRenderer
         return $html;
     }
 
+    /** Icon file, in the handoff's fixed Discover/Concept/Create/Deliver step order. */
+    private const PROCESS_ICONS = ['icon-clapper.png', 'icon-film-l.png', 'icon-star.png', 'icon-film-h.png'];
+
+    private const ARROW_SVG = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" '
+        . 'stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
     /** @param array<string, mixed> $o */
     private function renderProcess(array $o): string
     {
-        $html = '<section class="svc-process" aria-labelledby="services-overview-process">';
-        $html .= '<h2 class="wp-block-heading" id="services-overview-process">' . esc_html($o['processTitle']) . '</h2>';
-        $html .= '<ol>';
-        foreach ($o['processSteps'] as $step) {
-            $html .= '<li><strong>' . esc_html($step['label']) . '</strong> — ' . esc_html($step['desc']) . '</li>';
+        $html = '<section class="process" aria-labelledby="services-overview-process">';
+        $html .= '<div class="container">';
+        $html .= '<h2 class="section-title reveal" id="services-overview-process">' . esc_html($o['processTitle']) . '</h2>';
+        $html .= '<ol class="process-list">';
+
+        $steps = $o['processSteps'];
+        $lastIndex = count($steps) - 1;
+        $iconBase = get_stylesheet_directory_uri() . '/assets/images/';
+
+        foreach ($steps as $index => $step) {
+            $icon = self::PROCESS_ICONS[$index] ?? self::PROCESS_ICONS[0];
+            $html .= '<li class="process-step reveal" data-delay="' . (int) $index . '">'
+                . '<span class="process-step__icon"><img src="' . esc_url($iconBase . $icon) . '" alt="" /></span>'
+                . '<span class="process-step__label">' . esc_html($step['label']) . '</span>'
+                . '<span class="process-step__desc">' . esc_html($step['desc']) . '</span>'
+                . '</li>';
+
+            if ($index !== $lastIndex) {
+                $html .= '<li class="process-arrow" aria-hidden="true">' . self::ARROW_SVG . '</li>';
+            }
         }
+
         $html .= '</ol>';
+        $html .= '</div>';
         $html .= '</section>';
 
         return $html;

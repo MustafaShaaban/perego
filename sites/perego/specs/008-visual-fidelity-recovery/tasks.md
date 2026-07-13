@@ -39,6 +39,25 @@
     emits — the real `.site-footer*` styling comes from `perego-reference.scss`, so this per-block
     stylesheet is orphaned; a cleanup candidate, not a defect.
 - [ ] T006 [US2] Rebuild Home and Services routes, including desktop/mobile/RTL states and visual evidence.
+  - [x] Services archive "Our Process" (2026-07-14): `ServicesOverviewRenderer::renderProcess()` rendered
+    a plain `<ol><li><strong>Label</strong> — desc</li></ol>` with zero active CSS (`.svc-process` styling
+    only existed in the inactive `perego-legacy-pre-recovery.scss`) — exactly the "plain text list, not
+    designed cards/icons/arrows" defect the completion contract names. Rebuilt to the handoff's
+    `.process`/`.process-list`/`.process-step`/`.process-step__icon`/`__label`/`__desc`/`.process-arrow`
+    contract using the theme's existing icon assets (already present, no new assets needed) and the
+    already-active `perego-reference.scss` rules. Full-page live screenshot at 1440 now matches the
+    handoff's process section closely (icons, arrows, gradient band, spacing, typography). Pest 224/224
+    (new coverage for step/arrow counts + icons), route-health 72/0, a11y 12/0.
+  - [ ] **Known gap, not yet fixed:** the entire "Selected work" masonry section (`.portfolio.page-section`
+    / `.work-masonry` / `.work-card` with image/video/gallery lightbox triggers) is completely absent from
+    the rendered Services archive — `ServicesOverviewRenderer::render()` has no call for it at all. This
+    needs real Project CPT data (reuse `ProjectRepository`) and a lightbox integration; scoped as separate
+    follow-up work, not fabricated here.
+  - [ ] **Known gap, not yet fixed:** the four service singles' own "Our Process" sections are seeded as
+    plain editable `wp:list` blocks (`scripts/seed-services.php`) with the same missing icon/arrow design.
+    Unlike the archive's render, this content is editor-canvas (already-seeded on 8 live EN/AR posts), so
+    fixing it needs either a migration script or a small non-canvas structural block — not changed in this
+    pass to avoid an unverified content migration.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
 - [ ] T008 [US2] Rebuild Contact, Search, standard page, legal, and 404 routes with all required states and evidence.
 - [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.

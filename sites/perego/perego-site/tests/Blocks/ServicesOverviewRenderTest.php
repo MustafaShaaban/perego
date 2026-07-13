@@ -49,9 +49,23 @@ it('renders the what-we-do intro with its media image, process, and closing CTA'
     expect($html)->toContain('One studio, four services')
         ->and($html)->toContain('svc-whatwedo')
         ->and($html)->toMatch('/<img [^>]*ui-video-editing\.png/')
-        ->and($html)->toContain('svc-process')
+        ->and($html)->toContain('class="process"')
         ->and($html)->toContain('Have a project in mind?')
         ->and($html)->toMatch('/href="[^"]*\/contact"/');
+});
+
+it('renders the four-step process as designed icon cards with arrows, not a plain list', function () {
+    $html = renderServicesOverview();
+
+    expect($html)->toContain('class="process-list"')
+        ->and(substr_count($html, 'class="process-step reveal"'))->toBe(4)
+        ->and(substr_count($html, 'class="process-arrow"'))->toBe(3)
+        ->and($html)->toMatch('/<img [^>]*icon-clapper\.png/')
+        ->and($html)->toMatch('/<img [^>]*icon-film-l\.png/')
+        ->and($html)->toMatch('/<img [^>]*icon-star\.png/')
+        ->and($html)->toMatch('/<img [^>]*icon-film-h\.png/')
+        ->and($html)->toContain('class="process-step__label"')
+        ->and($html)->toContain('class="process-step__desc"');
 });
 
 it('localizes the whole overview into Arabic', function () {
