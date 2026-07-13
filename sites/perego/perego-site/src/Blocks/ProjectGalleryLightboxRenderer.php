@@ -48,9 +48,10 @@ final class ProjectGalleryLightboxRenderer
             'counter' => $strings['counter'],
         ]));
 
-        $html = '<section class="project-gallery" data-wp-interactive="perego/project-gallery" '
+        $html = '<section class="project-gallery" aria-labelledby="project-gallery-title" data-wp-interactive="perego/project-gallery" '
             . "data-wp-context='" . $context . "'>";
 
+        $html .= '<h2 id="project-gallery-title" class="project-gallery__title">' . esc_html($strings['sectionLabel']) . '</h2>';
         $html .= $this->renderThumbs($images, $strings['sectionLabel']);
         $html .= $this->renderLightbox($strings);
 

@@ -21,6 +21,8 @@ use PeregoSite\Blocks\LegalTocRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ProjectHeroRenderer;
+use PeregoSite\Blocks\ProjectGalleryLightboxRenderer;
+use PeregoSite\Blocks\ProjectNavigationRenderer;
 use PeregoSite\Blocks\SearchResultsRenderer;
 use PeregoSite\Blocks\ServiceHeroRenderer;
 use PeregoSite\Blocks\ServicesOverviewRenderer;
@@ -364,6 +366,40 @@ final class PeregoSiteServiceProvider
                     return (new ProjectHeroRenderer($content))->render(
                         $queried instanceof \WP_Post ? $queried : null
                     );
+                },
+            ]);
+
+            register_block_type($this->blockDir('project-gallery-lightbox'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    if (! $queried instanceof \WP_Post) {
+                        return '';
+                    }
+
+                    $content = new PortfolioContent($languageService->driver()->currentLocale());
+                    $labels = $content->projectLabels();
+
+                    return (new ProjectGalleryLightboxRenderer())->render(
+                        (new ProjectRepository())->galleryFor($queried),
+                        [
+                            'sectionLabel' => $content->projectLabel('galleryTitle') ?: 'Project gallery',
+                            'close' => $content->projectLabel('close') ?: 'Close',
+                            'prev' => (string) $labels['prev'],
+                            'next' => (string) $labels['next'],
+                            'counter' => '%1$s / %2$s',
+                        ],
+                    );
+                },
+            ]);
+
+            register_block_type($this->blockDir('project-navigation'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+
+                    return (new ProjectNavigationRenderer(
+                        new ProjectRepository(),
+                        new PortfolioContent($languageService->driver()->currentLocale()),
+                    ))->render($queried instanceof \WP_Post ? $queried : null);
                 },
             ]);
         });

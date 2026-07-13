@@ -7,7 +7,8 @@
 **This section supersedes all older recovery, PR, and Next blocks below.** The implemented Perego design
 fidelity and UI-string i18n work is merged through PR #12 into the Perego default/trunk line. The full
 client verification suite was recorded green: Pest 218, Jest 67, route-health 72/0, a11y 12/0, interactions
-4/0, and a clean debug log. No further engineering task is currently open.
+4/0, and a clean debug log. Spec 007 has completed the previously deferred project-gallery/lightbox,
+adjacent-project navigation, and related-project surfaces; no further engineering task is currently open.
 
 The only unresolved launch work is non-engineering owner material: approved client identities/logos,
 production project and journal content/media, counsel-reviewed English legal copy, and professional Arabic
