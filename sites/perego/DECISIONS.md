@@ -416,3 +416,20 @@ disturbing the fixture; the checklist already sanctioned "exclude from indexing"
 to the well-known WP default slug and documented as removable once the fixture is deleted at launch
 (LAUNCH-CHECKLIST §4). Verified live: the page emits `noindex,nofollow` and no longer appears in the
 sitemap, while real pages (e.g. `/contact/`) are unaffected.
+
+**Decision 19 (2026-07-14) — CoreX Forms framework bug: no `novalidate`, worked around client-side.**
+Manually driving the Contact form through its required states (spec 008 T005) reproduced the exact
+defect the completion contract flagged: submitting with an empty required field shows the browser's
+native "Please fill out this field" bubble instead of the handoff's custom inline `.corex-form__error` +
+form-summary UI. Root cause: `corex-forms`' `FormBlockRenderer`/`FlowBlockRenderer` render
+`<form class="corex-form">` without a `novalidate` attribute, so the browser's own constraint validation
+intercepts the submit before `window.Corex.forms`' own schema-mirrored validator (spec 043) ever runs —
+the framework's validation/loading/error/success JS is otherwise fully wired and correct. This is a CoreX
+**framework** bug (`plugins/corex-forms/src/Block/{FormBlockRenderer,FlowBlockRenderer}.php`), out of
+Client Site Mode scope to fix directly. **Worked around** in the client layer: `perego-theme/assets/src/js/
+main.js` sets `form.noValidate = true` on every `.corex-form` at `DOMContentLoaded`, before any user
+interaction is possible — no race condition, no framework file touched. Flagging for a CoreX Framework
+Mode task to add `novalidate` to the renderer directly (removing the client workaround once fixed
+upstream). **Why**: the same pattern as the two framework quirks logged in the 2026-07-11 environment
+bootstrap note — work around in the client site, document, and flag upstream rather than either shipping
+the native-bubble defect or editing framework internals from a client-site session.

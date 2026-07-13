@@ -57,6 +57,65 @@ html {
 	color: var(--muted);
 }
 
+/* Every CoreX form on the site (contact/project-brief, footer quick-message, join-us) shares one
+ * real submission engine (window.Corex, spec 043); style its state classes/attributes once here so
+ * the handoff's field-error, form-summary banner, and button-loading contract look the same
+ * everywhere instead of only on whichever page happened to get bespoke CSS first. */
+.corex-form__input[aria-invalid="true"] {
+	border-color: #ff6ba6;
+}
+
+.corex-form__status {
+	border-radius: 10px;
+	transition: background-color var(--perego-dur-medium, 0.3s) var(--perego-ease, ease);
+}
+
+.corex-form__status.is-success,
+.corex-form__status.is-error {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 16px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.corex-form__status.is-success::before,
+.corex-form__status.is-error::before {
+	flex: none;
+	font-size: 15px;
+	line-height: 1;
+}
+
+.corex-form__status.is-success {
+	background: rgba(31, 138, 91, 0.18);
+	border: 1px solid rgba(80, 220, 150, 0.4);
+}
+
+.corex-form__status.is-success::before {
+	content: "\2713";
+}
+
+.corex-form__status.is-error {
+	background: rgba(216, 39, 91, 0.14);
+	border: 1px solid rgba(255, 107, 166, 0.4);
+}
+
+.corex-form__status.is-error::before {
+	content: "\26A0";
+}
+
+/* The button dims and its sibling .corex-spinner (Corex.loading, spec 043) spins in currentColor
+ * right after it — a branded, disabled-looking loading state without touching the framework's
+ * spinner-after-the-button DOM order. */
+form.corex-is-loading .corex-form__submit {
+	opacity: 0.65;
+}
+
+form.corex-is-loading .corex-form__submit + .corex-spinner {
+	color: var(--accent);
+}
+
 /* Keep the editable post-content wrapper transparent to the handoff's two-panel flex contract. */
 .home-about__panels > .wp-block-post-content {
 	display: flex;

@@ -18,7 +18,21 @@
     field/error/loading/success form-state screenshots and the contact-page flat-footer layout.
 - [ ] T005 [US1] Rebuild shared buttons, fields, form states, standard footer, and flat footer to the reference contract.
   - [x] Align the shared footer and form wrappers while preserving the CoreX/careers submit pipelines.
-  - [ ] Verify every field/error/loading/success state and contact-page flat-footer layout visually.
+  - [x] Verify every field/error/loading/success state visually (2026-07-14). Found and fixed the root
+    cause of the native "Please fill out this field" bubble the completion contract flagged: CoreX's
+    `FormBlockRenderer`/`FlowBlockRenderer` never emit `novalidate` on `<form class="corex-form">`, so
+    browser constraint validation runs before the framework's own submit-time validator ever does. Fixed
+    client-side (`perego-theme/assets/src/js/main.js` sets `form.noValidate = true` on load — framework
+    code is out of Client Site Mode scope; flagged as a CoreX Framework Mode bug, not fixed upstream here).
+    Also styled the framework's real state classes (`.corex-form__status.is-success/.is-error`,
+    `.corex-is-loading`, `[aria-invalid="true"]`) to the handoff's banner/spinner/border look, and fixed a
+    real desync bug where the decorative service-chooser buttons didn't reset when the shared runtime
+    calls `form.reset()` after a successful submission. Manually verified with mocked REST responses:
+    default, focus, filled, field-invalid + form-summary (no native bubble), loading (button dim + spinner,
+    `corex-is-loading`/disabled confirmed via computed style), success (banner + form reset + chooser
+    resync), server-error, rate-limited, and network-failure (falls back to the same generic message —
+    a framework design choice, not a Perego gap). Contact-page flat-footer layout still needs a dedicated
+    visual pass.
 - [ ] T006 [US2] Rebuild Home and Services routes, including desktop/mobile/RTL states and visual evidence.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
 - [ ] T008 [US2] Rebuild Contact, Search, standard page, legal, and 404 routes with all required states and evidence.
