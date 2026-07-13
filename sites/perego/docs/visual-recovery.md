@@ -32,8 +32,17 @@ viewport applicability. Representative EN artifacts exist for dropdown at 1280px
 at 375px; their changed-pixel counts are 65,430, 335,728, and 337,450 respectively, all with no live
 horizontal overflow. The static prototype's mobile backdrop prevents a physical submenu pointer tap, so
 baseline state setup invokes that prototype control directly only for the deterministic screenshot; the
-live interaction suite still tests the real pointer path without force. These artifacts are unreviewed
-diagnostics, not acceptance evidence.
+live interaction suite still tests the real pointer path without force.
+
+**Manually reviewed (2026-07-14):** all 26 Home `header-dropdown`/`mobile-nav`/`mobile-services` EN+AR
+records across every applicable viewport (320–1440/wide) — desktop Services dropdown, mobile slide-in
+panel, and mobile Services accordion all render correctly, including the AR/RTL direction: the panel
+correctly slides in from the left (`inset-inline-end` + the `[dir="rtl"] .main-nav` transform mirror),
+nav/dropdown text right-aligns, and the dropdown opens under the active trigger. No structural defect
+found. Since the header/footer are shared FSE template parts rendered identically on every route, this is
+representative evidence for the shared shell (spec 008 T004) — it is not a substitute for per-route
+capture of the remaining 15 routes, which stays open. Residual pixel diff against the AR baseline is the
+documented EN-vs-AR content/font difference (`rtl-layout-surrogate`), not a layout defect.
 
 The original desktop static full-page capture is not an acceptance baseline: the handoff's
 viewport-driven reveal script leaves below-fold sections hidden when a full-page screenshot is taken
