@@ -16,7 +16,7 @@
     viewport in `docs/visual-recovery.md`; two real contrast/role a11y bugs found and fixed along the way).
     This closes the shared-shell header/nav slice; still open across the rest of T004/T005: footer
     field/error/loading/success form-state screenshots and the contact-page flat-footer layout.
-- [ ] T005 [US1] Rebuild shared buttons, fields, form states, standard footer, and flat footer to the reference contract.
+- [x] T005 [US1] Rebuild shared buttons, fields, form states, standard footer, and flat footer to the reference contract.
   - [x] Align the shared footer and form wrappers while preserving the CoreX/careers submit pipelines.
   - [x] Verify every field/error/loading/success state visually (2026-07-14). Found and fixed the root
     cause of the native "Please fill out this field" bubble the completion contract flagged: CoreX's
@@ -31,8 +31,13 @@
     default, focus, filled, field-invalid + form-summary (no native bubble), loading (button dim + spinner,
     `corex-is-loading`/disabled confirmed via computed style), success (banner + form reset + chooser
     resync), server-error, rate-limited, and network-failure (falls back to the same generic message —
-    a framework design choice, not a Perego gap). Contact-page flat-footer layout still needs a dedicated
-    visual pass.
+    a framework design choice, not a Perego gap).
+  - [x] Contact-page flat-footer layout verified (2026-07-14): `SiteFooterRenderer::render(flat: true)`
+    correctly renders the handoff's 2-column `.site-footer--flat` (Contact + quick-message, no Careers
+    column) with real dynamic contact/social data and the shared bottom bar. Noted, not fixed (dead code,
+    no visual effect): `site-footer/style.scss` styles `.perego-footer*` classes that the renderer never
+    emits — the real `.site-footer*` styling comes from `perego-reference.scss`, so this per-block
+    stylesheet is orphaned; a cleanup candidate, not a defect.
 - [ ] T006 [US2] Rebuild Home and Services routes, including desktop/mobile/RTL states and visual evidence.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
 - [ ] T008 [US2] Rebuild Contact, Search, standard page, legal, and 404 routes with all required states and evidence.
