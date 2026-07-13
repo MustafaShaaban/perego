@@ -45,13 +45,21 @@ Classification key:
    submit/status strings are localized via a client `gettext_corex` filter. AR routes render Arabic
    nav + form labels + buttons + status; EN unchanged. See `../005-i18n-strings/`.
 2. **Clients carousel placeholder names (FR-006).** Public home section shows fabricated client names.
-3. **Legal copy is draft** (Terms/Privacy) — needs counsel review; AR legal section bodies are unseeded.
+3. **Legal copy is draft** (Terms/Privacy) — EN sections are placeholder guidance needing counsel
+   review. The **AR** legal pages intentionally show a "pending professional Arabic legal translation"
+   note rather than fabricated Arabic legal prose (a deliberate, responsible choice in
+   `scripts/seed-legal.php`) — they need a **professional Arabic legal translation**, not auto-seeding.
 4. **Demo project/journal content** — example case studies + articles + demo photography must be
    replaced with real, owner-approved work.
 5. **`sample-page` WP-default copy** — remove or replace; no AR translation exists.
-6. **AR journal category terms render in English** — WordPress `category` taxonomy terms need AR
-   translation (Polylang term translation, an admin/content task). Detail:
-   [evidence/journal.md](./evidence/journal.md).
+6. ~~AR journal category terms render in English~~ — **RESOLVED, verified live (2026-07-13)**: the AR
+   `category` terms are translated + Polylang-linked and the AR posts use them, so badges render Arabic.
+   See [evidence/journal.md](./evidence/journal.md).
+
+## Resolved since the audit
+
+- **UI-string i18n** → spec 005 (blocker #1 above).
+- **AR journal category badges** → verified rendering Arabic (was #6).
 
 ## Not blockers (verified safe to ship)
 
