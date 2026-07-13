@@ -2,6 +2,20 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## Integration status (2026-07-13)
+
+Specs 004 (design fidelity) and 005 (UI-string i18n) are **merged and integrated**:
+- PR #11 (`feature/005-i18n-strings` → `feature/004-design-fidelity`) merged — `7ba9f9a`.
+- PR #10 (`feature/004-design-fidelity` → `feature/002-home`) merged — `00ebec2`.
+- Integrated `feature/002-home` re-verified green after the merges: Pest 212, Jest 67,
+  route-health 72/0, a11y 12/0, interactions 4/0, debug.log clean; `make-pot` warning-free.
+- **PR #12** (`feature/002-home` → `feature/001-global-foundation`, the origin default/trunk) is
+  **open, CLEAN/MERGEABLE**, zero divergence (002 strictly ahead of 001). It awaits the owner's
+  merge: the two-party-review control blocks the agent from self-merging a PR it authored.
+
+Remaining, all owner-gated (not engineering blockers): T020 real content (idempotent seeds ready),
+professional Arabic legal translation (deliberately not fabricated). See `LAUNCH-CHECKLIST.md`.
+
 ## Authoritative recovery status (2026-07-12)
 
 **This section supersedes every older “Latest”, “Next”, and “superseded” block below.** The older
