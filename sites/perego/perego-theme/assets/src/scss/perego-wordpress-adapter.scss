@@ -25,6 +25,12 @@
 	margin: 0;
 }
 
+/* WP wraps the header in a template-part box that is only header-height; flatten it so sticky
+ * positioning is measured against the page, as in the locked static handoff. */
+.wp-block-template-part:has(> .site-header) {
+	display: contents;
+}
+
 /* Keep the editable post-content wrapper transparent to the handoff's two-panel flex contract. */
 .home-about__panels > .wp-block-post-content {
 	display: flex;

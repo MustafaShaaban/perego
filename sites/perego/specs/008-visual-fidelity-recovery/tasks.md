@@ -2,9 +2,11 @@
 
 - [ ] T001 Create deterministic static-handoff baseline capture and diff infrastructure under `sites/perego/output/visual-recovery/`.
   - [x] Capture the initial static and live EN desktop diagnostic images.
+  - [x] Add a deterministic Home EN desktop runner for hero, About, Services, Clients, and footer states; it stores baseline/current/red-pixel-diff PNGs plus an explicitly unreviewed manifest.
   - [ ] Automate normalized baseline/current/diff capture for every route, state, locale, and required viewport.
 - [ ] T002 Port `site/css/styles.css` and required handoff assets into the client theme with separate WordPress adapter/editor layers.
   - [x] Preserve the source stylesheet untouched in `perego-reference.scss` and separate the WordPress/editor layers.
+  - [x] Map the copied stylesheet's handoff background URLs to the production theme build location without changing their visual values.
   - [ ] Verify every required asset/font is production-safe and referenced by the matching route contract.
 - [ ] T003 Audit and correct root/global-style/CoreX interference; record selectors and remediation in `sites/perego/docs/visual-recovery.md`.
 - [ ] T004 [US1] Rebuild header/navigation/dropdown/mobile panel and language pills to the reference DOM contract.

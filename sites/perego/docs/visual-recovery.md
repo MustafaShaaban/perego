@@ -11,6 +11,13 @@ Status: recovery in progress; no route has visual acceptance.
 
 The shell captures prove that importing the handoff stylesheet alone is insufficient: WordPress block markup and existing block styles can still change the resulting layout. They are diagnostic artefacts, not acceptance evidence.
 
+`sites/perego/perego-site/scripts/capture-visual-recovery.mjs` now captures Home EN at 1440px for
+the hero, About, Services, Clients, and footer viewport states. It freezes presentation-only motion,
+waits for fonts, writes baseline/current/red-pixel-diff PNGs, and records every result as
+`unreviewed` in `sites/perego/output/visual-recovery/home-en-1440-manifest.json`. The runner is a
+partial T001 implementation, not an acceptance gate: it must expand to the full route/language/state/
+viewport matrix and each result requires manual review.
+
 The original desktop static full-page capture is not an acceptance baseline: the handoff's
 viewport-driven reveal script leaves below-fold sections hidden when a full-page screenshot is taken
 without scrolling. T001 remains open until the capture runner records explicit viewport and scroll
@@ -36,6 +43,8 @@ CTA classes.
 | Home About | FSE's required post-content wrapper sat between `.home-about__panels` and the editable `.glass-panel` articles, preventing the handoff's flex gap from applying; the inner wrapper also lacked `.container`. | The template now emits `.container.home-about__inner`; a narrowly scoped adapter makes only the post-content wrapper a transparent flex column. Browser evidence confirms two direct panels and the 30px handoff gap. |
 | Services teaser | The dynamic renderer omitted the handoff `.container`, `.link-arrow`, `.reveal`, and staggered-delay classes, leaving the copied reference CSS without its expected layout and motion hooks. | The server renderer now emits the exact structural classes and delays while preserving dynamic service links and localized content. Browser evidence confirms the public DOM contract. |
 | Clients controls | The first renderer migration kept text chevrons and omitted handoff track IDs, labels, and animated equalizer hooks. | The renderer now emits the reference SVG controls, `corporateTrack`/`individualTrack` IDs, track ARIA, and `.eq-bar` hooks. Data-backed card galleries and final visual states still require completion. |
+| Sticky header | WordPress emitted the header inside a template-part wrapper whose only height was the header itself; CSS `position: sticky` therefore ended at the wrapper rather than persisting down the page. | A scoped adapter flattens only template-part wrappers that directly contain `.site-header`. At the About scroll state, live computed evidence is `position: sticky`, `top: 0`, and a 90px header height. |
+| CSS background assets | Handoff stylesheet paths were relative to static `site/css/`; after compiling into `perego-theme/assets/css/`, `../assets/images/*` requested an invalid production path. | The four affected reference URLs now map to the theme's `../images/*` build-relative location. Browser evidence confirms `footer.png` resolves and no page resource is broken. |
 | FSE layout | `.wp-site-blocks` constrained/flow margins can add max-width and block-spacing around reference sections. | Adapter resets only these structural wrappers; each route still needs a DOM comparison before acceptance. |
 | Route blocks | Existing bespoke `perego-*`, `svc-*`, and `portfolio-*` DOM is not automatically compatible with the reference stylesheet. | Rebuild route-by-route from the corresponding static template; do not use CSS aliases as a substitute for a DOM contract. |
 

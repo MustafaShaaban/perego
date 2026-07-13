@@ -402,7 +402,7 @@ button { font-family: inherit; cursor: pointer; }
 .site-footer { position: relative; overflow: hidden; background: #2c0958; }
 .site-footer::before {
   content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background-image: url("../assets/images/footer.png");
+  background-image: url("../images/footer.png");
   background-size: cover; background-position: center;
 }
 .site-footer__grid {
@@ -792,7 +792,7 @@ main { padding-top: 0; }
 }
 .svc-banner__inner::before {
   content: ""; position: absolute; inset: 0; z-index: 0; opacity: 0.5;
-  background: url("../assets/images/svc-banner-bg.png") center/cover no-repeat;
+  background: url("../images/svc-banner-bg.png") center/cover no-repeat;
   mix-blend-mode: screen;
 }
 .svc-banner__text, .svc-banner__media { position: relative; z-index: 1; }
@@ -805,7 +805,7 @@ main { padding-top: 0; }
 .whatwedo { position: relative; overflow: hidden; background: linear-gradient(180deg, #160435 0%, #1c0743 50%, #10002b 100%); }
 .whatwedo::before {
   content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
-  background: url("../assets/images/wavy-corners.png") center/cover no-repeat; opacity: 0.5;
+  background: url("../images/wavy-corners.png") center/cover no-repeat; opacity: 0.5;
 }
 .whatwedo__grid { position: relative; z-index: 1; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(30px, 5vw, 72px); align-items: center; }
 .whatwedo__text .section-title { margin-bottom: 8px; }
@@ -843,7 +843,7 @@ main { padding-top: 0; }
 .work-card:hover img { transform: scale(1.07); }
 .work-card:hover .work-card__overlay { background: rgba(12,0,32,0.4); }
 .m1 { grid-column: 1/4; grid-row: 1/3; }
-.work-brand { grid-column: 4/5; grid-row: 1/3; background: url('../assets/images/brand-card-bg.png') center / cover no-repeat; position: relative; overflow: hidden; cursor: default; }
+.work-brand { grid-column: 4/5; grid-row: 1/3; background: url('../images/brand-card-bg.png') center / cover no-repeat; position: relative; overflow: hidden; cursor: default; }
 .work-brand .work-brand__word { position: absolute; left: 50%; top: 38%; transform: translate(-50%, -50%) rotate(-90deg); width: clamp(74px, 9vw, 150px); height: auto; object-fit: contain; opacity: 0.98; }
 .work-brand .work-brand__word { display: none; }
 .work-brand .work-brand__logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) rotate(-90deg); width: clamp(220px, 26vh, 340px); height: auto; max-width: none; object-fit: contain; }
