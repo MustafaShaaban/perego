@@ -29,7 +29,8 @@ it('renders the eyebrow, the current service full name as the single H1, and no 
     expect($html)->toContain('svc-hero__eyebrow')
         ->and($html)->toContain('Our Services')
         ->and($html)->toMatch('/<img [^>]*svc-hero-bg\.png/')
-        ->and($html)->toMatch('/<h1 class="svc-hero__title">Video Editing &amp; Post-Production|<h1 class="svc-hero__title">Video Editing & Post-Production/')
+        ->and($html)->toMatch('/<div class="container svc-hero__inner">/')
+        ->and($html)->toMatch('/<h1 class="svc-hero__title reveal" data-delay="1">Video Editing &amp; Post-Production|<h1 class="svc-hero__title reveal" data-delay="1">Video Editing & Post-Production/')
         ->and(substr_count($html, '<h1'))->toBe(1);
 });
 
@@ -65,6 +66,6 @@ it('localizes the hero into Arabic', function () {
 it('falls back to the eyebrow as the title when no current service is resolved', function () {
     $html = renderServiceHero('');
 
-    expect($html)->toMatch('/<h1 class="svc-hero__title">Our Services<\/h1>/')
+    expect($html)->toMatch('/<h1 class="svc-hero__title reveal" data-delay="1">Our Services<\/h1>/')
         ->and(substr_count($html, 'svc-tab is-active'))->toBe(0);
 });

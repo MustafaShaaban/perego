@@ -11,12 +11,12 @@ Status: recovery in progress; no route has visual acceptance.
 
 The shell captures prove that importing the handoff stylesheet alone is insufficient: WordPress block markup and existing block styles can still change the resulting layout. They are diagnostic artefacts, not acceptance evidence.
 
-`sites/perego/perego-site/scripts/capture-visual-recovery.mjs` now captures Home EN at 1440px for
-the hero, About, Services, Clients, and footer viewport states. It freezes presentation-only motion,
-waits for fonts, writes baseline/current/red-pixel-diff PNGs, and records every result as
-`unreviewed` in `sites/perego/output/visual-recovery/home-en-1440-manifest.json`. The runner is a
-partial T001 implementation, not an acceptance gate: it must expand to the full route/language/state/
-viewport matrix and each result requires manual review.
+`sites/perego/perego-site/scripts/capture-visual-recovery.mjs` now captures all 16 locked English
+handoff templates at 1440px (plus the five Home landmarks) against their mapped Perego routes. It freezes
+presentation-only motion, waits for fonts, writes baseline/current/red-pixel-diff PNGs, and records every
+result as `unreviewed` in `sites/perego/output/visual-recovery/en-1440-manifest.json`. The runner is a
+partial T001 implementation, not an acceptance gate: AR, the required responsive widths, and interaction/
+form states remain to be captured and every result requires manual review.
 
 The original desktop static full-page capture is not an acceptance baseline: the handoff's
 viewport-driven reveal script leaves below-fold sections hidden when a full-page screenshot is taken
@@ -42,6 +42,7 @@ CTA classes.
 | Clients carousel | A malformed server closing tag moved individual cards two onward outside `.indiv-track`; legacy Swiper assumptions also contradicted the handoff grid tracks. | The renderer now closes the shared container and every individual card correctly; client-owned native-scroll behavior keeps the reference tracks intact. EN/AR counts and visual states remain required. |
 | Home About | FSE's required post-content wrapper sat between `.home-about__panels` and the editable `.glass-panel` articles, preventing the handoff's flex gap from applying; the inner wrapper also lacked `.container`. | The template now emits `.container.home-about__inner`; a narrowly scoped adapter makes only the post-content wrapper a transparent flex column. Browser evidence confirms two direct panels and the 30px handoff gap. |
 | Services teaser | The dynamic renderer omitted the handoff `.container`, `.link-arrow`, `.reveal`, and staggered-delay classes, leaving the copied reference CSS without its expected layout and motion hooks. | The server renderer now emits the exact structural classes and delays while preserving dynamic service links and localized content. Browser evidence confirms the public DOM contract. |
+| Service singles | The FSE service template placed the service hero outside `<main>`, so landmark captures skipped the hero entirely; its renderer also omitted the handoff container and reveal hooks. | The template now makes the reference service hero the first child of the main landmark, and the renderer emits `.container`, `.reveal`, and `data-delay="1"` hooks. Re-capture reduced the four service-single diffs from approximately 1.285M changed pixels to 0.227–0.239M; they remain unreviewed. |
 | Clients controls | The first renderer migration kept text chevrons and omitted handoff track IDs, labels, and animated equalizer hooks. | The renderer now emits the reference SVG controls, `corporateTrack`/`individualTrack` IDs, track ARIA, and `.eq-bar` hooks. Data-backed card galleries and final visual states still require completion. |
 | Sticky header | WordPress emitted the header inside a template-part wrapper whose only height was the header itself; CSS `position: sticky` therefore ended at the wrapper rather than persisting down the page. | A scoped adapter flattens only template-part wrappers that directly contain `.site-header`. At the About scroll state, live computed evidence is `position: sticky`, `top: 0`, and a 90px header height. |
 | CSS background assets | Handoff stylesheet paths were relative to static `site/css/`; after compiling into `perego-theme/assets/css/`, `../assets/images/*` requested an invalid production path. | The four affected reference URLs now map to the theme's `../images/*` build-relative location. Browser evidence confirms `footer.png` resolves and no page resource is broken. |

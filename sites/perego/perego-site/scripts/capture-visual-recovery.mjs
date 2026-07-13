@@ -17,12 +17,27 @@ const LIVE_BASE = process.env.PEREGO_LIVE_BASE ?? 'http://perego.local';
 const OUTPUT_ROOT = join('sites', 'perego', 'output', 'visual-recovery');
 const VIEWPORT = { width: 1440, height: 900 };
 
-const STATES = [
-	{ name: 'hero-default', landmark: '#hero' },
-	{ name: 'about', landmark: '#about' },
-	{ name: 'services', landmark: '#services' },
-	{ name: 'clients', landmark: '#clients' },
-	{ name: 'footer', landmark: '.site-footer' },
+const CAPTURES = [
+	{ route: 'home', state: 'hero-default', staticPath: 'index.html', livePath: '/', landmark: '#hero' },
+	{ route: 'home', state: 'about', staticPath: 'index.html', livePath: '/', landmark: '#about' },
+	{ route: 'home', state: 'services', staticPath: 'index.html', livePath: '/', landmark: '#services' },
+	{ route: 'home', state: 'clients', staticPath: 'index.html', livePath: '/', landmark: '#clients' },
+	{ route: 'home', state: 'footer', staticPath: 'index.html', livePath: '/', landmark: '.site-footer' },
+	{ route: 'services', state: 'default', staticPath: 'services.html', livePath: '/services/', landmark: 'main' },
+	{ route: 'service-video-editing', state: 'default', staticPath: 'service-video-editing.html', livePath: '/services/video-editing/', landmark: 'main' },
+	{ route: 'service-motion-graphics', state: 'default', staticPath: 'service-motion-graphics.html', livePath: '/services/motion-graphics/', landmark: 'main' },
+	{ route: 'service-graphic-design', state: 'default', staticPath: 'service-graphic-design.html', livePath: '/services/graphic-design/', landmark: 'main' },
+	{ route: 'service-website-making', state: 'default', staticPath: 'service-website-making.html', livePath: '/services/website-making/', landmark: 'main' },
+	{ route: 'work', state: 'default', staticPath: 'portfolio.html', livePath: '/work/', landmark: 'main' },
+	{ route: 'project', state: 'default', staticPath: 'project.html', livePath: '/work/brand-film-launch-campaign/', landmark: 'main' },
+	{ route: 'journal', state: 'default', staticPath: 'archive.html', livePath: '/journal/', landmark: 'main' },
+	{ route: 'journal-post', state: 'default', staticPath: 'single-post.html', livePath: '/behind-the-scenes-of-a-brand-film-example/', landmark: 'main' },
+	{ route: 'contact', state: 'default', staticPath: 'contact.html', livePath: '/contact/', landmark: 'main' },
+	{ route: 'terms', state: 'default', staticPath: 'terms.html', livePath: '/terms/', landmark: 'main' },
+	{ route: 'privacy', state: 'default', staticPath: 'privacy.html', livePath: '/privacy/', landmark: 'main' },
+	{ route: 'search', state: 'populated', staticPath: 'search.html', livePath: '/?s=design', landmark: 'main' },
+	{ route: 'not-found', state: 'default', staticPath: '404.html', livePath: '/visual-recovery-missing-route/', landmark: 'main' },
+	{ route: 'page', state: 'default', staticPath: 'page.html', livePath: '/sample-page/', landmark: 'main' },
 ];
 
 const freezeMotion = `
@@ -120,20 +135,20 @@ const diffPage = await browser.newPage();
 const records = [];
 
 try {
-	for (const state of STATES) {
-		const filename = `home-en-1440-${state.name}.png`;
+	for (const captureState of CAPTURES) {
+		const filename = `${captureState.route}-en-1440-${captureState.state}.png`;
 		const baselinePath = join(OUTPUT_ROOT, 'baseline', filename);
 		const actualPath = join(OUTPUT_ROOT, 'actual', filename);
 		const diffPath = join(OUTPUT_ROOT, 'diff', filename);
 
-		await capture(baselinePage, `${STATIC_BASE}/index.html`, state.landmark, baselinePath);
-		await capture(actualPage, `${LIVE_BASE}/`, state.landmark, actualPath);
+		await capture(baselinePage, `${STATIC_BASE}/${captureState.staticPath}`, captureState.landmark, baselinePath);
+		await capture(actualPage, `${LIVE_BASE}${captureState.livePath}`, captureState.landmark, actualPath);
 		const difference = await createDiff(diffPage, pixelDifference(baselinePath, actualPath, diffPath));
 		records.push({
-			route: 'home',
+			route: captureState.route,
 			language: 'en',
 			viewport: VIEWPORT,
-			state: state.name,
+			state: captureState.state,
 			baseline: baselinePath.replaceAll('\\', '/'),
 			actual: actualPath.replaceAll('\\', '/'),
 			diff: difference.error ? null : diffPath.replaceAll('\\', '/'),
@@ -145,5 +160,5 @@ try {
 	await browser.close();
 }
 
-writeFileSync(join(OUTPUT_ROOT, 'home-en-1440-manifest.json'), JSON.stringify({ records }, null, 2));
+writeFileSync(join(OUTPUT_ROOT, 'en-1440-manifest.json'), JSON.stringify({ records }, null, 2));
 console.log(JSON.stringify({ records }, null, 2));
