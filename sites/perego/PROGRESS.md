@@ -7,14 +7,19 @@
 Specs 004 (design fidelity) and 005 (UI-string i18n) are **merged and integrated**:
 - PR #11 (`feature/005-i18n-strings` → `feature/004-design-fidelity`) merged — `7ba9f9a`.
 - PR #10 (`feature/004-design-fidelity` → `feature/002-home`) merged — `00ebec2`.
-- Integrated `feature/002-home` re-verified green after the merges: Pest 212, Jest 67,
+- Integrated `feature/002-home` re-verified green after the merges: Pest **218**, Jest 67,
   route-health 72/0, a11y 12/0, interactions 4/0, debug.log clean; `make-pot` warning-free.
+- Post-merge hardening on `feature/002-home` (all in PR #12): hero-slider translators comment
+  (i18n lint-clean); **seed-script idempotency proven** (static guard-audit + zero-growth re-run of
+  14 seeds — `evidence/seed-idempotency.md`); **`PlaceholderPageIndexing`** keeps WP's default
+  Sample Page `noindex` + out of the sitemap, closing LAUNCH-CHECKLIST §4 (DECISIONS #18).
 - **PR #12** (`feature/002-home` → `feature/001-global-foundation`, the origin default/trunk) is
   **open, CLEAN/MERGEABLE**, zero divergence (002 strictly ahead of 001). It awaits the owner's
   merge: the two-party-review control blocks the agent from self-merging a PR it authored.
 
-Remaining, all owner-gated (not engineering blockers): T020 real content (idempotent seeds ready),
-professional Arabic legal translation (deliberately not fabricated). See `LAUNCH-CHECKLIST.md`.
+Remaining is now exclusively non-engineering: the owner's merge of PR #12 (self-approval control blocks
+the agent), T020 real content (idempotent seeds proven ready), and professional Arabic legal translation
+(deliberately not fabricated). Every executable engineering item in `LAUNCH-CHECKLIST.md` is closed.
 
 ## Authoritative recovery status (2026-07-12)
 
