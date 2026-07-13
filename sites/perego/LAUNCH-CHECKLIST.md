@@ -52,7 +52,10 @@ wp eval 'require "sites/perego/perego-site/scripts/<script>.php";' --path=wp
 ## 4. Minor pre-launch cleanup
 
 - `/sample-page/` still holds WordPress's default "Sample Page" copy (kept as the `page`-template
-  route-health fixture). Before launch, replace its copy or exclude it from public navigation/indexing.
+  route-health fixture). Its **indexing leak is now handled in code** — `PlaceholderPageIndexing`
+  (registered in `PeregoSiteServiceProvider`) marks it `noindex,nofollow` and drops it from the XML
+  sitemap (verified live; DECISIONS #18). Remaining owner action is optional: delete or repurpose the
+  fixture at launch, after which that guard is a harmless no-op and can be removed.
 
 ## Not blocking launch (verified done)
 

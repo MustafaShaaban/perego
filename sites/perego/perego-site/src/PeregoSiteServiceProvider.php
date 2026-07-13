@@ -76,6 +76,7 @@ final class PeregoSiteServiceProvider
         (new StructuredData())->register();
         (new \PeregoSite\Seo\PeregoAgentReadiness())->register();
         (new \PeregoSite\Seo\PeregoMeta($this->languageService->driver()->currentLocale()))->register();
+        (new \PeregoSite\Seo\PlaceholderPageIndexing())->register();
     }
 
     /**

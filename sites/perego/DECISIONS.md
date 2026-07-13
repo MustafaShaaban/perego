@@ -391,3 +391,15 @@ server-block-for-locale-aware-native-templates pattern rather than a plugin. The
 entry; the block's admin-only title/description follow the existing convention of being POT-tracked but not
 AR-translated. The remaining meta embellishments (author avatar, "By" prefix, separator dots) stay deferred
 as cosmetic.
+
+**Decision 18 (2026-07-13) — Keep WordPress's default "Sample Page" out of the index/sitemap in code.**
+The `page`-template route-health fixture is WordPress's auto-created `sample-page`, which still carries
+the default lorem copy and was appearing in `wp-sitemap-posts-page-1.xml` and indexable (`blog_public=1`).
+Rather than delete the fixture (needed for the `page`-route health check) or hand-edit content, added
+`Seo\PlaceholderPageIndexing`: a `wp_robots` filter setting `noindex,nofollow` on that page and a
+`wp_sitemaps_posts_query_args` filter dropping it from the posts sitemap, both keyed on WordPress's fixed
+`sample-page` slug. **Why**: closes a real (if minor) placeholder-content indexing leak now, without
+disturbing the fixture; the checklist already sanctioned "exclude from indexing" as a resolution. Scoped
+to the well-known WP default slug and documented as removable once the fixture is deleted at launch
+(LAUNCH-CHECKLIST §4). Verified live: the page emits `noindex,nofollow` and no longer appears in the
+sitemap, while real pages (e.g. `/contact/`) are unaffected.
