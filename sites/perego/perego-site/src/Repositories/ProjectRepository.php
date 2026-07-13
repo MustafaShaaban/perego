@@ -24,6 +24,92 @@ use WP_Term;
 final class ProjectRepository
 {
     /**
+     * Resolve a project's editor-managed gallery attachment IDs into safe image data. The meta is
+     * intentionally a normal post-meta list: seed data supplies a default only when absent, while
+     * editors retain full control thereafter.
+     *
+     * @return list<array{src: string, thumb: string, alt: string}>
+     */
+    public function galleryFor(WP_Post $project): array
+    {
+        $ids = get_post_meta($project->ID, '_perego_gallery_attachment_ids', true);
+        $ids = is_array($ids) ? array_values(array_filter(array_map('absint', $ids))) : [];
+
+        return array_values(array_filter(array_map(static function (int $id): ?array {
+            $src = wp_get_attachment_image_url($id, 'full');
+            if (! is_string($src) || $src === '') {
+                return null;
+            }
+
+            $thumb = wp_get_attachment_image_url($id, 'large');
+            $alt = (string) get_post_meta($id, '_wp_attachment_image_alt', true);
+
+            return [
+                'src' => $src,
+                'thumb' => is_string($thumb) && $thumb !== '' ? $thumb : $src,
+                'alt' => $alt !== '' ? $alt : get_the_title($id),
+            ];
+        }, $ids)));
+    }
+
+    /**
+     * @return array{previous: ?WP_Post, next: ?WP_Post}
+     */
+    public function adjacentFor(WP_Post $project): array
+    {
+        $projects = $this->projectsForLocale($project, 60);
+        $index = array_search($project->ID, array_map(static fn (WP_Post $item): int => $item->ID, $projects), true);
+        $count = count($projects);
+
+        if (! is_int($index) || $count < 2) {
+            return ['previous' => null, 'next' => null];
+        }
+
+        return [
+            'previous' => $projects[($index - 1 + $count) % $count],
+            'next' => $projects[($index + 1) % $count],
+        ];
+    }
+
+    /**
+     * @return list<WP_Post>
+     */
+    public function relatedFor(WP_Post $project, int $limit = 3): array
+    {
+        $args = $this->localeQueryArgs($project) + [
+            'post_type' => ProjectPostType::POST_TYPE,
+            'post_status' => 'publish',
+            'posts_per_page' => $limit,
+            'post__not_in' => [$project->ID],
+            'no_found_rows' => true,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ];
+        $terms = get_the_terms($project->ID, ProjectPostType::TAXONOMY);
+        if (is_array($terms) && $terms !== []) {
+            $args['tax_query'] = [[
+                'taxonomy' => ProjectPostType::TAXONOMY,
+                'field' => 'term_id',
+                'terms' => [(int) $terms[0]->term_id],
+            ]];
+        }
+
+        $related = (new WP_Query($args))->posts;
+        if (count($related) >= $limit) {
+            return $related;
+        }
+
+        // Some handoff demo categories contain fewer than three projects. Preserve the three-card
+        // layout by filling the remaining slots with other current-language work, never duplicating
+        // the current project or an already selected related project.
+        unset($args['tax_query']);
+        $args['post__not_in'] = array_merge([$project->ID], array_map(static fn (WP_Post $item): int => $item->ID, $related));
+        $args['posts_per_page'] = $limit - count($related);
+
+        return array_merge($related, (new WP_Query($args))->posts);
+    }
+
+    /**
      * All published projects, newest first, shaped for PortfolioGridRenderer. Bounded to a sane cap
      * (never -1) per the query-discipline rule.
      *
@@ -95,6 +181,31 @@ final class ProjectRepository
         $enTerm   = $enTermId ? get_term($enTermId, ProjectPostType::TAXONOMY) : null;
 
         return ($enTerm instanceof WP_Term) ? $enTerm->slug : $term->slug;
+    }
+
+    /** @return list<WP_Post> */
+    private function projectsForLocale(WP_Post $project, int $limit): array
+    {
+        return (new WP_Query($this->localeQueryArgs($project) + [
+            'post_type' => ProjectPostType::POST_TYPE,
+            'post_status' => 'publish',
+            'posts_per_page' => $limit,
+            'no_found_rows' => true,
+            'orderby' => 'date',
+            'order' => 'ASC',
+        ]))->posts;
+    }
+
+    /** @return array<string, string> */
+    private function localeQueryArgs(WP_Post $project): array
+    {
+        if (! function_exists('pll_get_post_language')) {
+            return [];
+        }
+
+        $language = pll_get_post_language($project->ID, 'slug');
+
+        return is_string($language) && $language !== '' ? ['lang' => $language] : [];
     }
 
     private function buildExcerpt(WP_Post $post, PortfolioContent $content, string $client, string $year): string

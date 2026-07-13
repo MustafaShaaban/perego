@@ -46,6 +46,11 @@ it('renders one thumbnail button per image, opening the lightbox', function () {
         ->and($html)->toContain('Frame A');
 });
 
+it('renders the localized gallery heading as the section label', function () {
+    expect(renderGallery())->toContain('<h2 id="project-gallery-title"')
+        ->and(renderGallery())->toContain('Project gallery');
+});
+
 it('falls back to the full src for a thumbnail when no thumb is set', function () {
     $html = renderGallery();
 

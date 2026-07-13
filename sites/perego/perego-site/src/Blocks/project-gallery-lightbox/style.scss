@@ -12,6 +12,16 @@
 	gap: clamp(12px, 1.6vw, 22px);
 }
 
+.project-gallery {
+	margin-block: clamp(32px, 4vw, 52px);
+	padding-inline: max(16px, calc((100% - var(--wp--style--global--content-size)) / 2));
+}
+
+.project-gallery__title {
+	margin-block-end: clamp(20px, 3vw, 34px);
+	text-align: center;
+}
+
 .project-gallery__thumb {
 	display: block;
 	inline-size: 100%;

@@ -36,10 +36,20 @@ renderer/template).
 Re-verified: **72-check route-health, 12-page a11y (0 violations), 194 Pest** all green. EN + AR + mobile
 captures confirm correct RTL mirroring.
 
-### Remaining open (tracked, not built this session)
+### Historical deferred record (superseded by Spec 007)
 
 Rows 3–5 above are real, valuable content-completeness gaps for the case-study experience, but are new
 features (gallery/lightbox, adjacent-post nav, related-projects query) rather than corrections to what's
 already there — the same category of decision as Home's clients-gallery scope call. Suggested next slice:
 wire the existing `ProjectGalleryLightboxRenderer` in first (it already exists and is unit-tested; only
 registration + template wiring + gallery-meta seeding remain), then prev/next nav, then related projects.
+
+## Completion update — 2026-07-13 (Spec 007)
+
+The three deferred project-single surfaces are now complete without a redesign:
+
+- The existing accessible `perego/project-gallery-lightbox` is registered, has the locked “Project gallery” heading, and is placed in the structural FSE template.
+- `seed-project-galleries.php` idempotently created exactly three approved handoff-image attachment IDs for every EN/AR demo project; later editor galleries are never replaced.
+- Adjacent links and a three-card, current-language related-project row are server-rendered; sparse service categories fill from other current-language work to preserve the locked three-card layout.
+
+Verification after the local seed: `npm run build`, Pest (**219 tests / 617 assertions**), Jest (**67 tests**), route health (**72 / 0**), accessibility (**12 pages / 0 serious-critical**), and interaction (**4 / 4**) all pass. Focused real-browser checks also confirm exactly three gallery thumbnails, an opening dialog, three related cards, and both wrapped adjacent links in EN and AR.

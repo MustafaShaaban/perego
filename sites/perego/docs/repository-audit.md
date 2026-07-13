@@ -34,6 +34,7 @@ any structural work.
 | M1 Global Foundation | `specs/001-global-foundation` | Header/footer/preloader blocks, `LanguageDriver`/`PolylangLanguageDriver`/`FallbackLanguageDriver`, EN/AR mechanism. Pest+Jest green. |
 | M2 Home | `specs/002-home` | `hero-slider`, `services-teaser` blocks, `HomeContent`, `front-page.html`, **asset build pipeline**. Visual fidelity checked vs handoff. |
 | M3-US1 Portfolio | `specs/003-services-portfolio` | `ProjectPostType` + `perego_project_category` taxonomy, `PortfolioContent`, `PortfolioGridRenderer`, `portfolio-grid` block, `archive-perego_project.html`, `scripts/seed-projects.php`. Committed in `af9e4fe`. |
+| M3-US2 Project single completion | `specs/007-project-single-completion` | Registered gallery/lightbox, idempotent approved-media gallery seeder, dynamic adjacent/related project rendering, and structural FSE placements. |
 
 **Note:** `sites/perego/PROGRESS.md` said US1 was "not yet committed" — this is **stale**;
 `git log` confirms the US1 files landed in `af9e4fe fixing the root`. Corrected here.

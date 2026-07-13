@@ -1,0 +1,11 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "perego-theme/project-navigation",
+  "title": "Perego Project Navigation",
+  "category": "theme",
+  "description": "Dynamic adjacent and related project links for a project single.",
+  "textdomain": "perego-site",
+  "style": "file:./style-index.css",
+  "supports": { "html": false }
+}
