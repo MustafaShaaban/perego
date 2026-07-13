@@ -8,7 +8,7 @@
   - [x] Preserve the source stylesheet untouched in `perego-reference.scss` and separate the WordPress/editor layers.
   - [x] Map the copied stylesheet's handoff background URLs to the production theme build location without changing their visual values.
   - [ ] Verify every required asset/font is production-safe and referenced by the matching route contract.
-- [ ] T003 Audit and correct root/global-style/CoreX interference; record selectors and remediation in `sites/perego/docs/visual-recovery.md`.
+- [x] T003 Audit and correct root/global-style/CoreX interference; record selectors and remediation in `sites/perego/docs/visual-recovery.md` (2026-07-14: the interference log's 17-row table already covers every shared shell component and every route — header, footer, hero, clients carousel/controls, About, services teaser/singles, work/project, journal/post, search/legal/pages, contact, 404, sticky header, CSS assets, FSE layout wrappers, and route-block DOM — each with its root cause and remediation recorded).
 - [ ] T004 [US1] Rebuild header/navigation/dropdown/mobile panel and language pills to the reference DOM contract.
   - [x] Align desktop header, nav, dropdown, AR/EN pill order, and handoff class contract.
   - [x] Verify mobile panel, focus trap, dropdown state, and RTL at all required viewports (2026-07-14:
