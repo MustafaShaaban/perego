@@ -79,3 +79,77 @@
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
 }
+
+/* The contact page keeps CoreX's real form endpoint/schema markup, but projects the locked
+ * contact.html layout onto its structural field wrappers. */
+.contact-form-wrap .contact__lead {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
+.contact-form-wrap .corex-form {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20px;
+}
+
+.contact-form-wrap .corex-form__field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-inline-size: 0;
+}
+
+.contact-form-wrap .corex-form__field:not(.corex-form__field--half),
+.contact-form-wrap .corex-form__status,
+.contact-form-wrap .corex-form__hp {
+	grid-column: 1 / -1;
+}
+
+.contact-form-wrap .corex-form__label {
+	font-weight: 700;
+	font-size: 15px;
+}
+
+.contact-form-wrap .corex-form__input {
+	width: 100%;
+	padding: 11px 4px;
+	background: transparent;
+	border: 0;
+	border-bottom: 1px solid rgba(255,255,255,0.35);
+	border-radius: 0;
+	color: #fff;
+	font: inherit;
+}
+
+.contact-form-wrap textarea.corex-form__input {
+	min-block-size: 143px;
+	padding: 14px;
+	border: 1px solid rgba(255,255,255,0.3);
+	border-radius: 14px;
+	resize: vertical;
+}
+
+.contact-form-wrap .corex-form__submit {
+	justify-self: start;
+	padding: 12px 42px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--accent);
+	color: #2a0148;
+	font: inherit;
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+@media (max-width: 760px) {
+	.contact-form-wrap .corex-form { grid-template-columns: 1fr; }
+	.contact-form-wrap .corex-form__field--half { grid-column: 1 / -1; }
+}
