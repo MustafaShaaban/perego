@@ -182,9 +182,26 @@ final class SiteFooterRenderer
     private function renderCareersColumn(): string
     {
         return '<div class="footer-col footer-careers">'
-            . '<h2 class="footer-heading">' . esc_html__('Join us', 'perego-site') . '</h2>'
+            . $this->careersEditorial()
             . $this->joinForm()
             . '</div>';
+    }
+
+    /**
+     * The Join-us heading and introduction are canvas-authored global content, not runtime copy.
+     * The fallback deliberately emits no invented prose when the block is unavailable.
+     */
+    private function careersEditorial(): string
+    {
+        if (! function_exists('do_blocks') || ! class_exists('WP_Block_Type_Registry')) {
+            return '';
+        }
+
+        if (! \WP_Block_Type_Registry::get_instance()->is_registered('perego-theme/global-section')) {
+            return '';
+        }
+
+        return do_blocks('<!-- wp:perego-theme/global-section {"role":"footer-careers"} /-->');
     }
 
     /**

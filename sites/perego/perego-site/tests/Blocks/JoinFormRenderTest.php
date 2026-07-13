@@ -30,6 +30,8 @@ it('renders the handoff join fields, a required CV upload, and the honeypot', fu
     expect($html)->toContain('name="name"')
         ->and($html)->toContain('name="email"')
         ->and($html)->toContain('name="portfolio"')
+        ->and($html)->toContain('placeholder="Put your name here"')
+        ->and($html)->toContain('placeholder="Put your Portfolio/website link"')
         ->and($html)->toContain('type="file" id="jf-cv" name="cv" accept=".pdf,.doc,.docx" required')
         ->and($html)->toContain('name="perego_hp"')
         ->and(substr_count($html, '<form'))->toBe(1);

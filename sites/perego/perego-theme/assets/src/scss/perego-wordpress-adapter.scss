@@ -68,3 +68,14 @@
 .site-footer .join-form__req {
 	display: none;
 }
+
+/* The CV constraint stays programmatically associated with the native input; the reference
+ * file-drop is the only visible prompt. */
+.site-footer .join-form__hint {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
