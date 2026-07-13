@@ -62,3 +62,9 @@
 	background: var(--accent);
 	color: #2a0148;
 }
+
+/* Requiredness remains native and announced by the controls; the locked footer keeps markers out of view. */
+.site-footer .corex-form__required,
+.site-footer .join-form__req {
+	display: none;
+}
