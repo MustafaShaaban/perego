@@ -50,6 +50,12 @@ it('renders the nav items in the documented order', function () {
         ->and($clients)->toBeLessThan($contact);
 });
 
+it('renders the handoff skip link before the header landmark', function () {
+    $html = renderHeader();
+
+    expect($html)->toStartWith('<a class="skip-link" href="#main">Skip to content</a><header');
+});
+
 it('marks the active nav item with aria-current', function () {
     $html = renderHeader('/services');
 

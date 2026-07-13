@@ -60,7 +60,8 @@ final class SiteHeaderRenderer
 
         $context = esc_attr((string) wp_json_encode(['isScrolled' => false, 'isMenuOpen' => false]));
 
-        $html = '<header id="siteHeader" class="site-header" data-wp-interactive="perego/site-header" '
+        $html = '<a class="skip-link" href="#main">' . esc_html__('Skip to content', 'perego-site') . '</a>';
+        $html .= '<header id="siteHeader" class="site-header" data-wp-interactive="perego/site-header" '
             . "data-wp-context='" . $context . "' "
             . 'data-wp-class--is-scrolled="context.isScrolled" '
             . 'data-wp-class--is-menu-open="context.isMenuOpen" '
