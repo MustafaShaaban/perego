@@ -4,11 +4,27 @@
  */
 
 .project-hero {
+	position: relative;
 	max-inline-size: var(--wp--style--global--content-size, 1240px);
 	margin-inline: auto;
 	padding-inline: var(--wp--preset--spacing--gutter);
 	padding-block: var(--wp--preset--spacing--section-y);
 	text-align: center;
+
+	/* Full-bleed background: this section's own width is content-constrained
+	   (max-inline-size), so a background on the element itself wouldn't reach
+	   the viewport edges — don't rely on body's own background (see spec 004
+	   T014 evidence) to cover the gutters either. */
+	&::before {
+		content: "";
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 50%;
+		inline-size: 100vw;
+		margin-inline-start: -50vw;
+		z-index: -1;
+		background: var(--wp--preset--color--bg-deep);
+	}
 }
 
 .project-hero__crumb {
@@ -43,6 +59,23 @@
 	font-weight: 700;
 	line-height: 1.04;
 	margin: 0;
+}
+
+.project-hero__featured {
+	max-inline-size: 1000px;
+	margin: clamp(24px, 4vw, 42px) auto 0;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	aspect-ratio: 16 / 8;
+	border: 1px solid var(--perego-glass-border);
+	box-shadow: var(--perego-shadow-featured);
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		display: block;
+	}
 }
 
 .project-hero__meta {

@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/post-breadcrumb",
+	"title": "Perego Post Breadcrumb",
+	"category": "theme",
+	"icon": "arrow-left-alt2",
+	"description": "The single-post breadcrumb: Home / Journal / <post title>. Language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}

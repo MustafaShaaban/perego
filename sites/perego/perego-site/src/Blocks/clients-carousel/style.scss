@@ -6,7 +6,10 @@
  */
 
 .clients {
+	position: relative;
+	overflow: hidden;
 	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--wp--preset--color--bg-deep);
 }
 
 .clients__inner {
@@ -56,41 +59,77 @@
 }
 
 .clients-swiper:not(.swiper-initialized) .swiper-slide {
-	inline-size: minmax(200px, 40%);
+	inline-size: 40%;
 	min-inline-size: 200px;
 	scroll-snap-align: start;
 }
 
-/* --- card --- */
-.client-card {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	padding: clamp(16px, 2vw, 24px);
-	border-radius: var(--perego-radius-card, 20px);
-	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
-	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
-	text-align: center;
-	align-items: center;
+.clients-swiper--corporate:not(.swiper-initialized) .swiper-slide {
+	inline-size: 18%;
+	min-inline-size: 110px;
 }
 
-.client-card__media {
-	inline-size: 100%;
-	aspect-ratio: 16 / 10;
-	border-radius: 12px;
-	overflow: hidden;
+/* --- card base --- */
+.client-card {
+	border-radius: var(--perego-radius-card, 20px);
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease);
+}
+
+.client-card:hover {
+	transform: translateY(-6px);
+}
+
+/* --- corporate: small square icon tile (handoff `.corp-card`) --- */
+.client-card--corporate {
+	aspect-ratio: 3 / 2;
 	display: grid;
 	place-items: center;
+	overflow: hidden;
+	background: var(--perego-gradient-card-media, linear-gradient(150deg, #6a17b8 0%, #4a0d8f 48%, #2e0556 100%));
+	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
 }
 
-.client-card__media img {
+.client-card--corporate:hover {
+	box-shadow: var(--perego-shadow-glow-accent);
+}
+
+.client-card__icon {
+	inline-size: 44%;
+	block-size: auto;
+	display: block;
+}
+
+.client-card--corporate .client-card__media {
+	inline-size: 100%;
+	block-size: 100%;
+}
+
+.client-card--corporate .client-card__media img {
 	inline-size: 100%;
 	block-size: 100%;
 	object-fit: cover;
 }
 
-.client-card__media--placeholder {
-	background: var(--perego-gradient-card-media, linear-gradient(135deg, #3f1173, #9a45dd));
+/* --- individual: wide info + thumbnail card (handoff `.indiv-card`) --- */
+.client-card--individual {
+	display: grid;
+	grid-template-columns: 1fr 42%;
+	min-block-size: 150px;
+	overflow: hidden;
+	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
+	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
+}
+
+.client-card--individual:hover {
+	box-shadow: var(--perego-shadow-card);
+}
+
+.client-card__info {
+	padding: clamp(16px, 2vw, 22px);
+	display: flex;
+	flex-direction: column;
+	text-align: start;
 }
 
 .client-card__name {
@@ -101,7 +140,25 @@
 .client-card__stat {
 	color: var(--wp--preset--color--accent-soft);
 	font-size: var(--wp--preset--font-size--small);
-	margin: 0;
+	margin: auto 0 0;
+}
+
+.client-card__thumb {
+	position: relative;
+}
+
+.client-card__thumb img {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+}
+
+.client-card__media--placeholder {
+	position: absolute;
+	inset: 0;
+	background: var(--perego-gradient-card-media, linear-gradient(135deg, #3f1173, #9a45dd));
 }
 
 /* --- controls --- */

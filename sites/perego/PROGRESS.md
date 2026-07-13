@@ -2,6 +2,123 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## Authoritative recovery status (2026-07-12)
+
+**This section supersedes every older “Latest”, “Next”, and “superseded” block below.** The older
+chronological notes are retained as evidence only and must not be used to decide what to build next.
+
+The current delivery branch is `feature/004-design-fidelity`, based on `feature/002-home` at `579565a`.
+The final, binding visual reference is `_design_handoff/Perego-Creative-Studio-Final-Handoff/site/`.
+No visual reinterpretation is authorized: every correction must make Perego match that handoff.
+
+### What is implemented
+
+- FSE shell, home, services, work/projects, clients, journal, legal, search, 404, contact, EN/AR routing,
+  major forms, SEO, and baseline accessibility/route-health checks are implemented in the client source.
+- The latest recorded route-health run covers **72** EN/AR desktop/mobile checks across all 16 mapped
+  handoff templates with no hard failures (spec 004 T007 extended the earlier 44-check pass). One
+  informational content gap: the representative standard page `/sample-page/` has no Arabic translation.
+- Single-post fidelity closure (2026-07-13): added the locale-aware `perego-theme/post-reading-time`
+  block ("N min read" / "N دقيقة للقراءة"), the last handoff meta element that was still deferred. Gates
+  after the change: Pest **212**, Jest **67**, route-health **72/0**, a11y **12/0**, interactions **4/0**,
+  debug.log clean; live EN + AR single posts verified. See DECISIONS #17.
+
+### What is not accepted or launch-ready
+
+- Pixel-level, state-by-state visual fidelity is design-complete for Home only; the other 15 handoff
+  templates have not yet been through the same evidence gate (Phase 4, not started).
+- Placeholder/demo media and content remain in public-facing surfaces (Home's client carousel; other
+  routes as their turn comes); legal content remains draft/review-only.
+- Gallery/lightbox completion for project singles, editor-canvas remediation for portfolio prose, manual
+  keyboard coverage, and production-like mail/HTTPS verification remain outstanding.
+- Specs 001-003 contain stale task state and do not represent the later delivery history accurately.
+
+### Next
+
+1. ~~Execute T004-T008 in `specs/004-design-fidelity/tasks.md`: build the route matrix and deterministic comparison process.~~
+   **Done (2026-07-12).** T004/T005 (route-matrix + quickstart), T006 (env/build verification recorded in
+   quickstart), T007 (verify-visual extended to all 16 templates — 72 checks/0 failures), T008
+   (visual-difference review procedure in `docs/visual-acceptance.md`) all complete. Evidence gate is ready.
+2. ~~Phase 3 (US1) — finalize Home as the first complete visual slice.~~ **Done (2026-07-12), T009-T013
+   all closed.** All 13 logged visual differences resolved (hero/about/service-card images, clients
+   background + card layout, footer contact/social, header logo/CTA/language-toggle, site-wide font
+   loading, AR-clients query bug — full detail in `specs/004-design-fidelity/evidence/home.md`), the
+   About Us/Our mission prose migrated to real editor-canvas content on the front page (T012 —
+   `perego-theme/home-about-bg` block + `wp:post-content`, seeded via `scripts/seed-home-about.php`,
+   verified against Polylang's own static-front-page translation source before building on it), and
+   a11y/interaction/route-health all re-verified green after two regressions this session's own changes
+   introduced and its own gates caught (a mobile CTA-overflow specificity bug, a color-contrast failure).
+   Final state: **72-check route-health + 12-page a11y (0 violations) + 4/4 interaction + 186 Pest + 67
+   Jest, all green.** Home is design-complete; **blocked on owner material** for launch only by its
+   placeholder client-carousel content (Sample Corporate/Individual Client names — FR-006).
+
+3. **Phase 4 (US2) — content-route slices. T014, T015, T016 DONE (2026-07-12).**
+   - **T014 services** (`fc52992`): hero image, whatwedo split+media, site-wide `.btn`→`.perego-btn` bug.
+   - **T015 work** (`687d4a9`, `c764444`): archive breadcrumb/demo-note, AR-filter canonical-slug bug,
+     project-single hero image + background-gap; gallery/lightbox + related-projects deferred.
+   - **T016 journal/single-post/search/404/contact/legal/page** (`58d5998`, `30d3bf4`, `058d4ce`):
+     journal + single-post (unstyled cards + empty author byline `post_author=0`), contact (the CoreX
+     Forms brief **and** the site-wide footer form were completely unstyled — block-only stylesheet
+     never loads for server-rendered forms; ported onto `.corex-form__*` + 2-col grid + honeypot/submit
+     fixes), legal (a **site-wide** WP 7.0.1 quirk dropped the h1/h2/h3 font-size presets → 16px headings
+     everywhere; resilient `:root` re-declaration; + white-gap), search (plain list → `.post-card` grid +
+     breadcrumb + pagination), 404 + page verified. Evidence: `evidence/{journal,single-post,contact,
+     legal,search-404-page}.md`. **All gates green: 72 route-health / 12-page a11y / 4 interactions / 195 Pest.**
+
+   **➡ RESUME HERE.** Remaining Phase 4: **T017** (migrate portfolio prose + any provider prose to
+   editor-canvas content) and **T018** (per-route EN/AR acceptance recording — largely captured in the
+   `evidence/*.md` + `route-matrix.md` already). Then Phase 5 (T019-T021 launch content) and Phase 6
+   (T022-T025 release evidence, guards, specs 001-003 reconcile, PR).
+
+   **⚠ TWO CROSS-CUTTING ITEMS SURFACED IN T016 — need owner attention:**
+   - **(launch blocker) UI-string i18n is unwired.** On every AR route the header nav, form field
+     labels, and button text render in **English** — no `.po`/`.mo` and no `pll_register_string` for the
+     `perego-site`/theme domains, and the nav labels in `SiteHeaderRenderer` are hardcoded English (not
+     even `__()`-wrapped). Pre-existing (present on the accepted AR home). The handoff is English-only so
+     it's not a deviation *from the handoff*, but it blocks a real bilingual launch. Needs its own i18n
+     slice (wrap strings + author translations, or Polylang string translations) — not a per-route fix.
+   - **(content) AR legal section bodies + `sample-page` demo copy** are unseeded/WP-default placeholder;
+     Phase-5 launch-content cleanup.
+
+4. **Phase 4 complete; Phase 5 docs done; Phase 6 verification done (2026-07-12).**
+   - **T017** (portfolio/provider prose → canvas): verified satisfied by the body of work — case
+     studies, service narratives, and home About are all `wp:post-content`; residual provider strings
+     are archive chrome + a deliberate demo marker (see `tasks.md`).
+   - **T018** (per-route acceptance recording): done — every route-matrix row carries status + evidence.
+   - **T019 + T021** (content manifest + launch-blocker audit): done — [specs/004-design-fidelity/content-manifest.md](specs/004-design-fidelity/content-manifest.md).
+   - **T020** (replace with owner content): **BLOCKED on owner material** (real clients/photography/legal
+     copy/articles); the idempotent seed workflow is proven and ready.
+   - **T022** (full suite): **Pest 195 · Jest 67 · route-health 72/0 · a11y 12/0 (0 serious-critical) ·
+     interactions 4/4** — all green.
+   - **T023** (guards): new/changed PHP self-checked against wp-guard (escaping, i18n, no raw request
+     output, ABSPATH, no SQL) and clean-code-guard (reused `.post-card`/`.perego-btn`, removed dead CSS).
+
+   **T024 — spec 001–003 reconciliation (final status).** The "open" boxes in the older specs are stale;
+   spec 004's delivery closed them:
+   - **002-home**: 15/15 — complete.
+   - **003-services-portfolio T015–T017** (service CPT, service single, services archive): **delivered** —
+     services routes are design-complete (evidence/services.md); `ServicePostType` + templates ship.
+   - **003 T013** (project single template): **delivered** (`single-perego_project.html` = project-hero +
+     `wp:post-content`); **T012/T014** (gallery-lightbox block + gallery meta): **deliberately deferred** —
+     `ProjectGalleryLightboxRenderer` exists in source but unregistered (evidence/work.md).
+   - **001-global-foundation T029/T036** (Jest): **delivered** — 67 Jest tests pass (site-header/
+     language-toggle/preloader/hero/carousel/gallery/portfolio). **T040** (live header/footer/preloader
+     comparison): **delivered** via evidence/home.md. **T041** ("branch not finished"): **superseded** by
+     the 004 branch, which is the active delivery source of truth.
+
+   **Remaining before launch**: (a) ~~the UI-string i18n slice~~ **DONE — spec 005**, (b) T020 owner
+   content. Spec 004 Phases 1–4 + the Phase-5 docs + Phase-6 verification shipped as PR #10.
+
+5. **Spec 005 — UI-string i18n (EN/AR gettext). DONE (2026-07-13), branch `feature/005-i18n-strings`.**
+   Closed the top launch blocker with the constitution-aligned approach (gettext `.po`/`.mo`, no Polylang
+   dependency): loaded the `perego-site` textdomain, `__()`-wrapped the hardcoded header nav labels
+   (const → `navItems()` method), authored `perego-site-ar.mo` for every public UI string (nav/forms/
+   buttons/aria/slider), and localized the framework (`corex`) form submit/status strings via a client
+   `gettext_corex` filter (`I18n/FrameworkFormStrings`, unit-tested). **AR routes now render Arabic UI
+   chrome; EN unchanged. Pest 200 · Jest 67 · route-health 72/0 · a11y 12/0 · interactions 4/4.** See
+   `specs/005-i18n-strings/`. **Only launch item left: T020 owner content** (real clients/photography/
+   legal copy/articles) — the idempotent seed workflow is ready.
+
 ## Latest (2026-07-12) — M6 clients + Phase 7 forms (partial)
 
 Shipped, each tested + guarded + pushed to `origin/feature/002-home`:

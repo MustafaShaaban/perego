@@ -12,7 +12,9 @@ use PeregoSite\Blocks\PortfolioGridRenderer;
 beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
+    Functions\when('esc_attr__')->returnArg();
     Functions\when('esc_url')->returnArg();
+    Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
     Functions\when('wp_json_encode')->alias('json_encode');
 });
 
@@ -91,4 +93,28 @@ it('renders an optional heading + intro when provided', function () {
 
 it('omits the heading when none is provided', function () {
     expect(renderGrid())->not->toContain('portfolio__title');
+});
+
+it('renders a Home breadcrumb and the demo-content note when provided', function () {
+    $filters = ['all' => 'All Projects'];
+    $strings = [
+        'groupLabel' => 'Filter',
+        'noResults' => 'None',
+        'heading' => 'Our Work',
+        'intro' => 'A selection.',
+        'demoNote' => "Example projects shown below.",
+        'uiHome' => 'Home',
+    ];
+
+    $html = (new PortfolioGridRenderer())->render(sampleProjects(), $filters, $strings);
+
+    expect($html)->toContain('class="page-crumb"')
+        ->and($html)->toMatch('/<a href="[^"]*\/">Home<\/a>/')
+        ->and($html)->toContain('aria-current="page">Our Work')
+        ->and($html)->toContain('portfolio__demo-note')
+        ->and($html)->toContain('Example projects shown below.');
+});
+
+it('omits the breadcrumb when uiHome is not provided', function () {
+    expect(renderGrid())->not->toContain('page-crumb');
 });

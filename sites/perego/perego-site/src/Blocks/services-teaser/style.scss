@@ -16,9 +16,13 @@
 	inset: 0;
 	z-index: 0;
 	pointer-events: none;
-	opacity: 0.6;
-	background: var(--perego-gradient-violet-band);
-	mask-image: radial-gradient(120% 100% at 50% 0%, #000 0%, transparent 70%);
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		opacity: 0.6;
+	}
 }
 
 .services-teaser__inner {
@@ -123,23 +127,12 @@
 	}
 }
 
-/* Media placeholder: a token gradient until real imagery lands (M7). Per-service hue variation is
-   a light hue-rotate of the shared token so no literal color is introduced. */
-.service-card__media {
+.service-card img {
 	position: absolute;
 	inset: 0;
-	display: block;
-	background: var(--perego-gradient-card-media);
-
-	&[data-service="motion-graphics"] {
-		filter: hue-rotate(-8deg);
-	}
-	&[data-service="graphic-design"] {
-		filter: hue-rotate(10deg);
-	}
-	&[data-service="website-making"] {
-		filter: hue-rotate(-16deg) brightness(0.92);
-	}
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
 }
 
 .service-card__overlay {

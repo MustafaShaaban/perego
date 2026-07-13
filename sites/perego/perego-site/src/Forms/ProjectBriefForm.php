@@ -45,36 +45,42 @@ final class ProjectBriefForm extends Form
         return [
             'name' => [
                 'type' => 'text',
+                'width' => 'half',
                 'rules' => ['required', 'min:2', 'max:80'],
                 'label' => __('Full name', 'perego-site'),
                 'placeholder' => __('Put your name here', 'perego-site'),
             ],
             'email' => [
                 'type' => 'email',
+                'width' => 'half',
                 'rules' => ['required', 'email', 'max:120'],
                 'label' => __('E-mail', 'perego-site'),
                 'placeholder' => __('Put your E-mail here', 'perego-site'),
             ],
             'phone' => [
                 'type' => 'phone',
+                'width' => 'half',
                 'rules' => ['max:24'],
                 'label' => __('Phone', 'perego-site'),
                 'placeholder' => __('Best number to reach you', 'perego-site'),
             ],
             'company' => [
                 'type' => 'text',
+                'width' => 'half',
                 'rules' => ['max:80'],
                 'label' => __('Company', 'perego-site'),
                 'placeholder' => __('Your brand or company', 'perego-site'),
             ],
             'budget' => [
                 'type' => 'select',
+                'width' => 'half',
                 'rules' => [],
                 'label' => __('Estimated budget', 'perego-site'),
                 'options' => $this->budgetOptions(),
             ],
             'subject' => [
                 'type' => 'text',
+                'width' => 'half',
                 'rules' => ['required', 'min:3', 'max:120'],
                 'label' => __('Message Subject', 'perego-site'),
                 'placeholder' => __('What is this about?', 'perego-site'),

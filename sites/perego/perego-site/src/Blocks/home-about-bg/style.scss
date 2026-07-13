@@ -1,0 +1,58 @@
+/**
+ * perego-theme/home-about-bg — tokens only, logical properties (RTL-correct by default).
+ * Ported from the handoff prototype's `.home-about__bg` rule. The section wrapper, inner grid, and
+ * panel styling live in the theme's main.scss (spec 004 T012) since the panels are now editor-canvas
+ * content (post-content), not this block's own markup.
+ */
+
+.home-about__bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		object-position: 28% center;
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			90deg,
+			rgba(12, 0, 32, 0.1) 0%,
+			rgba(12, 0, 32, 0.32) 42%,
+			rgba(12, 0, 32, 0.82) 76%,
+			rgba(12, 0, 32, 0.94) 100%
+		);
+	}
+}
+
+[dir="rtl"] .home-about__bg img {
+	object-position: 72% center;
+}
+
+[dir="rtl"] .home-about__bg::after {
+	background: linear-gradient(
+		270deg,
+		rgba(12, 0, 32, 0.1) 0%,
+		rgba(12, 0, 32, 0.32) 42%,
+		rgba(12, 0, 32, 0.82) 76%,
+		rgba(12, 0, 32, 0.94) 100%
+	);
+}
+
+@media (max-width: 900px) {
+	.home-about__bg::after,
+	[dir="rtl"] .home-about__bg::after {
+		background: linear-gradient(
+			180deg,
+			rgba(12, 0, 32, 0.35) 0%,
+			rgba(12, 0, 32, 0.78) 60%,
+			rgba(12, 0, 32, 0.92) 100%
+		);
+	}
+}

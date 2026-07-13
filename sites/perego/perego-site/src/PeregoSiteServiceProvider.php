@@ -11,7 +11,10 @@ namespace PeregoSite;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\HeroSliderRenderer;
+use PeregoSite\Blocks\HomeAboutBgRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
+use PeregoSite\Blocks\PostBreadcrumbRenderer;
+use PeregoSite\Blocks\PostReadingTimeRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
 use PeregoSite\Blocks\LegalTocRenderer;
@@ -202,9 +205,9 @@ final class PeregoSiteServiceProvider
 
             register_block_type($this->blockDir('clients-carousel'), [
                 'render_callback' => static function () use ($languageService): string {
-                    return (new ClientsCarouselRenderer(
-                        new ClientsContent($languageService->driver()->currentLocale())
-                    ))->render();
+                    $locale = $languageService->driver()->currentLocale();
+
+                    return (new ClientsCarouselRenderer(new ClientsContent($locale), $locale))->render();
                 },
             ]);
         });
@@ -250,6 +253,26 @@ final class PeregoSiteServiceProvider
                     return (new JournalHeaderRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render();
+                },
+            ]);
+
+            register_block_type($this->blockDir('post-breadcrumb'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+
+                    return (new PostBreadcrumbRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render($queried instanceof \WP_Post ? $queried : null);
+                },
+            ]);
+
+            register_block_type($this->blockDir('post-reading-time'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+
+                    return (new PostReadingTimeRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render($queried instanceof \WP_Post ? $queried : null);
                 },
             ]);
 
@@ -360,7 +383,7 @@ final class PeregoSiteServiceProvider
                 },
             ]);
 
-            $footerRenderer = new SiteFooterRenderer();
+            $footerRenderer = new SiteFooterRenderer($this->languageService);
             register_block_type($this->blockDir('site-footer'), [
                 'render_callback' => static function (array $attributes) use ($footerRenderer): string {
                     return $footerRenderer->render((bool) ($attributes['flat'] ?? false));
@@ -388,6 +411,11 @@ final class PeregoSiteServiceProvider
             $teaserRenderer = new ServicesTeaserRenderer($this->languageService);
             register_block_type($this->blockDir('services-teaser'), [
                 'render_callback' => static fn (): string => $teaserRenderer->render(),
+            ]);
+
+            $aboutBgRenderer = new HomeAboutBgRenderer();
+            register_block_type($this->blockDir('home-about-bg'), [
+                'render_callback' => static fn (): string => $aboutBgRenderer->render(),
             ]);
         });
     }

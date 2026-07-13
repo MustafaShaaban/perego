@@ -34,6 +34,8 @@ beforeEach(function () {
             '_perego_deliverables' => 'Hero film, 3 social cutdowns',
         ][$key] ?? '';
     });
+    Functions\when('has_post_thumbnail')->justReturn(false);
+    Functions\when('get_the_post_thumbnail')->justReturn('');
 });
 
 function renderProjectHero(string $locale = 'en'): string
@@ -76,4 +78,16 @@ it('localizes the breadcrumb and meta labels into Arabic', function () {
         ->and($html)->toContain('أعمالنا')
         ->and($html)->toContain('العميل')
         ->and($html)->toContain('دورنا');
+});
+
+it('renders the featured image when the project has a thumbnail', function () {
+    Functions\when('has_post_thumbnail')->justReturn(true);
+    Functions\when('get_the_post_thumbnail')->justReturn('<img src="https://perego.local/x.png" alt="" />');
+
+    expect(renderProjectHero())->toContain('project-hero__featured')
+        ->and(renderProjectHero())->toContain('https://perego.local/x.png');
+});
+
+it('omits the featured-image wrapper when the project has no thumbnail', function () {
+    expect(renderProjectHero())->not->toContain('project-hero__featured');
 });

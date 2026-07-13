@@ -26,7 +26,7 @@ final class PortfolioGridRenderer
     /**
      * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}> $projects
      * @param array<string, string> $filterLabels ordered, keyed by slug ('all' first); values are labels
-     * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string} $strings
+     * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string} $strings
      */
     public function render(array $projects, array $filterLabels, array $strings): string
     {
@@ -43,9 +43,19 @@ final class PortfolioGridRenderer
 
         if (! empty($strings['heading'])) {
             $html .= '<header class="portfolio__head">';
+            if (! empty($strings['uiHome'])) {
+                $html .= '<nav class="page-crumb" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
+                $html .= '<a href="' . esc_url(home_url('/')) . '">' . esc_html($strings['uiHome']) . '</a>';
+                $html .= '<span aria-hidden="true">/</span>';
+                $html .= '<span aria-current="page">' . esc_html($strings['heading']) . '</span>';
+                $html .= '</nav>';
+            }
             $html .= '<h1 class="portfolio__title">' . esc_html($strings['heading']) . '</h1>';
             if (! empty($strings['intro'])) {
                 $html .= '<p class="portfolio__intro">' . esc_html($strings['intro']) . '</p>';
+            }
+            if (! empty($strings['demoNote'])) {
+                $html .= '<p class="portfolio__demo-note">' . esc_html($strings['demoNote']) . '</p>';
             }
             $html .= '</header>';
         }

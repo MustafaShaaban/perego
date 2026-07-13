@@ -23,7 +23,7 @@ final class PortfolioContent
 
     /**
      * @var array<string, array{
-     *   h1: string, intro: string, all: string, noResults: string,
+     *   h1: string, intro: string, demoNote: string, all: string, noResults: string,
      *   clientLabel: string, groupLabel: string,
      *   categories: array{video: string, motion: string, design: string, web: string}
      * }>
@@ -32,6 +32,7 @@ final class PortfolioContent
         'en' => [
             'h1' => 'Our Work',
             'intro' => 'A selection of projects across video, motion, design, and web.',
+            'demoNote' => "Example projects shown below — to be replaced with Perego's real work.",
             'all' => 'All Projects',
             'noResults' => 'No projects in this category yet. Try another filter.',
             'clientLabel' => 'Client',
@@ -46,6 +47,7 @@ final class PortfolioContent
         'ar' => [
             'h1' => 'أعمالنا',
             'intro' => 'مجموعة مختارة من المشاريع في الفيديو والموشن والتصميم والويب.',
+            'demoNote' => 'المشاريع أدناه أمثلة توضيحية — سيتم استبدالها بأعمال بيريجو الحقيقية.',
             'all' => 'كل المشاريع',
             'noResults' => 'لا توجد مشاريع في هذه الفئة بعد. جرّب فلترًا آخر.',
             'clientLabel' => 'العميل',
@@ -175,6 +177,8 @@ final class PortfolioContent
             'noResults' => self::COPY[$this->locale]['noResults'],
             'heading' => self::COPY[$this->locale]['h1'],
             'intro' => self::COPY[$this->locale]['intro'],
+            'demoNote' => self::COPY[$this->locale]['demoNote'],
+            'uiHome' => $this->uiHome(),
         ];
     }
 

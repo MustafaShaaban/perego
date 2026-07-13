@@ -25,12 +25,12 @@ jest.mock( 'swiper/modules', () => ( {
 
 function twoCarousels() {
 	document.body.innerHTML =
-		'<div class="swiper clients-swiper" data-clients-swiper>' +
+		'<div class="swiper clients-swiper clients-swiper--corporate" data-clients-swiper>' +
 		'<div class="swiper-wrapper"></div>' +
 		'<button class="swiper-button-prev"></button>' +
 		'<button class="swiper-button-next"></button>' +
 		'<div class="swiper-pagination"></div></div>' +
-		'<div class="swiper clients-swiper" data-clients-swiper>' +
+		'<div class="swiper clients-swiper clients-swiper--individual" data-clients-swiper>' +
 		'<div class="swiper-wrapper"></div>' +
 		'<button class="swiper-button-prev"></button>' +
 		'<button class="swiper-button-next"></button>' +
@@ -82,11 +82,22 @@ test( 'wires each carousel to its own navigation buttons and pagination', () => 
 	} );
 } );
 
-test( 'defines responsive breakpoints that scale slides per view up', () => {
+test( 'sizes the corporate carousel as dense small tiles', () => {
 	twoCarousels();
 	loadView();
 
-	const options = mockSwiperCtor.mock.calls[ 0 ][ 1 ];
+	const [ , options ] = mockSwiperCtor.mock.calls[ 0 ];
+	expect( options.slidesPerView ).toBe( 3 );
+	expect( options.breakpoints[ 640 ].slidesPerView ).toBe( 5 );
+	expect( options.breakpoints[ 1024 ].slidesPerView ).toBe( 8 );
+} );
+
+test( 'sizes the individual carousel as a few wide cards per view', () => {
+	twoCarousels();
+	loadView();
+
+	const [ , options ] = mockSwiperCtor.mock.calls[ 1 ];
+	expect( options.slidesPerView ).toBe( 1.2 );
 	expect( options.breakpoints[ 640 ].slidesPerView ).toBe( 2.2 );
 	expect( options.breakpoints[ 1024 ].slidesPerView ).toBe( 4 );
 } );

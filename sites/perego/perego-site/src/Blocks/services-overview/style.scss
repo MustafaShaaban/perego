@@ -1,108 +1,27 @@
 /**
  * perego-theme/services-overview — the services archive. Tokens + logical properties (RTL-safe).
- * The .svc-process step styling is shared from the theme's global stylesheet; this file styles the
- * intro, the service-card grid, and the closing CTA.
+ * `.svc-hero`/`.svc-tabs`/`.svc-whatwedo`/`.svc-whatwedo__grid`/`.svc-process` are shared from the
+ * theme's global stylesheet (also used by the service-hero block and every service single's canvas
+ * "What we do" prose) — block-specific stylesheets only load on pages using that block, so shared
+ * cross-block markup must live theme-wide, not here. This file styles only the closing CTA.
  */
 
-.services-overview {
-	--_content: var(--wp--style--global--content-size, 1240px);
-}
-
-.services-overview__intro {
-	max-inline-size: var(--_content);
-	margin-inline: auto;
-	padding-inline: var(--wp--preset--spacing--gutter);
-	padding-block: var(--wp--preset--spacing--section-y);
-	text-align: center;
-}
-
-.services-overview__h1 {
-	font-size: var(--wp--preset--font-size--hero);
-	font-weight: 700;
-	line-height: 1.05;
-	margin: 0 0 14px;
-}
-
-.services-overview__eyebrow {
-	color: var(--wp--preset--color--accent-soft);
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	margin: 0 0 18px;
-}
-
-.services-overview__lead {
-	color: var(--perego-muted);
-	font-size: var(--wp--preset--font-size--lead);
-	max-inline-size: 68ch;
-	margin-inline: auto;
-	margin-block-end: 14px;
-}
-
-.services-overview__cards {
-	max-inline-size: var(--_content);
-	margin-inline: auto;
-	padding-inline: var(--wp--preset--spacing--gutter);
-	padding-block-end: var(--wp--preset--spacing--section-y);
-	display: grid;
-	grid-template-columns: repeat(4, 1fr);
-	gap: clamp(16px, 2vw, 26px);
-}
-
-.svc-overview-card {
-	display: flex;
-	flex-direction: column;
-	gap: 10px;
-	padding: clamp(20px, 2.4vw, 30px);
-	border-radius: var(--perego-radius-card, 20px);
-	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
-	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
-	color: var(--wp--preset--color--text, #fff);
-	text-decoration: none;
-	transition: transform var(--perego-dur-fast, 0.2s) var(--perego-ease, ease),
-		border-color var(--perego-dur-fast, 0.2s) var(--perego-ease, ease);
-}
-
-.svc-overview-card:hover {
-	transform: translateY(-4px);
-	border-color: var(--wp--preset--color--accent);
-}
-
-.svc-overview-card__label {
-	font-weight: 700;
-	font-size: var(--wp--preset--font-size--h3);
-	text-transform: uppercase;
-	letter-spacing: 0.02em;
-}
-
-.svc-overview-card__sub {
-	color: var(--perego-muted);
-	font-size: var(--wp--preset--font-size--small);
-}
-
 .services-overview__cta {
-	max-inline-size: var(--_content);
-	margin-inline: auto;
-	padding-inline: var(--wp--preset--spacing--gutter);
+	position: relative;
 	padding-block: var(--wp--preset--spacing--section-y);
 	text-align: center;
+	/* Explicit, full-bleed background: this section has no image/gradient of its own, and (unlike
+	   Home, where every section is packed edge-to-edge) it sits after .svc-process with nothing
+	   behind it — don't rely on body's own background painting correctly here. */
+	background: var(--wp--preset--color--bg-deep);
 }
 
-.services-overview__cta .btn {
+.services-overview__cta-inner {
+	max-inline-size: 820px;
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+}
+
+.services-overview__cta .perego-btn {
 	margin-block-start: 18px;
-}
-
-@media (max-width: 900px) {
-	.services-overview__cards {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.svc-overview-card {
-		transition: none;
-	}
-
-	.svc-overview-card:hover {
-		transform: none;
-	}
 }

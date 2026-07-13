@@ -1,0 +1,8 @@
+/**
+ * perego-theme/post-breadcrumb — sits above the single post's title inside `.post-single`, which is
+ * itself centered (handoff `single-post.html` renders the crumb with `justify-content:center`).
+ */
+.post-single .page-crumb {
+	justify-content: center;
+	margin-block-end: 14px;
+}
