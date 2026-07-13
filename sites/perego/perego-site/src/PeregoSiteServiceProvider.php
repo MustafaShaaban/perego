@@ -16,6 +16,7 @@ use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PostBreadcrumbRenderer;
 use PeregoSite\Blocks\PostReadingTimeRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
+use PeregoSite\Blocks\ContactServiceChooserRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
 use PeregoSite\Blocks\LegalTocRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
@@ -73,6 +74,7 @@ final class PeregoSiteServiceProvider
         $this->registerGlobalSurfaces();
         $this->registerGlobalSections();
         $this->registerClients();
+        $this->registerContactServiceChooser();
         $this->registerForms();
 
         (new StructuredData())->register();
@@ -430,6 +432,15 @@ final class PeregoSiteServiceProvider
             $preloaderRenderer = new PreloaderRenderer();
             register_block_type($this->blockDir('preloader'), [
                 'render_callback' => static fn (): string => $preloaderRenderer->render(),
+            ]);
+        });
+    }
+
+    private function registerContactServiceChooser(): void
+    {
+        add_action('init', function (): void {
+            register_block_type($this->blockDir('contact-service-chooser'), [
+                'render_callback' => static fn (): string => (new ContactServiceChooserRenderer())->render(),
             ]);
         });
     }

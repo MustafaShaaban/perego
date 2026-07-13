@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "perego-theme/contact-service-chooser",
+  "title": "Perego Contact Service Chooser",
+  "category": "theme",
+  "icon": "list-view",
+  "description": "Dynamic service choices for the Start a Project page.",
+  "textdomain": "perego-site",
+  "editorScript": "file:./index.js",
+  "viewScriptModule": "file:./view.js",
+  "supports": { "html": false }
+}

@@ -110,6 +110,23 @@
 	grid-column: 1 / -1;
 }
 
+.contact-form-wrap [data-corex-field="services"] {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
+.contact-form-wrap [data-corex-field="services"] * {
+	display: none;
+}
+
+.contact-form-wrap .corex-form__required {
+	display: none;
+}
+
 .contact-form-wrap .corex-form__label {
 	font-weight: 700;
 	font-size: 15px;
