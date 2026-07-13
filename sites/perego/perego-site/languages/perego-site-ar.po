@@ -1,0 +1,210 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: perego-site 0.1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"Language: ar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+"X-Domain: perego-site\n"
+
+# Brand
+msgid "Perego"
+msgstr "بيريجو"
+
+# Header nav
+msgid "Home"
+msgstr "الرئيسية"
+
+msgid "About Us"
+msgstr "من نحن"
+
+msgid "Services"
+msgstr "خدماتنا"
+
+msgid "Video Editing & Post-Production"
+msgstr "مونتاج الفيديو وما بعد الإنتاج"
+
+msgid "2D Motion Graphics & Animation"
+msgstr "موشن جرافيك وأنيميشن ثنائي الأبعاد"
+
+msgid "Graphic Design & Brand Identity"
+msgstr "التصميم الجرافيكي والهوية البصرية"
+
+msgid "Website Making"
+msgstr "إنشاء المواقع"
+
+msgid "Work"
+msgstr "أعمالنا"
+
+msgid "Journal"
+msgstr "المدونة"
+
+msgid "Clients"
+msgstr "عملاؤنا"
+
+msgid "Contact Us"
+msgstr "تواصل معنا"
+
+# Header controls / aria
+msgid "Primary"
+msgstr "التنقل الرئيسي"
+
+msgid "Menu"
+msgstr "القائمة"
+
+msgid "Start a Project"
+msgstr "ابدأ مشروعًا"
+
+msgid "Start a project"
+msgstr "ابدأ مشروعًا"
+
+msgid "Start your project"
+msgstr "ابدأ مشروعك"
+
+msgid "Perego — home"
+msgstr "بيريجو — الرئيسية"
+
+# Breadcrumbs / generic UI
+msgid "Breadcrumb"
+msgstr "مسار التنقل"
+
+msgid "Loading…"
+msgstr "جارٍ التحميل…"
+
+msgid "Previous"
+msgstr "السابق"
+
+msgid "Next"
+msgstr "التالي"
+
+msgid "Prev"
+msgstr "السابق"
+
+msgid "Search results pages"
+msgstr "صفحات نتائج البحث"
+
+# Hero slider (aria / controls)
+msgid "Introduction"
+msgstr "مقدمة"
+
+msgid "Hero slides"
+msgstr "الشرائح الرئيسية"
+
+msgid "Previous slide"
+msgstr "الشريحة السابقة"
+
+msgid "Next slide"
+msgstr "الشريحة التالية"
+
+msgid "Pause slideshow"
+msgstr "إيقاف العرض مؤقتًا"
+
+msgid "Play slideshow"
+msgstr "تشغيل العرض"
+
+msgid "Slide %d"
+msgstr "الشريحة %d"
+
+msgid "Slide %1$s of %2$s"
+msgstr "الشريحة %1$s من %2$s"
+
+# Footer
+msgid "Contact us"
+msgstr "تواصل معنا"
+
+msgid "Social media"
+msgstr "وسائل التواصل الاجتماعي"
+
+msgid "Perego on %s"
+msgstr "بيريجو على %s"
+
+msgid "Send a quick message"
+msgstr "أرسل رسالة سريعة"
+
+msgid "Join us"
+msgstr "انضم إلينا"
+
+msgid "Legal"
+msgstr "الشؤون القانونية"
+
+msgid "Terms & Conditions"
+msgstr "الشروط والأحكام"
+
+msgid "Privacy Policy"
+msgstr "سياسة الخصوصية"
+
+# Project brief form
+msgid "Full name"
+msgstr "الاسم الكامل"
+
+msgid "Put your name here"
+msgstr "أدخل اسمك هنا"
+
+msgid "E-mail"
+msgstr "البريد الإلكتروني"
+
+msgid "Put your E-mail here"
+msgstr "أدخل بريدك الإلكتروني هنا"
+
+msgid "Phone"
+msgstr "الهاتف"
+
+msgid "Best number to reach you"
+msgstr "أفضل رقم للتواصل معك"
+
+msgid "Company"
+msgstr "الشركة"
+
+msgid "Your brand or company"
+msgstr "علامتك التجارية أو شركتك"
+
+msgid "Estimated budget"
+msgstr "الميزانية التقديرية"
+
+msgid "Message Subject"
+msgstr "موضوع الرسالة"
+
+msgid "What is this about?"
+msgstr "عمّ تدور رسالتك؟"
+
+msgid "Your message"
+msgstr "رسالتك"
+
+msgid "Tell us about your project."
+msgstr "أخبرنا عن مشروعك."
+
+msgid "Choose your service"
+msgstr "اختر خدمتك"
+
+msgid "Under $1,000"
+msgstr "أقل من 1,000 دولار"
+
+msgid "$1,000 – $5,000"
+msgstr "1,000 – 5,000 دولار"
+
+msgid "$5,000 – $15,000"
+msgstr "5,000 – 15,000 دولار"
+
+msgid "$15,000+"
+msgstr "أكثر من 15,000 دولار"
+
+msgid "Not sure yet"
+msgstr "لست متأكدًا بعد"
+
+# Footer quick-message form
+msgid "Quick message"
+msgstr "رسالة سريعة"
+
+msgid "Your name"
+msgstr "اسمك"
+
+msgid "Email address"
+msgstr "البريد الإلكتروني"
+
+msgid "How can we help?"
+msgstr "كيف يمكننا مساعدتك؟"
+
+msgid "Client"
+msgstr "العميل"

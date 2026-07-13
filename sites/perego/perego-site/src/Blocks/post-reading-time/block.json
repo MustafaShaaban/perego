@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/post-reading-time",
+	"title": "Perego Post Reading Time",
+	"category": "theme",
+	"icon": "clock",
+	"description": "The single-post \"N min read\" meta estimate. Language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}

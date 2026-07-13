@@ -32,3 +32,16 @@ spl_autoload_register(static function (string $class): void {
         require $file;
     }
 });
+
+// Shared WP_Post test double. Mirrors WordPress core's `#[AllowDynamicProperties] class WP_Post`
+// (declared `post_content` avoids the PHP 8.2 dynamic-property deprecation when block-renderer tests
+// set a body). Defined here once so every test uses the same shape regardless of file load order.
+if (! class_exists('WP_Post')) {
+    #[AllowDynamicProperties]
+    class WP_Post
+    {
+        public int $ID = 0;
+
+        public string $post_content = '';
+    }
+}

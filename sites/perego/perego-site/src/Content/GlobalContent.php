@@ -51,6 +51,7 @@ final class GlobalContent
                 'h1' => 'The Perego Journal',
                 'lead' => 'Notes on video, motion, design and the web from the studio floor.',
                 'empty' => 'No articles published yet. Check back soon.',
+                'minRead' => '%d min read',
             ],
             'footer' => [
                 'blurb' => 'We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.',
@@ -98,6 +99,7 @@ final class GlobalContent
                 'h1' => 'مدونة بيريجو',
                 'lead' => 'ملاحظات في الفيديو والموشن والتصميم والويب من داخل الاستوديو.',
                 'empty' => 'لا توجد مقالات منشورة بعد. عُد قريبًا.',
+                'minRead' => '%d دقيقة للقراءة',
             ],
             'footer' => [
                 'blurb' => 'يسعدنا التواصل معك لتقديم حلول تقنية إبداعية والمساعدة والتوصيات المخصصة التي تناسب احتياجاتك على أفضل وجه.',
@@ -131,6 +133,15 @@ final class GlobalContent
     public function uiHome(): string
     {
         return $this->locale === 'ar' ? 'الرئيسية' : 'Home';
+    }
+
+    /**
+     * The localized single-post reading estimate, e.g. "6 min read" / "٦ دقيقة للقراءة" (handoff
+     * `readTime`). The caller supplies the already-computed minute count.
+     */
+    public function readTime(int $minutes): string
+    {
+        return sprintf(self::COPY[$this->locale]['journal']['minRead'], $minutes);
     }
 
     private readonly string $locale;
