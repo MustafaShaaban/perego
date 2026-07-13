@@ -64,7 +64,7 @@ final class ClientsCarouselRenderer
         $previousLabel = $isCorporate ? __('Previous clients', 'perego-site') : __('Previous', 'perego-site');
         $nextLabel = $isCorporate ? __('More clients', 'perego-site') : __('More', 'perego-site');
         $trackAttributes = $isCorporate
-            ? 'id="corporateTrack" tabindex="0" role="group" aria-label="' . esc_attr__('Corporate client logos', 'perego-site') . '"'
+            ? 'id="corporateTrack" tabindex="0" role="list" aria-label="' . esc_attr__('Corporate client logos', 'perego-site') . '"'
             : 'id="individualTrack" role="list"';
 
         $html .= '<div class="' . $sliderClass . ' reveal"><button type="button" class="corp-arrow corp-arrow--prev" aria-label="' . esc_attr($previousLabel) . '">' . $this->arrowSvg('previous') . '</button>';

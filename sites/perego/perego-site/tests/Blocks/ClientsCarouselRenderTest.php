@@ -159,7 +159,7 @@ it('renders the handoff navigation controls for populated tracks', function () {
 it('preserves the handoff track identifiers, labels, and arrow SVG controls', function () {
     $html = renderClients();
 
-    expect($html)->toContain('id="corporateTrack" tabindex="0" role="group"')
+    expect($html)->toContain('id="corporateTrack" tabindex="0" role="list"')
         ->and($html)->toContain('id="individualTrack" role="list"')
         ->and($html)->toContain('aria-label="Previous clients"')
         ->and($html)->toContain('aria-label="More clients"')
