@@ -4,7 +4,9 @@ function bindChooser( chooser ) {
 
 	if ( ! select ) return;
 
-	chooser.querySelectorAll( '.svc-choice' ).forEach( ( button ) => {
+	const buttons = chooser.querySelectorAll( '.svc-choice' );
+
+	buttons.forEach( ( button ) => {
 		button.addEventListener( 'click', () => {
 			const option = Array.from( select.options ).find( ( item ) => item.value === button.dataset.service );
 			if ( ! option ) return;
@@ -15,6 +17,22 @@ function bindChooser( chooser ) {
 			select.dispatchEvent( new Event( 'input', { bubbles: true } ) );
 			select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
 		} );
+	} );
+
+	// The shared CoreX runtime calls form.reset() on a successful submission (spec 043), which
+	// reverts the underlying <select> without touching these decorative buttons — resync them so
+	// the chooser doesn't keep showing a service as picked after the message it belonged to sent.
+	// The form's reset algorithm fires this event *before* it reverts each control's value, so read
+	// the select on the next tick rather than during the event itself.
+	form.addEventListener( 'reset', () => {
+		setTimeout( () => {
+			buttons.forEach( ( button ) => {
+				const option = Array.from( select.options ).find( ( item ) => item.value === button.dataset.service );
+				const selected = !! option?.selected;
+				button.classList.toggle( 'is-selected', selected );
+				button.setAttribute( 'aria-pressed', String( selected ) );
+			} );
+		}, 0 );
 	} );
 }
 

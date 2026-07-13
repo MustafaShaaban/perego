@@ -49,3 +49,20 @@ test( 'synchronizes each handoff choice button with the submitted CoreX multi-se
 	expect( graphic.classList.contains( 'is-selected' ) ).toBe( true );
 	expect( changes ).toHaveBeenCalledTimes( 3 );
 } );
+
+test( 'resyncs every choice button when the shared CoreX runtime resets the form after a successful submission', () => {
+	jest.useFakeTimers();
+	loadChooser();
+	const form = document.querySelector( 'form' );
+	const graphic = document.querySelector( '[data-service="graphic-design"]' );
+
+	graphic.click();
+	expect( graphic.classList.contains( 'is-selected' ) ).toBe( true );
+
+	form.reset();
+	jest.runAllTimers();
+
+	expect( graphic.classList.contains( 'is-selected' ) ).toBe( false );
+	expect( graphic.getAttribute( 'aria-pressed' ) ).toBe( 'false' );
+	jest.useRealTimers();
+} );
