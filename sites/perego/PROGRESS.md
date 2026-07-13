@@ -21,6 +21,7 @@ Google Fonts request. Spec 006 replaced it with local Open Sans (300/400/600/700
 (400/600/700) WOFF2 assets in `perego-theme/assets/fonts/`, preserving the handoff font families while
 removing both remote preconnect hints. Current evidence: Pest 218/615 assertions, Jest 67, route-health
 72/0, a11y 12/0 serious-critical, and interactions 4/4. This closes the last executable regression.
+The local-font fix is committed as `0db8cab` and proposed as Perego PR #13.
 
 ## Integration status (2026-07-13)
 
