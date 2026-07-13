@@ -39,6 +39,18 @@
     emits — the real `.site-footer*` styling comes from `perego-reference.scss`, so this per-block
     stylesheet is orphaned; a cleanup candidate, not a defect.
 - [ ] T006 [US2] Rebuild Home and Services routes, including desktop/mobile/RTL states and visual evidence.
+  - [x] **Home hero Previous/Next/Pause controls (2026-07-14):** confirmed and fixed the root cause of
+    "absent or unproven" — see the "Block-owned stylesheets never enqueued" row in
+    `docs/visual-recovery.md`. Six blocks' `block.json` were missing the `"style"` key entirely
+    (`hero-slider`, `clients-carousel`, `services-teaser`, `home-about-bg`, `portfolio-grid`,
+    `site-footer`, `site-header`), so their compiled CSS never loaded on any route. For the hero this
+    meant `.hero__controls` had no positioning at all and sat beneath the always-loaded `.hero__prism`
+    background layer, making Previous/Next/Pause completely unclickable (confirmed via a Playwright click
+    timeout: "element intercepts pointer events"). Fixed by adding the missing `"style"` declarations.
+    Manually verified live: Next/Prev/Pause now clickable, live region announces "Slide X of 3", and an
+    explicit pause persists through subsequent hover in/out (WCAG 2.2.2 compliant). Full suite re-verified
+    green after the fix (Pest 224/224, Jest 69/69, route-health 72/0, interactions 9/9, a11y 12/0); no
+    visual regression on Home/Work archive from the newly-active CSS.
   - [x] Services archive "Our Process" (2026-07-14): `ServicesOverviewRenderer::renderProcess()` rendered
     a plain `<ol><li><strong>Label</strong> — desc</li></ol>` with zero active CSS (`.svc-process` styling
     only existed in the inactive `perego-legacy-pre-recovery.scss`) — exactly the "plain text list, not
