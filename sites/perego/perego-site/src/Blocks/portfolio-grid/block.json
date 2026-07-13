@@ -9,7 +9,6 @@
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
 	"viewScriptModule": "file:./view.js",
-	"style": "file:./style-index.css",
 	"supports": {
 		"html": false,
 		"align": [ "wide", "full" ]

@@ -8,7 +8,6 @@
 	"description": "The homepage About section's full-bleed background image, absolutely positioned behind the editor-canvas panel content. Server-rendered; no view script.",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
-	"style": "file:./style-index.css",
 	"supports": {
 		"html": false
 	}

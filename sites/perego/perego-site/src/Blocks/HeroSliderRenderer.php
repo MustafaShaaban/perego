@@ -57,11 +57,11 @@ final class HeroSliderRenderer
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/hero-bg.png') . '" alt="" />'
             . '</div>';
 
-        $html .= '<div class="hero__inner">';
-        $html .= '<div class="hero__content">';
+        $html .= '<div class="container hero__inner">';
+        $html .= '<div class="hero__content hero-enter">';
         $html .= $this->renderSlides($slides);
         $html .= '<div class="hero__cta">'
-            . '<a class="perego-btn perego-btn--accent" href="' . esc_url(home_url('/contact')) . '">'
+            . '<a class="btn btn--accent" href="' . esc_url(home_url('/contact')) . '">'
             . esc_html($content->heroCta()) . '</a>'
             . '</div>';
         $html .= '</div>'; // .hero__content

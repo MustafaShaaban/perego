@@ -74,7 +74,15 @@ it('renders the Say Hello CTA linking to contact', function () {
     $html = renderHero();
 
     expect($html)->toContain('Say Hello!')
-        ->and($html)->toContain('/contact');
+        ->and($html)->toContain('/contact')
+        ->and($html)->toContain('class="btn btn--accent"');
+});
+
+it('preserves the handoff container and hero entry class contract', function () {
+    $html = renderHero();
+
+    expect($html)->toContain('class="container hero__inner"')
+        ->and($html)->toContain('class="hero__content hero-enter"');
 });
 
 it('binds each slide hidden state and each dot selected state to the store', function () {

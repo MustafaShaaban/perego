@@ -25,6 +25,18 @@
 	margin: 0;
 }
 
+/* Keep the editable post-content wrapper transparent to the handoff's two-panel flex contract. */
+.home-about__panels > .wp-block-post-content {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(18px, 2.4vw, 30px);
+	inline-size: 100%;
+}
+
+.home-about__panels > .wp-block-post-content > * {
+	margin-block: 0;
+}
+
 /* The handoff's reference CSS expects its own classed controls, not browser defaults. */
 .perego-theme-app :where(input, textarea, select, button) {
 	font: inherit;

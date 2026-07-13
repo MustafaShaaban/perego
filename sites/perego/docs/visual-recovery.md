@@ -7,8 +7,16 @@ Status: recovery in progress; no route has visual acceptance.
 - Static baseline: `sites/perego/output/visual-recovery/baseline/home-en-1440.png`
 - Live pre-recovery capture: `sites/perego/output/visual-recovery/actual/home-en-1440.png`
 - Live shell recovery captures: `output/visual-recovery/actual/home-en-1440-header-recovery.png` and `output/visual-recovery/actual/home-en-1440-shell-recovery.png`
+- Live structural recovery captures: `output/visual-recovery/actual/home-en-1440-client-dom-fixed.png`, `output/visual-recovery/actual/home-en-1440-hero-contract.png`, and `output/visual-recovery/actual/home-en-1440-about-wrapper-neutralized.png`
 
 The shell captures prove that importing the handoff stylesheet alone is insufficient: WordPress block markup and existing block styles can still change the resulting layout. They are diagnostic artefacts, not acceptance evidence.
+
+The original desktop static full-page capture is not an acceptance baseline: the handoff's
+viewport-driven reveal script leaves below-fold sections hidden when a full-page screenshot is taken
+without scrolling. T001 remains open until the capture runner records explicit viewport and scroll
+states. The two latest live captures prove only the repaired structural contracts: all individual
+client cards remain children of `.indiv-track`, and the hero has the reference container, entry, and
+CTA classes.
 
 ## Handoff CSS ownership
 
@@ -23,6 +31,9 @@ The shell captures prove that importing the handoff stylesheet alone is insuffic
 |---|---|---|
 | Header | Legacy `perego-*` markup could not match `.site-header`, `.main-nav`, `.lang-toggle`, or mobile selectors. | Server renderer and view script now emit/reference the handoff contract. Mobile and RTL browser checks remain required. |
 | Footer | Legacy `perego-footer*` and CoreX form wrappers bypassed `.site-footer`, `.footer-col`, `.footer-form`, and `.field` rules. | Shared footer renders handoff wrapper classes while retaining CoreX/careers form handlers. Submit-state and flat-footer visual checks remain required. |
+| Home hero | The server renderer omitted the static handoff's `.container`, `.hero-enter`, and `.btn.btn--accent` contract, so the reference CSS could not set the intended horizontal alignment or CTA presentation. | Hero renderer now emits the exact classes; browser evidence confirms the contract. Visual parity is still unaccepted pending state/viewport diffs. |
+| Clients carousel | A malformed server closing tag moved individual cards two onward outside `.indiv-track`; legacy Swiper assumptions also contradicted the handoff grid tracks. | The renderer now closes the shared container and every individual card correctly; client-owned native-scroll behavior keeps the reference tracks intact. EN/AR counts and visual states remain required. |
+| Home About | FSE's required post-content wrapper sat between `.home-about__panels` and the editable `.glass-panel` articles, preventing the handoff's flex gap from applying; the inner wrapper also lacked `.container`. | The template now emits `.container.home-about__inner`; a narrowly scoped adapter makes only the post-content wrapper a transparent flex column. Browser evidence confirms two direct panels and the 30px handoff gap. |
 | FSE layout | `.wp-site-blocks` constrained/flow margins can add max-width and block-spacing around reference sections. | Adapter resets only these structural wrappers; each route still needs a DOM comparison before acceptance. |
 | Route blocks | Existing bespoke `perego-*`, `svc-*`, and `portfolio-*` DOM is not automatically compatible with the reference stylesheet. | Rebuild route-by-route from the corresponding static template; do not use CSS aliases as a substitute for a DOM contract. |
 

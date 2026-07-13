@@ -8,7 +8,6 @@
 	"description": "The homepage services teaser: a heading, a See All Services link, and the four service cards (staggered offsets + hover lift). Server-rendered; hover is pure CSS (no view script).",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
-	"style": "file:./style-index.css",
 	"supports": {
 		"html": false
 	}

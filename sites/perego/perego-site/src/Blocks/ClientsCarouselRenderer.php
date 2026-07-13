@@ -16,7 +16,7 @@ use WP_Query;
 
 /**
  * Server-renders the perego-theme/clients-carousel block (spec M6): the homepage Corporate +
- * Individual client carousels. Cards are **server-rendered and present without JavaScript** (the
+ * Individual client carousels. Cards are **server-rendered and present without JavaScript**; the
  * Swiper enhancement in view.js only upgrades the already-rendered .swiper markup — no page-level
  * horizontal overflow, works with JS off). Language-aware via ClientsContent. Ported from the
  * handoff `index.html` #clients.
@@ -33,8 +33,10 @@ final class ClientsCarouselRenderer
 
     public function render(): string
     {
-        $html = '<section class="clients page-section" id="clients" aria-label="' . esc_attr($this->content->get('sectionLabel')) . '">';
-        $html .= '<div class="clients__inner">';
+        $html = '<section class="clients" id="clients" aria-labelledby="corporateTitle">';
+        $html .= '<div class="wavy-bg" aria-hidden="true"><img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" /></div>';
+        $html .= '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="eq" viewBox="0 0 64 64"><g fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"><line x1="17" y1="11" x2="17" y2="53"/><line x1="32" y1="11" x2="32" y2="53"/><line x1="47" y1="11" x2="47" y2="53"/></g><g fill="#4a0d8f" stroke="#ffffff" stroke-width="3.2"><circle cx="17" cy="36" r="7"/><circle cx="32" cy="46" r="7"/><circle cx="47" cy="22" r="7"/></g></symbol></svg>';
+        $html .= '<div class="container clients__inner">';
         $html .= $this->carousel('corporate', 'corporateTitle', 'corporateSubtitle');
         $html .= $this->carousel('individual', 'individualTitle', 'individualSubtitle');
         $html .= '</div>';
@@ -46,28 +48,26 @@ final class ClientsCarouselRenderer
     private function carousel(string $type, string $titleKey, string $subtitleKey): string
     {
         $clients = $this->query($type);
-        $headingId = 'clients-' . $type . '-title';
+        $headingId = $type === 'corporate' ? 'corporateTitle' : 'individualTitle';
 
-        $html = '<div class="clients-carousel clients-carousel--' . esc_attr($type) . '" aria-labelledby="' . $headingId . '">';
-        $html .= '<h2 class="clients-carousel__title" id="' . $headingId . '">' . esc_html($this->content->get($titleKey)) . '</h2>';
-        $html .= '<p class="clients-carousel__subtitle">' . esc_html($this->content->get($subtitleKey)) . '</p>';
+        $html = '<header class="clients__head' . ($type === 'individual' ? ' clients__head--indiv' : '') . ' reveal">';
+        $html .= '<h2 class="section-title" id="' . $headingId . '">' . esc_html($this->content->get($titleKey)) . '</h2>';
+        $html .= '<p class="section-subtitle">' . esc_html($this->content->get($subtitleKey)) . '</p></header>';
 
         if ($clients === []) {
-            return $html . '</div>';
+            return $html;
         }
 
-        $html .= '<div class="swiper clients-swiper clients-swiper--' . esc_attr($type) . '" data-clients-swiper>';
-        $html .= '<div class="swiper-wrapper">';
+        $trackClass = $type === 'corporate' ? 'corp-track' : 'indiv-track';
+        $sliderClass = $type === 'corporate' ? 'corp-slider' : 'indiv-slider';
+        $html .= '<div class="' . $sliderClass . ' reveal"><button type="button" class="corp-arrow corp-arrow--prev" aria-label="' . esc_attr__('Previous', 'perego-site') . '">&#8249;</button>';
+        $html .= '<div class="' . $trackClass . '" role="list">';
         foreach ($clients as $client) {
             $html .= $type === 'corporate' ? $this->corporateCard($client) : $this->individualCard($client);
         }
-        $html .= '</div>'; // .swiper-wrapper
-        $html .= '<button type="button" class="swiper-button-prev clients-swiper__prev" aria-label="' . esc_attr__('Previous', 'perego-site') . '"></button>';
-        $html .= '<button type="button" class="swiper-button-next clients-swiper__next" aria-label="' . esc_attr__('Next', 'perego-site') . '"></button>';
-        $html .= '<div class="swiper-pagination clients-swiper__pagination"></div>';
-        $html .= '</div>'; // .swiper
+        $html .= '</div><button type="button" class="corp-arrow corp-arrow--next" aria-label="' . esc_attr__('Next', 'perego-site') . '">&#8250;</button></div>';
 
-        return $html . '</div>';
+        return $html;
     }
 
     /**
@@ -77,13 +77,9 @@ final class ClientsCarouselRenderer
     private function corporateCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
-        $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => '']) : '';
-
-        $html = '<div class="swiper-slide client-card client-card--corporate" role="img" aria-label="' . esc_attr($title) . '">';
-        $html .= $thumb !== ''
-            ? '<div class="client-card__media">' . $thumb . '</div>'
-            : '<img class="client-card__icon" src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/corp-icon.png') . '" alt="" />';
-        $html .= '</div>';
+        $html = '<button type="button" class="corp-card" role="listitem" aria-label="' . esc_attr($title) . '">';
+        $html .= '<svg class="eq-icon" viewBox="0 0 64 64" aria-hidden="true"><use href="#eq"></use></svg>';
+        $html .= '</button>';
 
         return $html;
     }
@@ -99,19 +95,18 @@ final class ClientsCarouselRenderer
         $stat = (string) get_post_meta($client->ID, '_perego_client_stat', true);
         $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => '']) : '';
 
-        $html = '<div class="swiper-slide client-card client-card--individual">';
-        $html .= '<div class="client-card__info">';
-        $html .= '<p class="client-card__name">' . esc_html($title) . '</p>';
+        $html = '<a class="indiv-card" href="https://www.youtube.com/" target="_blank" rel="noopener" role="listitem">';
+        $html .= '<div class="indiv-card__info"><h3 class="indiv-card__title">' . esc_html($title) . '</h3>';
         if ($stat !== '') {
-            $html .= '<p class="client-card__stat">' . esc_html($stat) . '</p>';
+            $html .= '<p class="indiv-card__stat">' . esc_html($stat) . '</p>';
         }
         $html .= '</div>'; // .client-card__info
 
-        $html .= '<div class="client-card__thumb">';
-        $html .= $thumb !== '' ? $thumb : '<div class="client-card__media--placeholder" aria-hidden="true"></div>';
+        $html .= '<div class="indiv-card__thumb">';
+        $html .= $thumb !== '' ? $thumb : '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/client-review-crop.png') . '" alt="" loading="lazy" />';
         $html .= '</div>'; // .client-card__thumb
 
-        $html .= '</div>';
+        $html .= '</a>';
 
         return $html;
     }
