@@ -28,6 +28,76 @@ the dynamic Query Loop and native post content. English desktop evidence reduced
 507,037 to 461,995 pixels and the representative post from roughly 915,120 to 529,609. Neither route is
 accepted; card data, tags, comments, related posts, AR, responsive, state, and manual-review evidence remain open.
 
+Latest Contact increment (2026-07-13): narrowed two over-broad FSE layout resets that were overriding the
+locked inner-page hero overlap, then adapted the live CoreX project-brief presentation without changing its
+submission schema, nonce, validation, honeypot, or REST endpoint. The contact form now preserves the locked
+budget prompt, optional labels, select treatment, live character count, concise chooser labels, and hidden
+honeypot/error placeholders. English 1440 default evidence reduced the Contact diff from roughly 1,245,667
+to 353,189 pixels. It remains unaccepted: remaining typography/content deltas, Arabic, responsive
+widths, interaction/form states, and manual review are still required.
+
+Latest evidence-tooling increment (2026-07-13): the deterministic recovery runner now records each live
+capture's viewport/scroll width and horizontal-overflow result, preserves unrelated manifest records during
+a scoped route retest, and supports `PEREGO_CAPTURE_ROUTES`. The Contact EN/AR default sweep across all
+eight required widths reports no live horizontal overflow. This is diagnostic evidence only; it does not
+close T001 or accept Contact without full route/state coverage and manual review.
+
+Latest route-contract increment (2026-07-13): Search now keeps its real WordPress query while emitting the
+locked `page-section`/`post-hero__inner`/`search-bar`/`blog-grid`/`post-card`/pagination hierarchy; legal
+and standard-page templates now emit the locked section, container, hero, TOC, and prose hierarchy without
+moving editor-canvas content into PHP. The Search baseline now uses the handoff's `motion` query rather than
+an unrelated live query. The legal TOC now matches the handoff rather than adding a separate public review
+notice. EN 1440 diagnostics report 255,615 changed pixels for Search, 191,878 Terms, 185,187 Privacy, and
+111,709 standard page, all without horizontal overflow. None is accepted: AR, responsive,
+state, and manual-review evidence remain open.
+
+Latest header interaction increment (2026-07-13): the mobile menu's backdrop was intercepting Services
+taps because the sticky header's stacking context placed its fixed panel beneath the sibling backdrop; the
+generic close-on-link listener also immediately closed the Services accordion. A scoped open-menu stacking
+repair and trigger exclusion now preserve the locked handoff structure. The live interaction verifier uses
+the handoff selectors and passes six checks: sticky scroll, desktop dropdown hover, mobile panel, mobile
+Services accordion, Escape/focus restoration, and the real AR URL. This is functional evidence only; state
+screenshots/diffs, RTL, and all responsive widths remain unaccepted.
+
+Latest state-evidence increment (2026-07-13): the visual runner now captures the handoff header dropdown,
+mobile panel, and mobile Services accordion as explicit states at their applicable widths. Representative
+EN baseline/current/diff artifacts now exist for dropdown at 1280px and both mobile states at 375px; all
+three current renders have no horizontal overflow. They remain unreviewed diagnostics: the full EN/AR
+width matrix, manual review, and the remaining required interaction/form states are still open.
+
+Latest project-lightbox increment (2026-07-13): the representative project's three approved, seeded gallery
+attachments are present and the live gallery now has verified modal open/scroll lock plus Escape/focus
+restoration. Its renderer and the nine-check interaction suite pass. The project gallery remains visually
+unaccepted despite its thumbnail DOM now using the locked `portfolio`/`work-masonry`/`work-card` handoff
+contract. Adjacent links and related projects now also use the locked pagination and separate related-section
+surfaces inside the main landmark. Its EN 1440 gallery diagnostic fell from 814,983 to 276,937 changed pixels with no horizontal
+overflow; AR, responsive, state, and manual review remain open.
+
+**Preservation-phase verification (2026-07-14):** before committing the above uncommitted work, ran the
+full suite and manually reviewed the diff: Pest 223/223, Jest 68/68, both builds clean, route-health 72/0,
+interactions 9/9, and manual comparison of the Search and Project-gallery captures against the locked
+handoff confirmed the DOM/class contract genuinely matches (residual pixel diff is header-chrome and
+font-rendering noise, not a structural defect). **The a11y gate initially failed with 14 serious/critical
+violations across 12 pages** — verified pre-existing at HEAD (`134f685`), not introduced by the uncommitted
+diff, by re-running the audit against a stashed-clean checkout. Two real, distinct defects, both fixed:
+(1) `ClientsCarouselRenderer`'s corporate track used `role="group"` while its cards carried `role="listitem"`
+(an ARIA `listitem` requires a `list`/`listitem`-supporting parent role — the individual track already used
+`role="list"` correctly); changed the corporate track to `role="list"` to match. (2) Two reference-CSS
+contrast failures: `.lang-toggle__btn.is-active` sets white text on the `--accent` pill background (2.9:1;
+every other accent-background control in the reference already pairs it with a dark ink) and
+`.page-crumb span` dims to 50% opacity indiscriminately, which the current-page `aria-current="page"` label
+inherits too (down to ~2.3:1 on `--bg-deep`) even though only the `/` separators were meant to be dimmed.
+Fixed both with two small, scoped rules in `perego-wordpress-adapter.scss` (the adapter layer, not the
+untouched reference stylesheet). Also fixed a real RTL/logical-CSS gap found in the same file's new
+`.contact-form-wrap select` rule: the dropdown-arrow `background-position: right 4px center` and physical
+`padding` had no `[dir="rtl"]` mirror, so the arrow would sit on the wrong side in Arabic; added the mirror
+and switched the padding to `padding-block`/`padding-inline`. **Full suite after fixes: Pest 223, Jest 68,
+route-health 72/0, interactions 9/9, a11y 12/0 (0 serious/critical) — all green.** One pre-existing, in-scope
+gap noted but not fixed here (out of this diff's touched files): `SearchResultsRenderer::resultCard()`'s
+`post-card__media-placeholder` has no backing CSS rule in the reference stylesheet, so search results for
+posts without a featured image (e.g. service posts) render a blank media box instead of the handoff's
+gradient placeholder — tracked for T008's Search completion pass, not fixed in this preservation commit.
+
 The existing non-engineering owner material remains required for launch: approved client identities/logos,
 production project and journal content/media, counsel-reviewed English legal copy, and professional Arabic
 legal translation. The idempotent seed workflow is documented and proven ready; see

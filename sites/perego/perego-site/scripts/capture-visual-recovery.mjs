@@ -8,13 +8,14 @@
  * Run from the repository root after serving the handoff at http://127.0.0.1:8777:
  *   node sites/perego/perego-site/scripts/capture-visual-recovery.mjs
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from 'playwright';
 
 const STATIC_BASE = process.env.PEREGO_HANDOFF_BASE ?? 'http://127.0.0.1:8777';
 const LIVE_BASE = process.env.PEREGO_LIVE_BASE ?? 'http://perego.local';
 const OUTPUT_ROOT = join('sites', 'perego', 'output', 'visual-recovery');
+const MANIFEST_PATH = join(OUTPUT_ROOT, 'manifest.json');
 const VIEWPORTS = [
 	{ id: '320', width: 320, height: 900 },
 	{ id: '375', width: 375, height: 900 },
@@ -37,6 +38,9 @@ const CAPTURES = [
 	{ route: 'home', state: 'services', staticPath: 'index.html', livePath: '/', landmark: '#services' },
 	{ route: 'home', state: 'clients', staticPath: 'index.html', livePath: '/', landmark: '#clients' },
 	{ route: 'home', state: 'footer', staticPath: 'index.html', livePath: '/', landmark: '.site-footer' },
+	{ route: 'home', state: 'header-dropdown', staticPath: 'index.html', livePath: '/', viewportIds: ['1280', '1440', 'wide'], interaction: 'desktop-dropdown' },
+	{ route: 'home', state: 'mobile-nav', staticPath: 'index.html', livePath: '/', viewportIds: ['320', '375', '430', '768', '1024'], interaction: 'mobile-nav' },
+	{ route: 'home', state: 'mobile-services', staticPath: 'index.html', livePath: '/', viewportIds: ['320', '375', '430', '768', '1024'], interaction: 'mobile-services' },
 	{ route: 'services', state: 'default', staticPath: 'services.html', livePath: '/services/', landmark: 'main' },
 	{ route: 'service-video-editing', state: 'default', staticPath: 'service-video-editing.html', livePath: '/services/video-editing/', landmark: 'main' },
 	{ route: 'service-motion-graphics', state: 'default', staticPath: 'service-motion-graphics.html', livePath: '/services/motion-graphics/', landmark: 'main' },
@@ -44,15 +48,40 @@ const CAPTURES = [
 	{ route: 'service-website-making', state: 'default', staticPath: 'service-website-making.html', livePath: '/services/website-making/', landmark: 'main' },
 	{ route: 'work', state: 'default', staticPath: 'portfolio.html', livePath: '/work/', landmark: 'main' },
 	{ route: 'project', state: 'default', staticPath: 'project.html', livePath: '/work/brand-film-launch-campaign/', landmark: 'main' },
+	{ route: 'project', state: 'gallery', staticPath: 'project.html', livePath: '/work/brand-film-launch-campaign/', landmark: '#pjGallery' },
 	{ route: 'journal', state: 'default', staticPath: 'archive.html', livePath: '/journal/', landmark: 'main' },
 	{ route: 'journal-post', state: 'default', staticPath: 'single-post.html', livePath: '/behind-the-scenes-of-a-brand-film-example/', landmark: 'main' },
 	{ route: 'contact', state: 'default', staticPath: 'contact.html', livePath: '/contact/', landmark: 'main' },
 	{ route: 'terms', state: 'default', staticPath: 'terms.html', livePath: '/terms/', landmark: 'main' },
 	{ route: 'privacy', state: 'default', staticPath: 'privacy.html', livePath: '/privacy/', landmark: 'main' },
-	{ route: 'search', state: 'populated', staticPath: 'search.html', livePath: '/?s=design', landmark: 'main' },
+	{ route: 'search', state: 'populated', staticPath: 'search.html', livePath: '/?s=motion', landmark: 'main' },
 	{ route: 'not-found', state: 'default', staticPath: '404.html', livePath: '/visual-recovery-missing-route/', landmark: 'main' },
 	{ route: 'page', state: 'default', staticPath: 'page.html', livePath: '/sample-page/', landmark: 'main' },
 ];
+const requestedRoutes = ( process.env.PEREGO_CAPTURE_ROUTES ?? '' )
+	.split( ',' )
+	.map( ( route ) => route.trim() )
+	.filter( Boolean );
+const requestedCaptures = requestedRoutes.length === 0
+	? CAPTURES
+	: CAPTURES.filter( ( captureState ) => requestedRoutes.includes( captureState.route ) );
+
+function captureKey( record ) {
+	return [ record.route, record.language, record.viewport?.id, record.state ].join( ':' );
+}
+
+function existingManifestRecords() {
+	if ( ! existsSync( MANIFEST_PATH ) ) {
+		return [];
+	}
+
+	try {
+		const manifest = JSON.parse( readFileSync( MANIFEST_PATH, 'utf8' ) );
+		return Array.isArray( manifest.records ) ? manifest.records : [];
+	} catch {
+		return [];
+	}
+}
 
 const freezeMotion = `
 	*, *::before, *::after {
@@ -63,7 +92,7 @@ const freezeMotion = `
 	.reveal, .js .reveal { opacity: 1 !important; transform: none !important; }
 `;
 
-async function capture(page, url, landmark, outputPath, locale) {
+async function capture(page, url, landmark, interaction, outputPath, locale) {
 	await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
 	await page.addStyleTag({ content: freezeMotion });
 	if ( locale === 'ar' ) {
@@ -74,10 +103,42 @@ async function capture(page, url, landmark, outputPath, locale) {
 	}
 	await page.evaluate(async (selector) => {
 		await document.fonts.ready;
-		document.querySelector(selector)?.scrollIntoView({ block: 'start' });
+		if (selector) {
+			document.querySelector(selector)?.scrollIntoView({ block: 'start' });
+		}
 	}, landmark);
+	await applyInteractionState(page, interaction);
 	await page.waitForTimeout(150);
 	await page.screenshot({ path: outputPath });
+
+	return page.evaluate(() => ({
+		clientWidth: document.documentElement.clientWidth,
+		scrollWidth: document.documentElement.scrollWidth,
+		hasHorizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+	}));
+}
+
+async function applyInteractionState(page, interaction) {
+	if (!interaction) {
+		return;
+	}
+
+	if (interaction === 'desktop-dropdown') {
+		await page.locator('.has-dropdown').first().hover();
+		await page.waitForTimeout(250);
+		return;
+	}
+
+	await page.locator('#navToggle').click();
+	await page.waitForTimeout(150);
+
+	if (interaction === 'mobile-services') {
+		// The locked static prototype's backdrop also intercepts this nested tap. Force the click only
+		// to reproduce its documented open state for a visual baseline; live pointer behaviour is
+		// separately verified without force by verify-interactions.mjs.
+		await page.locator('.has-dropdown > .main-nav__link').first().click({ force: true });
+		await page.waitForTimeout(150);
+	}
 }
 
 async function alternateLanguageUrl(page, englishUrl, locale) {
@@ -164,13 +225,17 @@ const baselinePage = await browser.newPage();
 const actualPage = await browser.newPage();
 const diffPage = await browser.newPage();
 const records = [];
+const previousRecords = existingManifestRecords();
 
 try {
 	for (const viewport of requestedViewports) {
 		await baselinePage.setViewportSize(viewport);
 		await actualPage.setViewportSize(viewport);
 
-		for (const captureState of CAPTURES) {
+		for (const captureState of requestedCaptures) {
+			if (captureState.viewportIds && !captureState.viewportIds.includes(viewport.id)) {
+				continue;
+			}
 			const staticUrl = `${STATIC_BASE}/${captureState.staticPath}`;
 			const englishUrl = `${LIVE_BASE}${captureState.livePath}`;
 
@@ -196,8 +261,8 @@ try {
 				const actualPath = join(OUTPUT_ROOT, 'actual', filename);
 				const diffPath = join(OUTPUT_ROOT, 'diff', filename);
 
-				await capture(baselinePage, staticUrl, captureState.landmark, baselinePath, locale);
-				await capture(actualPage, liveUrl, captureState.landmark, actualPath, locale);
+				await capture(baselinePage, staticUrl, captureState.landmark, captureState.interaction, baselinePath, locale);
+				const actualMetrics = await capture(actualPage, liveUrl, captureState.landmark, captureState.interaction, actualPath, locale);
 				const difference = await createDiff(diffPage, pixelDifference(baselinePath, actualPath, diffPath));
 				records.push({
 					route: captureState.route,
@@ -209,6 +274,7 @@ try {
 					diff: difference.error ? null : diffPath.replaceAll('\\', '/'),
 					baselineKind: locale === 'en' ? 'locked-handoff' : 'rtl-layout-surrogate',
 					status: 'unreviewed',
+					actualMetrics,
 					...difference,
 				});
 			}
@@ -218,5 +284,11 @@ try {
 	await browser.close();
 }
 
-writeFileSync(join(OUTPUT_ROOT, 'manifest.json'), JSON.stringify({ records }, null, 2));
-console.log(JSON.stringify({ records }, null, 2));
+const capturedKeys = new Set( records.map( captureKey ) );
+const mergedRecords = [
+	...previousRecords.filter( ( record ) => ! capturedKeys.has( captureKey( record ) ) ),
+	...records,
+];
+
+writeFileSync( MANIFEST_PATH, JSON.stringify({ records: mergedRecords }, null, 2));
+console.log(JSON.stringify({ records: mergedRecords }, null, 2));
