@@ -18,8 +18,20 @@ function bindChooser( chooser ) {
 	} );
 }
 
+function bindMessageCounter( form ) {
+	const textarea = form.querySelector( 'textarea[name="message"]' );
+	const field = textarea?.closest( '[data-corex-field="message"]' );
+
+	if ( ! textarea || ! field ) return;
+
+	const update = () => field.setAttribute( 'data-perego-counter', `${ textarea.value.length } / 1200` );
+	textarea.addEventListener( 'input', update );
+	update();
+}
+
 function init() {
 	document.querySelectorAll( '[data-perego-service-chooser]' ).forEach( bindChooser );
+	document.querySelectorAll( 'form[data-corex-form="perego-project-brief"]' ).forEach( bindMessageCounter );
 }
 
 if ( document.readyState === 'loading' ) document.addEventListener( 'DOMContentLoaded', init );

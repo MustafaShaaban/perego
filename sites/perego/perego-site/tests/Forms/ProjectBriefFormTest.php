@@ -64,7 +64,7 @@ it('offers the exact budget ranges from the handoff, in order', function () {
     Functions\when('get_posts')->justReturn([]);
 
     expect(array_keys(briefFields()['budget']['options']))->toBe([
-        'under-1k', '1k-5k', '5k-15k', '15k-plus', 'not-sure',
+        '', 'under-1k', '1k-5k', '5k-15k', '15k-plus', 'not-sure',
     ]);
 });
 

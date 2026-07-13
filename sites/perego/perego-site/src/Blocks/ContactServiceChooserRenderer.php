@@ -15,6 +15,19 @@ defined('ABSPATH') || exit;
 /** Renders the handoff contact-service controls from the current-language service records. */
 final class ContactServiceChooserRenderer
 {
+    /**
+     * The contact handoff deliberately uses concise service labels while the service records retain
+     * their complete editorial names for headings, SEO, and form submissions.
+     *
+     * @var array<string,string>
+     */
+    private const HANDOFF_LABELS = [
+        'video-editing' => 'Video Editing',
+        'motion-graphics' => '2D Motion Graphics',
+        'graphic-design' => 'Graphic Design',
+        'website-making' => 'Website Making',
+    ];
+
     public function render(): string
     {
         $html = '<div class="contact-choose reveal" data-delay="1" data-perego-service-chooser>';
@@ -25,7 +38,7 @@ final class ContactServiceChooserRenderer
             $selected = $slug === $this->preselectedService();
             $html .= '<button type="button" class="svc-choice' . ($selected ? ' is-selected' : '') . '"'
                 . ' data-service="' . esc_attr($slug) . '" aria-pressed="' . ($selected ? 'true' : 'false') . '">'
-                . esc_html($label) . '</button>';
+                . esc_html($this->handoffLabel($slug, $label)) . '</button>';
         }
 
         $html .= '</div>';
@@ -57,6 +70,13 @@ final class ContactServiceChooserRenderer
         }
 
         return $services !== [] ? $services : ServicePostType::SERVICES;
+    }
+
+    private function handoffLabel(string $slug, string $fallback): string
+    {
+        return isset(self::HANDOFF_LABELS[$slug])
+            ? __(self::HANDOFF_LABELS[$slug], 'perego-site')
+            : $fallback;
     }
 
     private function preselectedService(): string
