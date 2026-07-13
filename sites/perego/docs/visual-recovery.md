@@ -27,7 +27,7 @@ CTA classes.
 
 ## Handoff CSS ownership
 
-- `perego-reference.scss` is an untouched copy of the locked `site/css/styles.css` reference.
+- `perego-reference.scss` is a faithful copy of the locked `site/css/styles.css` reference, except for four build-relative image URL remaps from `../assets/images/` to `../images/`; the values, selectors, and presentation rules are otherwise preserved.
 - `perego-wordpress-adapter.scss` is the only layer allowed to neutralize WordPress/FSE layout interference or attach production-only font handling.
 - `perego-editor.scss` is reserved for editor-canvas-only corrections and must not alter the public rendering contract.
 - `perego-legacy-pre-recovery.scss` is retained as recovery evidence but is not imported.
