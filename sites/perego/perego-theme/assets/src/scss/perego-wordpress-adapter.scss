@@ -8,8 +8,13 @@
 @font-face { font-family: "Cairo"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/cairo-arabic-700-normal.woff2") format("woff2"); }
 
 /* FSE structural wrappers must not introduce a second layout system around the reference DOM. */
+html {
+	overflow-x: clip;
+}
+
 .wp-site-blocks,
-.wp-site-blocks > * {
+.wp-site-blocks > .wp-block-template-part,
+.wp-site-blocks > main {
 	margin-block-start: 0;
 	margin-block-end: 0;
 }
@@ -20,7 +25,6 @@
 	margin-inline: 0;
 }
 
-.wp-site-blocks .wp-block-group,
 .wp-site-blocks .wp-block-group__inner-container {
 	margin: 0;
 }
@@ -29,6 +33,28 @@
  * positioning is measured against the page, as in the locked static handoff. */
 .wp-block-template-part:has(> .site-header) {
 	display: contents;
+}
+
+/* A sticky header is a stacking context. Keep its fixed mobile panel above the handoff backdrop
+ * while the panel is open; otherwise the sibling backdrop (z-index:150) intercepts every nav tap. */
+.site-header.is-menu-open {
+	z-index: 201;
+}
+
+/* The reference file's white text on the active language pill's accent background is 2.9:1 — below
+ * WCAG AA. Every other accent-background control in the reference (.pagination .is-current,
+ * .web-filter.is-active, .svc-tab .svc-tab__cta) already pairs it with a dark ink; align this one. */
+.lang-toggle__btn.is-active {
+	color: #2a0148;
+}
+
+/* The reference dims every breadcrumb span (including the current-page label) to 50% of
+ * `--muted-2`, which drops the current-page text on `--bg-deep` to ~2.3:1. Only the decorative
+ * separators are meant to be dimmed; give the current page the same full-strength `--muted` the
+ * breadcrumb's own links already use. */
+.page-crumb span[aria-current="page"] {
+	opacity: 1;
+	color: var(--muted);
 }
 
 /* Keep the editable post-content wrapper transparent to the handoff's two-panel flex contract. */
@@ -97,6 +123,17 @@
 	gap: 20px;
 }
 
+/* The post-content block is only the editable carrier for the live form. Its flow gap is not
+ * part of the locked contact form DOM. */
+.contact-form-wrap .wp-block-post-content.is-layout-flow > .corex-form {
+	margin-block-start: 0;
+}
+
+/* The handoff grid owns vertical alignment; the FSE flow wrapper must not offset its chooser. */
+.contact-hero__grid.is-layout-flow > .contact-choose {
+	margin-block-start: 0;
+}
+
 .contact-form-wrap .corex-form__field {
 	display: flex;
 	flex-direction: column;
@@ -123,21 +160,43 @@
 	display: none;
 }
 
+.contact-form-wrap .corex-form__hp {
+	position: absolute;
+	inset-inline-start: -9999px;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+}
+
+.contact-form-wrap .corex-form__error:empty,
+.contact-form-wrap .corex-form__status:empty {
+	display: none;
+}
+
 .contact-form-wrap .corex-form__required {
 	display: none;
 }
 
 .contact-form-wrap .corex-form__label {
-	font-weight: 700;
+	font-weight: 600;
 	font-size: 15px;
+}
+
+/* The form schema stays CoreX-owned; these two editorial qualifiers are presentation-only
+ * text from the locked contact handoff. */
+.contact-form-wrap [data-corex-field="phone"] .corex-form__label::after,
+.contact-form-wrap [data-corex-field="company"] .corex-form__label::after {
+	content: " (optional)";
+	color: var(--muted-2);
+	font-weight: 400;
 }
 
 .contact-form-wrap .corex-form__input {
 	width: 100%;
-	padding: 11px 4px;
+	padding: 10px 4px;
 	background: transparent;
 	border: 0;
-	border-bottom: 1px solid rgba(255,255,255,0.35);
+	border-bottom: 1.5px solid rgba(216, 106, 243, 0.5);
 	border-radius: 0;
 	color: #fff;
 	font: inherit;
@@ -149,6 +208,37 @@
 	border: 1px solid rgba(255,255,255,0.3);
 	border-radius: 14px;
 	resize: vertical;
+}
+
+.contact-form-wrap select.corex-form__input {
+	border-bottom-color: rgba(216, 106, 243, 0.5);
+	padding-block: 10px;
+	padding-inline: 4px 24px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23d86af3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 4px center;
+	appearance: none;
+}
+
+[dir="rtl"] .contact-form-wrap select.corex-form__input {
+	background-position: left 4px center;
+}
+
+.contact-form-wrap [data-corex-field="message"]::after {
+	content: attr(data-perego-counter);
+	position: absolute;
+	inset-inline-end: 2px;
+	top: 100%;
+	margin-top: 6px;
+	color: var(--muted-2);
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	text-align: end;
+}
+
+.contact-form-wrap [data-corex-field="message"] {
+	position: relative;
+	margin-bottom: 22px;
 }
 
 .contact-form-wrap .corex-form__submit {

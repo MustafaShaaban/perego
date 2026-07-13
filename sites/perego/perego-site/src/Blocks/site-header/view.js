@@ -185,6 +185,14 @@ const { actions } = store( 'perego/site-header', {
 
 			ref.querySelectorAll?.( '.main-nav a' ).forEach( ( link ) => {
 				link.addEventListener( 'click', () => {
+					const isMobileServicesTrigger =
+						window.matchMedia?.( '(max-width: 1024px)' ).matches &&
+						link.parentElement?.classList.contains( 'has-dropdown' );
+
+					if ( isMobileServicesTrigger ) {
+						return;
+					}
+
 					if ( context.isMenuOpen ) {
 						context.isMenuOpen = false;
 						document.getElementById( 'mainNav' )?.classList.remove( 'is-open' );
