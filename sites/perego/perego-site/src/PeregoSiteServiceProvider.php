@@ -395,13 +395,13 @@ final class PeregoSiteServiceProvider
             ]);
 
             register_block_type($this->blockDir('project-navigation'), [
-                'render_callback' => static function () use ($languageService): string {
+                'render_callback' => static function (array $attributes) use ($languageService): string {
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
 
                     return (new ProjectNavigationRenderer(
                         new ProjectRepository(),
                         new PortfolioContent($languageService->driver()->currentLocale()),
-                    ))->render($queried instanceof \WP_Post ? $queried : null);
+                    ))->render($queried instanceof \WP_Post ? $queried : null, (string) ($attributes['surface'] ?? 'all'));
                 },
             ]);
         });

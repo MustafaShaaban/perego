@@ -13,6 +13,7 @@ beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_url')->returnArg();
+	Functions\when('__')->returnArg();
     Functions\when('wp_json_encode')->alias('json_encode');
 });
 
@@ -41,13 +42,15 @@ it('renders nothing when there are no images', function () {
 it('renders one thumbnail button per image, opening the lightbox', function () {
     $html = renderGallery();
 
-    expect(substr_count($html, 'project-gallery__thumb'))->toBe(2)
+    expect(substr_count($html, 'class="work-card reveal"'))->toBe(2)
         ->and($html)->toContain('data-wp-on--click="actions.open"')
+        ->and($html)->toContain('class="work-masonry"')
+        ->and($html)->toContain('data-gallery="https://perego.local/a.jpg,https://perego.local/b.jpg"')
         ->and($html)->toContain('Frame A');
 });
 
 it('renders the localized gallery heading as the section label', function () {
-    expect(renderGallery())->toContain('<h2 id="project-gallery-title"')
+    expect(renderGallery())->toContain('<h2 id="pjGallery" class="section-title"')
         ->and(renderGallery())->toContain('Project gallery');
 });
 
@@ -63,6 +66,7 @@ it('renders an accessible dialog with a focus-trap keydown and modal semantics',
 
     expect($html)->toContain('role="dialog"')
         ->and($html)->toContain('aria-modal="true"')
+        ->and($html)->toContain('data-wp-init="callbacks.init"')
         ->and($html)->toContain('data-wp-on--keydown="actions.onKeydown"')
         ->and($html)->toContain('data-wp-bind--hidden="callbacks.lightboxHidden"');
 });

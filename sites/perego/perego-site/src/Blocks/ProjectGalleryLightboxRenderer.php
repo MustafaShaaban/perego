@@ -48,10 +48,10 @@ final class ProjectGalleryLightboxRenderer
             'counter' => $strings['counter'],
         ]));
 
-        $html = '<section class="project-gallery" aria-labelledby="project-gallery-title" data-wp-interactive="perego/project-gallery" '
-            . "data-wp-context='" . $context . "'>";
+        $html = '<section class="portfolio project-gallery" aria-labelledby="pjGallery" style="margin-top:clamp(32px,4vw,52px);" data-wp-interactive="perego/project-gallery" '
+            . "data-wp-context='" . $context . "' data-wp-init=\"callbacks.init\">";
 
-        $html .= '<h2 id="project-gallery-title" class="project-gallery__title">' . esc_html($strings['sectionLabel']) . '</h2>';
+        $html .= '<h2 id="pjGallery" class="section-title" style="text-align:center;margin-bottom:clamp(20px,3vw,34px);">' . esc_html($strings['sectionLabel']) . '</h2>';
         $html .= $this->renderThumbs($images, $strings['sectionLabel']);
         $html .= $this->renderLightbox($strings);
 
@@ -65,20 +65,19 @@ final class ProjectGalleryLightboxRenderer
      */
     private function renderThumbs(array $images, string $sectionLabel): string
     {
-        $html = '<ul class="project-gallery__grid" aria-label="' . esc_attr($sectionLabel) . '">';
+        $html = '<div class="work-masonry" aria-label="' . esc_attr($sectionLabel) . '">';
+        $gallerySources = implode(',', array_map(static fn (array $image): string => $image['src'], $images));
 
         foreach ($images as $index => $image) {
-            $thumb = $image['thumb'] !== '' ? $image['thumb'] : $image['src'];
-
-            $html .= '<li class="project-gallery__item">'
-                . '<button type="button" class="project-gallery__thumb" '
+            $html .= '<button type="button" class="work-card reveal" '
                 . "data-wp-context='" . esc_attr((string) wp_json_encode(['index' => $index])) . "' "
-                . 'data-wp-on--click="actions.open">'
-                . '<img src="' . esc_url($thumb) . '" alt="' . esc_attr($image['alt']) . '" loading="lazy" />'
-                . '</button></li>';
+                . 'data-wp-on--click="actions.open" data-gallery="' . esc_attr($gallerySources) . '" '
+                . 'aria-label="' . esc_attr(sprintf(__('Open project media %d', 'perego-site'), $index + 1)) . '">'
+                . '<img src="' . esc_url($image['thumb'] !== '' ? $image['thumb'] : $image['src']) . '" alt="' . esc_attr($image['alt']) . '" loading="lazy" />'
+                . '<span class="work-card__overlay"></span><span class="work-zoom" aria-hidden="true"></span></button>';
         }
 
-        $html .= '</ul>';
+        $html .= '</div>';
 
         return $html;
     }

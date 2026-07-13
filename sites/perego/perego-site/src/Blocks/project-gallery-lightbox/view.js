@@ -9,6 +9,16 @@ import { store, getContext, getElement } from '@wordpress/interactivity';
 
 let lastFocusedBeforeOpen = null;
 
+function closeLightbox( context ) {
+	if ( ! context.isOpen ) {
+		return;
+	}
+
+	context.isOpen = false;
+	document.body.style.overflow = '';
+	lastFocusedBeforeOpen?.focus?.();
+}
+
 function focusableIn( container ) {
 	return Array.from(
 		container.querySelectorAll(
@@ -60,13 +70,7 @@ const { state, actions } = store( 'perego/project-gallery', {
 		},
 
 		close() {
-			const context = getContext();
-			if ( ! context.isOpen ) {
-				return;
-			}
-			context.isOpen = false;
-			document.body.style.overflow = '';
-			lastFocusedBeforeOpen?.focus?.();
+			closeLightbox( getContext() );
 		},
 
 		next() {
@@ -120,6 +124,16 @@ const { state, actions } = store( 'perego/project-gallery', {
 		},
 	},
 	callbacks: {
+		init() {
+			const context = getContext();
+
+			document.addEventListener( 'keydown', ( event ) => {
+				if ( event.key === 'Escape' ) {
+					closeLightbox( context );
+				}
+			} );
+		},
+
 		lightboxHidden() {
 			return ! getContext().isOpen;
 		},
