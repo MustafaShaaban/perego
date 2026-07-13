@@ -53,10 +53,10 @@ final class SiteFooterRenderer
 
     public function render(bool $flat = false): string
     {
-        $classes = 'perego-footer' . ($flat ? ' perego-footer--flat' : '');
+        $classes = 'site-footer' . ($flat ? ' site-footer--flat' : '');
 
         $html = '<footer class="' . esc_attr($classes) . '" id="contact">';
-        $html .= '<div class="perego-footer__columns">';
+        $html .= '<div class="container site-footer__grid">';
         $html .= $this->renderContactColumn();
         $html .= $this->renderQuickMessageColumn();
 
@@ -75,16 +75,16 @@ final class SiteFooterRenderer
     {
         $blurb = ( new GlobalContent($this->languageService->driver()->currentLocale()) )->footer()['blurb'];
 
-        $html = '<div class="perego-footer__contact">';
+        $html = '<div class="footer-col footer-contact">';
 
-        $html .= '<a class="perego-footer__logo" href="' . esc_url(home_url('/')) . '" '
+        $html .= '<a class="logo" href="' . esc_url(home_url('/')) . '" '
             . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" alt="" />'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" alt="" class="logo__img" />'
             . '</a>';
 
-        $html .= '<h2>' . esc_html__('Contact us', 'perego-site') . '</h2>';
+        $html .= '<h2 class="footer-heading">' . esc_html__('Contact us', 'perego-site') . '</h2>';
         $html .= $this->renderContactChannels();
-        $html .= '<p class="perego-footer__blurb">' . esc_html($blurb) . '</p>';
+        $html .= '<p class="footer-blurb">' . esc_html($blurb) . '</p>';
         $html .= $this->renderSocialLinks();
 
         $html .= '</div>';
@@ -94,7 +94,7 @@ final class SiteFooterRenderer
 
     private function renderContactChannels(): string
     {
-        $html = '<ul class="perego-footer__channels">';
+        $html = '<ul class="footer-contacts">';
 
         foreach (self::CONTACT_CHANNELS as $channel) {
             // bdi isolates the LTR email/phone text from the surrounding RTL paragraph direction so
@@ -109,7 +109,7 @@ final class SiteFooterRenderer
 
     private function renderSocialLinks(): string
     {
-        $html = '<ul class="perego-footer__social" aria-label="' . esc_attr__('Social media', 'perego-site') . '">';
+        $html = '<ul class="footer-social" aria-label="' . esc_attr__('Social media', 'perego-site') . '">';
 
         foreach (self::SOCIAL_LINKS as $social) {
             $label = sprintf(
@@ -131,8 +131,7 @@ final class SiteFooterRenderer
 
     private function renderQuickMessageColumn(): string
     {
-        return '<div class="perego-footer__quick-message">'
-            . '<h2>' . esc_html__('Send a quick message', 'perego-site') . '</h2>'
+        return '<div class="footer-col footer-quick-message">'
             . $this->quickMessageForm()
             . '</div>';
     }
@@ -152,15 +151,29 @@ final class SiteFooterRenderer
             return '';
         }
 
-        return do_blocks(
+        $form = do_blocks(
             '<!-- wp:corex/form {"formSlug":"' . QuickMessageForm::SLUG . '"} /-->'
+        );
+
+        return str_replace(
+            [
+                'class="corex-form"',
+                'class="corex-form__field corex-form__field--full"',
+                'class="corex-form__submit"',
+            ],
+            [
+                'class="footer-form corex-form"',
+                'class="field corex-form__field corex-form__field--full"',
+                'class="btn btn--accent footer-form__submit corex-form__submit"',
+            ],
+            $form
         );
     }
 
     private function renderCareersColumn(): string
     {
-        return '<div class="perego-footer__careers">'
-            . '<h2>' . esc_html__('Join us', 'perego-site') . '</h2>'
+        return '<div class="footer-col footer-careers">'
+            . '<h2 class="footer-heading">' . esc_html__('Join us', 'perego-site') . '</h2>'
             . $this->joinForm()
             . '</div>';
     }
@@ -187,9 +200,9 @@ final class SiteFooterRenderer
     {
         $year = esc_html(gmdate('Y'));
 
-        return '<div class="perego-footer__bottom">'
+        return '<div class="container site-footer__bottom">'
             . '<p>&copy; ' . $year . ' ' . esc_html__('Perego', 'perego-site') . '</p>'
-            . '<nav aria-label="' . esc_attr__('Legal', 'perego-site') . '">'
+            . '<nav class="footer-legal" aria-label="' . esc_attr__('Legal', 'perego-site') . '">'
             . '<a href="' . esc_url(home_url('/terms')) . '">' . esc_html__('Terms & Conditions', 'perego-site') . '</a>'
             . '<a href="' . esc_url(home_url('/privacy')) . '">' . esc_html__('Privacy Policy', 'perego-site') . '</a>'
             . '</nav>'

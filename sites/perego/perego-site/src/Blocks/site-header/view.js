@@ -52,10 +52,13 @@ function readPersistedLanguage() {
 const { actions } = store( 'perego/site-header', {
 	state: {},
 	actions: {
-		toggleMenu() {
-			const context = getContext();
-			const { ref } = getElement();
-			context.isMenuOpen = ! context.isMenuOpen;
+			toggleMenu() {
+				const context = getContext();
+				const { ref } = getElement();
+				context.isMenuOpen = ! context.isMenuOpen;
+				document.getElementById( 'mainNav' )?.classList.toggle( 'is-open', context.isMenuOpen );
+				document.getElementById( 'navBackdrop' )?.classList.toggle( 'is-open', context.isMenuOpen );
+				ref.classList.toggle( 'is-open', context.isMenuOpen );
 
 			if ( context.isMenuOpen ) {
 				lastFocusedBeforeMenuOpen = document.activeElement;
@@ -64,9 +67,9 @@ const { actions } = store( 'perego/site-header', {
 				// Escape to close it — the Escape/Tab handler is scoped to the nav, so it only fires
 				// when focus is inside the panel (it never is if focus stays on the hamburger, which
 				// was the bug the interaction verification caught).
-				const header = ref.closest?.( '.perego-header' ) || ref;
+				const header = ref.closest?.( '.site-header' ) || ref;
 				const firstFocusable = header.querySelector?.(
-					'.perego-header__nav a[href], .perego-header__nav button:not([disabled])'
+					'.main-nav a[href], .main-nav button:not([disabled])'
 				);
 				firstFocusable?.focus?.();
 			} else {
@@ -83,6 +86,9 @@ const { actions } = store( 'perego/site-header', {
 			}
 
 			context.isMenuOpen = false;
+			document.getElementById( 'mainNav' )?.classList.remove( 'is-open' );
+			document.getElementById( 'navBackdrop' )?.classList.remove( 'is-open' );
+			document.getElementById( 'navToggle' )?.classList.remove( 'is-open' );
 			document.body.style.overflow = '';
 			lastFocusedBeforeMenuOpen?.focus?.();
 		},
@@ -132,8 +138,9 @@ const { actions } = store( 'perego/site-header', {
 			}
 
 			event.preventDefault();
-			const item = event.currentTarget.closest( '.perego-header__nav-item' );
-			item?.classList.toggle( 'is-open' );
+			const item = event.currentTarget.closest( '.has-dropdown' );
+			const isOpen = item?.classList.toggle( 'is-open' ) ?? false;
+			event.currentTarget.setAttribute( 'aria-expanded', String( isOpen ) );
 		},
 
 	},
@@ -145,7 +152,7 @@ const { actions } = store( 'perego/site-header', {
 			// Language switching is real navigation via anchors. Only the fallback (non-URL-managed)
 			// mode needs the client: reflect the persisted cookie into <html> on load and persist
 			// each switch click so the choice carries across pages. Polylang carries it in the URL.
-			const toggle = ref.querySelector?.( '.perego-language-toggle' );
+			const toggle = ref.querySelector?.( '.lang-toggle' );
 			if ( toggle && toggle.dataset.langUrlManaged !== '1' ) {
 				const persisted = readPersistedLanguage();
 				if ( persisted ) {
@@ -164,19 +171,25 @@ const { actions } = store( 'perego/site-header', {
 			onScroll();
 			window.addEventListener( 'scroll', onScroll, { passive: true } );
 
-			const backdrop = ref.querySelector?.( '.perego-header__nav-backdrop' );
+			const backdrop = document.getElementById( 'navBackdrop' );
 			backdrop?.addEventListener( 'click', () => {
 				if ( context.isMenuOpen ) {
 					context.isMenuOpen = false;
+					document.getElementById( 'mainNav' )?.classList.remove( 'is-open' );
+					backdrop.classList.remove( 'is-open' );
+					document.getElementById( 'navToggle' )?.classList.remove( 'is-open' );
 					document.body.style.overflow = '';
 					lastFocusedBeforeMenuOpen?.focus?.();
 				}
 			} );
 
-			ref.querySelectorAll?.( '.perego-header__nav a' ).forEach( ( link ) => {
+			ref.querySelectorAll?.( '.main-nav a' ).forEach( ( link ) => {
 				link.addEventListener( 'click', () => {
 					if ( context.isMenuOpen ) {
 						context.isMenuOpen = false;
+						document.getElementById( 'mainNav' )?.classList.remove( 'is-open' );
+						document.getElementById( 'navBackdrop' )?.classList.remove( 'is-open' );
+						document.getElementById( 'navToggle' )?.classList.remove( 'is-open' );
 						document.body.style.overflow = '';
 					}
 				} );

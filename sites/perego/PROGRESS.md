@@ -2,15 +2,16 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## Authoritative delivery closure (2026-07-13)
+## Authoritative visual-recovery status (2026-07-13)
 
-**This section supersedes all older recovery, PR, and Next blocks below.** The implemented Perego design
-fidelity and UI-string i18n work is merged through PR #12 into the Perego default/trunk line. The full
-client verification suite was recorded green: Pest 218, Jest 67, route-health 72/0, a11y 12/0, interactions
-4/0, and a clean debug log. Spec 007 has completed the previously deferred project-gallery/lightbox,
-adjacent-project navigation, and related-project surfaces; no further engineering task is currently open.
+**The earlier visual-completion claims are invalidated.** Route-health, accessibility, interaction, unit,
+and resource checks prove functional quality only; they do **not** prove visual parity with the locked final
+handoff. The current frontend is a generic WordPress approximation with an incompatible CSS/DOM contract.
+Spec 008 is rebuilding the Perego client rendering layer from the authoritative handoff stylesheet and
+markup. No route may be called design-complete until deterministic baseline, actual, diff, manual review,
+responsive EN/AR, and state evidence exists.
 
-The only unresolved launch work is non-engineering owner material: approved client identities/logos,
+The existing non-engineering owner material remains required for launch: approved client identities/logos,
 production project and journal content/media, counsel-reviewed English legal copy, and professional Arabic
 legal translation. The idempotent seed workflow is documented and proven ready; see
 `LAUNCH-CHECKLIST.md` and `specs/004-design-fidelity/content-manifest.md`.

@@ -31,9 +31,9 @@ function renderFooter(bool $flat = false): string
 it('renders the 3-column layout: contact, quick-message entry point, careers entry point', function () {
     $html = renderFooter();
 
-    expect($html)->toContain('perego-footer__contact')
-        ->and($html)->toContain('perego-footer__quick-message')
-        ->and($html)->toContain('perego-footer__careers');
+    expect($html)->toContain('footer-col footer-contact')
+        ->and($html)->toContain('footer-col footer-quick-message')
+        ->and($html)->toContain('footer-col footer-careers');
 });
 
 it('renders the approved contact channels and social links', function () {
@@ -41,7 +41,7 @@ it('renders the approved contact channels and social links', function () {
 
     expect($html)->toContain('mailto:mostafa.emam3313@gmail.com')
         ->and($html)->toContain('tel:+996562932759')
-        ->and($html)->toContain('perego-footer__social');
+        ->and($html)->toContain('footer-social');
 });
 
 it('renders the bottom bar with the current year and legal links', function () {
@@ -55,6 +55,6 @@ it('renders the bottom bar with the current year and legal links', function () {
 it('renders the flat 2-column variant on the contact page', function () {
     $html = renderFooter(flat: true);
 
-    expect($html)->toContain('perego-footer--flat')
-        ->and($html)->not->toContain('perego-footer__careers');
+    expect($html)->toContain('site-footer--flat')
+        ->and($html)->not->toContain('footer-col footer-careers');
 });

@@ -43,7 +43,7 @@ final class JoinFormRenderer
             'server_error' => $t['server_error'],
         ];
 
-        $html = '<form class="join-form" method="post" enctype="multipart/form-data"'
+        $html = '<form class="footer-form join-form" method="post" enctype="multipart/form-data"'
             . ' data-perego-join data-endpoint="' . $endpoint . '" data-nonce="' . $nonce . '"'
             . ' data-max-bytes="5242880" data-messages="' . esc_attr((string) wp_json_encode($messages)) . '"'
             . ' aria-describedby="join-form-status" novalidate>';
@@ -53,16 +53,17 @@ final class JoinFormRenderer
         $html .= $this->field('jf-portfolio', 'portfolio', 'url', $t['portfolio'], false, ['inputmode' => 'url', 'placeholder' => 'https://']);
 
         // CV file input + accessible constraint hint.
-        $html .= '<div class="join-form__field">';
+        $html .= '<div class="field join-form__field">';
         $html .= '<label for="jf-cv">' . esc_html($t['cv']) . ' <span class="join-form__req" aria-hidden="true">*</span></label>';
-        $html .= '<input type="file" id="jf-cv" name="cv" accept=".pdf,.doc,.docx" required aria-describedby="jf-cv-hint" />';
+        $html .= '<label class="file-drop" for="jf-cv"><span class="file-drop__text">' . esc_html($t['cvHint']) . '</span>';
+        $html .= '<input type="file" id="jf-cv" name="cv" accept=".pdf,.doc,.docx" required aria-describedby="jf-cv-hint" /></label>';
         $html .= '<p class="join-form__hint" id="jf-cv-hint">' . esc_html($t['cvHint']) . '</p>';
         $html .= '</div>';
 
         // Honeypot (visually hidden, ignored by real users).
         $html .= '<input type="text" name="perego_hp" class="join-form__hp" tabindex="-1" autocomplete="off" aria-hidden="true" value="" />';
 
-        $html .= '<button type="submit" class="join-form__submit perego-btn perego-btn--accent">' . esc_html($t['submit']) . '</button>';
+        $html .= '<button type="submit" class="btn btn--accent footer-form__submit join-form__submit">' . esc_html($t['submit']) . '</button>';
         $html .= '<p class="join-form__status" id="join-form-status" role="status" aria-live="polite"></p>';
         $html .= '</form>';
 
@@ -79,7 +80,7 @@ final class JoinFormRenderer
         $req = $required ? ' required' : '';
         $mark = $required ? ' <span class="join-form__req" aria-hidden="true">*</span>' : '';
 
-        return '<div class="join-form__field">'
+        return '<div class="field join-form__field">'
             . '<label for="' . esc_attr($id) . '">' . esc_html($label) . $mark . '</label>'
             . '<input type="' . esc_attr($type) . '" id="' . esc_attr($id) . '" name="' . esc_attr($name) . '"' . $req . $extra . ' />'
             . '</div>';

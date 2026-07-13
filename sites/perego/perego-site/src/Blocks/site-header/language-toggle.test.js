@@ -19,16 +19,15 @@ function loadStore( { context, element } ) {
 
 function buildHeader( { urlManaged = false } = {} ) {
 	document.body.innerHTML = `
-		<div class="perego-header">
-			<div class="perego-header__nav-backdrop"></div>
-			<nav class="perego-header__nav"></nav>
-			<div class="perego-language-toggle" data-lang-url-managed="${ urlManaged ? '1' : '0' }">
+		<header class="site-header">
+			<nav id="mainNav" class="main-nav"></nav>
+			<div class="lang-toggle" data-lang-url-managed="${ urlManaged ? '1' : '0' }">
 				<span aria-current="true" lang="en">EN</span>
-				<a class="perego-language-toggle__link" data-locale="ar" hreflang="ar" href="#ar">AR</a>
+				<a class="lang-toggle__btn" data-locale="ar" hreflang="ar" href="#ar">AR</a>
 			</div>
-		</div>`;
+		</header><div id="navBackdrop" class="nav-backdrop"></div>`;
 
-	return document.querySelector( '.perego-header' );
+	return document.querySelector( '.site-header' );
 }
 
 function initHeader( ref ) {

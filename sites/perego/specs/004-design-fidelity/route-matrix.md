@@ -1,7 +1,10 @@
 # Perego Route Acceptance Matrix
 
 **Reference root**: `_design_handoff/Perego-Creative-Studio-Final-Handoff/site/`  
-**Rule**: `Not accepted` means the route must not be described as design-complete. A functional route-health check alone is not visual acceptance.
+**Authoritative status (2026-07-13)**: All earlier row-level `Design-complete` claims are invalidated by
+Spec 008. They were based on route health and qualitative checks, not the required baseline/actual/diff
+comparison evidence. **Every route is Not accepted until Spec 008 records deterministic EN/AR responsive
+visual evidence and a manual comparison against the locked handoff.**
 
 | Handoff template | Perego route / template | Required evidence | Owner | Current status |
 | --- | --- | --- | --- | --- |

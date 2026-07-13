@@ -11,12 +11,14 @@ use PeregoSite\Blocks\SiteHeaderRenderer;
 use PeregoSite\Services\LanguageService;
 
 beforeEach(function () {
+    Functions\when('__')->returnArg();
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_html__')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_attr__')->returnArg();
     Functions\when('esc_url')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
+    Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
     Functions\when('wp_json_encode')->alias('json_encode');
 });
 
@@ -32,7 +34,7 @@ it('renders the nav items in the documented order', function () {
 
     $home     = strpos($html, '>Home<');
     $about    = strpos($html, '>About Us<');
-    $services = strpos($html, '>Services<');
+    $services = strpos($html, '>Services');
     $work     = strpos($html, '>Work<');
     $journal  = strpos($html, '>Journal<');
     $clients  = strpos($html, '>Clients<');
@@ -52,7 +54,7 @@ it('marks the active nav item with aria-current', function () {
     $html = renderHeader('/services');
 
     expect($html)->toContain('aria-current="page"')
-        ->and($html)->toMatch('/<li class="[^"]*is-active[^"]*"[^>]*><a [^>]*aria-current="page"[^>]*>Services</');
+        ->and($html)->toMatch('/<li class="[^"]*is-active[^"]*"[^>]*><a [^>]*aria-current="page"[^>]*>Services/');
 });
 
 it('does not mark any item active on an unmatched path', function () {
@@ -75,14 +77,15 @@ it('renders the services dropdown linking to all four service pages', function (
 });
 
 it('renders a hamburger control for the mobile menu', function () {
-    expect(renderHeader())->toContain('perego-header__hamburger');
+    expect(renderHeader())->toContain('id="navToggle"')
+        ->and(renderHeader())->toContain('class="nav-toggle"');
 });
 
 it('renders the current locale as a non-link marked aria-current, and the other as a real switch link', function () {
     $html = renderHeader(); // fallback driver, current locale = en
 
     // The current language (EN) is not a link — it is the current-state marker.
-    expect($html)->toContain('perego-language-toggle')
+    expect($html)->toContain('class="lang-toggle"')
         ->and($html)->toMatch('/<span[^>]*aria-current="true"[^>]*>EN<\/span>/');
 
     // The other language (AR) is a real anchor to its switch URL — never a JS-only button.
@@ -105,8 +108,8 @@ it('declares the initial Interactivity API context', function () {
 it('renders the mobile nav panel with a matching id, backdrop, and keydown trap', function () {
     $html = renderHeader();
 
-    expect($html)->toContain('id="perego-mobile-nav"')
-        ->and($html)->toContain('perego-header__nav-backdrop')
+    expect($html)->toContain('id="mainNav"')
+        ->and($html)->toContain('id="navBackdrop"')
         ->and($html)->toContain('data-wp-on--keydown="actions.handleMenuKeydown"');
 });
 
