@@ -35,7 +35,7 @@ final class ClientsCarouselRenderer
     {
         $html = '<section class="clients" id="clients" aria-labelledby="corporateTitle">';
         $html .= '<div class="wavy-bg" aria-hidden="true"><img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" /></div>';
-        $html .= '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="eq" viewBox="0 0 64 64"><g fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"><line x1="17" y1="11" x2="17" y2="53"/><line x1="32" y1="11" x2="32" y2="53"/><line x1="47" y1="11" x2="47" y2="53"/></g><g fill="#4a0d8f" stroke="#ffffff" stroke-width="3.2"><circle cx="17" cy="36" r="7"/><circle cx="32" cy="46" r="7"/><circle cx="47" cy="22" r="7"/></g></symbol></svg>';
+        $html .= '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="eqg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#31ffff"/><stop offset="0.5" stop-color="#7b8bf0"/><stop offset="1" stop-color="#d86af3"/></linearGradient></defs><symbol id="eq" viewBox="0 0 64 64"><g fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"><line x1="17" y1="11" x2="17" y2="53"/><line x1="32" y1="11" x2="32" y2="53"/><line x1="47" y1="11" x2="47" y2="53"/></g><g fill="#4a0d8f" stroke="#ffffff" stroke-width="3.2"><circle class="eq-bar" cx="17" cy="36" r="7"/><circle class="eq-bar" cx="32" cy="46" r="7"/><circle class="eq-bar" cx="47" cy="22" r="7"/></g></symbol></svg>';
         $html .= '<div class="container clients__inner">';
         $html .= $this->carousel('corporate', 'corporateTitle', 'corporateSubtitle');
         $html .= $this->carousel('individual', 'individualTitle', 'individualSubtitle');
@@ -60,12 +60,19 @@ final class ClientsCarouselRenderer
 
         $trackClass = $type === 'corporate' ? 'corp-track' : 'indiv-track';
         $sliderClass = $type === 'corporate' ? 'corp-slider' : 'indiv-slider';
-        $html .= '<div class="' . $sliderClass . ' reveal"><button type="button" class="corp-arrow corp-arrow--prev" aria-label="' . esc_attr__('Previous', 'perego-site') . '">&#8249;</button>';
-        $html .= '<div class="' . $trackClass . '" role="list">';
+        $isCorporate = $type === 'corporate';
+        $previousLabel = $isCorporate ? __('Previous clients', 'perego-site') : __('Previous', 'perego-site');
+        $nextLabel = $isCorporate ? __('More clients', 'perego-site') : __('More', 'perego-site');
+        $trackAttributes = $isCorporate
+            ? 'id="corporateTrack" tabindex="0" role="group" aria-label="' . esc_attr__('Corporate client logos', 'perego-site') . '"'
+            : 'id="individualTrack" role="list"';
+
+        $html .= '<div class="' . $sliderClass . ' reveal"><button type="button" class="corp-arrow corp-arrow--prev" aria-label="' . esc_attr($previousLabel) . '">' . $this->arrowSvg('previous') . '</button>';
+        $html .= '<div class="' . $trackClass . '" ' . $trackAttributes . '>';
         foreach ($clients as $client) {
             $html .= $type === 'corporate' ? $this->corporateCard($client) : $this->individualCard($client);
         }
-        $html .= '</div><button type="button" class="corp-arrow corp-arrow--next" aria-label="' . esc_attr__('Next', 'perego-site') . '">&#8250;</button></div>';
+        $html .= '</div><button type="button" class="corp-arrow corp-arrow--next" aria-label="' . esc_attr($nextLabel) . '">' . $this->arrowSvg('next') . '</button></div>';
 
         return $html;
     }
@@ -109,6 +116,13 @@ final class ClientsCarouselRenderer
         $html .= '</a>';
 
         return $html;
+    }
+
+    private function arrowSvg(string $direction): string
+    {
+        $path = $direction === 'previous' ? 'M15 4 7 12l8 8' : 'M9 4l8 8-8 8';
+
+        return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' . $path . '" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     }
 
     /** @return list<\WP_Post> */

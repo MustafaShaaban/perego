@@ -156,6 +156,17 @@ it('renders the handoff navigation controls for populated tracks', function () {
         ->and($html)->toContain('class="indiv-track"');
 });
 
+it('preserves the handoff track identifiers, labels, and arrow SVG controls', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('id="corporateTrack" tabindex="0" role="group"')
+        ->and($html)->toContain('id="individualTrack" role="list"')
+        ->and($html)->toContain('aria-label="Previous clients"')
+        ->and($html)->toContain('aria-label="More clients"')
+        ->and($html)->toContain('<circle class="eq-bar"')
+        ->and($html)->toContain('<svg viewBox="0 0 24 24" aria-hidden="true">');
+});
+
 it('omits the handoff track shell for a client type with no posts, keeping the heading', function () {
     $GLOBALS['__perego_clients_by_term_id'] = [PEREGO_TEST_CORP_EN => [], PEREGO_TEST_INDIV_EN => []];
 
