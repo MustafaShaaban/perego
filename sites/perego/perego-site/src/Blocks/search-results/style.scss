@@ -1,0 +1,101 @@
+/**
+ * perego-theme/search-results — the search page. Tokens + logical properties (RTL-safe).
+ * The result cards reuse the shared `.post-card` / `.blog-grid` family (main.scss); this file owns
+ * only the page shell, the search form, and the pagination pills.
+ */
+.search-page {
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--wp--preset--color--bg-deep);
+}
+
+/* Breadcrumb, title, summary and the search form are centred; the result grid below is not. */
+.search-page .page-crumb {
+	justify-content: center;
+	margin-block-end: 14px;
+}
+
+.search-page__title {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	text-align: center;
+	margin: 0 0 20px;
+}
+
+.search-page__form {
+	display: flex;
+	gap: 10px;
+	margin-inline: auto;
+	margin-block-end: 24px;
+	max-inline-size: 680px;
+	flex-wrap: wrap;
+}
+
+.search-page__form input[type="search"] {
+	flex: 1 1 240px;
+	padding: 12px 16px;
+	border-radius: var(--perego-radius-pill, 999px);
+	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.2));
+	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
+	color: var(--wp--preset--color--text, #fff);
+	min-block-size: 44px;
+}
+
+.search-page__summary {
+	color: var(--perego-muted);
+	text-align: center;
+	margin-block-end: clamp(24px, 3vw, 40px);
+}
+
+/* The result grid inherits `.blog-grid` (3 cols → responsive); keep its cards left-aligned even
+   though the page header above them is centred. */
+.search-page__results {
+	text-align: start;
+}
+
+.search-page__empty {
+	font-size: var(--wp--preset--font-size--lead);
+	font-weight: 600;
+	text-align: center;
+}
+
+.search-page__hint {
+	color: var(--perego-muted-2, rgba(255, 255, 255, 0.6));
+	text-align: center;
+}
+
+/* Pagination pills (paginate_links output: a/span.page-numbers). */
+.search-page__pagination {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	justify-content: center;
+	margin-block-start: clamp(32px, 4vw, 52px);
+}
+
+.search-page__pagination .page-numbers {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: 42px;
+	min-block-size: 42px;
+	padding: 0 14px;
+	border-radius: var(--perego-radius-pill, 999px);
+	border: 1px solid var(--perego-glass-border);
+	background: var(--perego-glass-fill);
+	color: var(--wp--preset--color--text);
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.search-page__pagination .page-numbers.current {
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+	border-color: transparent;
+}
+
+.search-page__pagination a.page-numbers:hover {
+	border-color: var(--wp--preset--color--accent);
+}

@@ -27,12 +27,23 @@
 }
 
 .perego-header__logo {
+	display: inline-flex;
+	align-items: center;
+	flex: none;
 	color: var(--wp--preset--color--text);
 	font-weight: 700;
 	text-decoration: none;
+
+	img {
+		block-size: 46px;
+		inline-size: auto;
+		display: block;
+	}
 }
 
-.perego-header__nav ul {
+/* Direct child only — must not match the nested .perego-header__dropdown ul, or its
+   descendant specificity would override the dropdown's own display:none and force it open. */
+.perego-header__nav > ul {
 	display: flex;
 	align-items: center;
 	gap: 1.5rem;
@@ -72,29 +83,45 @@
 	display: block;
 }
 
+/* Header-specific delta over the shared .perego-btn primitive (handoff `.header-cta` modifier). */
 .perego-header__cta {
-	background: var(--wp--preset--color--accent);
-	color: var(--wp--preset--color--cta-text-on-accent);
-	border-radius: var(--perego-radius-btn);
-	padding: 0.6rem 1.25rem;
-	text-decoration: none;
+	flex: none;
+	padding: 10px 22px;
+	font-size: var(--wp--preset--font-size--small);
+	white-space: nowrap;
 }
 
 .perego-language-toggle {
-	display: flex;
-	gap: 0.5rem;
+	display: inline-flex;
+	gap: 6px;
+	flex: none;
+}
 
-	button {
-		background: none;
-		border: none;
-		color: var(--perego-muted);
-		cursor: pointer;
+.perego-language-toggle__current,
+.perego-language-toggle__link {
+	min-inline-size: 46px;
+	padding: 10px 14px;
+	border: 0;
+	border-radius: var(--perego-radius-btn);
+	font-weight: 700;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--wp--preset--color--text);
+	text-align: center;
+	text-decoration: none;
+	background: var(--perego-glass-fill);
+	transition: background var(--perego-dur-fast) var(--perego-ease);
+}
 
-		&.is-current {
-			color: var(--wp--preset--color--text);
-			font-weight: 700;
-		}
-	}
+.perego-language-toggle__current {
+	background: var(--wp--preset--color--accent);
+	/* Same token the accent button uses for text-on-accent contrast (WCAG AA) — plain --color--text
+	   (white) fails color-contrast against this bright accent background. */
+	color: var(--wp--preset--color--cta-text-on-accent);
+	box-shadow: var(--perego-shadow-glow-accent);
+}
+
+.perego-language-toggle__link:hover {
+	background: var(--perego-glass-panel-fill);
 }
 
 .perego-header__hamburger {
@@ -110,7 +137,9 @@
 
 /* Mobile: ≤1024px per design-tokens.json breakpoints.mobileNav */
 @media (max-width: 1024px) {
-	.perego-header__cta {
+	/* Qualified with the header parent so this reliably outranks the shared .perego-btn
+	   (main.css, enqueued after this block's inline style) at equal single-class specificity. */
+	.perego-header .perego-header__cta {
 		display: none;
 	}
 
@@ -134,7 +163,7 @@
 		transform: translateX(100%);
 		transition: transform var(--perego-dur-medium) var(--perego-ease);
 
-		ul {
+		> ul {
 			flex-direction: column;
 			align-items: stretch;
 		}
@@ -159,14 +188,16 @@
 	.perego-header__nav-item.is-open > .perego-header__dropdown {
 		display: block;
 	}
-}
 
-:root[dir='rtl'] .perego-header__nav {
-	inset-inline-end: auto;
-	inset-inline-start: 0;
-	transform: translateX(-100%);
-}
+	/* RTL mirrors the slide-in panel to come from the left — mobile-only, so it must stay inside
+	   this breakpoint (at desktop the nav is in flow and any transform mis-shifts it). */
+	:root[dir='rtl'] .perego-header__nav {
+		inset-inline-end: auto;
+		inset-inline-start: 0;
+		transform: translateX(-100%);
+	}
 
-:root[dir='rtl'] .perego-header.is-menu-open .perego-header__nav {
-	transform: translateX(0);
+	:root[dir='rtl'] .perego-header.is-menu-open .perego-header__nav {
+		transform: translateX(0);
+	}
 }

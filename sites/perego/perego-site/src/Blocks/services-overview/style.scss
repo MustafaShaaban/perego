@@ -1,0 +1,27 @@
+/**
+ * perego-theme/services-overview — the services archive. Tokens + logical properties (RTL-safe).
+ * `.svc-hero`/`.svc-tabs`/`.svc-whatwedo`/`.svc-whatwedo__grid`/`.svc-process` are shared from the
+ * theme's global stylesheet (also used by the service-hero block and every service single's canvas
+ * "What we do" prose) — block-specific stylesheets only load on pages using that block, so shared
+ * cross-block markup must live theme-wide, not here. This file styles only the closing CTA.
+ */
+
+.services-overview__cta {
+	position: relative;
+	padding-block: var(--wp--preset--spacing--section-y);
+	text-align: center;
+	/* Explicit, full-bleed background: this section has no image/gradient of its own, and (unlike
+	   Home, where every section is packed edge-to-edge) it sits after .svc-process with nothing
+	   behind it — don't rely on body's own background painting correctly here. */
+	background: var(--wp--preset--color--bg-deep);
+}
+
+.services-overview__cta-inner {
+	max-inline-size: 820px;
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+}
+
+.services-overview__cta .perego-btn {
+	margin-block-start: 18px;
+}

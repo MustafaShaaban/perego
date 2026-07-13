@@ -1,0 +1,14 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/clients-carousel",
+	"title": "Perego Clients Carousel",
+	"category": "theme",
+	"icon": "groups",
+	"description": "The homepage Corporate + Individual client carousels. Cards are server-rendered (work without JS); Swiper (modular: Navigation, Pagination, Keyboard, A11y) enhances them. Language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}

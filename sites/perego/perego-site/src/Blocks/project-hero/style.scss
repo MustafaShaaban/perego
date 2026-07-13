@@ -1,0 +1,102 @@
+/**
+ * perego-theme/project-hero — the case-study hero band. Tokens + logical properties (RTL-safe).
+ * Ported from the handoff project.html .post-hero + meta dl.
+ */
+
+.project-hero {
+	position: relative;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	padding-block: var(--wp--preset--spacing--section-y);
+	text-align: center;
+
+	/* Full-bleed background: this section's own width is content-constrained
+	   (max-inline-size), so a background on the element itself wouldn't reach
+	   the viewport edges — don't rely on body's own background (see spec 004
+	   T014 evidence) to cover the gutters either. */
+	&::before {
+		content: "";
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 50%;
+		inline-size: 100vw;
+		margin-inline-start: -50vw;
+		z-index: -1;
+		background: var(--wp--preset--color--bg-deep);
+	}
+}
+
+.project-hero__crumb {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	align-items: center;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2, rgba(255, 255, 255, 0.6));
+
+	a {
+		color: inherit;
+		text-decoration: none;
+	}
+
+	a:hover {
+		color: var(--wp--preset--color--accent-soft);
+	}
+}
+
+.project-hero__cat {
+	margin-block: 16px 8px;
+	font-size: var(--wp--preset--font-size--small, 14px);
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	color: var(--wp--preset--color--accent-soft);
+}
+
+.project-hero__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.04;
+	margin: 0;
+}
+
+.project-hero__featured {
+	max-inline-size: 1000px;
+	margin: clamp(24px, 4vw, 42px) auto 0;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	aspect-ratio: 16 / 8;
+	border: 1px solid var(--perego-glass-border);
+	box-shadow: var(--perego-shadow-featured);
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		display: block;
+	}
+}
+
+.project-hero__meta {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+	gap: 20px 32px;
+	margin-block: clamp(28px, 4vw, 44px) 0;
+	padding-block: 24px;
+	border-block: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.1));
+	text-align: start;
+}
+
+.project-hero__meta-item dt {
+	font-size: var(--wp--preset--font-size--small, 13px);
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--perego-muted-2, rgba(255, 255, 255, 0.6));
+	margin-block-end: 4px;
+}
+
+.project-hero__meta-item dd {
+	margin: 0;
+	font-weight: 600;
+}

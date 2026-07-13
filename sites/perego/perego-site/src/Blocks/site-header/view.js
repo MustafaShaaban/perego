@@ -2,8 +2,11 @@
  * perego/site-header Interactivity API store. Handles: the sticky-scroll header state, the
  * mobile slide-in nav panel (focus trap, scroll lock, Esc/backdrop/link-click close, focus
  * restore to the hamburger), the mobile Services tap-accordion (desktop uses pure CSS
- * :hover/:focus-within — no JS needed there), and the language toggle (persists to a cookie,
- * swaps <html lang>/dir and the font stack). See spec 001 FR-002–FR-004, FR-008.
+ * :hover/:focus-within — no JS needed there). Language switching is real navigation now — the
+ * switcher is server-rendered anchors to each locale's URL (spec Phase 5, no JS-only toggle); this
+ * script only handles client-side language state in the fallback (non-URL-managed) mode: mirror the
+ * persisted cookie into <html> on load and persist each switch-link click for cross-page memory.
+ * See spec 001 FR-002–FR-004, FR-008.
  */
 import { store, getContext, getElement } from '@wordpress/interactivity';
 
@@ -57,6 +60,15 @@ const { actions } = store( 'perego/site-header', {
 			if ( context.isMenuOpen ) {
 				lastFocusedBeforeMenuOpen = document.activeElement;
 				document.body.style.overflow = 'hidden';
+				// Move focus into the panel so the focus trap works AND a keyboard user can press
+				// Escape to close it — the Escape/Tab handler is scoped to the nav, so it only fires
+				// when focus is inside the panel (it never is if focus stays on the hamburger, which
+				// was the bug the interaction verification caught).
+				const header = ref.closest?.( '.perego-header' ) || ref;
+				const firstFocusable = header.querySelector?.(
+					'.perego-header__nav a[href], .perego-header__nav button:not([disabled])'
+				);
+				firstFocusable?.focus?.();
 			} else {
 				document.body.style.overflow = '';
 				( lastFocusedBeforeMenuOpen || ref ).focus?.();
@@ -124,26 +136,26 @@ const { actions } = store( 'perego/site-header', {
 			item?.classList.toggle( 'is-open' );
 		},
 
-		switchLanguage( event ) {
-			const locale = event.target.closest( '[data-locale]' )?.dataset.locale;
-
-			if ( ! locale ) {
-				return;
-			}
-
-			applyLanguage( locale );
-			persistLanguage( locale );
-			window.location.reload();
-		},
 	},
 	callbacks: {
 		init() {
 			const context = getContext();
 			const { ref } = getElement();
 
-			const persisted = readPersistedLanguage();
-			if ( persisted ) {
-				applyLanguage( persisted );
+			// Language switching is real navigation via anchors. Only the fallback (non-URL-managed)
+			// mode needs the client: reflect the persisted cookie into <html> on load and persist
+			// each switch click so the choice carries across pages. Polylang carries it in the URL.
+			const toggle = ref.querySelector?.( '.perego-language-toggle' );
+			if ( toggle && toggle.dataset.langUrlManaged !== '1' ) {
+				const persisted = readPersistedLanguage();
+				if ( persisted ) {
+					applyLanguage( persisted );
+				}
+				toggle.querySelectorAll( 'a[data-locale]' ).forEach( ( link ) => {
+					link.addEventListener( 'click', () => {
+						persistLanguage( link.dataset.locale );
+					} );
+				} );
 			}
 
 			const onScroll = () => {

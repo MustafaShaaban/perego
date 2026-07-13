@@ -9,6 +9,7 @@
  * Author:            Perego
  * License:           GPL-2.0-or-later
  * Text Domain:       perego-site
+ * Domain Path:       /languages
  *
  * @package PeregoSite
  */
@@ -28,6 +29,15 @@ spl_autoload_register(static function (string $class): void {
     if (is_file($file)) {
         require $file;
     }
+});
+
+// Load the UI-string translations (spec 005). Polylang sets the `ar` locale on `/ar/` routes; this
+// makes WordPress pick `languages/perego-site-ar.mo` so the `__()`-wrapped header nav, form labels,
+// and buttons render in Arabic instead of falling through to their English source. On `init` (not
+// `plugins_loaded`) so the locale Polylang resolves per-request is already in effect.
+add_action('init', static function (): void {
+    load_plugin_textdomain('perego-site', false, dirname(plugin_basename(__FILE__)) . '/languages');
+    (new PeregoSite\I18n\FrameworkFormStrings())->register();
 });
 
 // Boot the site provider, which wires the --starter example (REST + block + options page)

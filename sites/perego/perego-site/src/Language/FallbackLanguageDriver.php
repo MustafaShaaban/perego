@@ -37,9 +37,29 @@ final class FallbackLanguageDriver implements LanguageDriver
 
     public function currentLocale(): string
     {
+        // A ?lang query var (set by a switch-link click) is authoritative for this request; the
+        // cookie carries the choice across subsequent pages that omit it. Neither valid → English.
+        $fromQuery = $this->localeFromQuery();
+        if ($fromQuery !== null) {
+            return $fromQuery;
+        }
+
         $stored = $this->cookie[self::COOKIE_NAME] ?? null;
 
         return in_array($stored, $this->availableLocales(), true) ? $stored : 'en';
+    }
+
+    private function localeFromQuery(): ?string
+    {
+        $query = (string) parse_url($this->requestUri, PHP_URL_QUERY);
+        if ($query === '') {
+            return null;
+        }
+
+        parse_str($query, $params);
+        $lang = $params['lang'] ?? null;
+
+        return in_array($lang, $this->availableLocales(), true) ? $lang : null;
     }
 
     public function isRtl(): bool
@@ -64,5 +84,10 @@ final class FallbackLanguageDriver implements LanguageDriver
         $params['lang'] = $locale;
 
         return $path . '?' . http_build_query($params);
+    }
+
+    public function managesLanguageViaUrl(): bool
+    {
+        return false;
     }
 }

@@ -125,6 +125,20 @@ describe( 'actions.toggleMenu / closeMenu — scroll lock + focus restore', () =
 		expect( document.body.style.overflow ).toBe( 'hidden' );
 	} );
 
+	test( 'opening moves focus into the nav panel so the trap + Escape work', () => {
+		const ref = buildHeader();
+		const trigger = document.createElement( 'button' );
+		document.body.appendChild( trigger );
+		trigger.focus();
+		const context = { isMenuOpen: false, isScrolled: false };
+		const { actions } = loadStore( { context, element: { ref } } );
+
+		actions.toggleMenu();
+
+		const firstLink = ref.querySelector( '.perego-header__nav a[href]' );
+		expect( document.activeElement ).toBe( firstLink );
+	} );
+
 	test( 'closing restores focus to the element that opened the menu', () => {
 		const ref = buildHeader();
 		const trigger = document.createElement( 'button' );

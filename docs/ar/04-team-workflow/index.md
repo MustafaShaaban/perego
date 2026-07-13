@@ -12,3 +12,5 @@ last_verified: null
 > [`_translation-memory.md`](../../_translation-memory.md)).
 
 > English source: [`en/04-team-workflow/index.md`](../../en/04-team-workflow/index.md)
+
+> [Model Routing Gate](./model-routing.md) mirrors the provider-neutral routing policy; its English canonical source is linked inside the page.

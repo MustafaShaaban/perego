@@ -19,6 +19,7 @@ The newcomer on-ramp to how Corex is built. These pages **link** to the authorit
 | [Onboarding](./onboarding.md) | The first-day path: get running, read the four files, run the tests, ship your first change. |
 | [Branching & commits](./branching-and-commits.md) | git-flow-lite, Conventional Commits, the PR review process, releasing. |
 | [The Spec Kit loop](./spec-kit.md) | Spec-first with Claude Code: `/speckit-specify → /plan → /tasks → /implement`, and the rules that never bend. |
+| [Model Routing Gate](./model-routing.md) | Provider-neutral L/M/H/V routing for Codex and Claude Code, token discipline, single-writer safety, and handoffs. |
 | [Quality gates](./quality-gates.md) | The Guard Gate (clean-code/wp/woo/test/docs), Pest, Jest, Playwright, CI, the Definition of Done. |
 
 ## The one-paragraph version

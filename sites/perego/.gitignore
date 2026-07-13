@@ -1,0 +1,9 @@
+# Compiled front-end assets for the Perego client site — generated from source (SCSS/JS) by
+# `npm run build` in perego-theme and perego-site. Never committed (same principle as the repo
+# root's /build/ + dist/ rule); rebuilt for local dev and by the deploy pipeline (M7). See
+# DECISIONS.md — "M2 asset build pipeline".
+perego-theme/assets/css/*.css
+perego-theme/assets/css/*.css.map
+perego-theme/assets/js/*.js
+perego-theme/assets/js/*.asset.php
+perego-site/build/

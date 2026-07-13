@@ -1,0 +1,42 @@
+/**
+ * perego-theme/not-found — the 404 composition. Tokens + logical properties (RTL-safe).
+ */
+.notfound {
+	max-inline-size: 720px;
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	padding-block: clamp(60px, 12vw, 140px);
+	text-align: center;
+}
+
+.notfound__code {
+	font-size: clamp(80px, 18vw, 180px);
+	font-weight: 800;
+	line-height: 1;
+	margin: 0;
+	background: linear-gradient(135deg, var(--wp--preset--color--accent-soft) 0%, var(--wp--preset--color--accent) 100%);
+	-webkit-background-clip: text;
+	background-clip: text;
+	color: transparent;
+}
+
+.notfound__title {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	margin: 8px 0 14px;
+}
+
+.notfound__text {
+	color: var(--perego-muted);
+	font-size: var(--wp--preset--font-size--lead);
+	max-inline-size: 52ch;
+	margin-inline: auto;
+}
+
+.notfound__actions {
+	display: flex;
+	gap: 14px;
+	justify-content: center;
+	flex-wrap: wrap;
+	margin-block-start: 28px;
+}

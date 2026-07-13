@@ -21,30 +21,37 @@ use PeregoSite\Services\LanguageService;
  */
 final class SiteHeaderRenderer
 {
-    /**
-     * @var list<array{label: string, href: string, children?: list<array{label: string, href: string}>}>
-     */
-    private const NAV_ITEMS = [
-        ['label' => 'Home', 'href' => '/'],
-        ['label' => 'About Us', 'href' => '/about'],
-        [
-            'label' => 'Services',
-            'href' => '/services',
-            'children' => [
-                ['label' => 'Video Editing & Post-Production', 'href' => '/services/video-editing'],
-                ['label' => '2D Motion Graphics & Animation', 'href' => '/services/motion-graphics'],
-                ['label' => 'Graphic Design & Brand Identity', 'href' => '/services/graphic-design'],
-                ['label' => 'Website Making', 'href' => '/services/website-making'],
-            ],
-        ],
-        ['label' => 'Work', 'href' => '/work'],
-        ['label' => 'Journal', 'href' => '/journal'],
-        ['label' => 'Clients', 'href' => '/#clients'],
-        ['label' => 'Contact Us', 'href' => '/contact'],
-    ];
-
     public function __construct(private readonly LanguageService $languageService)
     {
+    }
+
+    /**
+     * The primary nav items. Labels are `__()`-wrapped with literal strings (not stored in a const) so
+     * they are both extractable by `wp i18n make-pot` and translated at render time — the AR `.mo`
+     * (spec 005) then localizes the header nav that otherwise rendered in English on `/ar/`.
+     *
+     * @return list<array{label: string, href: string, children?: list<array{label: string, href: string}>}>
+     */
+    private function navItems(): array
+    {
+        return [
+            ['label' => __('Home', 'perego-site'), 'href' => '/'],
+            ['label' => __('About Us', 'perego-site'), 'href' => '/about'],
+            [
+                'label' => __('Services', 'perego-site'),
+                'href' => '/services',
+                'children' => [
+                    ['label' => __('Video Editing & Post-Production', 'perego-site'), 'href' => '/services/video-editing'],
+                    ['label' => __('2D Motion Graphics & Animation', 'perego-site'), 'href' => '/services/motion-graphics'],
+                    ['label' => __('Graphic Design & Brand Identity', 'perego-site'), 'href' => '/services/graphic-design'],
+                    ['label' => __('Website Making', 'perego-site'), 'href' => '/services/website-making'],
+                ],
+            ],
+            ['label' => __('Work', 'perego-site'), 'href' => '/work'],
+            ['label' => __('Journal', 'perego-site'), 'href' => '/journal'],
+            ['label' => __('Clients', 'perego-site'), 'href' => '/#clients'],
+            ['label' => __('Contact Us', 'perego-site'), 'href' => '/contact'],
+        ];
     }
 
     public function render(string $currentPath = '/'): string
@@ -60,8 +67,11 @@ final class SiteHeaderRenderer
             . 'data-wp-init="callbacks.init">';
 
         $html .= '<div class="perego-header__bar">';
-        $html .= '<a class="perego-header__logo" href="' . esc_url(home_url('/')) . '">'
-            . esc_html__('Perego', 'perego-site') . '</a>';
+        $html .= '<a class="perego-header__logo" href="' . esc_url(home_url('/')) . '" '
+            . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" '
+            . 'alt="" />'
+            . '</a>';
 
         $html .= '<div class="perego-header__nav-backdrop"></div>';
         $html .= '<nav id="perego-mobile-nav" class="perego-header__nav" '
@@ -70,7 +80,7 @@ final class SiteHeaderRenderer
         $html .= '<ul>' . $this->renderNavItems($currentPath) . '</ul>';
         $html .= '</nav>';
 
-        $html .= '<a class="perego-header__cta" href="' . esc_url(home_url('/contact')) . '">'
+        $html .= '<a class="perego-btn perego-btn--accent perego-header__cta" href="' . esc_url(home_url('/contact')) . '">'
             . esc_html__('Start a Project', 'perego-site') . '</a>';
 
         $html .= $this->renderLanguageToggle($driver->currentLocale());
@@ -92,7 +102,7 @@ final class SiteHeaderRenderer
     {
         $html = '';
 
-        foreach (self::NAV_ITEMS as $item) {
+        foreach ($this->navItems() as $item) {
             $isActive  = $this->isActive($item['href'], $currentPath);
             $classes   = 'perego-header__nav-item' . ($isActive ? ' is-active' : '');
             $ariaCurrent = $isActive ? ' aria-current="page"' : '';
@@ -118,22 +128,53 @@ final class SiteHeaderRenderer
         return $html;
     }
 
+    /**
+     * The language switcher as real navigation (spec Phase 5 — never the prototype's JS-only toggle):
+     * the current language is a non-link aria-current marker; each other language is an anchor to that
+     * locale's actual URL (Polylang's real translated URL, or the fallback's `?lang=` switch). The
+     * `data-lang-url-managed` flag tells the view-script whether the driver's URLs already carry the
+     * language (Polylang → the client stays out of it) or the choice needs client-side persistence.
+     */
     private function renderLanguageToggle(string $currentLocale): string
     {
-        $html = '<div class="perego-language-toggle" data-wp-interactive="perego/site-header">';
+        $driver = $this->languageService->driver();
+        $urlManaged = $driver->managesLanguageViaUrl() ? '1' : '0';
 
-        foreach ($this->languageService->driver()->availableLocales() as $locale) {
-            $isCurrent = $locale === $currentLocale;
-            $html .= '<button type="button" class="' . ($isCurrent ? 'is-current' : '') . '" '
-                . 'data-wp-on--click="actions.switchLanguage" '
+        $html = '<div class="perego-language-toggle" data-wp-interactive="perego/site-header" '
+            . 'data-lang-url-managed="' . $urlManaged . '">';
+
+        foreach ($driver->availableLocales() as $locale) {
+            $label = esc_html(strtoupper($locale));
+
+            if ($locale === $currentLocale) {
+                $html .= '<span class="perego-language-toggle__current is-current" '
+                    . 'aria-current="true" lang="' . esc_attr($locale) . '">' . $label . '</span>';
+                continue;
+            }
+
+            $html .= '<a class="perego-language-toggle__link" '
+                . 'href="' . esc_url($this->switchUrl($locale)) . '" '
                 . 'data-locale="' . esc_attr($locale) . '" '
-                . 'aria-pressed="' . ($isCurrent ? 'true' : 'false') . '">'
-                . esc_html(strtoupper($locale)) . '</button>';
+                . 'hreflang="' . esc_attr($locale) . '" lang="' . esc_attr($locale) . '">'
+                . $label . '</a>';
         }
 
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * The switch URL for a locale, degrading to the home page if the driver cannot resolve one
+     * (e.g. Polylang has no translation for the current entity) — never a broken or mixed link.
+     */
+    private function switchUrl(string $locale): string
+    {
+        try {
+            return $this->languageService->driver()->urlFor($locale);
+        } catch (\Throwable) {
+            return (string) home_url('/');
+        }
     }
 
     private function isActive(string $href, string $currentPath): bool

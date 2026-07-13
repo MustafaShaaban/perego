@@ -54,4 +54,9 @@ final class PolylangLanguageDriver implements LanguageDriver
 
         throw new InvalidArgumentException(sprintf('No Polylang translation available for locale "%s".', $locale));
     }
+
+    public function managesLanguageViaUrl(): bool
+    {
+        return true;
+    }
 }

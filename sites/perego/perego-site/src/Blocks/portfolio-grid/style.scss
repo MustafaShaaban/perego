@@ -1,0 +1,134 @@
+/**
+ * perego-theme/portfolio-grid — tokens only, logical properties. Ported from the handoff prototype's
+ * .web-filter chips + .post-card grid.
+ */
+
+.portfolio {
+	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--perego-gradient-bg);
+}
+
+.portfolio__inner {
+	inline-size: 100%;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+}
+
+.portfolio__head {
+	text-align: center;
+	max-inline-size: 720px;
+	margin-inline: auto;
+	margin-block-end: clamp(24px, 3vw, 40px);
+}
+
+.portfolio__title {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	line-height: 1.05;
+	margin: 0 0 0.4em;
+}
+
+.portfolio__intro {
+	font-size: var(--wp--preset--font-size--lead);
+	color: var(--perego-muted);
+	margin: 0;
+}
+
+.portfolio__head .page-crumb {
+	justify-content: center;
+	margin-block-end: 14px;
+}
+
+.portfolio__demo-note {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2);
+	margin: 6px 0 0;
+}
+
+/* Service filter chips. */
+.portfolio-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	justify-content: center;
+	margin-block-end: clamp(28px, 4vw, 48px);
+}
+
+.portfolio-filter {
+	padding: 10px 22px;
+	border-radius: var(--perego-radius-pill);
+	border: 1px solid var(--perego-glass-border);
+	background: var(--perego-glass-fill);
+	color: var(--wp--preset--color--text);
+	font: inherit;
+	font-weight: 600;
+	font-size: var(--wp--preset--font-size--small);
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background var(--perego-dur-fast) var(--perego-ease),
+		border-color var(--perego-dur-fast) var(--perego-ease),
+		color var(--perego-dur-fast) var(--perego-ease),
+		transform var(--perego-dur-fast) var(--perego-ease);
+
+	&:hover,
+	&:focus-visible {
+		border-color: var(--wp--preset--color--accent);
+		transform: translateY(-2px);
+	}
+
+	&.is-active {
+		background: var(--wp--preset--color--accent);
+		border-color: var(--wp--preset--color--accent);
+		color: var(--wp--preset--color--cta-text-on-accent);
+	}
+}
+
+/* Project card grid — the .post-card item styling itself is shared (main.scss; also used by the
+   native-block journal archive, which doesn't load this block's stylesheet at all). */
+.post-cards.portfolio-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: clamp(20px, 2.4vw, 30px);
+}
+
+/* Placeholder media until real project imagery lands (per-category token gradient). */
+.post-card__media-placeholder {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	background: var(--perego-gradient-card-media);
+
+	&[data-category="motion"] {
+		filter: hue-rotate(-8deg);
+	}
+	&[data-category="design"] {
+		filter: hue-rotate(10deg);
+	}
+	&[data-category="web"] {
+		filter: hue-rotate(-16deg) brightness(0.92);
+	}
+}
+
+.portfolio__empty {
+	text-align: center;
+	color: var(--perego-muted);
+	padding-block: clamp(40px, 6vw, 80px);
+	font-size: var(--wp--preset--font-size--lead);
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+@media (max-width: 900px) {
+	.post-cards.portfolio-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 560px) {
+	.post-cards.portfolio-grid {
+		grid-template-columns: 1fr;
+	}
+}

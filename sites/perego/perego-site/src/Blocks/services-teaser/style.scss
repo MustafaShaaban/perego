@@ -1,0 +1,174 @@
+/**
+ * perego-theme/services-teaser — tokens only, logical properties (RTL-correct by default).
+ * Ported from the handoff prototype's services-teaser + service-card rules. The `.perego-link-arrow`
+ * primitive lives here (first block to need it); it can move to the theme base if reused widely.
+ */
+
+.services-teaser {
+	position: relative;
+	overflow: hidden;
+	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--perego-gradient-bg);
+}
+
+.wavy-bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		opacity: 0.6;
+	}
+}
+
+.services-teaser__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+}
+
+.services-teaser__head {
+	max-inline-size: 560px;
+}
+
+.services-teaser__title {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	line-height: 1.05;
+	margin: 0;
+}
+
+.services-teaser__link {
+	margin-block-start: 26px;
+}
+
+/* Arrow link primitive. */
+.perego-link-arrow {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	font-weight: 700;
+	font-size: var(--wp--preset--font-size--h3);
+	color: var(--wp--preset--color--text);
+	text-decoration: none;
+
+	svg {
+		transition: transform var(--perego-dur-fast) var(--perego-ease);
+	}
+
+	&:hover {
+		color: var(--wp--preset--color--accent-soft);
+	}
+
+	&:hover svg {
+		transform: translateX(6px);
+	}
+}
+
+[dir="rtl"] .perego-link-arrow svg {
+	transform: scaleX(-1);
+}
+
+[dir="rtl"] .perego-link-arrow:hover svg {
+	transform: scaleX(-1) translateX(6px);
+}
+
+/* Card grid with staggered offsets. */
+.service-cards {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: clamp(18px, 2vw, 34px);
+	margin-block-start: clamp(30px, 4vw, 48px);
+	align-items: start;
+}
+
+.service-card {
+	position: relative;
+	display: block;
+	aspect-ratio: 5 / 6;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	box-shadow: var(--perego-shadow-service-card);
+	text-decoration: none;
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease);
+
+	&:nth-child(2) {
+		margin-block-start: clamp(40px, 7vw, 120px);
+	}
+
+	&:nth-child(4) {
+		margin-block-start: clamp(60px, 10vw, 170px);
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: var(--perego-radius-card);
+		box-shadow: inset 0 0 0 1px transparent;
+		transition: box-shadow var(--perego-dur-fast) var(--perego-ease);
+	}
+
+	&:hover {
+		transform: translateY(-10px);
+	}
+
+	&:hover::after {
+		box-shadow: inset 0 0 0 2px var(--wp--preset--color--accent),
+			var(--perego-shadow-glow-accent);
+	}
+}
+
+.service-card img {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: cover;
+}
+
+.service-card__overlay {
+	position: absolute;
+	inset: 0;
+	background: var(--perego-gradient-card-overlay);
+}
+
+.service-card__label {
+	position: absolute;
+	inset-inline: 0;
+	inset-block-end: 0;
+	padding: 22px 24px;
+	font-size: clamp(18px, 1.5vw, 24px);
+	font-weight: 700;
+	line-height: 1.12;
+	text-transform: uppercase;
+	text-align: start;
+	color: var(--wp--preset--color--text);
+}
+
+@media (max-width: 900px) {
+	.service-cards {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.service-card:nth-child(2),
+	.service-card:nth-child(4) {
+		margin-block-start: 34px;
+	}
+}
+
+@media (max-width: 560px) {
+	.service-cards {
+		grid-template-columns: 1fr;
+	}
+	.service-card:nth-child(n) {
+		margin-block-start: 0;
+	}
+}

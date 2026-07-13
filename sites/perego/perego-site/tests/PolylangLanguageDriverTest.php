@@ -46,6 +46,10 @@ it('resolves the switch URL from the raw translations Polylang reports for the c
     expect($driver->urlFor('ar'))->toBe('https://perego.local/ar/services/');
 });
 
+it('reports that it manages language through the URL (Polylang directory URLs carry the language)', function () {
+    expect((new PolylangLanguageDriver())->managesLanguageViaUrl())->toBeTrue();
+});
+
 it('rejects a locale Polylang does not offer a translation for', function () {
     Functions\when('pll_the_languages')->justReturn([
         ['slug' => 'en', 'url' => 'https://perego.local/services/'],

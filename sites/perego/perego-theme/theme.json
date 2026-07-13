@@ -1,6 +1,9 @@
 {
 	"$schema": "https://schemas.wp.org/trunk/theme.json",
 	"version": 3,
+	"customTemplates": [
+		{ "name": "legal", "title": "Legal (Terms / Privacy)", "postTypes": ["page"] }
+	],
 	"settings": {
 		"appearanceTools": true,
 		"useRootPaddingAwareAlignments": true,
@@ -60,12 +63,15 @@
 					"muted": "rgba(255,255,255,0.72)",
 					"muted-2": "rgba(255,255,255,0.55)",
 					"glass-border": "rgba(216,106,243,0.45)",
-					"glass-fill": "rgba(72,3,131,0.28)"
+					"glass-fill": "rgba(72,3,131,0.28)",
+					"glass-panel-fill": "rgba(22,4,53,0.55)"
 				},
 				"gradient": {
 					"bg": "linear-gradient(160deg, #10002b 0%, #12012e 14%, #1a0339 30%, #26074a 46%, #370d63 62%, #4e1483 78%, #691da9 92%, #6c1eae 100%)",
 					"violet-band": "linear-gradient(120deg, #2a0a52, #4e1483 45%, #6c1eae 78%, #7d24c4)",
-					"banner": "linear-gradient(105deg, #4a0d8f, #6c1eae 55%, #7d24c4)"
+					"banner": "linear-gradient(105deg, #4a0d8f, #6c1eae 55%, #7d24c4)",
+					"card-media": "linear-gradient(150deg, #1a0338 0%, #4e1483 60%, #6c1eae 100%)",
+					"card-overlay": "linear-gradient(180deg, rgba(38,7,74,0.15) 0%, rgba(38,7,74,0.35) 45%, rgba(20,3,45,0.88) 100%)"
 				},
 				"radius": {
 					"card": "29px",
@@ -80,7 +86,8 @@
 					"card": "0 16px 40px rgba(0,0,0,0.4)",
 					"service-card": "0 24px 60px rgba(0,0,0,0.45)",
 					"featured": "0 26px 70px rgba(0,0,0,0.5)",
-					"glow-accent": "0 0 24px rgba(216,106,243,0.55)"
+					"glow-accent": "0 0 24px rgba(216,106,243,0.55)",
+					"glass-panel-inset": "inset 0 0 40px rgba(216,106,243,0.08)"
 				},
 				"glass-blur": "14px",
 				"motion": {

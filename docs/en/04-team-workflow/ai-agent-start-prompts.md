@@ -22,10 +22,11 @@ You are working in the CoreX monorepo. Before doing anything:
    (see docs/en/04-team-workflow/agent-roles.md). State the mode and the files you may edit.
 3. Read the source-of-truth files for that mode. Never work from main except inspection/allowed merge/release.
    Use a focused branch. Do not create .worktrees without owner approval.
-4. Follow Spec Kit before implementation. Run the relevant Guard Gate before shipping any diff. Apply UI/UX ProMax
+4. After the Role Gate, declare the Model Routing Gate (`L`, `M`, `H`, or `V`) using `MODEL ROUTE — <provider> · <route> · <parent-or-agent> · <configured model/effort> · <reason>`; then follow Spec Kit. Do not claim that the parent model changed, and never run simultaneous Codex/Claude writers.
+5. Run the relevant Guard Gate before shipping any diff. Apply UI/UX ProMax
    to any UI-facing work.
-5. Never edit wp/wp-content/ or dist/ as source. Never commit dist/. Use Acme placeholders only.
-6. Update PROGRESS.md and DECISIONS.md. End with the SUMMARY/…/NEXT STEP handoff format (AGENTS.md / WORKING-GUIDE §G.5).
+6. Never edit wp/wp-content/ or dist/ as source. Never commit dist/. Use Acme placeholders only.
+7. Update PROGRESS.md and DECISIONS.md. End with the SUMMARY/…/NEXT STEP handoff format (AGENTS.md / WORKING-GUIDE §G.5).
 ```
 
 ## CoreX Framework Mode prompt
@@ -72,5 +73,5 @@ documented fallback: docs-app npm run build). Keep examples neutral with Acme pl
 handoff format.
 ```
 
-> **Arabic translation:** these team-workflow prompts are currently English-only. A bilingual (`docs/ar/`) mirror is
-> tracked as a backlog item; the English version is canonical for this area until then.
+> **Arabic mirror policy:** the English prompt remains canonical. The Arabic workflow mirror records translation status
+> per page; the routing policy has a concise Arabic mirror at `docs/ar/04-team-workflow/model-routing.md`.
