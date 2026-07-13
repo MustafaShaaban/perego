@@ -40,6 +40,7 @@ final class HeroSliderRenderer
             'count'       => count($slides),
             // Localized strings; view.js substitutes/derives from these so translation happens
             // server-side where `__()` is available. `announce` is a template (slide X of Y).
+            /* translators: 1: current slide number, 2: total number of slides. */
             'announce'    => __('Slide %1$s of %2$s', 'perego-site'),
             'pauseLabel'  => __('Pause slideshow', 'perego-site'),
             'resumeLabel' => __('Play slideshow', 'perego-site'),

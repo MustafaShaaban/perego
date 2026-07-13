@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-13T08:54:46+00:00\n"
+"POT-Creation-Date: 2026-07-13T09:09:46+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: perego-site\n"
@@ -45,38 +45,39 @@ msgstr ""
 msgid "Missing “%1$s” global section for the “%2$s” language. Add and link a translation."
 msgstr ""
 
-#: src/Blocks/HeroSliderRenderer.php:43
+#. translators: 1: current slide number, 2: total number of slides.
+#: src/Blocks/HeroSliderRenderer.php:44
 #, php-format
 msgid "Slide %1$s of %2$s"
 msgstr ""
 
-#: src/Blocks/HeroSliderRenderer.php:44
-#: src/Blocks/HeroSliderRenderer.php:115
+#: src/Blocks/HeroSliderRenderer.php:45
+#: src/Blocks/HeroSliderRenderer.php:116
 msgid "Pause slideshow"
 msgstr ""
 
-#: src/Blocks/HeroSliderRenderer.php:45
+#: src/Blocks/HeroSliderRenderer.php:46
 msgid "Play slideshow"
 msgstr ""
 
-#: src/Blocks/HeroSliderRenderer.php:48
+#: src/Blocks/HeroSliderRenderer.php:49
 msgid "Introduction"
 msgstr ""
 
-#: src/Blocks/HeroSliderRenderer.php:111
+#: src/Blocks/HeroSliderRenderer.php:112
 msgid "Previous slide"
 msgstr ""
 
-#: src/Blocks/HeroSliderRenderer.php:122
+#: src/Blocks/HeroSliderRenderer.php:123
 msgid "Next slide"
 msgstr ""
 
-#: src/Blocks/HeroSliderRenderer.php:132
+#: src/Blocks/HeroSliderRenderer.php:133
 msgid "Hero slides"
 msgstr ""
 
 #. translators: %d: slide number
-#: src/Blocks/HeroSliderRenderer.php:139
+#: src/Blocks/HeroSliderRenderer.php:140
 #, php-format
 msgid "Slide %d"
 msgstr ""
