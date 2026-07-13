@@ -27,8 +27,10 @@ gh pr merge 10 --repo MustafaShaaban/perego --merge   # 004 (now incl. 005) → 
 
 ## 2. Owner content (T020) — blocked on your material; seeds are ready
 
-Each item below has a proven **idempotent** seed script. Provide the real content (edit the script's
-data or the WordPress admin), then run the seed. Run any seed with:
+Each item below has a proven **idempotent** seed script — verified by static guard-audit **and** an
+empirical zero-growth re-run on 2026-07-13 (`specs/004-design-fidelity/evidence/seed-idempotency.md`).
+Provide the real content (edit the script's data or the WordPress admin), then run the seed. Run any
+seed with:
 ```bash
 wp eval 'require "sites/perego/perego-site/scripts/<script>.php";' --path=wp
 ```
