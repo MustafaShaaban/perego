@@ -16,6 +16,12 @@ inline CSS, and decorative pointer interaction through the Perego FSE block boun
 default runner reports 0 changed pixels; this is evidence only, not acceptance. Arabic, responsive,
 interaction-state, and manual visual review remain required by Spec 008 T001.
 
+Latest route-contract increment (2026-07-13): Work and project now use the locked archive/single
+landmark, hero, filter, grid, card, category, and featured-media classes through their existing
+server-rendered client blocks. English desktop evidence reduced the Work diff from roughly 989,618 to
+233,288 pixels and the project diff from roughly 616,244 to 479,258. Neither route is accepted; gallery,
+navigation, pagination, media mapping, AR, responsive, state, and manual-review evidence remain open.
+
 The existing non-engineering owner material remains required for launch: approved client identities/logos,
 production project and journal content/media, counsel-reviewed English legal copy, and professional Arabic
 legal translation. The idempotent seed workflow is documented and proven ready; see

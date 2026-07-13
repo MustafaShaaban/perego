@@ -37,32 +37,33 @@ final class PortfolioGridRenderer
             'present' => $present,
         ]));
 
-        $html = '<section class="portfolio" data-wp-interactive="perego/portfolio-grid" '
+        $html = '<section class="page-section" data-wp-interactive="perego/portfolio-grid" '
             . "data-wp-context='" . $context . "'>";
-        $html .= '<div class="portfolio__inner">';
+        $html .= '<div class="container">';
 
         if (! empty($strings['heading'])) {
-            $html .= '<header class="portfolio__head">';
+            $html .= '<div class="post-hero__inner" style="text-align:center;">';
             if (! empty($strings['uiHome'])) {
-                $html .= '<nav class="page-crumb" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
+                $html .= '<nav class="page-crumb" style="justify-content:center;" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';
                 $html .= '<a href="' . esc_url(home_url('/')) . '">' . esc_html($strings['uiHome']) . '</a>';
                 $html .= '<span aria-hidden="true">/</span>';
                 $html .= '<span aria-current="page">' . esc_html($strings['heading']) . '</span>';
                 $html .= '</nav>';
             }
-            $html .= '<h1 class="portfolio__title">' . esc_html($strings['heading']) . '</h1>';
+            $html .= '<h1 class="post-title" style="font-size:clamp(34px,4.5vw,60px);margin-top:14px;">' . esc_html($strings['heading']) . '</h1>';
             if (! empty($strings['intro'])) {
-                $html .= '<p class="portfolio__intro">' . esc_html($strings['intro']) . '</p>';
+                $html .= '<p class="section-lead">' . esc_html($strings['intro']) . '</p>';
             }
             if (! empty($strings['demoNote'])) {
-                $html .= '<p class="portfolio__demo-note">' . esc_html($strings['demoNote']) . '</p>';
+                $html .= '<p class="section-lead" style="font-size:14px;color:var(--muted-2);margin-top:6px;">' . esc_html($strings['demoNote']) . '</p>';
             }
-            $html .= '</header>';
+            $html .= '</div>';
         }
 
         $html .= $this->renderFilters($filterLabels, $strings['groupLabel']);
         $html .= $this->renderGrid($projects);
-        $html .= '<p class="portfolio__empty" role="status" data-wp-bind--hidden="callbacks.noResultsHidden">'
+        $html .= '<p id="portfolioEmpty" hidden class="section-lead" role="status" data-wp-bind--hidden="callbacks.noResultsHidden" '
+            . 'style="font-size:var(--fs-lead);padding:clamp(40px,6vw,80px) 0;">'
             . esc_html($strings['noResults']) . '</p>';
         $html .= '</div></section>';
 
@@ -74,12 +75,13 @@ final class PortfolioGridRenderer
      */
     private function renderFilters(array $filterLabels, string $groupLabel): string
     {
-        $html = '<div class="portfolio-filters" role="group" aria-label="' . esc_attr($groupLabel) . '">';
+        $html = '<div class="portfolio-filters" role="group" aria-label="' . esc_attr($groupLabel) . '" '
+            . 'style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:clamp(24px,3vw,40px) 0;">';
 
         foreach ($filterLabels as $slug => $label) {
             $isAll = $slug === 'all';
 
-            $html .= '<button type="button" class="portfolio-filter' . ($isAll ? ' is-active' : '') . '" '
+            $html .= '<button type="button" class="web-filter portfolio-filter' . ($isAll ? ' is-active' : '') . '" '
                 . 'data-filter="' . esc_attr($slug) . '" '
                 . 'aria-pressed="' . ($isAll ? 'true' : 'false') . '" '
                 . "data-wp-context='" . esc_attr((string) wp_json_encode(['filter' => $slug])) . "' "
@@ -99,21 +101,21 @@ final class PortfolioGridRenderer
      */
     private function renderGrid(array $projects): string
     {
-        $html = '<div class="post-cards portfolio-grid">';
+        $html = '<div class="blog-grid" id="portfolioGrid">';
 
         foreach ($projects as $project) {
             $media = $project['thumbUrl'] !== ''
                 ? '<img src="' . esc_url($project['thumbUrl']) . '" alt="' . esc_attr($project['thumbAlt']) . '" loading="lazy" />'
                 : '<span class="post-card__media-placeholder" data-category="' . esc_attr($project['category']) . '" aria-hidden="true"></span>';
 
-            $html .= '<a class="post-card" href="' . esc_url($project['url']) . '" '
+            $html .= '<a class="post-card reveal" href="' . esc_url($project['url']) . '" '
                 . 'data-category="' . esc_attr($project['category']) . '" '
                 . "data-wp-context='" . esc_attr((string) wp_json_encode(['category' => $project['category']])) . "' "
                 . 'data-wp-bind--hidden="callbacks.cardHidden">';
             $html .= '<div class="post-card__media">' . $media . '</div>';
             $html .= '<div class="post-card__body">';
             $html .= '<span class="post-card__cat">' . esc_html($project['categoryLabel']) . '</span>';
-            $html .= '<h2 class="post-card__title">' . esc_html($project['title']) . '</h2>';
+            $html .= '<h2 class="post-card__title" style="font-size:clamp(18px,1.6vw,22px);">' . esc_html($project['title']) . '</h2>';
             $html .= '<p class="post-card__excerpt">' . esc_html($project['excerpt']) . '</p>';
             $html .= '</div></a>';
         }

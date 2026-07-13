@@ -1,15 +1,16 @@
 <!-- wp:template-part {"slug":"header"} /-->
 
-<!-- wp:perego-theme/project-hero /-->
-
-<!-- wp:group {"tagName":"main","className":"project-single__body","layout":{"type":"constrained"}} -->
-<main id="main" tabindex="-1" class="wp-block-group project-single__body">
-	<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
+<main id="main" tabindex="-1">
+	<article class="post page-section">
+		<div class="container">
+			<!-- wp:perego-theme/project-hero /-->
+			<div class="prose" style="max-width:920px;">
+				<!-- wp:post-content {"layout":{"type":"default"}} /-->
+			</div>
+			<!-- wp:perego-theme/project-gallery-lightbox /-->
+			<!-- wp:perego-theme/project-navigation /-->
+		</div>
+	</article>
 </main>
-<!-- /wp:group -->
-
-<!-- wp:perego-theme/project-gallery-lightbox /-->
-
-<!-- wp:perego-theme/project-navigation /-->
 
 <!-- wp:template-part {"slug":"footer"} /-->

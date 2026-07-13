@@ -35,33 +35,37 @@ final class ProjectHeroRenderer
         $labels = $this->content->projectLabels();
         $categoryName = $this->categoryName($project->ID);
 
-        $html = '<section class="project-hero">';
-        $html .= '<nav class="project-hero__crumb" aria-label="Breadcrumb">';
+        $html = '<div class="post-hero">';
+        $html .= '<div class="post-hero__inner">';
+        $html .= '<nav class="page-crumb" style="justify-content:center;" aria-label="Breadcrumb">';
         $html .= '<a href="' . esc_url(home_url('/')) . '">' . esc_html($this->content->uiHome()) . '</a>';
         $html .= '<span aria-hidden="true">/</span>';
         $html .= '<a href="' . esc_url(home_url('/work')) . '">' . esc_html($this->content->heading()) . '</a>';
+        $html .= '<span aria-hidden="true">/</span>';
+        $html .= '<span aria-current="page">' . esc_html(__('Project', 'perego-site')) . '</span>';
         $html .= '</nav>';
 
         if ($categoryName !== '') {
-            $html .= '<p class="project-hero__cat">' . esc_html($categoryName) . '</p>';
+            $html .= '<span class="post-cat" style="margin-top:16px;">' . esc_html($categoryName) . '</span>';
         }
 
-        $html .= '<h1 class="project-hero__title">' . esc_html(get_the_title($project)) . '</h1>';
+        $html .= '<h1 class="post-title">' . esc_html(get_the_title($project)) . '</h1>';
+        $html .= '</div>';
 
         if (has_post_thumbnail($project->ID)) {
-            $html .= '<div class="project-hero__featured">'
+            $html .= '<div class="post-featured">'
                 . get_the_post_thumbnail($project->ID, 'large', ['loading' => 'eager'])
                 . '</div>';
         }
 
-        $html .= '<dl class="project-hero__meta">';
+        $html .= '<dl class="project-hero__meta" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:20px 32px;margin:0 0 8px;padding:24px 0;border-block:1px solid rgba(255,255,255,0.1);">';
         $html .= $this->metaItem($labels['clientLabel'], (string) get_post_meta($project->ID, '_perego_client', true));
         $html .= $this->metaItem($labels['yearLabel'], (string) get_post_meta($project->ID, '_perego_year', true));
         $html .= $this->metaItem($labels['roleLabel'], (string) get_post_meta($project->ID, '_perego_role', true));
         $html .= $this->metaItem($labels['deliverablesLabel'], (string) get_post_meta($project->ID, '_perego_deliverables', true));
         $html .= '</dl>';
 
-        $html .= '</section>';
+        $html .= '</div>';
 
         return $html;
     }
@@ -73,7 +77,7 @@ final class ProjectHeroRenderer
         }
 
         return '<div class="project-hero__meta-item">'
-            . '<dt>' . esc_html($label) . '</dt>'
+            . '<dt style="font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted-2);margin-bottom:4px;">' . esc_html($label) . '</dt>'
             . '<dd>' . esc_html($value) . '</dd>'
             . '</div>';
     }
