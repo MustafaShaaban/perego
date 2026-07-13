@@ -59,6 +59,17 @@
     fixing it needs either a migration script or a small non-canvas structural block — not changed in this
     pass to avoid an unverified content migration.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
+  - [x] Single-post comment form (2026-07-14): confirmed the exact defect the completion contract names —
+    WordPress's core `wp:comments`/`wp:post-comments-form` blocks already inherit the handoff's own
+    `.comment-form` glass-card container verbatim (class names match; `perego-reference.scss` is an
+    untouched copy), but core hardcodes a white background + grey border on the bare `<input>`/`<textarea>`
+    elements, producing exactly the "native white comment fields" defect. Fixed with scoped CSS in
+    `perego-wordpress-adapter.scss` restyling only the form controls (transparent background, subtle
+    border, white text, accent focus ring) and the submit button (accent background, dark text, matching
+    every other Perego button). Left native HTML5 required-field validation as-is (no CoreX-style custom
+    validator exists for core comments — replacing it without one would silently drop the only validation
+    this form has); a full "shared form state system" for comments (section 12) remains open follow-up.
+    Verified live (dark theme now applies, no white boxes); Pest 224/224, route-health 72/0, a11y 12/0.
 - [ ] T008 [US2] Rebuild Contact, Search, standard page, legal, and 404 routes with all required states and evidence.
 - [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.
 - [ ] T010 Complete state/viewport visual regression, a11y, performance, security, quality gates, docs, PR, and merge.
