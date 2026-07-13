@@ -40,7 +40,7 @@ it('wires the secure endpoint, a nonce, the size cap, and the localized state me
 
     expect($html)->toContain('data-endpoint="https://perego.local/wp-json/perego/v1/careers/apply"')
         ->and($html)->toContain('data-nonce="nonce123"')
-        ->and($html)->toContain('data-max-bytes="5242880"')
+        ->and($html)->toContain('data-max-bytes="10485760"')
         ->and($html)->toContain('data-messages=')
         ->and($html)->toContain('wrong_type')
         ->and($html)->toContain('too_large');

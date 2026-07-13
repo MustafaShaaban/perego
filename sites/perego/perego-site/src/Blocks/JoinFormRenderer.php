@@ -14,7 +14,7 @@ use PeregoSite\Content\GlobalContent;
 
 /**
  * Server-renders the perego-theme/join-form block (spec Phase 7): the footer "Join us" / CV form —
- * full name, e-mail, portfolio link, and a CV upload (pdf/doc/docx ≤ 5 MB). Accessible (label-bound
+ * full name, e-mail, portfolio link, and a CV upload (pdf/doc/docx ≤ 10 MB). Accessible (label-bound
  * inputs, required markers, an aria-live status region, described-by constraints), language-aware,
  * and carrying the honeypot + endpoint the secured `perego/v1/careers/apply` route expects. The
  * upload lifecycle + every handoff state is driven by view.js; the markup is present without JS.
@@ -45,7 +45,7 @@ final class JoinFormRenderer
 
         $html = '<form class="footer-form join-form" method="post" enctype="multipart/form-data"'
             . ' data-perego-join data-endpoint="' . $endpoint . '" data-nonce="' . $nonce . '"'
-            . ' data-max-bytes="5242880" data-messages="' . esc_attr((string) wp_json_encode($messages)) . '"'
+            . ' data-max-bytes="10485760" data-messages="' . esc_attr((string) wp_json_encode($messages)) . '"'
             . ' aria-describedby="join-form-status" novalidate>';
 
         $html .= $this->field('jf-name', 'name', 'text', $t['name'], true, ['autocomplete' => 'name', 'maxlength' => '80']);
