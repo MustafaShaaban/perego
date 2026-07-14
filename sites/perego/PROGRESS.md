@@ -36,12 +36,19 @@
   thumbnail strip, nonce/cap-guarded save → clean int list; 5/5 save tests + server-side render verified) —
   and verified work-archive + project-single fidelity EN/AR (captures in `output/playwright/014-*`). Pest
   256/256; guards pass.
-- **Next spec:** **015** (Journal, single article, search) — branch `feature/015-journal-search-pages` off
-  014. Native Journal posts (WP core posts) + search. Likely fidelity + editability verification (native post
-  editing) similar in spirit; check the journal archive, single article, and search results vs the handoff
-  (`archive.html`/`journal.html`/`search`), EN/AR.
-- **Then 016–018 in order** (contact/forms/email, supporting pages/legal/404, final acceptance + cleanup:
-  remove any remaining duplicate CSS/dead code/obsolete seeds/orphan DB data).
+- **Active spec:** **015** (Journal, single article, search) — **DONE (T001–T006), PR pending push confirm.**
+  Verification spec: the journal archive (Query Loop `blog-grid`/`post-card`), single article
+  (`post-hero`/`post-title`/`post-meta`/`post-featured`/`post-content`), and search (`search-bar`/results/
+  no-results) are **native WP posts + core search via FSE blocks** — already handoff-faithful (captures in
+  `output/playwright/015-*`) and **natively editable** (3 EN + 3 AR posts). Search is per-language (Polylang),
+  no-results state matches the handoff. **No code change needed** → Pest unchanged 256/256.
+- **Next spec:** **016** (Contact, forms, form states, email routing) — branch `feature/016-contact-forms-email`
+  off 015. This is the big one: three forms (contact/brief, quick-message, careers/join) editable + routed +
+  validated + stored via CoreX Forms/Submissions; Email Studio routing; form states (default/invalid/
+  submitting/success/server-error); real submissions. Depends on spec 010 (CoreX runtime). Verify Forms &
+  Flows/Submissions/Data Models visible + functional.
+- **Then 017–018** (supporting pages/terms/privacy/generic/404; final acceptance + cleanup: remove remaining
+  duplicate CSS/dead code/obsolete seeds/orphan DB data).
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
