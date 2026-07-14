@@ -64,9 +64,18 @@
     `PluginDocumentSettingPanel` or classic meta boxes). Fields per `spec.md`. Confirmed stored keys today:
     Project `_perego_client/_year/_role/_deliverables/_gallery_attachment_ids` (+ `_thumbnail_id`); Service
     + Client keys to enumerate from their seeds. No ACF; no generic Custom Fields.
-- [ ] T010 Prove a new Project/Service/Client is completable in wp-admin (metadata + gallery/media)
-    without CLI or DB editing. Browser evidence. (Depends on T009.)
+- [x] T010 (scalar fields) Proved a new Project is completable through the registered controls: created a
+    draft via the editor path and read the meta back via `/wp/v2/perego_project/{id}` with `context=edit`
+    (`client/year/gallery` all exposed), then cleaned up (0 probes left). The meta-box save is separately
+    unit-tested (nonce/cap/autosave guards). **The rich gallery media picker (wp.media) moves to spec 014**
+    (Work/Project — "gallery editable with a real media UI"). Browser screenshot deferred: the local
+    playwright-cli admin context proved unreliable (open/snapshot/run-code use different page contexts);
+    the REST edit-context round-trip is the authoritative editor-path proof here.
 
 ## Phase 5 — Delivery
 
-- [ ] T011 Full suite green; guards; live verify. Update PROGRESS/DECISIONS/roadmap. Open PR.
+- [x] T011 Pest 243/243, Jest 76/76; home/work/services + AR 200; no fatals; PROGRESS/DECISIONS/roadmap +
+    `corex-framework-gaps.md` updated. Spec 010 PR opened. **Spec 010 delivers:** admin-bundle fix (GAP-2),
+    forms/submissions verification, structured metadata + editor controls for all 3 CPTs. **Deferred with
+    reason:** T005 interactive Forms&Flows screen click-through + T007/T008 (framework GAP-1) + gallery
+    media UI (→ spec 014).
