@@ -40,6 +40,25 @@ URLs. DB inventory/dry-run/backup/migration run via wp-cli against `wp/`. Never 
 do not change WP home/siteurl. Per DATABASE/CLEANUP guidance, the WAMP DB behind perego.local IS the
 migration target — so **Run 1 (local) is the authoritative inventory**, not a placeholder.
 
+## Migration applied — 2026-07-14 13:47 UTC (local WAMP)
+
+- **Backup gate:** `wp db export` → `scripts/output/db-backup-20260714-134449.sql` (1,557,421 bytes,
+  gitignored); `backup-check` passed. This is the rollback artifact.
+- **footer-careers migrated first** (T005/T009): the `perego-theme/footer-careers` block renders the
+  EN/AR editorial byte-identically (verified live perego.local + ngrok) before any deletion.
+- **Apply result:** removed **14** `perego_section` records (all 7 roles × EN/AR, incl. #141/#142
+  footer-careers). Report: `scripts/output/global-sections-apply-20260714-134716.json`.
+- **Post-conditions verified:**
+  - `wp post list --post_type=perego_section --format=count` → **0**
+  - orphaned `_perego_section_role` meta rows → **0**
+  - orphaned (count=0) `post_translations` groups → **0** (Polylang cleaned on delete)
+  - `language` terms → en=30, ar=29 (live content only; unaffected)
+  - Footer "Join us" editorial still renders identically EN + AR (content now from block defaults).
+- **Idempotency:** a second `apply` removed **0** records (no-op).
+- **ngrok == local fingerprint:** the newly-built `footer-careers` block appeared on both perego.local
+  and the ngrok mirror, and both reflect the post-migration state — confirming ngrok tunnels to this same
+  WAMP install/DB.
+
 ## Run 2 — ngrok mirror cross-check — optional (not required to proceed)
 
 The authoritative deployment is the ngrok site, whose deployed-commit identity is not yet proven and whose

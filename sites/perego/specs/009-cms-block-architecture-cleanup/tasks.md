@@ -29,12 +29,13 @@ One feature = one branch = one PR. Mark boxes truthfully; runtime-gated tasks st
     blogname "Perego Creative Studio"). ngrok is an optional mirror. Recorded in roadmap + RESUME HERE.
 - [x] T007 Authoritative dry-run = local WAMP Run 1 (14 records, 0 anomalies) per the goal's DATABASE
     guidance that the WAMP DB behind perego.local is the migration target. ngrok cross-check optional.
-- [ ] T008 DB backup gate: `wp db export` a timestamped dump before any destructive change; `backup-check`
-    passes against it.
+- [x] T008 DB backup gate: `wp db export` → gitignored `scripts/output/db-backup-20260714-134449.sql`
+    (1.5 MB); `backup-check` passed. Rollback artifact for the migration.
 - [x] T009 Switched `SiteFooterRenderer::careersEditorial()` to the `footer-careers` block (done with
     T005). Live EN/AR footer editorial byte-identical. global-section dependency dropped from the footer.
-- [ ] T010 Run `--apply`; confirm removal of `perego_section` posts/meta/translation relations; emit final
-    orphan report; re-run `--apply` to prove idempotent no-op. (Runtime.)
+- [x] T010 Ran `apply` (gated on backup + footer-careers block registered): removed 14 `perego_section`
+    records; 0 posts / 0 role-meta / 0 orphaned translation groups remain; footer editorial intact EN/AR;
+    second `apply` = no-op (idempotent). Evidence in `global-sections-inventory.md`.
 
 ## Phase 2 — Code removal + cleanup (partly runtime-verified)
 

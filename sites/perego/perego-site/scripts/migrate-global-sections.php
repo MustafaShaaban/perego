@@ -43,10 +43,8 @@ switch ($mode) {
         migrate_gs_backup_check($backup === false ? '' : (string) $backup);
         break;
     case 'apply':
-        WP_CLI::error(
-            'apply is not implemented in this commit. Destructive removal is spec 009 T010 and requires '
-            . 'a passed backup-check plus a verified footer-careers editable surface (T009). Aborting.'
-        );
+        $backup = getenv('MIGRATE_GS_BACKUP');
+        migrate_gs_apply($backup === false ? '' : (string) $backup);
         break;
     default:
         WP_CLI::error(sprintf('Unknown mode "%s". Use: dry-run | backup-check | apply.', $mode));
@@ -115,7 +113,7 @@ function migrate_gs_dry_run(): void
         'writes_performed' => 0,
     ];
 
-    $path = migrate_gs_write_report($report);
+    $path = migrate_gs_write_report($report, 'dry-run');
 
     WP_CLI::log(sprintf('Global Sections dry run — %d record(s):', count($records)));
     foreach ($records as $r) {
@@ -187,6 +185,99 @@ function migrate_gs_anomalies(array $byRoleLocale, bool $pllActive): array
 }
 
 /**
+ * Destructively remove every perego_section record after the safety gates pass. Gates (all required):
+ *   1. A verified DB backup (MIGRATE_GS_BACKUP) — the rollback path.
+ *   2. The perego-theme/footer-careers block is registered — proof the one consumed role has a new home,
+ *      so deletion loses no frontend content.
+ * Deletes posts with force (removing their post meta and term relationships). Idempotent: a second run
+ * finds no records and makes no change. Writes a final orphan report.
+ */
+function migrate_gs_apply(string $backupPath): void
+{
+    if (! post_type_exists(GlobalSectionPostType::POST_TYPE)) {
+        WP_CLI::success('perego_section is not registered — nothing to remove (idempotent no-op).');
+
+        return;
+    }
+
+    // Gate 1: verified backup.
+    if ($backupPath === '' || ! is_readable($backupPath) || (int) filesize($backupPath) <= 0) {
+        WP_CLI::error('apply refused: set MIGRATE_GS_BACKUP to a verified, non-empty DB export first.');
+    }
+
+    // Gate 2: the migrated home must exist so no content is lost.
+    $registry = class_exists('WP_Block_Type_Registry') ? WP_Block_Type_Registry::get_instance() : null;
+    if ($registry === null || ! $registry->is_registered('perego-theme/footer-careers')) {
+        WP_CLI::error('apply refused: perego-theme/footer-careers block is not registered (migration target missing).');
+    }
+
+    $ids = get_posts([
+        'post_type' => GlobalSectionPostType::POST_TYPE,
+        'post_status' => 'any',
+        'numberposts' => 200,
+        'fields' => 'ids',
+        'no_found_rows' => true,
+        'suppress_filters' => false,
+    ]);
+
+    $deleted = [];
+    $failed = [];
+    foreach ((array) $ids as $id) {
+        $id = (int) $id;
+        $role = (string) get_post_meta($id, GlobalSectionPostType::META_ROLE, true);
+        $result = wp_delete_post($id, true);
+        if ($result === false || $result === null) {
+            $failed[] = $id;
+            continue;
+        }
+        $deleted[] = ['id' => $id, 'role' => $role];
+    }
+
+    // Orphan scan: any post meta or posts of this type that survived deletion.
+    $remaining = get_posts([
+        'post_type' => GlobalSectionPostType::POST_TYPE,
+        'post_status' => 'any',
+        'numberposts' => 50,
+        'fields' => 'ids',
+        'no_found_rows' => true,
+        'suppress_filters' => false,
+    ]);
+
+    global $wpdb;
+    $orphanMeta = (int) $wpdb->get_var(
+        $wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s", GlobalSectionPostType::META_ROLE)
+    );
+
+    $report = [
+        'generated_at' => gmdate('c'),
+        'mode' => 'apply',
+        'backup' => $backupPath,
+        'deleted_count' => count($deleted),
+        'deleted' => $deleted,
+        'failed' => $failed,
+        'remaining_posts' => count((array) $remaining),
+        'orphan_role_meta_rows' => $orphanMeta,
+    ];
+    $path = migrate_gs_write_report($report, 'apply');
+
+    foreach ($deleted as $d) {
+        WP_CLI::log(sprintf('  deleted #%d (role=%s)', $d['id'], $d['role'] === '' ? '(none)' : $d['role']));
+    }
+    if ($failed !== []) {
+        WP_CLI::warning('Failed to delete: ' . implode(',', $failed));
+    }
+    if (count((array) $remaining) > 0 || $orphanMeta > 0) {
+        WP_CLI::warning(sprintf('Orphans remain: %d posts, %d role-meta rows.', count((array) $remaining), $orphanMeta));
+    }
+
+    WP_CLI::success(sprintf(
+        'Removed %d perego_section record(s). Report: %s',
+        count($deleted),
+        $path
+    ));
+}
+
+/**
  * Verify a non-empty DB export exists at the given path. This is the hard gate for a future apply; it
  * performs no database work itself.
  */
@@ -211,14 +302,15 @@ function migrate_gs_backup_check(string $path): void
  *
  * @param array<string, mixed> $report
  */
-function migrate_gs_write_report(array $report): string
+function migrate_gs_write_report(array $report, string $label): string
 {
     $dir = __DIR__ . '/output';
     if (! is_dir($dir)) {
         wp_mkdir_p($dir);
     }
 
-    $path = $dir . '/global-sections-dry-run-' . gmdate('Ymd-His') . '.json';
+    $safeLabel = preg_replace('/[^a-z0-9\-]/', '', $label) ?: 'report';
+    $path = $dir . '/global-sections-' . $safeLabel . '-' . gmdate('Ymd-His') . '.json';
     file_put_contents($path, (string) wp_json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
     return $path;
