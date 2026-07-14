@@ -14,8 +14,10 @@
     source edited); asset now serves 200. Logged as a **framework/deployment gap** (deploy must build CoreX
     admin assets) — see `evidence/runtime-audit.md` + DECISIONS. Full interactive click-through of each page
     remains a follow-up (browser tooling was flaky), but the root cause is resolved.
-- [ ] T003 Determine ACF's role (CoreX-kit dependency vs owner choice); document; confirm Perego metadata
-    does not require ACF.
+- [x] T003 ACF is active but **not used by Perego** (no `acf_*`/`get_field` in perego-site) and **not
+    required by any CoreX plugin/addon** (grep-confirmed). Standalone owner plugin; Perego metadata is
+    native — FR-5 satisfied. Documented in `docs/corex-framework-gaps.md`. (Whether ACF stays active is an
+    owner decision; not deactivating it — owner's plugin.)
 
 ## Phase 2 — Forms as CoreX flows
 
@@ -28,10 +30,12 @@
 
 ## Phase 3 — Data Models
 
-- [ ] T007 Register Projects/Services/Clients via the public DataRegistry seam with truthful capabilities
-    (read/query/schema/detail; mutations only with a real adapter). If unsupported → framework-gap doc +
-    separate CoreX task; do not fake.
-- [ ] T008 Verify the models appear in Data Models with accurate schema/labels/capabilities.
+- [~] T007 **BLOCKED — framework gap (GAP-1).** `DataRegistry` only supports the framework submissions
+    source + custom managed DB tables; there is no public seam/adapter to register a CPT-backed source, so
+    Projects/Services/Clients cannot appear in Data Models without coupling to framework internals.
+    Recorded in `docs/corex-framework-gaps.md` (GAP-1) for a CoreX Framework Mode task. Not faking it.
+- [~] T008 Blocked by T007/GAP-1. Models surface in Data Models once CoreX ships the seam. Meanwhile the
+    CPTs remain fully editable via native post editors + registered meta (Phase 4).
 
 ## Phase 4 — Structured metadata editor controls
 

@@ -123,12 +123,21 @@ latent inconsistency.)
 Collections: Journal (native posts), `perego_project`, `perego_service`, `perego_client`. Global content:
 FSE parts/blocks. See spec 010 for the full field lists per model.
 
-## CoreX integration inventory (to verify at runtime — spec 010)
+## CoreX integration inventory (spec 010 — audited 2026-07-14)
 
-Required admin routes: Overview, Forms & Flows, Submissions, Data Models, Data, Email Studio, Access &
-Abilities, Operations & Security, Insights, Blog Pro (where enabled). Required flows: footer quick message,
-project brief/contact, careers/join. **Live dashboard currently reported as not exposing expected
-Forms/Submissions/Data Models** — treat as a release-blocking runtime/deployment problem (spec 010).
+- **Backend healthy:** all CoreX addons active v0.33.0; 82 `/corex/v1` REST routes; full admin menu
+  registered (Overview, Forms & Flows, Submissions, Data Models, Data, Email Studio, Access, Operations,
+  Insights, Blog Pro). Data API returns 200 for admin.
+- **Root cause of "missing dashboard" FOUND + FIXED:** the CoreX admin React bundle
+  (`corex-config/build/admin/index.js`) was unbuilt → 404 → app never mounted. Built locally (gitignored);
+  **deploy must build CoreX admin assets** (GAP-2 in `docs/corex-framework-gaps.md`).
+- **Data Models — framework gap (GAP-1):** no public seam to register CPT-backed sources; only
+  `submissions` + custom managed tables. Projects/Services/Clients can't appear in Data Models yet — CoreX
+  Framework Mode task. Perego does NOT fake it.
+- **ACF:** active but unused by Perego + not required by CoreX — no dependency (FR-5 ok).
+- **Still to do (spec 010):** verify the 3 forms as flows (footer quick message, project brief, careers);
+  submissions land in Submissions; register Project/Service/Client structured metadata with proper editor
+  controls; prove a new record is completable in wp-admin without CLI.
 
 ## Database migration inventory
 
