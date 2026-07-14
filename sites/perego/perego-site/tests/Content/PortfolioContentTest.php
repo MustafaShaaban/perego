@@ -39,6 +39,16 @@ it('includes heading + intro in the grid strings for a fully bilingual work page
         ->and($strings['heading'])->toBe('Our Work');
 });
 
+it('includes the archive closing CTA copy in the grid strings, in both languages', function () {
+    $en = (new PortfolioContent('en'))->gridStrings();
+    $ar = (new PortfolioContent('ar'))->gridStrings();
+
+    expect($en['ctaTitle'])->toBe('Have a project in mind?')
+        ->and($en['ctaButton'])->toBe('Start a Project')
+        ->and($ar['ctaTitle'])->toBe('هل لديك مشروع في ذهنك؟')
+        ->and($ar['ctaButton'])->toBe('ابدأ مشروعك');
+});
+
 it('exposes localized single-project (case study) labels in English', function () {
     $labels = (new PortfolioContent('en'))->projectLabels();
 

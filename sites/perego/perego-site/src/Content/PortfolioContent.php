@@ -43,6 +43,9 @@ final class PortfolioContent
                 'design' => 'Graphic Design',
                 'web' => 'Website Making',
             ],
+            'ctaTitle' => 'Have a project in mind?',
+            'ctaBody' => "Tell us what you're working on and we'll help you shape the plan.",
+            'ctaButton' => 'Start a Project',
         ],
         'ar' => [
             'h1' => 'أعمالنا',
@@ -58,6 +61,9 @@ final class PortfolioContent
                 'design' => 'التصميم الجرافيكي',
                 'web' => 'إنشاء المواقع',
             ],
+            'ctaTitle' => 'هل لديك مشروع في ذهنك؟',
+            'ctaBody' => 'أخبرنا بما تعمل عليه وسنساعدك في بلورة الخطة.',
+            'ctaButton' => 'ابدأ مشروعك',
         ],
     ];
 
@@ -172,7 +178,7 @@ final class PortfolioContent
     }
 
     /**
-     * @return array{groupLabel: string, noResults: string, heading: string, intro: string}
+     * @return array{groupLabel: string, noResults: string, heading: string, intro: string, demoNote: string, uiHome: string, ctaTitle: string, ctaBody: string, ctaButton: string}
      */
     public function gridStrings(): array
     {
@@ -183,6 +189,9 @@ final class PortfolioContent
             'intro' => self::COPY[$this->locale]['intro'],
             'demoNote' => self::COPY[$this->locale]['demoNote'],
             'uiHome' => $this->uiHome(),
+            'ctaTitle' => self::COPY[$this->locale]['ctaTitle'],
+            'ctaBody' => self::COPY[$this->locale]['ctaBody'],
+            'ctaButton' => self::COPY[$this->locale]['ctaButton'],
         ];
     }
 

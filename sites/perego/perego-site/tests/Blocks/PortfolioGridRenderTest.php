@@ -118,3 +118,25 @@ it('renders a Home breadcrumb and the demo-content note when provided', function
 it('omits the breadcrumb when uiHome is not provided', function () {
     expect(renderGrid())->not->toContain('page-crumb');
 });
+
+it('renders the closing "have a project in mind" CTA when cta strings are provided', function () {
+    $filters = ['all' => 'All Projects'];
+    $strings = [
+        'groupLabel' => 'Filter',
+        'noResults' => 'None',
+        'ctaTitle' => 'Have a project in mind?',
+        'ctaBody' => "Tell us what you're working on and we'll help you shape the plan.",
+        'ctaButton' => 'Start a Project',
+    ];
+
+    $html = (new PortfolioGridRenderer())->render(sampleProjects(), $filters, $strings);
+
+    expect($html)->toContain('id="pfCta"')
+        ->and($html)->toContain('Have a project in mind?')
+        ->and($html)->toContain("Tell us what you're working on and we'll help you shape the plan.")
+        ->and($html)->toMatch('/<a class="btn btn--accent" href="[^"]*\/contact">Start a Project<\/a>/');
+});
+
+it('omits the CTA section entirely when no cta title is provided', function () {
+    expect(renderGrid())->not->toContain('id="pfCta"');
+});

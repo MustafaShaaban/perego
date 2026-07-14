@@ -136,6 +136,18 @@
     separators to both `home.html`'s card template and `single.html`'s meta row. Verified live: both EN
     and AR now render `date · N min read` / `تاريخ · N دقيقة للقراءة` correctly. Pest 232/232 (no
     regressions), route-health 72/0, a11y 12/0.
+  - [x] **Work archive missing closing CTA (2026-07-14):** comparing the live Work archive full-page
+    render against the handoff's own `portfolio.html` found the entire closing "Have a project in
+    mind?" CTA section (`#pfCta`, between the grid/pagination and the footer) was completely absent —
+    `archive-perego_project.html` only ever rendered `perego-theme/portfolio-grid` with nothing after
+    it. `PortfolioContent` already had dead `ctaTitle`/`ctaBody`/`ctaButton` copy that didn't match this
+    section at all (wrong text, actually belonging to the *project single's* "Related projects" CTA via
+    a separate `projectLabels()` method) — added the correct handoff copy as new keys in `gridStrings()`
+    and a `PortfolioGridRenderer::renderCta()` method matching the exact handoff markup
+    (`section-title`/`section-lead`/`btn btn--accent`), reusing the same pattern
+    `ServicesOverviewRenderer`'s own closing CTA already established. 4 new Pest tests. Verified live:
+    the CTA now renders identically to the handoff on the real Work archive. Pest 235/235, route-health
+    72/0, a11y 12/0.
   - [x] Single-post comment form (2026-07-14): confirmed the exact defect the completion contract names —
     WordPress's core `wp:comments`/`wp:post-comments-form` blocks already inherit the handoff's own
     `.comment-form` glass-card container verbatim (class names match; `perego-reference.scss` is an

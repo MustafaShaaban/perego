@@ -26,7 +26,7 @@ final class PortfolioGridRenderer
     /**
      * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}> $projects
      * @param array<string, string> $filterLabels ordered, keyed by slug ('all' first); values are labels
-     * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string} $strings
+     * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string} $strings
      */
     public function render(array $projects, array $filterLabels, array $strings): string
     {
@@ -65,6 +65,31 @@ final class PortfolioGridRenderer
         $html .= '<p id="portfolioEmpty" hidden class="section-lead" role="status" data-wp-bind--hidden="callbacks.noResultsHidden" '
             . 'style="font-size:var(--fs-lead);padding:clamp(40px,6vw,80px) 0;">'
             . esc_html($strings['noResults']) . '</p>';
+        $html .= '</div></section>';
+
+        $html .= $this->renderCta($strings);
+
+        return $html;
+    }
+
+    /**
+     * The handoff's closing "Have a project in mind?" CTA (portfolio.html), missing from the archive
+     * entirely until now — matches the same section-title/section-lead/btn contract
+     * ServicesOverviewRenderer's own closing CTA uses.
+     *
+     * @param array{ctaTitle?: string, ctaBody?: string, ctaButton?: string} $strings
+     */
+    private function renderCta(array $strings): string
+    {
+        if (empty($strings['ctaTitle'])) {
+            return '';
+        }
+
+        $html = '<section class="page-section" aria-labelledby="pfCta" style="border-top:1px solid rgba(255,255,255,0.08);">';
+        $html .= '<div class="container" style="text-align:center;max-width:820px;">';
+        $html .= '<h2 class="section-title" id="pfCta">' . esc_html($strings['ctaTitle']) . '</h2>';
+        $html .= '<p class="section-lead" style="margin:16px auto 28px;">' . esc_html($strings['ctaBody'] ?? '') . '</p>';
+        $html .= '<a class="btn btn--accent" href="' . esc_url(home_url('/contact')) . '">' . esc_html($strings['ctaButton'] ?? '') . '</a>';
         $html .= '</div></section>';
 
         return $html;
