@@ -6,8 +6,9 @@
 
 - **Date/time:** 2026-07-14 (~14:30 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
-- **Latest pushed commit:** `c4be9ea` (spec 011 T002–T009 header/footer/i18n). **T010 done; T011 = open PR.**
-- **Active spec:** `011` (global shell + preloader) — **T001–T010 DONE.** T002 header/nav/dropdown matched to
+- **Latest pushed commit:** `8036f7b` (spec 011 T010 docs). **Spec 011 DONE → PR #19** (base = spec 010 branch).
+- **Next spec:** **012** (homepage fidelity + editability) — start here. Continue specs 012–018 in order.
+- **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
   handoff (About→`/#about`, Services→`/#services`, short dropdown labels, anchor `isActive` fix); T003 sticky
   state byte-identical to handoff; T004 mobile menu (spec-008 verified); T005 lang switcher verified live
   (AR RTL, Arabic labels, real switch URL); T006 standard footer confirmed; **T007 contact flat footer bug
