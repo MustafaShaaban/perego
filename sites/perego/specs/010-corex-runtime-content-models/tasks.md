@@ -51,9 +51,14 @@
     (`_perego_client/_year/_role/_deliverables` as sanitized strings; `_gallery_attachment_ids` as a typed
     integer list) with `show_in_rest`, `sanitize_callback`, and `auth_callback` — verified registered
     (show_in_rest=1) and REST-exposed on project #84 with existing values intact; Pest +2 (235 total).
-    **Remaining:** same for Service + Client CPTs, then editor UI (meta box / block panel) so the fields
-    are editable in wp-admin. Original scope note below:
-    Currently there is **no `register_post_meta`** for Service/Client CPTs;
+    ✅ Service (`_perego_service_slug`) + Client (`_perego_client_stat`, `_perego_client_video_url`) meta
+    registered too (Pest +2). ✅ **Editor UI:** `PeregoSite\Admin\PostMetaBoxes` adds a "Project/Service/
+    Client details" meta box (admin-only) with labelled text inputs for the scalar fields and a guarded
+    `save_post` handler (nonce + `edit_post` cap + autosave/revision guards; sanitises via each field's
+    registered callback; deletes on empty). Unit-tested (schema + all save guards + sanitize + delete);
+    verified all 3 meta boxes register. **Remaining:** a real media UI (wp.media) for the Project gallery
+    (`_perego_gallery_attachment_ids`) instead of relying on seeds — follow-up.
+    (History: Service/Client previously had no `register_post_meta`.)
     all meta is seed-only `update_post_meta`. Register every field via native `register_post_meta`
     (`show_in_rest` + `type` + `sanitize_callback` + `auth_callback`) + editor UI (block-editor
     `PluginDocumentSettingPanel` or classic meta boxes). Fields per `spec.md`. Confirmed stored keys today:
