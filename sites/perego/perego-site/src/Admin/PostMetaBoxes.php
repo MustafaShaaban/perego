@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PeregoSite\Admin;
 
+use PeregoSite\Content\HeroContent;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
@@ -60,29 +61,77 @@ final class PostMetaBoxes
                     ClientPostType::META_VIDEO_URL => ['label' => __('Video URL', 'perego-site'), 'sanitize' => 'esc_url_raw'],
                 ],
             ],
+            // spec 012 T004 — the homepage hero, editable per language on the front page (the box is
+            // scoped to the front page in addBoxes(); other pages never show it). Empty fields fall back
+            // to the HomeContent seed in HeroContent::resolve().
+            'page' => [
+                'title' => __('Homepage hero', 'perego-site'),
+                'fields' => [
+                    HeroContent::META_SLIDE_TITLE[0] => ['label' => __('Slide 1 title', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    HeroContent::META_SLIDE_TEXT[0] => ['label' => __('Slide 1 text', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    HeroContent::META_SLIDE_TITLE[1] => ['label' => __('Slide 2 title', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    HeroContent::META_SLIDE_TEXT[1] => ['label' => __('Slide 2 text', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    HeroContent::META_SLIDE_TITLE[2] => ['label' => __('Slide 3 title', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    HeroContent::META_SLIDE_TEXT[2] => ['label' => __('Slide 3 text', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    HeroContent::META_CTA => ['label' => __('CTA button label', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                ],
+            ],
         ];
     }
 
     public function register(): void
     {
-        add_action('add_meta_boxes', [$this, 'addBoxes']);
+        add_action('add_meta_boxes', [$this, 'addBoxes'], 10, 2);
         add_action('save_post', [$this, 'save'], 10, 2);
     }
 
-    public function addBoxes(): void
+    /**
+     * @param string        $postType the screen's post type (from the add_meta_boxes hook)
+     * @param \WP_Post|null $post     the post being edited (from the add_meta_boxes hook)
+     */
+    public function addBoxes($postType = '', $post = null): void
     {
-        foreach ($this->schema() as $postType => $box) {
+        foreach ($this->schema() as $type => $box) {
+            // The hero box lives on the `page` type but is only relevant to the front page (and its
+            // translations) — never every page.
+            if ($type === 'page' && ! $this->isFrontPage($post)) {
+                continue;
+            }
+
             add_meta_box(
-                'perego-meta-' . $postType,
+                'perego-meta-' . $type,
                 $box['title'],
-                function ($post) use ($postType): void {
-                    $this->renderBox($postType, (int) $post->ID);
+                function ($boxPost) use ($type): void {
+                    $this->renderBox($type, (int) $boxPost->ID);
                 },
-                $postType,
+                $type,
                 'normal',
                 'default'
             );
         }
+    }
+
+    /**
+     * Is the given post the site's front page (or one of its Polylang translations)? The hero meta
+     * only applies there.
+     */
+    private function isFrontPage($post): bool
+    {
+        if (! is_object($post) || ! isset($post->ID)) {
+            return false;
+        }
+
+        $frontId = (int) get_option('page_on_front');
+        if ($frontId <= 0) {
+            return false;
+        }
+
+        $ids = [$frontId];
+        if (function_exists('pll_get_post_translations')) {
+            $ids = array_map('intval', array_values(pll_get_post_translations($frontId))) ?: $ids;
+        }
+
+        return in_array((int) $post->ID, $ids, true);
     }
 
     private function renderBox(string $postType, int $postId): void

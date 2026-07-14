@@ -10,7 +10,7 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
-use PeregoSite\Content\HomeContent;
+use PeregoSite\Content\HeroContent;
 use PeregoSite\Services\LanguageService;
 
 /**
@@ -31,8 +31,9 @@ final class HeroSliderRenderer
 
     public function render(): string
     {
-        $content = new HomeContent($this->languageService->driver()->currentLocale());
-        $slides  = $content->heroSlides();
+        $locale = $this->languageService->driver()->currentLocale();
+        $hero   = (new HeroContent())->resolve($this->frontPageId(), $locale);
+        $slides = $hero['slides'];
 
         $context = esc_attr((string) wp_json_encode([
             'activeIndex' => 0,
@@ -62,7 +63,7 @@ final class HeroSliderRenderer
         $html .= $this->renderSlides($slides);
         $html .= '<div class="hero__cta">'
             . '<a class="btn btn--accent" href="' . esc_url(home_url('/contact')) . '">'
-            . esc_html($content->heroCta()) . '</a>'
+            . esc_html($hero['cta']) . '</a>'
             . '</div>';
         $html .= '</div>'; // .hero__content
         $html .= '</div>'; // .hero__inner
@@ -78,6 +79,20 @@ final class HeroSliderRenderer
         $html .= '</section>';
 
         return $html;
+    }
+
+    /**
+     * The page whose hero meta to read. On the static front page the queried object *is* that page
+     * (EN or AR), giving locale-correct overrides; otherwise fall back to the configured front page.
+     */
+    private function frontPageId(): int
+    {
+        $queried = function_exists('get_queried_object_id') ? (int) get_queried_object_id() : 0;
+        if ($queried > 0) {
+            return $queried;
+        }
+
+        return function_exists('get_option') ? (int) get_option('page_on_front') : 0;
     }
 
     /**
