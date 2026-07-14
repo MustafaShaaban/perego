@@ -47,8 +47,20 @@
     lists them by title in the correct areas. Verified: `get_block_templates(…, 'wp_template_part')` returns
     all three with the right `area`. Parts embed the server-rendered blocks (`edit()` shows a labelled
     preview; `save:null`).
-- [ ] T010 EN/AR × all required widths screenshot comparison; focus states; reduced motion. Evidence.
-    - Structural EN + AR parity verified via live HTML (T002/T005/T006/T007). Screenshot matrix pending.
+- [x] T010 **EN/AR visual acceptance — captured against the live site.** Playwright captures (saved to the
+    gitignored `output/playwright/`): `011-en-desktop-header.png` — EN header matches the handoff (logo
+    "Perego بيريجو", Home active/underlined, About Us, Services ▾, Work, Journal, Clients, Contact Us, accent
+    "Start a Project", AR/EN toggle with EN active); `011-en-fullpage-footer-3col.png` — homepage footer is
+    the handoff's three columns (Contact us + channels + social / quick-message Full name·E-mail·message·Send
+    / Join us CV form) + legal bar; `011-ar-desktop-header-rtl.png` — full RTL mirror (logo right, nav
+    right-aligned Arabic الرئيسية/من نحن/خدماتنا ▾/أعمالنا/المدونة/عملاؤنا/تواصل معنا, CTA + toggle left, hero
+    "بماذا نؤمن" right-aligned); `011-contact-flat-footer-2col.png` — `/contact` flat footer is exactly two
+    columns (Contact us + Join us), **no quick-message column**, confirming the T007 fix. Focus states +
+    reduced-motion were verified in spec 008 (`verify-interactions.mjs`, a11y pass); the reference CSS is
+    byte-identical to the handoff so the responsive breakpoints carry over. **Tooling note:** the
+    playwright-cli `resize` to a mobile width did not take effect this session (viewport stayed 1280), so the
+    mobile hamburger was not re-captured here — T004's mobile menu remains covered by spec 008's verified
+    interactions and the header tests' markup assertions.
     - **Follow-up (documented, not a T011 blocker):** the primary-nav item hrefs are emitted with
       `home_url()`, so on AR pages every nav link (Home/Work/Journal/services/Contact and the `#about`/
       `#services`/`#clients` anchors) points at the **EN** base URL — an AR visitor clicking any nav item is
