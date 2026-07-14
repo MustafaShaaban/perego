@@ -65,8 +65,8 @@ Studio) — no hidden CPTs, seed-only content, or hard-coded editorial prose sta
 | Spec | Scope | Branch | Status |
 |------|-------|--------|--------|
 | 009 | CMS block architecture + Global Sections migration/removal + cleanup | `feature/009-cms-block-architecture-cleanup` | **DONE** (migrated, removed, verified; PR open) — footer canvas-editing seam → 011 |
-| 010 | CoreX runtime, Forms, Submissions, Data Models | `feature/010-corex-runtime-content-models` | Not started |
-| 011 | Global shell + preloader | `feature/011-global-shell-preloader` | Not started |
+| 010 | CoreX runtime, Forms, Submissions, Data Models | `feature/010-corex-runtime-content-models` | **DONE** (PR #18) — admin-bundle fix, metadata+editor controls; GAP-1/2 documented |
+| 011 | Global shell + preloader | `feature/011-global-shell-preloader` | **IN PROGRESS** |
 | 012 | Homepage design + functional completion | `feature/012-home-page-fidelity` | Not started |
 | 013 | Services archive + four service singles | `feature/013-services-pages-completion` | Not started |
 | 014 | Work archive + project single | `feature/014-work-project-pages` | Not started |
