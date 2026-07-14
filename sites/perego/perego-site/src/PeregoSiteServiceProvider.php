@@ -82,8 +82,10 @@ final class PeregoSiteServiceProvider
         (new \PeregoSite\Seo\PlaceholderPageIndexing())->register();
 
         // spec 010 T009: editor controls for the structured Project/Service/Client metadata (admin only).
+        // spec 014 T002: the Project gallery wp.media picker (deferred from 010).
         if (is_admin()) {
             (new \PeregoSite\Admin\PostMetaBoxes())->register();
+            (new \PeregoSite\Admin\ProjectGalleryMetaBox())->register();
         }
     }
 
