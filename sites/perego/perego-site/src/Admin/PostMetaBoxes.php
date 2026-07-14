@@ -48,6 +48,9 @@ final class PostMetaBoxes
                 'title' => __('Service details', 'perego-site'),
                 'fields' => [
                     ServicePostType::META_SERVICE_SLUG => ['label' => __('Canonical service key (video/motion/design/web)', 'perego-site'), 'sanitize' => 'sanitize_key'],
+                    ServicePostType::META_TEASER_LABEL => ['label' => __('Homepage card label (e.g. "Video Editing")', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    ServicePostType::META_TEASER_IMAGE_ID => ['label' => __('Homepage card image (attachment ID)', 'perego-site'), 'sanitize' => 'absint'],
+                    ServicePostType::META_TEASER_ALT => ['label' => __('Homepage card image alt text', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
                 ],
             ],
             ClientPostType::POST_TYPE => [
