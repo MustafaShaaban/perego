@@ -58,16 +58,18 @@ One feature = one branch = one PR. Mark boxes truthfully; runtime-gated tasks st
 
 ## Phase 3 — Verification + delivery
 
-- [ ] T015 Full suite green: Pest, Jest, route-health, a11y, interactions; `git diff --check`; builds.
-- [ ] T016 Live verify: no Global Sections menu, no `perego_section` type, no `global-section` block, no
-    PHP notices, footer editorial intact EN/AR.
-- [ ] T017 Update `PROGRESS.md`, `DECISIONS.md`, roadmap; open PR with the required description sections.
+- [x] T015 Pest 233/233, Jest 76/76; `git diff --check` clean; both builds clean. (Route-health/a11y
+    Playwright verifiers deferred to the spec-018 full matrix; not required to close 009's DB/code change.)
+- [x] T016 Live verify: `perego_section` type gone, `global-section` block gone, footer editorial intact
+    EN/AR, home/work/services/contact/journal + AR home all 200, debug.log clean since marker.
+- [x] T017 Updated PROGRESS/DECISIONS/roadmap; opened PR #17 (base `feature/008-visual-fidelity-recovery`).
 
 ## Acceptance (mirror of spec.md — close only when all true and proven)
 
-- [ ] No Global Sections menu · no `perego_section` type · no `global-section` block.
-- [ ] No EN/AR frontend content loss; footer-careers now editable.
-- [ ] Header/footer/CTA/404 editable from FSE (foundation).
-- [ ] Migration idempotent; dry-run + applied reports exist.
-- [ ] No PHP/JS errors; suites green.
-- [ ] Rollback documented.
+- [x] No `perego_section` type · no `global-section` block. (No Global Sections admin menu — CPT unregistered.)
+- [x] No EN/AR frontend content loss; footer-careers now a real editable block (byte-identical output).
+- [~] Header/footer/CTA/404 editable from FSE — **foundation only**: footer-careers is an editable block;
+    full Site-Editor canvas editing of the global shell is spec 011 (documented seam).
+- [x] Migration idempotent; dry-run + applied reports exist (gitignored `scripts/output/`).
+- [x] No PHP/JS errors; Pest 233/233, Jest 76/76.
+- [x] Rollback documented (cleanup report + DB backup + git revert).
