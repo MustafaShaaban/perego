@@ -21,12 +21,20 @@
 
 ## Phase 2 — Forms as CoreX flows
 
-- [ ] T004 Inventory how the 3 Perego forms currently register (QuickMessageForm, ProjectBriefForm,
-    careers endpoint) and whether they appear as flows in Forms & Flows.
-- [ ] T005 Provision the 3 flows via the public seam idempotently (create-if-absent, stable slugs, no
-    overwrite); bind frontend blocks by slug; verify each appears in Forms & Flows.
-- [ ] T006 Submit each form on the frontend; verify the submission appears in CoreX Submissions with
-    correct EN/AR field labels and routing.
+- [x] T004 Forms inventory (`/corex/v1/forms` as admin returns 3): `perego-quick-message` (footer, extends
+    `Corex\Forms\Form`, stable slug) and `perego-project-brief` (contact) are **real CoreX forms** through
+    the public `Corex\Forms\Form` API — they run through the CoreX engine so their submissions persist. The
+    **careers/join** form is a **separate custom endpoint** (`perego/v1/careers/apply`), NOT a CoreX form,
+    because CoreX Forms has no file-upload field type (needs the CV upload — see DECISIONS Decision 7 /
+    corex-careers). So 2 of 3 are CoreX forms; the 3rd is a documented framework limitation.
+- [~] T005 The 2 CoreX forms already register via the public `Corex\Forms\Form` API with stable slugs
+    (`perego-quick-message`, `perego-project-brief`) and appear in `/corex/v1/forms`; frontend blocks bind
+    by slug. **Remaining:** confirm they render/edit in the Forms & Flows *screen* (interactive admin, now
+    that the admin bundle is built) and decide whether code-forms need mirroring as persisted DB flows.
+    The careers form stays a custom endpoint (file-upload gap).
+- [x] T006 (substantially) Submissions land in CoreX Submissions — `/corex/v1/submissions` (admin) returns
+    real entries incl. id 150 from flow `perego-project-brief`. Pipeline works end-to-end for the CoreX
+    forms. Remaining: per-form fresh test submission + EN/AR label spot-check (interactive), tracked to 016.
 
 ## Phase 3 — Data Models
 

@@ -8,7 +8,7 @@
 - **Branch:** `feature/009-cms-block-architecture-cleanup` (off `feature/008-visual-fidelity-recovery` @ `1b7ecda`)
 - **Latest pushed commit:** `4a5cfdc` (T011) — plus uncommitted T012–T016 cleanup about to be committed/pushed
 - **Active spec:** `010` (CoreX runtime) — audit done, admin-bundle 404 root-caused + fixed; `009` DONE (PR #17)
-- **Active task:** spec 010 T003 (ACF role) / T004 (forms-as-flows inventory) / T007 (register Projects/Services/Clients data models — pure Perego client code, unblocked)
+- **Active task:** spec 010 — T001–T004 done, T006 substantially done (submissions land, id 150), T007/T008 BLOCKED (GAP-1). **Next unblocked: T009/T010** (register Project/Service/Client structured metadata + proper editor controls — pure Perego client code) and T005 interactive Forms & Flows screen check.
 - **⚠ Deploy note:** CoreX admin React bundle (`corex-config/build/admin/index.js`) was 404 (unbuilt) — the real cause of the "missing dashboard". Built locally (gitignored, no framework source edited); **deploy must build CoreX admin assets** or it 404s again. See DECISIONS + spec 010 evidence.
 - **Current objective:** spec 009 complete; move to spec 010 — verify/restore CoreX Forms & Flows / Submissions / Data Models admin, provision the 3 flows, register Projects/Services/Clients models via public seams
 - **Completed this session:** spec 009 end-to-end — bilingual `footer-careers` block (byte-identical EN/AR, verified live perego.local + ngrok); backup-gated idempotent migration removed 14 `perego_section` records (0 orphans); removed CPT+resolver+renderer+block+seed+3 tests+provider wiring; removed orphan `site-footer/style.scss`; regenerated `.pot`; cleanup report. Pest 233/233, Jest 76/76; home+AR 200, no fatals.
