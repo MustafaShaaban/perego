@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/footer-careers",
+	"title": "Perego Footer Careers",
+	"category": "perego",
+	"icon": "megaphone",
+	"description": "The footer 'Join us' careers heading and blurb, stored bilingually (EN + AR) in block attributes; renders only the current language on the frontend and shows both languages in the editor.",
+	"textdomain": "perego-site",
+	"attributes": {
+		"headingEn": { "type": "string", "default": "Join us" },
+		"headingAr": { "type": "string", "default": "انضم إلينا" },
+		"blurbEn": {
+			"type": "string",
+			"default": "We're constantly evolving. If you're ready to grow with us, share your CV and portfolio."
+		},
+		"blurbAr": {
+			"type": "string",
+			"default": "نحن في تطوّر مستمر. إن كنت مستعدًا للنمو معنا، شاركنا سيرتك الذاتية وأعمالك."
+		}
+	},
+	"supports": { "html": false, "reusable": false },
+	"editorScript": "file:./index.js"
+}

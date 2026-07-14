@@ -32,6 +32,7 @@ use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
+use PeregoSite\Blocks\FooterCareersRenderer;
 use PeregoSite\Blocks\GlobalSectionRenderer;
 use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\GlobalContent;
@@ -234,6 +235,16 @@ final class PeregoSiteServiceProvider
                     return (new NotFoundRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render();
+                },
+            ]);
+
+            // spec 009: the footer "Join us" careers editorial, migrated off the perego_section CPT into
+            // a bilingual block whose EN/AR variants live in its own attributes.
+            register_block_type($this->blockDir('footer-careers'), [
+                'render_callback' => static function (array $attributes) use ($languageService): string {
+                    return (new FooterCareersRenderer(
+                        $languageService->driver()->currentLocale()
+                    ))->render($attributes);
                 },
             ]);
 

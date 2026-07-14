@@ -188,8 +188,10 @@ final class SiteFooterRenderer
     }
 
     /**
-     * The Join-us heading and introduction are canvas-authored global content, not runtime copy.
-     * The fallback deliberately emits no invented prose when the block is unavailable.
+     * The Join-us heading and introduction, rendered from the perego-theme/footer-careers block whose
+     * EN/AR variants live in its own attributes (spec 009 — migrated off the perego_section CPT). The
+     * bare instance uses the block's default attributes, so output is identical to the prior CPT render;
+     * the fallback deliberately emits no invented prose when the block is unavailable.
      */
     private function careersEditorial(): string
     {
@@ -197,11 +199,11 @@ final class SiteFooterRenderer
             return '';
         }
 
-        if (! \WP_Block_Type_Registry::get_instance()->is_registered('perego-theme/global-section')) {
+        if (! \WP_Block_Type_Registry::get_instance()->is_registered('perego-theme/footer-careers')) {
             return '';
         }
 
-        return do_blocks('<!-- wp:perego-theme/global-section {"role":"footer-careers"} /-->');
+        return do_blocks('<!-- wp:perego-theme/footer-careers /-->');
     }
 
     /**

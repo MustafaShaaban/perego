@@ -15,9 +15,13 @@ One feature = one branch = one PR. Mark boxes truthfully; runtime-gated tasks st
     anomaly detection, timestamped JSON report to `scripts/output/`. PHP-lint clean. **Run against the
     local WAMP DB: 14 records, 0 anomalies, footer-careers EN/AR present** — see
     `evidence/global-sections-inventory.md` (Run 1). `apply` intentionally refuses (deferred to T010).
-- [ ] T005 Design + build the `footer-careers` editable FSE surface (Option A) so the footer "Join us"
-    editorial is editable in the Site Editor, EN/AR-aware, with a meaningful preview. Add a Pest render
-    test for the new surface. **Do not yet remove the `global-section` dependency.**
+- [x] T005 Built the bilingual `perego-theme/footer-careers` block (EN/AR variants in block attributes;
+    editor shows both languages via RichText — no "edit elsewhere" placeholder; frontend renders only the
+    current language). `FooterCareersRenderer` reconstructs the exact core heading/paragraph markup the
+    record held and `do_blocks` it → **byte-identical output**. Switched
+    `SiteFooterRenderer::careersEditorial()` onto it (T009 folded in). Built (`build/Blocks/footer-careers`),
+    Pest test added. **Verified live EN + AR on perego.local/ngrok — output matches baseline exactly.**
+    global-section block still registered (removed in T011). Pest 246/246, Jest 76/76.
 
 ## Phase 1 — Migration (target = WAMP DB via wp-cli; runnable locally)
 
@@ -27,8 +31,8 @@ One feature = one branch = one PR. Mark boxes truthfully; runtime-gated tasks st
     guidance that the WAMP DB behind perego.local is the migration target. ngrok cross-check optional.
 - [ ] T008 DB backup gate: `wp db export` a timestamped dump before any destructive change; `backup-check`
     passes against it.
-- [ ] T009 Switch `SiteFooterRenderer::careersEditorial()` to render from the new editable surface; verify
-    live EN/AR footer editorial unchanged; drop the `global-section` block dependency. (Runtime verify.)
+- [x] T009 Switched `SiteFooterRenderer::careersEditorial()` to the `footer-careers` block (done with
+    T005). Live EN/AR footer editorial byte-identical. global-section dependency dropped from the footer.
 - [ ] T010 Run `--apply`; confirm removal of `perego_section` posts/meta/translation relations; emit final
     orphan report; re-run `--apply` to prove idempotent no-op. (Runtime.)
 
