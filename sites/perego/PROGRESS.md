@@ -21,8 +21,15 @@
   - **Proven** via live edit round-trips (teaser label + hero title changed the homepage, then restored) and a
     pixel-identical full-page capture (`output/playwright/012-en-homepage-noregression.png`). Pest 249/249.
     Both seeders idempotent; DB backup `db-backup-20260714-220905.sql` (gitignored). Guards pass.
-- **Next spec:** **013** (Services archive + four service singles) — branch `feature/013-services-pages-completion`
-  off 012. Then 014–018 in order.
+- **Active spec:** **013** (Services archive + four service singles) — branch `feature/013-services-pages-completion`
+  (off 012). **T001 audit DONE.** Archive + 4 singles render 200 with all handoff sections (svc-hero/whatwedo/
+  process/portfolio), EN/AR; whatwedo+process editable via `post-content`. **Gap (same as 012):** the
+  `svc-hero` (title/eyebrow/subline/tabs) and the `/services/` overview render from the hardcoded
+  `ServiceContent::COPY`, not the `perego_service` post. **Next: T002** confirm the editable seam + verify the
+  selected-work source (Projects vs hardcoded) → **T003** service hero ← CPT (reuse the 012 projection +
+  per-field seed-fallback + seeder + edit round-trip pattern) → T004 archive ← CPT → T005 selected-work ←
+  Projects → fidelity/guards/PR. Spec: `specs/013-services-pages-completion/`.
+- **Then 014–018 in order.**
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
