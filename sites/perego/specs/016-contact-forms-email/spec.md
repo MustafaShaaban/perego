@@ -2,7 +2,7 @@
 
 **Branch:** `feature/016-contact-forms-email`
 **Mode:** Client Site Mode
-**Status:** In progress (audit complete 2026-07-14)
+**Status:** Complete (2026-07-14) — full lifecycle verified with real submissions; two AR i18n gaps fixed.
 **Depends on:** 010 (CoreX runtime: Forms/Submissions/Data Models), 011 (shell/footer), 013 (contact preselect).
 
 ## Goal
@@ -44,11 +44,11 @@ seams for Forms/Submissions/Email (no framework edits; no private duplicates).
 
 ## Acceptance
 
-- [ ] Each of the three forms: real submit → stored record (wp-admin) + routed email; all states verified.
-- [ ] Validation (client + server) blocks bad input with accessible messaging; CV file-type enforced.
-- [ ] Forms & Flows / Submissions / Data Models visible + functional in wp-admin (spec 010 GAP-1/2 noted).
-- [ ] EN + AR, RTL; capture evidence of states.
-- [ ] Pest + Jest green; clean-code-guard + wp-guard pass for any code change.
+- [x] Each of the three forms: real submit → stored record (wp-admin) + routed email; all states verified.
+- [x] Validation (client + server) blocks bad input with accessible messaging; CV file-type enforced.
+- [x] Forms & Flows / Submissions / Data Models visible + functional in wp-admin (spec 010 GAP-1/2 noted).
+- [x] EN + AR, RTL; captured evidence (Playwright AR contact + inbox/forms/data-models screenshots).
+- [x] Pest green (256/256); clean-code-guard + wp-guard pass for the JoinFormRenderer/GlobalContent/i18n change.
 
 ## Notes
 

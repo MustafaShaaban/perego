@@ -48,9 +48,9 @@ final class JoinFormRenderer
             . ' data-max-bytes="10485760" data-messages="' . esc_attr((string) wp_json_encode($messages)) . '"'
             . ' aria-describedby="join-form-status" novalidate>';
 
-        $html .= $this->field('jf-name', 'name', 'text', $t['name'], true, ['autocomplete' => 'name', 'maxlength' => '80', 'placeholder' => 'Put your name here']);
+        $html .= $this->field('jf-name', 'name', 'text', $t['name'], true, ['autocomplete' => 'name', 'maxlength' => '80', 'placeholder' => $t['namePlaceholder']]);
         $html .= $this->field('jf-email', 'email', 'email', $t['email'], true, ['autocomplete' => 'email', 'maxlength' => '120']);
-        $html .= $this->field('jf-portfolio', 'portfolio', 'url', $t['portfolio'], false, ['inputmode' => 'url', 'placeholder' => 'Put your Portfolio/website link']);
+        $html .= $this->field('jf-portfolio', 'portfolio', 'url', $t['portfolio'], false, ['inputmode' => 'url', 'placeholder' => $t['portfolioPlaceholder']]);
 
         // CV file input + accessible constraint hint.
         $html .= '<div class="field join-form__field">';

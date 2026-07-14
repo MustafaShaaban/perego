@@ -218,3 +218,9 @@ msgstr "كيف يمكننا مساعدتك؟"
 
 msgid "Client"
 msgstr "العميل"
+
+msgid "Say hello."
+msgstr "قل مرحبًا."
+
+msgid "Select a range"
+msgstr "اختر نطاقًا"
