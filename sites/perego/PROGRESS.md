@@ -2,51 +2,59 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## Session summary (2026-07-14) — T003–T006/T007 closed, two critical bugs found and fixed
+## Session summary (2026-07-14) — T003–T007 substantially closed; full 8-viewport × EN/AR matrix run; T008 Contact bug found and fixed
 
-Continuing the visual-fidelity recovery per `PEREGO_FINAL_COMPLETION_PROMPT.md`. 17 commits this
-session, all verified and pushed to `feature/008-visual-fidelity-recovery`. Full suite green
-throughout: **Pest 230/230, Jest 76/76, route-health 72/0, interactions 12/12, a11y 12/0**
-(a11y started the session at 14 serious/critical violations).
+Continuing the visual-fidelity recovery per `PEREGO_FINAL_COMPLETION_PROMPT.md`. All work this
+session verified and pushed to `feature/008-visual-fidelity-recovery`. Full suite green:
+**Pest 242/242, Jest 76/76, interactions 12/12, a11y 12/12** (a11y started the session at 14
+serious/critical violations). Ran the full `capture-visual-recovery.mjs` matrix for the first time
+this session — 20 routes/states × 8 required widths × EN/AR = 362 captures, **0 with horizontal
+overflow**; the only 16 "unavailable" records are the 404/sample-page routes in AR, which cannot
+publish an hreflang alternate by design (not a defect).
 
-**Closed**: T003 (interference audit), T004 (header/nav/dropdown/mobile/RTL), T005 (forms/footer
-states). **Partial**: T006 (Home hero controls + Services process + selected-work all fixed;
-per-service-single process migration still open), T007 (comment-form styling fixed; full Work/
-Journal state matrix still open).
+**Closed**: T003 (interference audit), T005 (forms/footer states). T004/T006/T007 have every
+sub-item done (see `tasks.md`) but keep their top-level box open pending a full manual review pass
+over all 362 captured screenshots, per the file's own acceptance rule.
 
-**Real bugs found and fixed** (not cosmetic):
-- Two pre-existing a11y regressions (ARIA role mismatch, contrast failures) + an RTL logical-CSS gap,
-  found while verifying the session's starting diff.
+**Real bugs found and fixed this session** (not cosmetic), most recent first:
+- **AR Contact page was completely unstyled at every width** — only discovered once the full
+  8-viewport matrix was actually captured and reviewed (earlier spot-checks at 1440/375 alone missed
+  it). Root cause: `page-contact.html` depended on implicit `page-{slug}.html` template-hierarchy
+  matching instead of an explicit `_wp_page_template` assignment; Polylang's translated-page slug
+  (`contact` → `contact-2`) never matches that filename, so AR silently fell back to the generic
+  `page.html` template. Fixed by registering `page-contact` in `theme.json`'s `customTemplates` and
+  explicitly assigning it on both language pages (Decision 21). Also fixed a second bug it was
+  hiding: 3 of 4 service-chooser labels were untranslated (hardcoded English + no matching `.po`
+  entry) — now sourced from `HomeContent::services()`'s existing locale-aware short names.
+- Two pre-existing a11y regressions (ARIA role mismatch, contrast failures) + an RTL logical-CSS gap.
 - A CoreX **framework** bug causing native browser validation bubbles on every CoreX form (worked
   around client-side; logged as Decision 19 for a CoreX Framework Mode task).
 - A service-chooser UI desync after `form.reset()`.
 - Services archive's "Our Process" was a plain unstyled `<ol>` — rebuilt as the handoff's icon/card/
-  arrow design.
+  arrow design; same fix migrated to the four per-service-single process sections.
 - Native white WordPress comment-form fields.
-- **Six blocks' `block.json` were missing the `"style"` key entirely** (`hero-slider`,
-  `clients-carousel`, `services-teaser`, `home-about-bg`, `portfolio-grid`, `site-footer`,
-  `site-header`), silently orphaning their compiled CSS on every route — this is why the homepage
-  hero's Previous/Next/Pause controls were completely unclickable, not just "unproven."
-- **Both site lightboxes were completely invisible** despite opening correctly in the DOM: the
-  reference stylesheet's `.lightbox` rule only becomes visible via an `.is-open` class that nothing
-  ever added, since both lightbox blocks toggle the WordPress-idiomatic `hidden` attribute instead.
-  The already-shipped `project-gallery-lightbox`'s "9/9 passing" interaction checks had only ever
-  asserted the `hidden` DOM attribute, never actual computed visibility — proof that DOM-level
-  "verified" is not the same as visually verified. Fixed with one scoped CSS rule; strengthened
-  `verify-interactions.mjs` to assert computed style directly so this bug class cannot silently
-  recur.
-- Built the previously-nonexistent shared `perego-theme/media-lightbox` (site-wide accessible image/
-  video/gallery dialog) and used it to fill in the Services archive's completely-missing
-  "Selected work" section with real project data.
+- **Six blocks' `block.json` were missing the `"style"` key entirely**, silently orphaning their
+  compiled CSS on every route — this is why the homepage hero's Previous/Next/Pause controls were
+  completely unclickable, not just "unproven."
+- **Both site lightboxes were completely invisible** despite opening correctly in the DOM — the
+  already-shipped `project-gallery-lightbox`'s "9/9 passing" interaction checks had only ever
+  asserted the `hidden` DOM attribute, never actual computed visibility. Fixed with one scoped CSS
+  rule; strengthened `verify-interactions.mjs` to assert computed style directly.
+- Built the previously-nonexistent shared `perego-theme/media-lightbox` and used it for the Services
+  archive's and every service single's "Selected work" sections, and for individual client-card
+  video playback.
+- Work archive's missing closing CTA section; Journal/single-post reading-time + meta-dot separators
+  bug (broke inside Query Loop); search result-card placeholder had zero CSS.
 
 **Full detail, root causes, and evidence**: `docs/visual-recovery.md`, `DECISIONS.md` (Decisions
-19–20), and `specs/008-visual-fidelity-recovery/tasks.md`.
+19–21), and `specs/008-visual-fidelity-recovery/tasks.md`.
 
-**Honestly still open** (not fabricated as done): per-service-single "Our Process" sections (same
-design gap as the archive, needs a content migration since it's seeded editor-canvas content);
-individual/corporate client cards need real video URLs wired to the new lightbox; the full route ×
-8-viewport × EN/AR × state visual matrix for Contact/Search/legal/404/Work/Journal (T008) remains
-open. See `specs/008-visual-fidelity-recovery/tasks.md` for the exact task-by-task state.
+**Honestly still open** (not fabricated as done): a full manual review pass over all 362 captured
+screenshots (automated capture found 0 overflow, but manual visual review has only sampled a subset);
+T009's WP block-editor "no recovery warning" check is blocked on a genuine credential issue (documented
+dev password no longer works — flagged for owner input); T010 (performance/security/SEO gates, final
+regression pass, merge) not started. See `specs/008-visual-fidelity-recovery/tasks.md` for the exact
+task-by-task state.
 
 ## Authoritative visual-recovery status (2026-07-13)
 

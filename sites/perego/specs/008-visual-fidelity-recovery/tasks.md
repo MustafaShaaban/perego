@@ -192,6 +192,28 @@
     not in the reference stylesheet) matching the look of the seeded `portfolio-N.png` placeholders
     used everywhere else, so a photo-less result reads as an intentional "no photo yet" state instead
     of a broken image. Verified live; route-health 72/0, a11y 12/0.
+  - [x] **Full 8-viewport × EN/AR × all-routes capture run for the first time this session (2026-07-14):**
+    prior route reviews were manual spot-checks, mostly at 1440/375. Ran `capture-visual-recovery.mjs`
+    across all 20 route/state entries × all 8 required widths (320/375/430/768/1024/1280/1440/wide) ×
+    EN/AR — 362 total captures, 0 with horizontal overflow. The only 16 "unavailable" records are the
+    404 and WP-sample-`page` routes in AR (both discovered via hreflang alternate, which a true 404/no-
+    real-translation route cannot publish by design — not a defect).
+  - [x] **AR Contact page found completely unstyled at every width, only visible via the full-matrix
+    capture (2026-07-14) — see Decision 21 in `DECISIONS.md` and the matching row in
+    `docs/visual-recovery.md`:** root cause was `page-contact.html` depending on implicit
+    `page-{slug}.html` template-hierarchy matching instead of an explicit `_wp_page_template`
+    assignment; Polylang's translated-page slug (`contact` → `contact-2`) never matches that filename,
+    so AR silently fell back to the generic `page.html` template with none of the designed
+    hero/chooser/card markup. Fixed by registering `page-contact` in `theme.json`'s `customTemplates`
+    and explicitly assigning it via `wp post meta update` on both language pages, mirroring the legal
+    pages' already-correct pattern. Also fixed a second bug hiding behind the first: three of the four
+    service-chooser button labels were hardcoded English strings with no matching AR `.po` entry (only
+    "Website Making" coincidentally already existed in the catalog), so `ContactServiceChooserRenderer`
+    now takes the injected `LanguageService` and reuses `HomeContent::services()`'s existing
+    locale-aware short names instead of a second, divergent, untranslated label set. 4 new Pest tests.
+    Verified live: AR Contact now renders the full styled layout with all four labels correctly in
+    Arabic at every width. Pest 242/242, Jest 76/76, interactions 12/12, a11y 12/12 (incl. AR contact),
+    full re-capture still 0/362 horizontal-overflow.
 - [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.
   - [x] Polylang setup confirmed live (2026-07-14): EN/AR languages configured (`/wp-json/pll/v1/languages`
     reports both, AR correctly flagged `is_rtl:true`), every required route resolves in both languages

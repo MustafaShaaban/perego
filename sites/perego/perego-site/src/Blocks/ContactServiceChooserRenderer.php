@@ -8,25 +8,18 @@ declare(strict_types=1);
 
 namespace PeregoSite\Blocks;
 
+use PeregoSite\Content\HomeContent;
 use PeregoSite\PostTypes\ServicePostType;
+use PeregoSite\Services\LanguageService;
 
 defined('ABSPATH') || exit;
 
 /** Renders the handoff contact-service controls from the current-language service records. */
 final class ContactServiceChooserRenderer
 {
-    /**
-     * The contact handoff deliberately uses concise service labels while the service records retain
-     * their complete editorial names for headings, SEO, and form submissions.
-     *
-     * @var array<string,string>
-     */
-    private const HANDOFF_LABELS = [
-        'video-editing' => 'Video Editing',
-        'motion-graphics' => '2D Motion Graphics',
-        'graphic-design' => 'Graphic Design',
-        'website-making' => 'Website Making',
-    ];
+    public function __construct(private readonly LanguageService $languageService)
+    {
+    }
 
     public function render(): string
     {
@@ -72,11 +65,22 @@ final class ContactServiceChooserRenderer
         return $services !== [] ? $services : ServicePostType::SERVICES;
     }
 
+    /**
+     * The contact handoff deliberately uses concise service labels while the service records retain
+     * their complete editorial names for headings, SEO, and form submissions. Reuses the home
+     * services-teaser's own locale-aware short names (spec 002) so the two never drift apart.
+     */
     private function handoffLabel(string $slug, string $fallback): string
     {
-        return isset(self::HANDOFF_LABELS[$slug])
-            ? __(self::HANDOFF_LABELS[$slug], 'perego-site')
-            : $fallback;
+        $content = new HomeContent($this->languageService->driver()->currentLocale());
+
+        foreach ($content->services() as $service) {
+            if ($service['slug'] === $slug) {
+                return $service['name'];
+            }
+        }
+
+        return $fallback;
     }
 
     private function preselectedService(): string

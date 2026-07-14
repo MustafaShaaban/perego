@@ -553,8 +553,9 @@ final class PeregoSiteServiceProvider
     private function registerContactServiceChooser(): void
     {
         add_action('init', function (): void {
+            $chooserRenderer = new ContactServiceChooserRenderer($this->languageService);
             register_block_type($this->blockDir('contact-service-chooser'), [
-                'render_callback' => static fn (): string => (new ContactServiceChooserRenderer())->render(),
+                'render_callback' => static fn (): string => $chooserRenderer->render(),
             ]);
         });
     }

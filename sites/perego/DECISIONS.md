@@ -467,3 +467,32 @@ just `hidden`, so this exact bug class cannot silently regress again. **Why this
 itself**: it's concrete evidence that "the interaction script passed" is not sufficient proof of visual
 correctness — matching the completion contract's own repeated warning not to treat functional/DOM checks
 as visual acceptance.
+
+**Decision 21 (2026-07-14) — AR Contact page silently lost its custom template because block-theme
+template hierarchy matches page templates by slug, and Polylang mutates translated slugs.** Running the
+full 8-viewport × EN/AR visual-recovery capture (previously only spot-checked at 1440/375) surfaced a
+severe regression invisible to every prior manual check: the Arabic Contact page rendered as a bare,
+unstyled list of native `corex-form__*` fields with no service-chooser buttons and no card container,
+while English rendered the full designed layout. Root cause: `page-contact.html` was never registered as
+a named custom template (unlike `legal.html`, already correctly registered in `theme.json`'s
+`customTemplates` and explicitly assigned via `_wp_page_template` on both the `terms`/`terms-2` and
+`privacy`/`privacy-2` pairs) — instead it relied on WordPress's implicit `page-{slug}.html` template-hierarchy
+match. That works for the English page (slug `contact`) but Polylang appends `-2` to a translation's slug
+to avoid a global slug collision (`contact` → `contact-2`), so the AR page's slug never matches
+`page-contact.html` and WordPress silently falls back to the generic `page.html` template — no error, no
+warning, just a completely different, undesigned page. Fixed by registering
+`{ "name": "page-contact", "title": "Contact", "postTypes": ["page"] }` in `theme.json` and explicitly
+setting `_wp_page_template = page-contact` on both page 57 (EN) and page 58 (AR) via `wp post meta
+update`, mirroring the legal pages' already-correct pattern — template selection no longer depends on a
+slug that Polylang is free to mutate. Verifying the fix also surfaced a second, smaller bug: the
+service-chooser buttons' concise labels (`ContactServiceChooserRenderer::HANDOFF_LABELS`) were hardcoded
+English strings passed through a bare `__()` call with no matching `.po` catalog entries for three of the
+four labels (only `"Website Making"` happened to coincidentally already exist in the catalog as a
+full-name string), so AR rendered three buttons in English and one in Arabic. Fixed by having the renderer
+take the injected `LanguageService` and reuse `HomeContent::services()`'s already-correct, already-translated
+locale-aware short names (the same source the home services-teaser cards use) instead of maintaining a
+second, divergent, untranslated copy of the same four labels. **Why this matters beyond the fix itself**:
+this is the second time this session that a defect was invisible to narrow, single-viewport manual
+review and only surfaced once the full route × viewport × language matrix was actually captured and
+looked at — reinforcing that partial/spot-check verification is not equivalent to the completion
+contract's required full-matrix visual proof.
