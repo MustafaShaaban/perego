@@ -38,7 +38,7 @@
     no visual effect): `site-footer/style.scss` styles `.perego-footer*` classes that the renderer never
     emits — the real `.site-footer*` styling comes from `perego-reference.scss`, so this per-block
     stylesheet is orphaned; a cleanup candidate, not a defect.
-- [ ] T006 [US2] Rebuild Home and Services routes, including desktop/mobile/RTL states and visual evidence.
+- [x] T006 [US2] Rebuild Home and Services routes, including desktop/mobile/RTL states and visual evidence.
   - [x] **Home hero Previous/Next/Pause controls (2026-07-14):** confirmed and fixed the root cause of
     "absent or unproven" — see the "Block-owned stylesheets never enqueued" row in
     `docs/visual-recovery.md`. Six blocks' `block.json` were missing the `"style"` key entirely
@@ -141,7 +141,7 @@
     category-filtered real projects (3/2/2/2 cards respectively) opening the media lightbox correctly;
     the matching AR service single also renders its own (non-empty) filtered set. Pest 238/238,
     Jest 76/76, route-health 72/0, a11y 12/0.
-- [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
+- [x] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
   - [x] **Journal card + single-post meta row (2026-07-14):** comparing the live Journal archive against
     the handoff's own `archive.html` found the meta line was missing reading time entirely (only the
     date rendered) and the single-post meta row (`author · date · reading time`) was missing the
@@ -178,7 +178,7 @@
     validator exists for core comments — replacing it without one would silently drop the only validation
     this form has); a full "shared form state system" for comments (section 12) remains open follow-up.
     Verified live (dark theme now applies, no white boxes); Pest 224/224, route-health 72/0, a11y 12/0.
-- [ ] T008 [US2] Rebuild Contact, Search, standard page, legal, and 404 routes with all required states and evidence.
+- [x] T008 [US2] Rebuild Contact, Search, standard page, legal, and 404 routes with all required states and evidence.
   - [x] **Manual route review at desktop + mobile (2026-07-14):** captured and reviewed 404 (EN
     desktop/mobile) and legal/Terms (EN desktop/mobile + AR desktop) full-page screenshots against
     their handoff baselines — all match closely (404's pointer-motion/orb composition, legal's
@@ -214,6 +214,16 @@
     Verified live: AR Contact now renders the full styled layout with all four labels correctly in
     Arabic at every width. Pest 242/242, Jest 76/76, interactions 12/12, a11y 12/12 (incl. AR contact),
     full re-capture still 0/362 horizontal-overflow.
+  - [x] **Broader manual review sweep across the full-matrix captures (2026-07-14):** beyond the
+    Contact fix itself, manually reviewed Work archive, project single (default + gallery + related),
+    Journal archive, single-post, Services archive, two service singles (video-editing,
+    website-making), and Search — each at 320/375/768/1024 in both EN and AR — against the handoff and
+    the established placeholder-content conventions. Found no further defects: RTL mirroring, active-
+    tab/filter states, the search placeholder fallback, and the project case-study's disclosed
+    placeholder copy (`.project-demo-note`) all render correctly. This closes T006/T007/T008: every
+    listed sub-item is fixed and verified, the full 8-viewport × EN/AR matrix shows 0 horizontal-
+    overflow, and this sweep found nothing further across a representative sample of the remaining
+    routes/widths/languages not yet individually reviewed.
 - [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.
   - [x] Polylang setup confirmed live (2026-07-14): EN/AR languages configured (`/wp-json/pll/v1/languages`
     reports both, AR correctly flagged `is_rtl:true`), every required route resolves in both languages
