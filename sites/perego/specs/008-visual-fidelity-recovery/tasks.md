@@ -193,6 +193,17 @@
     used everywhere else, so a photo-less result reads as an intentional "no photo yet" state instead
     of a broken image. Verified live; route-health 72/0, a11y 12/0.
 - [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.
-- [ ] T010 Complete state/viewport visual regression, a11y, performance, security, quality gates, docs, PR, and merge.
-- [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.
+  - [x] Polylang setup confirmed live (2026-07-14): EN/AR languages configured (`/wp-json/pll/v1/languages`
+    reports both, AR correctly flagged `is_rtl:true`), every required route resolves in both languages
+    (72/72 route-health), and AR pages render `dir="rtl"`/Cairo typography/mirrored layout correctly
+    across every route reviewed this session (Home, Services, Work, Journal, Contact, legal). Category
+    taxonomy terms are correctly per-language-linked (verified directly via `pll_get_term()` while
+    building the per-service selected-work filter — see T006).
+  - [ ] **Blocked on a genuine external credential, not an engineering gap:** wanted to open the
+    WP block editor for a migrated service post to directly confirm no "attempt block recovery"
+    warning, as an extra check beyond the `parse_blocks()` sanity pass already done. The documented
+    dev admin credentials (`admin`/`changeme` per `PROGRESS.md`'s environment-bootstrap note) no longer
+    work — the password has evidently been changed since. Did not attempt further guesses. Smallest
+    owner action: share the current wp-admin password (or reset it), or confirm the existing
+    `parse_blocks()` structural check is sufficient acceptance evidence for the editor-canvas content.
 - [ ] T010 Complete state/viewport visual regression, a11y, performance, security, quality gates, docs, PR, and merge.
