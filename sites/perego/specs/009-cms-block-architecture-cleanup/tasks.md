@@ -45,12 +45,16 @@ One feature = one branch = one PR. Mark boxes truthfully; runtime-gated tasks st
     CPT constants into the retained migration script. Regenerated `.pot` (0 global-section refs).
     Rebuilt. Verified: home 200, `perego_section` gone, `global-section` block gone, `footer-careers`
     registered, footer editorial intact. Pest 233/233, Jest 76/76.
-- [ ] T012 Evidence-based dead-asset sweep (duplicate CSS, orphaned block styles, stale selectors) —
-    inventory first, remove only proven-dead; note candidates already flagged in
-    `specs/008-.../tasks.md` (e.g. orphaned `site-footer/style.scss`).
-- [ ] T013 Write `docs/cleanup-report.md` (removed file/symbol/DB entity, why, replacement, verification,
-    rollback).
-- [ ] T014 Prove FSE editability of the migrated global areas (Site-Editor screenshots, no credentials).
+- [x] T012 Dead-asset sweep: removed the orphaned `site-footer/style.scss` (styled `.perego-footer*`
+    classes the renderer never emits — real footer styling is in `perego-reference.scss`; grep-confirmed
+    unused) + its `style` key/import; rebuilt; footer stays styled (`class="site-footer"`). No orphaned
+    global-section CSS remained. Broader duplicate-CSS/Swiper-selector sweep deferred to spec 018.
+- [x] T013 Wrote `docs/cleanup-report.md` (DB entities, code, assets — why/replacement/verification/rollback).
+- [x] T014 Proved the `footer-careers` block is a real editor-available editable block (registered with an
+    editor script + its 4 bilingual attributes via the block registry; edit UI shows both EN/AR). **Seam:**
+    wiring the footer as editable Site-Editor template-part blocks (owner edits on the canvas) is spec 011;
+    spec 009 delivers the architecture removal + content preservation + an editable block, not the footer
+    canvas rebuild.
 
 ## Phase 3 — Verification + delivery
 

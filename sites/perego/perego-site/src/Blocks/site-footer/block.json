@@ -14,7 +14,6 @@
 		}
 	},
 	"editorScript": "file:./index.js",
-	"style": "file:./style-index.css",
 	"supports": {
 		"html": false
 	}

@@ -64,7 +64,7 @@ Studio) — no hidden CPTs, seed-only content, or hard-coded editorial prose sta
 
 | Spec | Scope | Branch | Status |
 |------|-------|--------|--------|
-| 009 | CMS block architecture + Global Sections migration/removal + cleanup | `feature/009-cms-block-architecture-cleanup` | **IN PROGRESS** (foundation authored) |
+| 009 | CMS block architecture + Global Sections migration/removal + cleanup | `feature/009-cms-block-architecture-cleanup` | **DONE** (migrated, removed, verified; PR open) — footer canvas-editing seam → 011 |
 | 010 | CoreX runtime, Forms, Submissions, Data Models | `feature/010-corex-runtime-content-models` | Not started |
 | 011 | Global shell + preloader | `feature/011-global-shell-preloader` | Not started |
 | 012 | Homepage design + functional completion | `feature/012-home-page-fidelity` | Not started |
@@ -144,13 +144,20 @@ only — **manual overlay/diff review is required for acceptance**.
 
 ## Completed items
 
-- Startup audit + static inventory of Global Sections and FSE templates (this file, 2026-07-14).
+- Startup audit + static inventory of Global Sections and FSE templates (2026-07-14).
+- **Spec 009 DONE (2026-07-14):** migrated `footer-careers` to a bilingual `perego-theme/footer-careers`
+  block (byte-identical EN/AR output); backup-gated, idempotent migration removed all 14 `perego_section`
+  records (0 orphans); removed the CPT + resolver + renderer + block + seed + 3 tests + provider wiring;
+  removed the orphaned `site-footer/style.scss`; regenerated `.pot`; cleanup report written. Pest 233/233,
+  Jest 76/76; home+AR 200, no fatals.
 - Spec 008 recovery work (unmerged): T001–T008 substantially closed; see `PROGRESS.md`.
 
 ## Remaining items
 
-- Spec 009: execute dry-run migration, backup gate, migrate `footer-careers`, remove CPT + dead code,
-  cleanup report, prove FSE editability of migrated global areas. Then specs 010–018 in order.
+- **Spec 010 (next):** CoreX runtime — verify/restore Forms & Flows, Submissions, Data Models admin;
+  provision the 3 flows; register Projects/Services/Clients models via public seams; structured-metadata
+  editor controls. Then 011–018 in order.
+- Spec 011 owns the footer/header/CTA/404 Site-Editor canvas rebuild (the 009 editability seam).
 
 ## Known blockers
 

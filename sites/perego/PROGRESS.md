@@ -4,18 +4,17 @@
 
 ## RESUME HERE
 
-- **Date/time:** 2026-07-14 (~13:15 UTC)
+- **Date/time:** 2026-07-14 (~14:00 UTC)
 - **Branch:** `feature/009-cms-block-architecture-cleanup` (off `feature/008-visual-fidelity-recovery` @ `1b7ecda`)
-- **Latest pushed commit:** `d56caa2` (spec 009 foundation)
-- **Active spec:** `specs/009-cms-block-architecture-cleanup/` — CMS block architecture + Global Sections removal
-- **Active task:** T004 done (dry-run tool, run locally); next is **T005** (footer-careers editable surface) then the runtime T006–T010
-- **Current objective:** replace the Global Sections CPT with block-first FSE-editable global content via a safe, idempotent, backup-gated migration; remove the CPT + dead code; cleanup report
-- **Completed this session:** startup audit; static + local-DB inventory (14 records, only `footer-careers` consumed); durable roadmap (`docs/final-completion-roadmap.md`); spec 009 spec/plan/tasks; read-only dry-run reporter (`scripts/migrate-global-sections.php`) built + run locally (0 anomalies); DECISIONS + this block
-- **Work in progress:** spec 009 foundation committed; migration not executed
-- **Exact next file/action:** build the `footer-careers` EN/AR editable FSE surface (spec 009 T005, plan Option A) and switch `SiteFooterRenderer::careersEditorial()` onto it; then, with live access, T006 (fingerprint deployed build) → T007 (live dry-run) → T008 (DB backup gate) → T010 (`apply`)
-- **Verification run:** `php -l` on the new script (clean); dry-run executed against local DB (14 records, 0 anomalies, footer-careers EN/AR present)
-- **Verification still required:** live-DB dry-run; full Pest/Jest/route-health/a11y/interactions after any code change; live footer editorial EN/AR unchanged post-migration
-- **Known blockers:** (1) deployed-commit identity unproven — needs runtime fingerprint; (2) migration `apply` blocked on a live DB backup gate; (3) CoreX admin Forms/Submissions/Data Models reportedly missing on live (spec 010)
+- **Latest pushed commit:** `4a5cfdc` (T011) — plus uncommitted T012–T016 cleanup about to be committed/pushed
+- **Active spec:** `009` **DONE** (migrated + removed + verified); **next spec: 010** (CoreX runtime, forms, content models)
+- **Active task:** spec 009 → open PR (T017), then start spec 010
+- **Current objective:** spec 009 complete; move to spec 010 — verify/restore CoreX Forms & Flows / Submissions / Data Models admin, provision the 3 flows, register Projects/Services/Clients models via public seams
+- **Completed this session:** spec 009 end-to-end — bilingual `footer-careers` block (byte-identical EN/AR, verified live perego.local + ngrok); backup-gated idempotent migration removed 14 `perego_section` records (0 orphans); removed CPT+resolver+renderer+block+seed+3 tests+provider wiring; removed orphan `site-footer/style.scss`; regenerated `.pot`; cleanup report. Pest 233/233, Jest 76/76; home+AR 200, no fatals.
+- **Exact next file/action:** commit+push T012–T016, open the spec 009 PR (base `feature/008-visual-fidelity-recovery`), then begin spec 010: audit CoreX admin routes at perego.local/wp-admin (Forms & Flows, Submissions, Data Models) and the deployed CoreX version/active plugins.
+- **Verification run:** Pest 233/233, Jest 76/76; `git diff --check` clean; home/work/services/contact/journal + AR home all 200; debug.log clean since marker; migration idempotent (2nd apply = 0); DB backup `db-backup-20260714-134449.sql` (rollback).
+- **Verification still required (spec 010):** CoreX admin routes render for admin; 3 flows visible; submissions land; models registered where supported.
+- **Known blockers:** none blocking spec 009 (complete). Spec 010 risk: CoreX admin Forms/Submissions/Data Models reportedly missing on live — to be diagnosed at runtime (perego.local wp-admin).
 - **Live URL status:** canonical runtime `http://perego.local/` (local WAMP, 200, siteurl=perego.local — same DB as wp-cli). ngrok mirror `https://mower-hamstring-baggy.ngrok-free.dev/` 200 (tunnel; ngrok-domain URLs). Resolver: prefer perego.local; ngrok optional; never stop if ngrok offline. Do not change WP home/siteurl.
 - **DB migration status:** dry-run only (local); no writes performed; CPT + 14 records still present
 - **Autonomous mode:** continue specs 009–018 in dependency order without pausing between tasks/specs; stop only for a genuine external blocker (finish other unblocked work + update durable memory + commit/push first).
