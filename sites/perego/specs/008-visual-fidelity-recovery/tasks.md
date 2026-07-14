@@ -103,6 +103,25 @@
     correct per-service steps, icons, and arrows render identically to the archive's design. `parse_blocks()`
     sanity check confirms no orphaned/invalid block content. Full suite re-verified green: Pest 230/230,
     route-health 72/0, a11y 12/0.
+  - [x] **Individual client video lightbox (2026-07-14):** the completion contract's "Individual client
+    cards lack the required visible play affordance and functioning video/embed lightbox" is now
+    fully implemented — `ClientsCarouselRenderer::individualCard()` reads a new
+    `_perego_client_video_url` post-meta field; when an editor sets a real URL, the card opens it in
+    the site-wide `media-lightbox` and shows the handoff's `.play-btn` affordance, otherwise it stays
+    a plain non-interactive card (a decorative play icon on a card with nothing to play would be a
+    misleading affordance, and the seeded demo clients deliberately carry no fabricated video content).
+    Corporate client cards were re-checked against the handoff's own `index.html`: its `.corp-card`
+    markup has no `data-video`/`data-image`/`data-gallery` trigger at all, only the individual cards
+    do — so "corporate media lightboxes" were never actually part of the locked design, and no change
+    was needed there. 2 new Pest tests (with/without a video URL). Manually verified live: temporarily
+    set a real video URL on a seeded client, confirmed the play-btn renders only on that card, and that
+    clicking it opens the lightbox as a working autoplaying iframe embed with correct focus
+    trap/Escape/scroll-lock — then reverted the test data.
+  - [x] **Regression caught and fixed while verifying the above:** `#individualTrack` (the individual
+    client scroll track) was missing `tabindex="0"` — present on the corporate track already but never
+    added to individual — triggering a real axe `scrollable-region-focusable` violation on both EN and
+    AR home. Added the same `tabindex="0"` + `aria-label` the corporate track already carries.
+    Full suite re-verified green: Pest 232/232, route-health 72/0, interactions 12/12, a11y 12/0.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
   - [x] Single-post comment form (2026-07-14): confirmed the exact defect the completion contract names —
     WordPress's core `wp:comments`/`wp:post-comments-form` blocks already inherit the handoff's own

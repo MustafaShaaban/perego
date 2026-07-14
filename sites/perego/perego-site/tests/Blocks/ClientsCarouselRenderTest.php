@@ -140,6 +140,29 @@ it('renders an individual card with a visible name and a thumbnail placeholder w
         ->and($html)->toContain('client-review-crop.png');
 });
 
+it('renders a non-interactive card with no play affordance when a client has no video URL', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('<div class="indiv-card"')
+        ->and($html)->not->toContain('class="play-btn"')
+        ->and($html)->not->toContain('data-video=');
+});
+
+it('opens the site-wide media lightbox with a visible play affordance when a client has a real video URL', function () {
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key) => match (true) {
+        $id === 21 && $key === '_perego_client_stat' => 'Example stat',
+        $id === 21 && $key === '_perego_client_video_url' => 'https://www.youtube.com/embed/example',
+        default => '',
+    });
+
+    $html = renderClients();
+
+    expect($html)->toContain('<a class="indiv-card"')
+        ->and($html)->toContain('data-video="https://www.youtube.com/embed/example"')
+        ->and($html)->toContain('href="https://www.youtube.com/embed/example"')
+        ->and($html)->toContain('class="play-btn" aria-hidden="true"');
+});
+
 it('shows the client stat only when one is set', function () {
     $html = renderClients();
 
@@ -160,7 +183,7 @@ it('preserves the handoff track identifiers, labels, and arrow SVG controls', fu
     $html = renderClients();
 
     expect($html)->toContain('id="corporateTrack" tabindex="0" role="list"')
-        ->and($html)->toContain('id="individualTrack" role="list"')
+        ->and($html)->toContain('id="individualTrack" tabindex="0" role="list"')
         ->and($html)->toContain('aria-label="Previous clients"')
         ->and($html)->toContain('aria-label="More clients"')
         ->and($html)->toContain('<circle class="eq-bar"')

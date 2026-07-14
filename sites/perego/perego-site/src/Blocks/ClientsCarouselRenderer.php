@@ -65,7 +65,7 @@ final class ClientsCarouselRenderer
         $nextLabel = $isCorporate ? __('More clients', 'perego-site') : __('More', 'perego-site');
         $trackAttributes = $isCorporate
             ? 'id="corporateTrack" tabindex="0" role="list" aria-label="' . esc_attr__('Corporate client logos', 'perego-site') . '"'
-            : 'id="individualTrack" role="list"';
+            : 'id="individualTrack" tabindex="0" role="list" aria-label="' . esc_attr__('Individual clients', 'perego-site') . '"';
 
         $html .= '<div class="' . $sliderClass . ' reveal"><button type="button" class="corp-arrow corp-arrow--prev" aria-label="' . esc_attr($previousLabel) . '">' . $this->arrowSvg('previous') . '</button>';
         $html .= '<div class="' . $trackClass . '" ' . $trackAttributes . '>';
@@ -93,16 +93,25 @@ final class ClientsCarouselRenderer
 
     /**
      * Individual: a wide info-plus-thumbnail card (handoff `.indiv-card`) — name/stat text beside a
-     * thumbnail. No play-button overlay: unlike the handoff's demo, real cards here have no video to
-     * play, and a decorative play icon on a non-interactive card would be a misleading affordance.
+     * thumbnail. When an editor sets a real `_perego_client_video_url`, the card opens it in the
+     * site-wide media lightbox (perego-theme/media-lightbox) and shows the handoff's `.play-btn`
+     * affordance; without one, it stays a plain non-video card — a decorative play icon on a card
+     * with nothing to play would be a misleading affordance.
      */
     private function individualCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
         $stat = (string) get_post_meta($client->ID, '_perego_client_stat', true);
         $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => '']) : '';
+        $videoUrl = (string) get_post_meta($client->ID, '_perego_client_video_url', true);
 
-        $html = '<a class="indiv-card" href="https://www.youtube.com/" target="_blank" rel="noopener" role="listitem">';
+        if ($videoUrl !== '') {
+            $html = '<a class="indiv-card" href="' . esc_url($videoUrl) . '" target="_blank" rel="noopener" '
+                . 'data-video="' . esc_attr($videoUrl) . '" role="listitem">';
+        } else {
+            $html = '<div class="indiv-card" role="listitem">';
+        }
+
         $html .= '<div class="indiv-card__info"><h3 class="indiv-card__title">' . esc_html($title) . '</h3>';
         if ($stat !== '') {
             $html .= '<p class="indiv-card__stat">' . esc_html($stat) . '</p>';
@@ -111,9 +120,12 @@ final class ClientsCarouselRenderer
 
         $html .= '<div class="indiv-card__thumb">';
         $html .= $thumb !== '' ? $thumb : '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/client-review-crop.png') . '" alt="" loading="lazy" />';
+        if ($videoUrl !== '') {
+            $html .= '<span class="play-btn" aria-hidden="true"></span>';
+        }
         $html .= '</div>'; // .client-card__thumb
 
-        $html .= '</a>';
+        $html .= $videoUrl !== '' ? '</a>' : '</div>';
 
         return $html;
     }
