@@ -6,8 +6,16 @@
 
 - **Date/time:** 2026-07-14 (~14:30 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
-- **Latest pushed commit:** `8036f7b` (spec 011 T010 docs). **Spec 011 DONE → PR #19** (base = spec 010 branch).
-- **Next spec:** **012** (homepage fidelity + editability) — start here. Continue specs 012–018 in order.
+- **Latest pushed commit:** `203af28` (spec 011 done docs). **Spec 011 DONE → PR #19**. Now on
+  `feature/012-home-page-fidelity` (branched off 011); spec 012 audit committed, implementation pending.
+- **Active spec:** **012** (homepage fidelity + editability). **T001 audit DONE.** Homepage matches handoff
+  visually (all 4 sections present); About = editable `post-content`, Clients = editable Client-CPT query.
+  **Gap to close:** hero slides/CTA + services-teaser (title/"See all"/4 cards) are hardcoded in
+  `HomeContent::COPY` (EN+AR) — not WP-editable, and the teaser ignores the Service CPT. **Next: T002** decide
+  the editable seam per field (block attr vs options vs Service CPT; keep COPY as seed only) → **T003**
+  services teaser ← Service CPT → **T004** hero editable → tests/guards/PR. Spec: `specs/012-home-page-fidelity/`.
+- **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
+  /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
   handoff (About→`/#about`, Services→`/#services`, short dropdown labels, anchor `isActive` fix); T003 sticky
   state byte-identical to handoff; T004 mobile menu (spec-008 verified); T005 lang switcher verified live
