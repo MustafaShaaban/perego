@@ -21,15 +21,19 @@
   - **Proven** via live edit round-trips (teaser label + hero title changed the homepage, then restored) and a
     pixel-identical full-page capture (`output/playwright/012-en-homepage-noregression.png`). Pest 249/249.
     Both seeders idempotent; DB backup `db-backup-20260714-220905.sql` (gitignored). Guards pass.
-- **Active spec:** **013** (Services archive + four service singles) — branch `feature/013-services-pages-completion`
-  (off 012). **T001 audit DONE.** Archive + 4 singles render 200 with all handoff sections (svc-hero/whatwedo/
-  process/portfolio), EN/AR; whatwedo+process editable via `post-content`. **Gap (same as 012):** the
-  `svc-hero` (title/eyebrow/subline/tabs) and the `/services/` overview render from the hardcoded
-  `ServiceContent::COPY`, not the `perego_service` post. **Next: T002** confirm the editable seam + verify the
-  selected-work source (Projects vs hardcoded) → **T003** service hero ← CPT (reuse the 012 projection +
-  per-field seed-fallback + seeder + edit round-trip pattern) → T004 archive ← CPT → T005 selected-work ←
-  Projects → fidelity/guards/PR. Spec: `specs/013-services-pages-completion/`.
-- **Then 014–018 in order.**
+- **Active spec:** **013** (Services archive + four service singles) — **DONE (T001–T008), PR pending push
+  confirm.** Service pages were visually complete; spec 013 closed editability: the service-single **H1 ← the
+  Service post's own title** (native editing), and the single + archive **hero tabs ← each Service's editable
+  `_perego_teaser_label`** (spec-012 meta), via a new shared `Content\ServiceCatalog` with per-field
+  `ServiceContent` seed fallback → byte-identical EN/AR. Selected work (archive + single) already ← real
+  Projects. Fixed a latent bug: the archive tab CTA passed `?service=<name>` (contact chooser needs the slug)
+  → now `?service=<slug>`. whatwedo/process editable via `post-content`. Proven via a live title edit
+  round-trip; Pest 251/251; guards pass. Evidence `output/playwright/013-service-single-hero.png`.
+- **Next spec:** **014** (Work archive + project single) — branch `feature/014-work-project-pages` off 013.
+  Then 015–018 in order. Reuse the projection + seed-fallback + live-edit-proof pattern; the Project CPT
+  already backs the work grid + selected work, so 014 is likely fidelity + editability verification of the
+  project single (hero/meta/gallery) similar to 013.
+- **Then 015–018 in order.**
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to

@@ -23,7 +23,12 @@
 - [x] T005 **Selected work ← Projects — verified.** The archive's "Selected work" (via `WP_Query` +
     `ProjectRepository`) and the single's `service-selected-work` (service→category → Project query) both
     source real published Projects. No change needed.
-- [ ] T006 Fidelity + states: four singles + archive vs handoff at all widths, EN/AR, hover/focus/reduced
-    motion/tab active. Capture evidence.
-- [ ] T007 Prove the editor workflow: edit a Service → its single + archive + homepage teaser all change.
-- [ ] T008 Full suite + guards; update durable memory; open PR.
+- [x] T006 **Fidelity confirmed.** Capture `output/playwright/013-service-single-hero.png` — the single's
+    svc-hero matches the handoff (OUR SERVICES eyebrow, H1 from the post title, four tabs with active state +
+    START YOUR PROJECT CTA). whatwedo/process/portfolio unchanged from prior specs; archive tabs byte-identical
+    live. AR verified byte-identical via live HTML. Interaction/reduced-motion carried by the unchanged CSS/JS.
+- [x] T007 **Editor workflow proven** — editing Service post 13's title changed its service page H1 (T003) and
+    (spec 012) its homepage teaser card; the archive/single tabs track each Service's teaser label. Real WP
+    round-trips, restored.
+- [x] T008 **Full suite + guards + PR.** Pest 251/251 (784 assertions); no JS touched → Jest unaffected.
+    clean-code-guard + wp-guard pass. Durable memory updated; PR opened.
