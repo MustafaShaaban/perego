@@ -47,7 +47,13 @@
 
 ## Phase 4 — Structured metadata editor controls
 
-- [ ] T009 **Scoped (not started — large):** currently there is **no `register_post_meta`** for any CPT;
+- [~] T009 **In progress.** ✅ Project: registered all 5 structured meta fields via `register_post_meta`
+    (`_perego_client/_year/_role/_deliverables` as sanitized strings; `_gallery_attachment_ids` as a typed
+    integer list) with `show_in_rest`, `sanitize_callback`, and `auth_callback` — verified registered
+    (show_in_rest=1) and REST-exposed on project #84 with existing values intact; Pest +2 (235 total).
+    **Remaining:** same for Service + Client CPTs, then editor UI (meta box / block panel) so the fields
+    are editable in wp-admin. Original scope note below:
+    Currently there is **no `register_post_meta`** for Service/Client CPTs;
     all meta is seed-only `update_post_meta`. Register every field via native `register_post_meta`
     (`show_in_rest` + `type` + `sanitize_callback` + `auth_callback`) + editor UI (block-editor
     `PluginDocumentSettingPanel` or classic meta boxes). Fields per `spec.md`. Confirmed stored keys today:

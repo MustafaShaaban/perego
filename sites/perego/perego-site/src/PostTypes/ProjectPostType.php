@@ -23,6 +23,12 @@ final class ProjectPostType
 
     public const TAXONOMY = 'perego_project_category';
 
+    public const META_CLIENT = '_perego_client';
+    public const META_YEAR = '_perego_year';
+    public const META_ROLE = '_perego_role';
+    public const META_DELIVERABLES = '_perego_deliverables';
+    public const META_GALLERY = '_perego_gallery_attachment_ids';
+
     /**
      * The fixed category terms, in display order. Slugs are the enum from CONTENT_MODEL.md; the
      * labels match the four service names.
@@ -40,6 +46,72 @@ final class ProjectPostType
     {
         register_post_type(self::POST_TYPE, $this->postTypeArgs());
         register_taxonomy(self::TAXONOMY, self::POST_TYPE, $this->taxonomyArgs());
+
+        foreach ($this->metaArgs() as $key => $args) {
+            register_post_meta(self::POST_TYPE, $key, $args);
+        }
+    }
+
+    /**
+     * Structured project metadata registered explicitly (REST schema + sanitization + auth) so the fields
+     * are first-class — editable through proper controls and exposed to the REST API — rather than
+     * seed-only `update_post_meta`. Keys are protected (leading `_`), so each carries an auth_callback.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function metaArgs(): array
+    {
+        $text = static fn (): array => [
+            'type' => 'string',
+            'single' => true,
+            'default' => '',
+            'show_in_rest' => true,
+            'sanitize_callback' => 'sanitize_text_field',
+            'auth_callback' => [self::class, 'authEdit'],
+        ];
+
+        return [
+            self::META_CLIENT => $text(),
+            self::META_YEAR => $text(),
+            self::META_ROLE => $text(),
+            self::META_DELIVERABLES => $text(),
+            self::META_GALLERY => [
+                'type' => 'array',
+                'single' => true,
+                'show_in_rest' => [
+                    'schema' => ['type' => 'array', 'items' => ['type' => 'integer']],
+                ],
+                'sanitize_callback' => [self::class, 'sanitizeIntList'],
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+        ];
+    }
+
+    /**
+     * Authorize protected-meta edits. Mirrors the CPT's own edit capability.
+     */
+    public static function authEdit(): bool
+    {
+        return function_exists('current_user_can') && current_user_can('edit_posts');
+    }
+
+    /**
+     * Coerce a gallery value to a clean list of positive attachment IDs.
+     *
+     * @param mixed $value
+     * @return list<int>
+     */
+    public static function sanitizeIntList($value): array
+    {
+        $ids = [];
+        foreach ((array) $value as $id) {
+            $id = (int) $id;
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
     }
 
     /**
