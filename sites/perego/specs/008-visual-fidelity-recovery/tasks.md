@@ -89,11 +89,20 @@
     silently regress again. Verified live with screenshots: both dialogs now render fully visible,
     correctly styled (backdrop, close/prev/next controls, dots). Pest 230/230, Jest 76/76,
     route-health 72/0, interactions 12/12, a11y 12/0.
-  - [ ] **Known gap, not yet fixed:** the four service singles' own "Our Process" sections are seeded as
-    plain editable `wp:list` blocks (`scripts/seed-services.php`) with the same missing icon/arrow design.
-    Unlike the archive's render, this content is editor-canvas (already-seeded on 8 live EN/AR posts), so
-    fixing it needs either a migration script or a small non-canvas structural block — not changed in this
-    pass to avoid an unverified content migration.
+  - [x] **Per-service-single "Our Process" migration (2026-07-14):** the four service singles' own
+    process sections were seeded as plain editable `wp:list` blocks with the same missing icon/arrow
+    design as the archive had — unlike the archive's PHP-only render, this is editor-canvas content
+    already seeded on 8 live EN/AR posts, so fixing the render alone would not have touched them.
+    Extracted the icon/card/arrow block-builder into a shared, side-effect-free
+    `scripts/lib-service-process-blocks.php` (used by both `seed-services.php`, for future seeds, and
+    a new one-time `scripts/migrate-service-process.php`, mirroring the exact established pattern of
+    `migrate-service-whatwedo-media.php`). Each step's label/desc stays on real editable core blocks
+    (`wp:paragraph`/`wp:image` inside `wp:group`); only the icon and the decorative arrows between
+    steps are structural. Ran the migration against the live install: **8/8 posts migrated**, second
+    run confirms idempotency (0 migrated). Verified live on all four EN services + one AR service:
+    correct per-service steps, icons, and arrows render identically to the archive's design. `parse_blocks()`
+    sanity check confirms no orphaned/invalid block content. Full suite re-verified green: Pest 230/230,
+    route-health 72/0, a11y 12/0.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
   - [x] Single-post comment form (2026-07-14): confirmed the exact defect the completion contract names —
     WordPress's core `wp:comments`/`wp:post-comments-form` blocks already inherit the handoff's own

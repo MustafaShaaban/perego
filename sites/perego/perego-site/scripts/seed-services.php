@@ -28,6 +28,8 @@ if (! defined('ABSPATH')) {
     exit(1);
 }
 
+require __DIR__ . '/lib-service-process-blocks.php';
+
 $pllReady = function_exists('pll_set_post_language')
     && function_exists('pll_get_post')
     && function_exists('pll_save_post_translations')
@@ -77,17 +79,7 @@ $buildContent = static function (ServiceContent $content, string $slug) use ($wh
     $blocks .= '</div>' . "\n";
     $blocks .= '<!-- /wp:group -->' . "\n\n";
 
-    $blocks .= '<!-- wp:group {"align":"full","className":"svc-process","layout":{"type":"constrained"}} -->' . "\n";
-    $blocks .= '<div class="wp-block-group alignfull svc-process">' . "\n";
-    $blocks .= '<!-- wp:heading --><h2 class="wp-block-heading">' . esc_html($content->label('ourProcess')) . '</h2><!-- /wp:heading -->' . "\n";
-    $blocks .= '<!-- wp:list {"ordered":true} --><ol class="wp-block-list">' . "\n";
-    foreach ($content->processSteps($slug) as $step) {
-        $blocks .= '<!-- wp:list-item --><li><strong>' . esc_html($step['label']) . '</strong> — '
-            . esc_html($step['desc']) . '</li><!-- /wp:list-item -->' . "\n";
-    }
-    $blocks .= '</ol><!-- /wp:list -->' . "\n";
-    $blocks .= '</div>' . "\n";
-    $blocks .= '<!-- /wp:group -->' . "\n";
+    $blocks .= buildProcessBlocks($content, $slug);
 
     return $blocks;
 };
