@@ -47,10 +47,14 @@
 
 ## Phase 4 — Structured metadata editor controls
 
-- [ ] T009 Register Project/Service/Client structured metadata (REST schema, sanitization, auth, editor
-    UI) via native WP APIs + CoreX contracts — not ACF, not generic Custom Fields.
+- [ ] T009 **Scoped (not started — large):** currently there is **no `register_post_meta`** for any CPT;
+    all meta is seed-only `update_post_meta`. Register every field via native `register_post_meta`
+    (`show_in_rest` + `type` + `sanitize_callback` + `auth_callback`) + editor UI (block-editor
+    `PluginDocumentSettingPanel` or classic meta boxes). Fields per `spec.md`. Confirmed stored keys today:
+    Project `_perego_client/_year/_role/_deliverables/_gallery_attachment_ids` (+ `_thumbnail_id`); Service
+    + Client keys to enumerate from their seeds. No ACF; no generic Custom Fields.
 - [ ] T010 Prove a new Project/Service/Client is completable in wp-admin (metadata + gallery/media)
-    without CLI or DB editing. Browser evidence.
+    without CLI or DB editing. Browser evidence. (Depends on T009.)
 
 ## Phase 5 — Delivery
 
