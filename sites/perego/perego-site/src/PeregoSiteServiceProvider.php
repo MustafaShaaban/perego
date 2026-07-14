@@ -19,6 +19,7 @@ use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\ContactServiceChooserRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
 use PeregoSite\Blocks\LegalTocRenderer;
+use PeregoSite\Blocks\MediaLightboxRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ProjectHeroRenderer;
@@ -309,8 +310,33 @@ final class PeregoSiteServiceProvider
 
             register_block_type($this->blockDir('services-overview'), [
                 'render_callback' => static function () use ($overviewRenderer, $languageService): string {
+                    $projects = new ProjectRepository();
+                    $portfolioContent = new PortfolioContent($languageService->driver()->currentLocale());
+
+                    $posts = (new \WP_Query([
+                        'post_type' => ProjectPostType::POST_TYPE,
+                        'post_status' => 'publish',
+                        'posts_per_page' => 9,
+                        'no_found_rows' => true,
+                        'orderby' => 'date',
+                        'order' => 'DESC',
+                    ]))->posts;
+
+                    $selectedWork = array_map(static function (\WP_Post $post) use ($projects, $portfolioContent): array {
+                        $card = $projects->toGridCard($post, $portfolioContent);
+                        $gallery = $projects->galleryFor($post);
+
+                        return [
+                            'title' => $card['title'],
+                            'thumbUrl' => $card['thumbUrl'],
+                            'thumbAlt' => $card['thumbAlt'],
+                            'gallerySrcs' => array_column($gallery, 'src'),
+                        ];
+                    }, $posts);
+
                     return $overviewRenderer->render(
-                        new ServiceContent($languageService->driver()->currentLocale())
+                        new ServiceContent($languageService->driver()->currentLocale()),
+                        $selectedWork
                     );
                 },
             ]);
@@ -432,6 +458,16 @@ final class PeregoSiteServiceProvider
             $preloaderRenderer = new PreloaderRenderer();
             register_block_type($this->blockDir('preloader'), [
                 'render_callback' => static fn (): string => $preloaderRenderer->render(),
+            ]);
+
+            $lightboxRenderer = new MediaLightboxRenderer();
+            $languageService = $this->languageService;
+            register_block_type($this->blockDir('media-lightbox'), [
+                'render_callback' => static function () use ($lightboxRenderer, $languageService): string {
+                    $content = new GlobalContent($languageService->driver()->currentLocale());
+
+                    return $lightboxRenderer->render($content->lightbox());
+                },
             ]);
         });
     }

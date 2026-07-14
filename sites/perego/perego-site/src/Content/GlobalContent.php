@@ -72,6 +72,11 @@ final class GlobalContent
                 'rate_limit' => 'Too many attempts — please try again in a few minutes.',
                 'server_error' => 'Something went wrong on our end. Please try again shortly.',
             ],
+            'lightbox' => [
+                'close' => 'Close',
+                'prev' => 'Previous',
+                'next' => 'Next',
+            ],
         ],
         'ar' => [
             'notFound' => [
@@ -119,6 +124,11 @@ final class GlobalContent
                 'too_large' => 'حجم الملف يتجاوز 10 ميجابايت. يرجى إرفاق سيرة أصغر.',
                 'rate_limit' => 'محاولات كثيرة — يرجى المحاولة بعد بضع دقائق.',
                 'server_error' => 'حدث خطأ لدينا. يرجى المحاولة مرة أخرى بعد قليل.',
+            ],
+            'lightbox' => [
+                'close' => 'إغلاق',
+                'prev' => 'السابق',
+                'next' => 'التالي',
             ],
         ],
     ];
@@ -173,6 +183,12 @@ final class GlobalContent
     public function join(): array
     {
         return self::COPY[$this->locale]['join'];
+    }
+
+    /** @return array{close: string, prev: string, next: string} */
+    public function lightbox(): array
+    {
+        return self::COPY[$this->locale]['lightbox'];
     }
 
     /** @return array<string, string> */
