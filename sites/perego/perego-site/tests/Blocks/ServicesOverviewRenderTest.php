@@ -50,7 +50,24 @@ it('renders the hero background image and four service tabs linking to the singl
         ->and(substr_count($html, 'class="svc-tab"'))->toBe(4)
         ->and($html)->toContain('/services/video-editing')
         ->and($html)->toContain('/services/website-making')
-        ->and($html)->toMatch('/href="[^"]*\/contact\?service=/');
+        // The CTA must carry the canonical service *slug* (what the contact chooser whitelists),
+        // not the localized name — otherwise ?service= preselection never matches.
+        ->and($html)->toContain('/contact?service=video-editing')
+        ->and($html)->toContain('/contact?service=website-making')
+        ->and($html)->not->toMatch('/contact\?service=Video(%20| )Editing/');
+});
+
+it('uses the editable tab labels when provided, per field over the ServiceContent seed', function () {
+    $html = (new ServicesOverviewRenderer())->render(
+        new ServiceContent('en'),
+        sampleSelectedWork(),
+        ['video-editing' => 'VE', 'website-making' => 'WM'],
+    );
+
+    expect($html)->toMatch('/svc-tab__label">VE</')            // edited
+        ->and($html)->toMatch('/svc-tab__label">WM</')         // edited
+        ->and($html)->toContain('2D Motion Graphics')          // unset -> seed
+        ->and($html)->toContain('Graphic Design');             // unset -> seed
 });
 
 it('renders the what-we-do intro with its media image, process, and closing CTA', function () {

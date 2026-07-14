@@ -11,9 +11,9 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\HomeContent;
+use PeregoSite\Content\ServiceCatalog;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Services\LanguageService;
-use WP_Query;
 
 /**
  * Server-renders the perego/services-teaser block (spec 002 / M2, US2): the homepage "Services we
@@ -40,7 +40,7 @@ final class ServicesTeaserRenderer
     {
         $locale  = $this->languageService->driver()->currentLocale();
         $content = new HomeContent($locale);
-        $posts   = $this->servicePostsBySlug($locale);
+        $posts   = (new ServiceCatalog())->postsBySlug($locale);
 
         $html = '<section class="services-teaser" id="services" aria-labelledby="' . self::HEADING_ID . '">';
 
@@ -70,42 +70,6 @@ final class ServicesTeaserRenderer
         $html .= '</section>';
 
         return $html;
-    }
-
-    /**
-     * Published Service posts for the current locale, indexed by their canonical service slug. Polylang
-     * honours the `lang` arg, so the AR homepage matches AR Services (which share the EN slug meta). No
-     * posts (or CPT/Polylang absent) → empty map → every card uses the handoff seed.
-     *
-     * @return array<string, \WP_Post>
-     */
-    private function servicePostsBySlug(string $locale): array
-    {
-        if (! class_exists(WP_Query::class)) {
-            return [];
-        }
-
-        $q = new WP_Query([
-            'post_type'        => ServicePostType::POST_TYPE,
-            'post_status'      => 'publish',
-            'posts_per_page'   => 10,
-            'no_found_rows'    => true,
-            'ignore_sticky_posts' => true,
-            'orderby'          => 'menu_order',
-            'order'            => 'ASC',
-            'lang'             => $locale,
-        ]);
-
-        $map = [];
-        foreach ($q->posts as $post) {
-            $slug = (string) get_post_meta($post->ID, ServicePostType::META_SERVICE_SLUG, true);
-            if ($slug !== '' && ! isset($map[$slug])) {
-                $map[$slug] = $post;
-            }
-        }
-        wp_reset_postdata();
-
-        return $map;
     }
 
     /**

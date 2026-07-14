@@ -32,12 +32,16 @@ final class ServicesOverviewRenderer
      *        class stays a pure, unit-testable function of its inputs — the same pattern
      *        ProjectGalleryLightboxRenderer uses for its own resolved images array.
      */
-    public function render(ServiceContent $content, array $selectedWork): string
+    /**
+     * @param list<array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>}> $selectedWork
+     * @param array<string, string> $tabLabels canonical slug => editable tab label (spec 013); missing → seed
+     */
+    public function render(ServiceContent $content, array $selectedWork, array $tabLabels = []): string
     {
         $o = $content->overview();
 
         $html = '<section class="services-overview">';
-        $html .= $this->renderHero($o, $content);
+        $html .= $this->renderHero($o, $content, $tabLabels);
         $html .= $this->renderWhatWeDo($o);
         $html .= $this->renderProcess($o);
         $html .= $this->renderSelectedWork($content, $selectedWork);
@@ -47,8 +51,11 @@ final class ServicesOverviewRenderer
         return $html;
     }
 
-    /** @param array<string, mixed> $o */
-    private function renderHero(array $o, ServiceContent $content): string
+    /**
+     * @param array<string, mixed>  $o
+     * @param array<string, string> $tabLabels
+     */
+    private function renderHero(array $o, ServiceContent $content, array $tabLabels): string
     {
         $html = '<section class="svc-hero" aria-labelledby="services-overview-title">';
         $html .= '<div class="svc-hero__bg" aria-hidden="true">'
@@ -60,10 +67,14 @@ final class ServicesOverviewRenderer
 
         foreach ($content->slugs() as $slug) {
             $href = esc_url(home_url('/services/' . $slug));
-            $ctaHref = esc_url(add_query_arg('service', $content->name($slug), home_url('/contact')));
+            // The contact chooser whitelists the canonical service *slug*, not the localized name —
+            // pass the slug so ?service= preselects (matches the service-single hero's CTA).
+            // add_query_arg url-encodes the value, so hand it the raw slug (no pre-encoding).
+            $ctaHref = esc_url(add_query_arg('service', $slug, home_url('/contact')));
+            $label = ($tabLabels[$slug] ?? '') !== '' ? $tabLabels[$slug] : $content->name($slug);
             $html .= '<div class="svc-tab">';
             $html .= '<a class="svc-tab__main" href="' . $href . '"><span class="svc-tab__label">'
-                . esc_html($content->name($slug)) . '</span></a>';
+                . esc_html($label) . '</span></a>';
             $html .= '<a class="svc-tab__cta" href="' . $ctaHref . '">'
                 . esc_html__('Start your project', 'perego-site') . '</a>';
             $html .= '</div>';

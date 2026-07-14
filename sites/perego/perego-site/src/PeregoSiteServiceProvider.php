@@ -303,8 +303,9 @@ final class PeregoSiteServiceProvider
 
             register_block_type($this->blockDir('services-overview'), [
                 'render_callback' => static function () use ($overviewRenderer, $languageService): string {
+                    $locale = $languageService->driver()->currentLocale();
                     $projects = new ProjectRepository();
-                    $portfolioContent = new PortfolioContent($languageService->driver()->currentLocale());
+                    $portfolioContent = new PortfolioContent($locale);
 
                     $posts = (new \WP_Query([
                         'post_type' => ProjectPostType::POST_TYPE,
@@ -328,28 +329,38 @@ final class PeregoSiteServiceProvider
                     }, $posts);
 
                     return $overviewRenderer->render(
-                        new ServiceContent($languageService->driver()->currentLocale()),
-                        $selectedWork
+                        new ServiceContent($locale),
+                        $selectedWork,
+                        (new \PeregoSite\Content\ServiceCatalog())->labelsBySlug($locale)
                     );
                 },
             ]);
 
             register_block_type($this->blockDir('service-hero'), [
                 'render_callback' => static function () use ($heroRenderer, $languageService): string {
-                    $content = new ServiceContent($languageService->driver()->currentLocale());
+                    $locale  = $languageService->driver()->currentLocale();
+                    $content = new ServiceContent($locale);
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
 
                     // Resolve the canonical service slug from meta, not post_name: a translated
                     // (e.g. Arabic) service post carries a Polylang-de-duplicated slug like
                     // "video-editing-2", but _perego_service_slug always holds the canonical
                     // "video-editing" the ServiceContent map + tab routes are keyed on.
-                    $currentSlug = '';
+                    $currentSlug  = '';
+                    $currentTitle = '';
                     if ($queried instanceof \WP_Post) {
                         $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
                         $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                        // spec 013: the H1 is the Service post's own title (edit it natively); the tab
+                        // labels come from each Service's editable teaser label — both seed-fallback.
+                        // Use the raw post_title (not get_the_title) so the renderer's single esc_html
+                        // matches the old ServiceContent path byte-for-byte (no double entity-encoding).
+                        $currentTitle = (string) $queried->post_title;
                     }
 
-                    return $heroRenderer->render($content, $currentSlug);
+                    $tabLabels = (new \PeregoSite\Content\ServiceCatalog())->labelsBySlug($locale);
+
+                    return $heroRenderer->render($content, $currentSlug, $currentTitle, $tabLabels);
                 },
             ]);
 
