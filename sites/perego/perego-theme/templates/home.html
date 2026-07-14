@@ -20,7 +20,13 @@
 					<!-- wp:post-terms {"term":"category","className":"post-card__cat"} /-->
 					<!-- wp:post-title {"isLink":true,"level":3,"className":"post-card__title"} /-->
 					<!-- wp:post-excerpt {"moreText":"","className":"post-card__excerpt"} /-->
-					<!-- wp:post-date {"className":"post-card__meta"} /-->
+					<!-- wp:group {"className":"post-card__meta","layout":{"type":"flex"}} -->
+					<div class="wp-block-group post-card__meta">
+						<!-- wp:post-date /-->
+						<!-- wp:html --><span class="post-meta__dot"></span><!-- /wp:html -->
+						<!-- wp:perego-theme/post-reading-time /-->
+					</div>
+					<!-- /wp:group -->
 				</div>
 				<!-- /wp:group -->
 			</article>

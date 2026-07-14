@@ -123,6 +123,19 @@
     AR home. Added the same `tabindex="0"` + `aria-label` the corporate track already carries.
     Full suite re-verified green: Pest 232/232, route-health 72/0, interactions 12/12, a11y 12/0.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
+  - [x] **Journal card + single-post meta row (2026-07-14):** comparing the live Journal archive against
+    the handoff's own `archive.html` found the meta line was missing reading time entirely (only the
+    date rendered) and the single-post meta row (`author · date · reading time`) was missing the
+    handoff's `.post-meta__dot` separators between each part — the CSS for `.post-meta`/`.post-meta__dot`
+    was already correctly copied into `perego-reference.scss`, only the markup never used it. Root cause
+    for the archive specifically: `perego-theme/post-reading-time`'s `render_callback` resolved the post
+    via `get_queried_object()`, which is only correct on a singular page — inside a Query Loop (the
+    archive's `post-template`) it still points at the archive itself, so the block could never have
+    worked there even if inserted. Fixed the render_callback to use `get_post()` (correctly resolves the
+    loop's current post in both single and archive contexts), added the reading-time block + dot
+    separators to both `home.html`'s card template and `single.html`'s meta row. Verified live: both EN
+    and AR now render `date · N min read` / `تاريخ · N دقيقة للقراءة` correctly. Pest 232/232 (no
+    regressions), route-health 72/0, a11y 12/0.
   - [x] Single-post comment form (2026-07-14): confirmed the exact defect the completion contract names —
     WordPress's core `wp:comments`/`wp:post-comments-form` blocks already inherit the handoff's own
     `.comment-form` glass-card container verbatim (class names match; `perego-reference.scss` is an

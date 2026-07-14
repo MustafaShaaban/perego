@@ -274,11 +274,15 @@ final class PeregoSiteServiceProvider
 
             register_block_type($this->blockDir('post-reading-time'), [
                 'render_callback' => static function () use ($languageService): string {
-                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    // get_queried_object() is only correct on a singular page; inside a Query Loop
+                    // (e.g. the journal archive's post-template) it still points at the archive
+                    // itself, not the post currently being rendered. get_post() correctly resolves
+                    // the loop's current global $post in both contexts.
+                    $current = function_exists('get_post') ? get_post() : null;
 
                     return (new PostReadingTimeRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
-                    ))->render($queried instanceof \WP_Post ? $queried : null);
+                    ))->render($current instanceof \WP_Post ? $current : null);
                 },
             ]);
 
