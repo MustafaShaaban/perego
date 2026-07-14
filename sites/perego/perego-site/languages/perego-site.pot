@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-13T09:09:46+00:00\n"
+"POT-Creation-Date: 2026-07-14T13:53:36+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: perego-site\n"
@@ -26,23 +26,45 @@ msgstr ""
 
 #. Author of the plugin
 #: perego-site.php:9
-#: src/Blocks/SiteFooterRenderer.php:191
+#: src/Blocks/SiteFooterRenderer.php:232
 msgid "Perego"
 msgstr ""
 
-#: src/Blocks/ClientsCarouselRenderer.php:65
+#: src/Blocks/ClientsCarouselRenderer.php:64
+msgid "Previous clients"
+msgstr ""
+
+#: src/Blocks/ClientsCarouselRenderer.php:64
 msgid "Previous"
 msgstr ""
 
-#: src/Blocks/ClientsCarouselRenderer.php:66
-#: src/Blocks/SearchResultsRenderer.php:148
-msgid "Next"
+#: src/Blocks/ClientsCarouselRenderer.php:65
+msgid "More clients"
 msgstr ""
 
-#. translators: 1: section role key, 2: language locale
-#: src/Blocks/GlobalSectionRenderer.php:107
-#, php-format
-msgid "Missing “%1$s” global section for the “%2$s” language. Add and link a translation."
+#: src/Blocks/ClientsCarouselRenderer.php:65
+msgid "More"
+msgstr ""
+
+#: src/Blocks/ClientsCarouselRenderer.php:67
+msgid "Corporate client logos"
+msgstr ""
+
+#: src/Blocks/ClientsCarouselRenderer.php:68
+msgid "Individual clients"
+msgstr ""
+
+#: src/Blocks/ContactServiceChooserRenderer.php:27
+#: src/Forms/ProjectBriefForm.php:97
+msgid "Choose your service"
+msgstr ""
+
+#: src/Blocks/ContactServiceChooserRenderer.php:28
+msgid "Choose your service (select one or more)"
+msgstr ""
+
+#: src/Blocks/ContactServiceChooserRenderer.php:38
+msgid "Tap to select one or more services. Tap again to deselect."
 msgstr ""
 
 #. translators: 1: current slide number, 2: total number of slides.
@@ -85,62 +107,81 @@ msgstr ""
 #: src/Blocks/JournalHeaderRenderer.php:31
 #: src/Blocks/PortfolioGridRenderer.php:47
 #: src/Blocks/PostBreadcrumbRenderer.php:32
-#: src/Blocks/SearchResultsRenderer.php:163
+#: src/Blocks/SearchResultsRenderer.php:158
 msgid "Breadcrumb"
+msgstr ""
+
+#: src/Blocks/NotFoundRenderer.php:32
+#: src/Blocks/SiteFooterRenderer.php:90
+#: src/Blocks/SiteHeaderRenderer.php:72
+msgid "Perego — home"
+msgstr ""
+
+#: src/Blocks/NotFoundRenderer.php:33
+msgid "Perego بيريجو"
 msgstr ""
 
 #: src/Blocks/PreloaderRenderer.php:29
 msgid "Loading…"
 msgstr ""
 
-#: src/Blocks/SearchResultsRenderer.php:147
-msgid "Prev"
+#: src/Blocks/ProjectGalleryLightboxRenderer.php:75
+#, php-format
+msgid "Open project media %d"
 msgstr ""
 
-#: src/Blocks/SearchResultsRenderer.php:156
+#: src/Blocks/ProjectHeroRenderer.php:45
+#: src/PostTypes/ProjectPostType.php:53
+msgid "Project"
+msgstr ""
+
+#: src/Blocks/SearchResultsRenderer.php:137
 msgid "Search results pages"
 msgstr ""
 
-#: src/Blocks/ServicesOverviewRenderer.php:60
+#: src/Blocks/SearchResultsRenderer.php:139
+#: src/Blocks/SearchResultsRenderer.php:140
+msgid "Prev"
+msgstr ""
+
+#: src/Blocks/SearchResultsRenderer.php:149
+#: src/Blocks/SearchResultsRenderer.php:150
+msgid "Next"
+msgstr ""
+
+#: src/Blocks/ServiceSelectedWorkRenderer.php:64
+#: src/Blocks/ServicesOverviewRenderer.php:191
+#, php-format
+msgid "Open %s"
+msgstr ""
+
+#: src/Blocks/ServicesOverviewRenderer.php:68
 msgid "Start your project"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:81
-#: src/Blocks/SiteHeaderRenderer.php:71
-msgid "Perego — home"
-msgstr ""
-
-#: src/Blocks/SiteFooterRenderer.php:85
+#: src/Blocks/SiteFooterRenderer.php:94
 msgid "Contact us"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:112
+#: src/Blocks/SiteFooterRenderer.php:121
 msgid "Social media"
 msgstr ""
 
 #. translators: %s: social network name
-#: src/Blocks/SiteFooterRenderer.php:117
+#: src/Blocks/SiteFooterRenderer.php:126
 #, php-format
 msgid "Perego on %s"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:135
-msgid "Send a quick message"
-msgstr ""
-
-#: src/Blocks/SiteFooterRenderer.php:163
-msgid "Join us"
-msgstr ""
-
-#: src/Blocks/SiteFooterRenderer.php:192
+#: src/Blocks/SiteFooterRenderer.php:233
 msgid "Legal"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:193
+#: src/Blocks/SiteFooterRenderer.php:234
 msgid "Terms & Conditions"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:194
+#: src/Blocks/SiteFooterRenderer.php:235
 msgid "Privacy Policy"
 msgstr ""
 
@@ -193,6 +234,10 @@ msgstr ""
 msgid "Contact Us"
 msgstr ""
 
+#: src/Blocks/SiteHeaderRenderer.php:63
+msgid "Skip to content"
+msgstr ""
+
 #: src/Blocks/SiteHeaderRenderer.php:78
 msgid "Primary"
 msgstr ""
@@ -201,8 +246,13 @@ msgstr ""
 msgid "Start a Project"
 msgstr ""
 
+#: src/Blocks/SiteHeaderRenderer.php:89
 #: src/Blocks/SiteHeaderRenderer.php:92
 msgid "Menu"
+msgstr ""
+
+#: src/Blocks/SiteHeaderRenderer.php:145
+msgid "Language"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:37
@@ -210,18 +260,22 @@ msgid "Start a project"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:50
+#: src/Forms/QuickMessageForm.php:42
 msgid "Full name"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:51
+#: src/Forms/QuickMessageForm.php:43
 msgid "Put your name here"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:57
+#: src/Forms/QuickMessageForm.php:48
 msgid "E-mail"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:58
+#: src/Forms/QuickMessageForm.php:49
 msgid "Put your E-mail here"
 msgstr ""
 
@@ -254,6 +308,7 @@ msgid "What is this about?"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:91
+#: src/Forms/QuickMessageForm.php:54
 msgid "Your message"
 msgstr ""
 
@@ -261,27 +316,27 @@ msgstr ""
 msgid "Tell us about your project."
 msgstr ""
 
-#: src/Forms/ProjectBriefForm.php:97
-msgid "Choose your service"
-msgstr ""
-
 #: src/Forms/ProjectBriefForm.php:112
-msgid "Under $1,000"
+msgid "Select a range"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:113
-msgid "$1,000 – $5,000"
+msgid "Under $1,000"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:114
-msgid "$5,000 – $15,000"
+msgid "$1,000 – $5,000"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:115
-msgid "$15,000+"
+msgid "$5,000 – $15,000"
 msgstr ""
 
 #: src/Forms/ProjectBriefForm.php:116
+msgid "$15,000+"
+msgstr ""
+
+#: src/Forms/ProjectBriefForm.php:117
 msgid "Not sure yet"
 msgstr ""
 
@@ -289,16 +344,8 @@ msgstr ""
 msgid "Quick message"
 msgstr ""
 
-#: src/Forms/QuickMessageForm.php:42
-msgid "Your name"
-msgstr ""
-
-#: src/Forms/QuickMessageForm.php:47
-msgid "Email address"
-msgstr ""
-
-#: src/Forms/QuickMessageForm.php:52
-msgid "How can we help?"
+#: src/Forms/QuickMessageForm.php:55
+msgid "Say hello."
 msgstr ""
 
 #: src/PostTypes/ClientPostType.php:42
@@ -321,29 +368,8 @@ msgstr ""
 msgid "Client Type"
 msgstr ""
 
-#: src/PostTypes/GlobalSectionPostType.php:59
-#: src/PostTypes/GlobalSectionPostType.php:63
-msgid "Global Sections"
-msgstr ""
-
-#: src/PostTypes/GlobalSectionPostType.php:60
-msgid "Global Section"
-msgstr ""
-
-#: src/PostTypes/GlobalSectionPostType.php:61
-msgid "Add New Global Section"
-msgstr ""
-
-#: src/PostTypes/GlobalSectionPostType.php:62
-msgid "Edit Global Section"
-msgstr ""
-
 #: src/PostTypes/ProjectPostType.php:52
 msgid "Projects"
-msgstr ""
-
-#: src/PostTypes/ProjectPostType.php:53
-msgid "Project"
 msgstr ""
 
 #: src/PostTypes/ProjectPostType.php:54
@@ -375,56 +401,32 @@ msgstr ""
 msgid "Clients carousels (Corporate + Individual). Rendered by ClientsCarouselRenderer."
 msgstr ""
 
-#: src/Blocks/global-section/index.js:16
-msgid "— Select a role —"
+#: src/Blocks/contact-service-chooser/index.js:6
+msgid "Contact service choices are rendered from published services."
 msgstr ""
 
-#: src/Blocks/global-section/index.js:17
-msgid "Header content"
+#: src/Blocks/footer-careers/index.js:19
+msgid "English"
 msgstr ""
 
-#: src/Blocks/global-section/index.js:18
-msgid "Standard footer"
+#: src/Blocks/footer-careers/index.js:26
+msgid "Careers heading (EN)"
 msgstr ""
 
-#: src/Blocks/global-section/index.js:19
-msgid "Contact (flat) footer"
+#: src/Blocks/footer-careers/index.js:34
+msgid "Careers blurb (EN)"
 msgstr ""
 
-#: src/Blocks/global-section/index.js:20
-msgid "Global project CTA"
+#: src/Blocks/footer-careers/index.js:38
+msgid "Arabic"
 msgstr ""
 
-#: src/Blocks/global-section/index.js:21
-msgid "Global contact details"
+#: src/Blocks/footer-careers/index.js:45
+msgid "Careers heading (AR)"
 msgstr ""
 
-#: src/Blocks/global-section/index.js:22
-msgid "404 editorial"
-msgstr ""
-
-#: src/Blocks/global-section/index.js:30
-msgid "No role selected"
-msgstr ""
-
-#: src/Blocks/global-section/index.js:35
-msgid "Global section"
-msgstr ""
-
-#: src/Blocks/global-section/index.js:37
-msgid "Role"
-msgstr ""
-
-#: src/Blocks/global-section/index.js:41
-msgid "Which global record renders here, in the current language."
-msgstr ""
-
-#: src/Blocks/global-section/index.js:49
-msgid "Global section:"
-msgstr ""
-
-#: src/Blocks/global-section/index.js:52
-msgid "Edit the copy in the matching Global Section record; it renders here per language."
+#: src/Blocks/footer-careers/index.js:53
+msgid "Careers blurb (AR)"
 msgstr ""
 
 #: src/Blocks/hero-slider/index.js:12
@@ -445,6 +447,10 @@ msgstr ""
 
 #: src/Blocks/legal-toc/index.js:11
 msgid "Legal TOC (generated from the page headings). Rendered by LegalTocRenderer."
+msgstr ""
+
+#: src/Blocks/media-lightbox/index.js:13
+msgid "Media lightbox — the site-wide accessible dialog for image/video/gallery triggers. Rendered once by MediaLightboxRenderer."
 msgstr ""
 
 #: src/Blocks/not-found/index.js:11
@@ -483,6 +489,10 @@ msgstr ""
 msgid "Service hero — eyebrow, service name (H1), and the four-service tabs. Rendered by ServiceHeroRenderer."
 msgstr ""
 
+#: src/Blocks/service-selected-work/index.js:12
+msgid "Selected work — real projects for this service, opening the media lightbox. Rendered by ServiceSelectedWorkRenderer."
+msgstr ""
+
 #: src/Blocks/services-overview/index.js:12
 msgid "Services overview — Our Services intro, four cards, process, CTA. Rendered by ServicesOverviewRenderer."
 msgstr ""
@@ -509,14 +519,24 @@ msgctxt "block description"
 msgid "The homepage Corporate + Individual client carousels. Cards are server-rendered (work without JS); Swiper (modular: Navigation, Pagination, Keyboard, A11y) enhances them. Language-aware."
 msgstr ""
 
-#: src/Blocks/global-section/block.json
+#: src/Blocks/contact-service-chooser/block.json
 msgctxt "block title"
-msgid "Perego Global Section"
+msgid "Perego Contact Service Chooser"
 msgstr ""
 
-#: src/Blocks/global-section/block.json
+#: src/Blocks/contact-service-chooser/block.json
 msgctxt "block description"
-msgid "Renders a language-aware perego_global_section record (header, footer, CTA, contact details, 404) resolved by role for the current Polylang language."
+msgid "Dynamic service choices for the Start a Project page."
+msgstr ""
+
+#: src/Blocks/footer-careers/block.json
+msgctxt "block title"
+msgid "Perego Footer Careers"
+msgstr ""
+
+#: src/Blocks/footer-careers/block.json
+msgctxt "block description"
+msgid "The footer 'Join us' careers heading and blurb, stored bilingually (EN + AR) in block attributes; renders only the current language on the frontend and shows both languages in the editor."
 msgstr ""
 
 #: src/Blocks/hero-slider/block.json
@@ -567,6 +587,16 @@ msgstr ""
 #: src/Blocks/legal-toc/block.json
 msgctxt "block description"
 msgid "The legal page aside: draft/review notice, last-updated line, and a table of contents generated from the page's own H2 anchors. Language-aware."
+msgstr ""
+
+#: src/Blocks/media-lightbox/block.json
+msgctxt "block title"
+msgid "Perego Media Lightbox"
+msgstr ""
+
+#: src/Blocks/media-lightbox/block.json
+msgctxt "block description"
+msgid "The site-wide accessible image/video/gallery lightbox dialog (ported from the handoff's main.js lightbox IIFE). Renders once per page in the footer template part; its view script delegates a click listener to every [data-image]/[data-video]/[data-gallery] trigger anywhere on the page, so any block can open it without wiring its own dialog."
 msgstr ""
 
 #: src/Blocks/not-found/block.json
@@ -639,6 +669,16 @@ msgctxt "block description"
 msgid "The case-study hero: breadcrumb, service category, project title (H1), and the client/year/role/deliverables meta. Server-rendered from the queried project."
 msgstr ""
 
+#: src/Blocks/project-navigation/block.json
+msgctxt "block title"
+msgid "Perego Project Navigation"
+msgstr ""
+
+#: src/Blocks/project-navigation/block.json
+msgctxt "block description"
+msgid "Dynamic adjacent and related project links for a project single."
+msgstr ""
+
 #: src/Blocks/search-results/block.json
 msgctxt "block title"
 msgid "Perego Search Results"
@@ -657,6 +697,16 @@ msgstr ""
 #: src/Blocks/service-hero/block.json
 msgctxt "block description"
 msgid "The service single hero: an eyebrow, the current service's name as H1, and the shared four-service tabs (main link + Start-your-project CTA). Server-rendered; tab hover/active is pure CSS."
+msgstr ""
+
+#: src/Blocks/service-selected-work/block.json
+msgctxt "block title"
+msgid "Perego Service Selected Work"
+msgstr ""
+
+#: src/Blocks/service-selected-work/block.json
+msgctxt "block description"
+msgid "The service single's own \"Selected work\" masonry (handoff service-*.html): real published projects filtered to the current service's category, opening the site-wide media lightbox. Server-rendered."
 msgstr ""
 
 #: src/Blocks/services-overview/block.json

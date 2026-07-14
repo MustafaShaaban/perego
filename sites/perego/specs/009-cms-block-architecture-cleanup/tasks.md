@@ -39,9 +39,12 @@ One feature = one branch = one PR. Mark boxes truthfully; runtime-gated tasks st
 
 ## Phase 2 — Code removal + cleanup (partly runtime-verified)
 
-- [ ] T011 Remove Global Sections code: `GlobalSectionPostType`, `GlobalSectionResolver`,
+- [x] T011 Removed Global Sections code: `GlobalSectionPostType`, `GlobalSectionResolver`,
     `GlobalSectionRenderer`, `Blocks/global-section/*`, `scripts/seed-global-sections.php`, the 3 tests,
-    provider `registerGlobalSections()` + the `perego_section` translatable entry.
+    provider `registerGlobalSections()` + imports + the `perego_section` translatable entry. Inlined the
+    CPT constants into the retained migration script. Regenerated `.pot` (0 global-section refs).
+    Rebuilt. Verified: home 200, `perego_section` gone, `global-section` block gone, `footer-careers`
+    registered, footer editorial intact. Pest 233/233, Jest 76/76.
 - [ ] T012 Evidence-based dead-asset sweep (duplicate CSS, orphaned block styles, stale selectors) —
     inventory first, remove only proven-dead; note candidates already flagged in
     `specs/008-.../tasks.md` (e.g. orphaned `site-footer/style.scss`).

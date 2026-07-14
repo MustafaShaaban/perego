@@ -1,15 +1,17 @@
 <?php
 
 /**
- * Global Sections migration reporter (spec 009). SAFE BY DEFAULT: the only mode implemented here is a
- * read-only **dry run** that inventories every `perego_section` record and produces a report — it writes
- * NOTHING to the database. A `backup-check` mode verifies a DB export exists (the gate for a future
- * destructive `apply`, which is intentionally NOT implemented in this commit — see spec 009 T010).
+ * Global Sections migration tool (spec 009). Modes (via MIGRATE_GS_MODE, default dry-run):
+ *   - `dry-run`      : read-only inventory of every `perego_section` record; writes NOTHING to the DB.
+ *   - `backup-check` : verify a non-empty DB export exists (MIGRATE_GS_BACKUP) — the rollback gate.
+ *   - `apply`        : destructively remove all `perego_section` records, gated on a verified backup AND
+ *                      the perego-theme/footer-careers block being registered (its migrated home).
+ * Idempotent: a second `apply` is a no-op. This script is retained after the CPT/code removal (T011) as
+ * the migration's rollback + orphan-report record.
  *
- * Why: only the `footer-careers` role is actually rendered on the public frontend
- * (SiteFooterRenderer::careersEditorial); the other roles are seeded-but-unconsumed. This report proves,
- * against the LIVE database, exactly which records exist per role/locale before anything is migrated or
- * removed, so removal causes no content loss.
+ * Why: only the `footer-careers` role was rendered on the public frontend (now migrated to the
+ * perego-theme/footer-careers block); the other roles were seeded-but-unconsumed. The dry-run proved,
+ * against the DB, exactly which records existed per role/locale, so removal caused no content loss.
  *
  * Run (from repo root; `require` keeps `declare(strict_types)` valid, which `wp eval-file` breaks):
  *   wp eval 'require "sites/perego/perego-site/scripts/migrate-global-sections.php";' --path=wp
@@ -26,7 +28,10 @@ if (! defined('ABSPATH')) {
     exit(1);
 }
 
-use PeregoSite\PostTypes\GlobalSectionPostType;
+// The former GlobalSectionPostType is removed (spec 009 T011); its identifiers are inlined here so this
+// script survives as the migration's idempotent rollback/orphan-report record.
+const MIGRATE_GS_POST_TYPE = 'perego_section';
+const MIGRATE_GS_META_ROLE = '_perego_section_role';
 
 /** Roles whose content is rendered on the public frontend (must have a migration target before removal). */
 const MIGRATE_GS_CONSUMED_ROLES = ['footer-careers'];
@@ -56,7 +61,7 @@ switch ($mode) {
  */
 function migrate_gs_dry_run(): void
 {
-    if (! post_type_exists(GlobalSectionPostType::POST_TYPE)) {
+    if (! post_type_exists(MIGRATE_GS_POST_TYPE)) {
         WP_CLI::success(
             'perego_section is not registered — the CPT appears already removed. Nothing to inventory.'
         );
@@ -70,7 +75,7 @@ function migrate_gs_dry_run(): void
     }
 
     $ids = get_posts([
-        'post_type' => GlobalSectionPostType::POST_TYPE,
+        'post_type' => MIGRATE_GS_POST_TYPE,
         'post_status' => 'any',
         'numberposts' => 200,
         'fields' => 'ids',
@@ -84,7 +89,7 @@ function migrate_gs_dry_run(): void
 
     foreach ((array) $ids as $id) {
         $id = (int) $id;
-        $role = (string) get_post_meta($id, GlobalSectionPostType::META_ROLE, true);
+        $role = (string) get_post_meta($id, MIGRATE_GS_META_ROLE, true);
         $locale = $pllActive ? (string) pll_get_post_language($id) : 'unknown';
         $locale = $locale === '' ? 'unknown' : $locale;
         $post = get_post($id);
@@ -105,7 +110,7 @@ function migrate_gs_dry_run(): void
 
     $report = [
         'generated_at' => gmdate('c'),
-        'post_type' => GlobalSectionPostType::POST_TYPE,
+        'post_type' => MIGRATE_GS_POST_TYPE,
         'total_records' => count($records),
         'consumed_roles' => MIGRATE_GS_CONSUMED_ROLES,
         'records' => $records,
@@ -163,7 +168,7 @@ function migrate_gs_anomalies(array $byRoleLocale, bool $pllActive): array
         foreach ($byRoleLocale[''] as $ids) {
             $count += count($ids);
         }
-        $anomalies[] = sprintf('%d record(s) have no %s meta (unclassifiable).', $count, GlobalSectionPostType::META_ROLE);
+        $anomalies[] = sprintf('%d record(s) have no %s meta (unclassifiable).', $count, MIGRATE_GS_META_ROLE);
     }
 
     // Duplicate singletons (more than one record for the same role+locale).
@@ -194,7 +199,7 @@ function migrate_gs_anomalies(array $byRoleLocale, bool $pllActive): array
  */
 function migrate_gs_apply(string $backupPath): void
 {
-    if (! post_type_exists(GlobalSectionPostType::POST_TYPE)) {
+    if (! post_type_exists(MIGRATE_GS_POST_TYPE)) {
         WP_CLI::success('perego_section is not registered — nothing to remove (idempotent no-op).');
 
         return;
@@ -212,7 +217,7 @@ function migrate_gs_apply(string $backupPath): void
     }
 
     $ids = get_posts([
-        'post_type' => GlobalSectionPostType::POST_TYPE,
+        'post_type' => MIGRATE_GS_POST_TYPE,
         'post_status' => 'any',
         'numberposts' => 200,
         'fields' => 'ids',
@@ -224,7 +229,7 @@ function migrate_gs_apply(string $backupPath): void
     $failed = [];
     foreach ((array) $ids as $id) {
         $id = (int) $id;
-        $role = (string) get_post_meta($id, GlobalSectionPostType::META_ROLE, true);
+        $role = (string) get_post_meta($id, MIGRATE_GS_META_ROLE, true);
         $result = wp_delete_post($id, true);
         if ($result === false || $result === null) {
             $failed[] = $id;
@@ -235,7 +240,7 @@ function migrate_gs_apply(string $backupPath): void
 
     // Orphan scan: any post meta or posts of this type that survived deletion.
     $remaining = get_posts([
-        'post_type' => GlobalSectionPostType::POST_TYPE,
+        'post_type' => MIGRATE_GS_POST_TYPE,
         'post_status' => 'any',
         'numberposts' => 50,
         'fields' => 'ids',
@@ -245,7 +250,7 @@ function migrate_gs_apply(string $backupPath): void
 
     global $wpdb;
     $orphanMeta = (int) $wpdb->get_var(
-        $wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s", GlobalSectionPostType::META_ROLE)
+        $wpdb->prepare("SELECT COUNT(*) FROM {$wpdb->postmeta} WHERE meta_key = %s", MIGRATE_GS_META_ROLE)
     );
 
     $report = [
