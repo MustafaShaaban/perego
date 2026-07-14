@@ -6,7 +6,7 @@
 
 - **Date/time:** 2026-07-14 (~13:15 UTC)
 - **Branch:** `feature/009-cms-block-architecture-cleanup` (off `feature/008-visual-fidelity-recovery` @ `1b7ecda`)
-- **Latest pushed commit:** _pending this session's push_ (record the SHA after push)
+- **Latest pushed commit:** `d56caa2` (spec 009 foundation)
 - **Active spec:** `specs/009-cms-block-architecture-cleanup/` — CMS block architecture + Global Sections removal
 - **Active task:** T004 done (dry-run tool, run locally); next is **T005** (footer-careers editable surface) then the runtime T006–T010
 - **Current objective:** replace the Global Sections CPT with block-first FSE-editable global content via a safe, idempotent, backup-gated migration; remove the CPT + dead code; cleanup report
