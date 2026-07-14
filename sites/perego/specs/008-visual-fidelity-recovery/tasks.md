@@ -122,6 +122,25 @@
     added to individual — triggering a real axe `scrollable-region-focusable` violation on both EN and
     AR home. Added the same `tabindex="0"` + `aria-label` the corporate track already carries.
     Full suite re-verified green: Pest 232/232, route-health 72/0, interactions 12/12, a11y 12/0.
+  - [x] **Per-service "Selected work" section (2026-07-14):** comparing each service single's own
+    handoff file (e.g. `service-video-editing.html:129-134`) found ANOTHER complete section missing —
+    a `.portfolio.page-section`/`.work-masonry` gallery of real projects filtered to that service's own
+    category, with no heading of its own (unlike the archive's version). Built
+    `ServiceSelectedWorkRenderer` (same pure-function/pre-resolved-array pattern as
+    `ServicesOverviewRenderer`'s selected-work) and a new `perego-theme/service-selected-work` block,
+    inserted into `single-perego_service.html` after `wp:post-content`. Query is filtered by a
+    service→category slug map (`video-editing`→`video`, etc.) resolved to the **current-locale**
+    taxonomy term via `pll_get_term()` — Polylang gives every language its own category term (e.g.
+    `video` for en, `video-ar` for ar), so querying by the English slug alone would have left every
+    Arabic service single with an empty (if correctly hidden) section. 3 new Pest tests. **Caught and
+    fixed a real site-wide fatal error introduced while building this**: the block was registered with
+    `new ServiceSelectedWorkRenderer()` before its `use` import was added, throwing an uncaught "Class
+    not found" fatal on every single request site-wide the moment the code was saved — caught
+    immediately via a broad route smoke-test (curl across all main routes) before it was ever committed,
+    fixed by adding the missing `use` statement. Verified live: all four EN services render
+    category-filtered real projects (3/2/2/2 cards respectively) opening the media lightbox correctly;
+    the matching AR service single also renders its own (non-empty) filtered set. Pest 238/238,
+    Jest 76/76, route-health 72/0, a11y 12/0.
 - [ ] T007 [US2] Rebuild Work/project and Journal/single-post routes, including cards, filters, gallery, and visual evidence.
   - [x] **Journal card + single-post meta row (2026-07-14):** comparing the live Journal archive against
     the handoff's own `archive.html` found the meta line was missing reading time entirely (only the

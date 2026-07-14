@@ -1,0 +1,14 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/service-selected-work",
+	"title": "Perego Service Selected Work",
+	"category": "theme",
+	"icon": "grid-view",
+	"description": "The service single's own \"Selected work\" masonry (handoff service-*.html): real published projects filtered to the current service's category, opening the site-wide media lightbox. Server-rendered.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"supports": {
+		"html": false
+	}
+}

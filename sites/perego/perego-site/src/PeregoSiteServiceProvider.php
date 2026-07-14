@@ -27,6 +27,7 @@ use PeregoSite\Blocks\ProjectGalleryLightboxRenderer;
 use PeregoSite\Blocks\ProjectNavigationRenderer;
 use PeregoSite\Blocks\SearchResultsRenderer;
 use PeregoSite\Blocks\ServiceHeroRenderer;
+use PeregoSite\Blocks\ServiceSelectedWorkRenderer;
 use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
@@ -361,6 +362,79 @@ final class PeregoSiteServiceProvider
                     }
 
                     return $heroRenderer->render($content, $currentSlug);
+                },
+            ]);
+
+            $selectedWorkRenderer = new ServiceSelectedWorkRenderer();
+
+            register_block_type($this->blockDir('service-selected-work'), [
+                'render_callback' => static function () use ($selectedWorkRenderer, $languageService): string {
+                    // The service and project CPTs use different (but 1:1) slugs for the same four
+                    // disciplines — map the current service to its matching project category.
+                    $serviceToCategory = [
+                        'video-editing' => 'video',
+                        'motion-graphics' => 'motion',
+                        'graphic-design' => 'design',
+                        'website-making' => 'web',
+                    ];
+
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    $currentSlug = '';
+                    if ($queried instanceof \WP_Post) {
+                        $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
+                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                    }
+                    $category = $serviceToCategory[$currentSlug] ?? '';
+                    if ($category === '') {
+                        return '';
+                    }
+
+                    $locale = $languageService->driver()->currentLocale();
+
+                    // Polylang gives every language its own category term (e.g. "video" for en, a
+                    // separate "video-ar" term for ar, linked as translations) — querying by the
+                    // English slug alone would only ever match English-tagged projects, leaving the
+                    // Arabic service singles with an empty (correctly hidden) section.
+                    $enTerm = get_term_by('slug', $category, ProjectPostType::TAXONOMY);
+                    $termId = $enTerm ? (int) $enTerm->term_id : 0;
+                    if ($termId !== 0 && function_exists('pll_get_term')) {
+                        $localized = pll_get_term($termId, $locale);
+                        $termId = $localized ? (int) $localized : $termId;
+                    }
+                    if ($termId === 0) {
+                        return '';
+                    }
+
+                    $projects = new ProjectRepository();
+                    $portfolioContent = new PortfolioContent($locale);
+
+                    $posts = (new \WP_Query([
+                        'post_type' => ProjectPostType::POST_TYPE,
+                        'post_status' => 'publish',
+                        'posts_per_page' => 9,
+                        'no_found_rows' => true,
+                        'orderby' => 'date',
+                        'order' => 'DESC',
+                        'tax_query' => [[
+                            'taxonomy' => ProjectPostType::TAXONOMY,
+                            'field' => 'term_id',
+                            'terms' => $termId,
+                        ]],
+                    ]))->posts;
+
+                    $selectedWork = array_map(static function (\WP_Post $post) use ($projects, $portfolioContent): array {
+                        $card = $projects->toGridCard($post, $portfolioContent);
+                        $gallery = $projects->galleryFor($post);
+
+                        return [
+                            'title' => $card['title'],
+                            'thumbUrl' => $card['thumbUrl'],
+                            'thumbAlt' => $card['thumbAlt'],
+                            'gallerySrcs' => array_column($gallery, 'src'),
+                        ];
+                    }, $posts);
+
+                    return $selectedWorkRenderer->render($selectedWork);
                 },
             ]);
         });
