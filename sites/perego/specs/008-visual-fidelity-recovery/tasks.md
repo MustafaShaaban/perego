@@ -179,5 +179,20 @@
     this form has); a full "shared form state system" for comments (section 12) remains open follow-up.
     Verified live (dark theme now applies, no white boxes); Pest 224/224, route-health 72/0, a11y 12/0.
 - [ ] T008 [US2] Rebuild Contact, Search, standard page, legal, and 404 routes with all required states and evidence.
+  - [x] **Manual route review at desktop + mobile (2026-07-14):** captured and reviewed 404 (EN
+    desktop/mobile) and legal/Terms (EN desktop/mobile + AR desktop) full-page screenshots against
+    their handoff baselines — all match closely (404's pointer-motion/orb composition, legal's
+    sticky-TOC/prose layout, mobile stacking, no horizontal overflow). The AR legal body is correctly
+    an honest untranslated-content placeholder (no fabricated legal text), and its TOC correctly renders
+    empty since the placeholder body has no anchored H2 sections yet — not a bug.
+  - [x] **Search result-card placeholder had no visual backing at all (2026-07-14):** a search result
+    for a post with no featured image (e.g. a service post) rendered a fully blank `.post-card__media`
+    box — `.post-card__media-placeholder` has zero CSS anywhere (a documented gap since the very start
+    of this session's preservation phase). Added a branded diagonal-stripe fallback (Perego addition,
+    not in the reference stylesheet) matching the look of the seeded `portfolio-N.png` placeholders
+    used everywhere else, so a photo-less result reads as an intentional "no photo yet" state instead
+    of a broken image. Verified live; route-health 72/0, a11y 12/0.
+- [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.
+- [ ] T010 Complete state/viewport visual regression, a11y, performance, security, quality gates, docs, PR, and merge.
 - [ ] T009 [US3] Verify content remains FSE/editor-canvas managed and Polylang Free EN/AR behavior remains linked and RTL-correct.
 - [ ] T010 Complete state/viewport visual regression, a11y, performance, security, quality gates, docs, PR, and merge.

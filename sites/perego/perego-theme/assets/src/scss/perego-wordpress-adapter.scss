@@ -385,3 +385,22 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	opacity: 1;
 	visibility: visible;
 }
+
+/* Perego addition, not in the reference stylesheet: the seeded demo projects always carry a real
+ * (placeholder-labelled) featured image, but content types with no photo at all yet — e.g. a service
+ * post surfaced in Search — have nothing to show in a .post-card__media box, and
+ * .post-card__media-placeholder has no visual backing anywhere. A blank box reads as a broken image;
+ * a branded diagonal pattern (matching the seeded portfolio-N.png placeholders' own look) reads as an
+ * intentional "no photo yet" state instead. */
+.post-card__media-placeholder {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	background: repeating-linear-gradient(
+		135deg,
+		var(--bg-deep),
+		var(--bg-deep) 10px,
+		rgba(216, 106, 243, 0.08) 10px,
+		rgba(216, 106, 243, 0.08) 20px
+	);
+}
