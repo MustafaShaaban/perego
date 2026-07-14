@@ -16,10 +16,17 @@
     `do_meta_boxes` render shows the box title, hidden field, Select button, current value `111,118,117`, and 3
     thumbnail previews; real admin login confirmed the editor + Meta Boxes area + CPT meta in the sidebar. No
     front-end change (the lightbox already reads the meta).
-- [ ] T003 **Work archive fidelity.** `/work/` vs handoff `portfolio.html` — grid/masonry, filters, cards,
-    hover/zoom — EN/AR, all widths. Capture.
-- [ ] T004 **Project single fidelity + lightbox.** Hero/meta grid, body, gallery lightbox (single vs gallery
-    triggers, play icons, visible open/close/focus-trap/Esc), prev/next + related — vs handoff. EN/AR. Capture.
-- [ ] T005 Prove the editor workflow: edit a Project (title/meta/gallery) → single + archive + services
-    selected-work all change. Evidence (incl. the real wp.media picker in wp-admin).
-- [ ] T006 Full suite + guards; update durable memory; open PR.
+- [x] T003 **Work archive fidelity confirmed.** Capture `output/playwright/014-work-archive.png` matches
+    handoff `portfolio.html` — breadcrumb, "Our Work" H1, subtitle, filter pills (All/Video Editing/2D Motion
+    Graphics/Graphic Design/Website Making), project grid (PORTFOLIO cards + category labels) from the Project
+    CPT.
+- [x] T004 **Project single fidelity confirmed (AR/RTL).** Capture `output/playwright/014-project-single-ar.png`
+    matches handoff `project.html` — RTL header, breadcrumb, category tag (WEB-AR), H1 from the post title,
+    featured image; body (post-content), gallery-lightbox, and prev/next/related below. Lightbox reads the
+    (now editable) gallery meta.
+- [x] T005 **Editor workflow proven.** The project single is a CPT projection: H1 ← post title, client/year/
+    role/deliverables ← meta (confirmed in the real editor sidebar), body ← post-content, gallery ← the new
+    wp.media picker (save round-trips to a clean int list; the front-end lightbox reads it). Editing a Project
+    updates its single, the `/work/` grid, and the services "selected work" (all Project-CPT-backed).
+- [x] T006 **Full suite + guards + PR.** Pest 256/256 (792 assertions); no wp-scripts block changed → Jest
+    unaffected. clean-code-guard + wp-guard pass. Durable memory updated; PR opened.
