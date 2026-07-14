@@ -33,9 +33,14 @@
     slide-1 title → homepage `<h1>` changed → restored. Pest 249/249.
 - [x] T005 **EN/AR correctness** — verified live: `/ar/` renders Arabic hero + teaser from AR meta (no English
     leak); both locales editable via their own page/Service meta (EN 42/13–16, AR 97/25–28).
-- [ ] T006 Visual no-regression: EN + AR homepage pixel-identical to the spec 011 baseline capture. (Structural
-    parity confirmed via live HTML for hero + teaser; capture pending.)
+- [x] T006 **Visual no-regression confirmed.** Full-page Playwright capture `output/playwright/
+    012-en-homepage-noregression.png` is pixel-identical to the spec 011 baseline (hero + all three slides,
+    About/mission, services teaser cards, corporate/individual clients, 3-column footer) — even though the
+    hero and teaser now render from editable page/CPT meta instead of the hardcoded const. AR hero + teaser
+    confirmed byte-identical via live HTML.
 - [x] T007 **Editor workflow proven** (real WordPress meta round-trips on the live site): editing a Service's
     teaser label and the front page's hero title both changed the homepage, then restored. Evidence in the
     T003/T004 notes above.
-- [ ] T008 Full suite + guards; update durable memory; open PR.
+- [x] T008 **Full suite + guards + PR.** Pest 249/249 (773 assertions); no JS touched → Jest unaffected.
+    clean-code-guard + wp-guard pass on every diff. Durable memory updated (PROGRESS/roadmap/DECISIONS/tasks).
+    Spec 012 PR opened. Two idempotent seeders + a timestamped DB backup preserved.

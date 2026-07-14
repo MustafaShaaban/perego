@@ -8,26 +8,21 @@
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
 - **Latest pushed commit:** `203af28` (spec 011 done docs). **Spec 011 DONE → PR #19**. Now on
   `feature/012-home-page-fidelity` (branched off 011); spec 012 audit committed, implementation pending.
-- **Active spec:** **012** (homepage fidelity + editability). **T001 audit + T002 decision DONE.** Homepage
-  matches handoff visually; About = editable `post-content`, Clients = editable Client-CPT query. Gap: hero
-  slides/CTA + services-teaser (title/"See all"/4 cards) hardcoded in `HomeContent::COPY` (EN+AR).
-- **⚠ UNCOMMITTED disk changes (tooling outage — see below):** DECISIONS.md (T002 seam decision),
-  `specs/012-.../tasks.md` (T001/T002 marked done), `ServicePostType.php` (added teaser meta consts
-  `META_TEASER_LABEL/_IMAGE_ID/_ALT` + their `register_post_meta` args, mirroring `META_SERVICE_SLUG`). These
-  are saved to the working tree but NOT committed/pushed because git is blocked by the Bash outage below.
-- **🚧 BLOCKER (external, transient):** the `claude-opus-4-8` safety classifier is temporarily unavailable, so
-  ALL Bash is blocked — this stops git commit/push, wp-cli (needed to inspect whether Service posts 13–16/25–28
-  carry `_perego_service_slug`/menu_order the teaser renderer must match against), Pest, and the wp-scripts
-  build. Read/Grep/Write/Edit still work. **Single action needed:** wait for the classifier/Bash to recover,
-  then run the verify+commit cycle below.
-- **RESUME (when Bash returns):** (1) `git add` the 3 uncommitted files + commit T002; (2) inspect Service
-  posts' `_perego_service_slug` + menu_order + `_thumbnail_id` per locale; (3) implement **T003** —
-  `ServicesTeaserRenderer` queries the 4 published Services for the current Polylang locale, matches the fixed
-  `HomeContent` order by service-slug, overlays teaser meta when present, falls back to the `HomeContent` seed
-  PER FIELD (→ byte-identical output when unseeded); extend `Admin/PostMetaBoxes` with the 3 teaser fields;
-  write an idempotent seeder from `HomeContent`+handoff `card-*.png`; Pest tests for override+fallback; verify
-  EN/AR visual no-regression; guards; commit. (4) **T004** hero ← block attributes. Spec:
-  `specs/012-home-page-fidelity/`. Decision detail: DECISIONS.md 2026-07-14 (homepage editable seam).
+- **Active spec:** **012** (homepage fidelity + editability) — **DONE (T001–T008), PR pending push confirm.**
+  The homepage was visually complete; spec 012 closed the **editability** gap. About + Clients already edited
+  (post-content / Client CPT). Now **hero + services teaser are genuinely editable too**, with zero visual
+  regression (EN + AR):
+  - **Services teaser ← Service CPT:** teaser meta (`_perego_teaser_label`/`_image_id`/`_alt`) on
+    `perego_service`, overlaid per field on the `HomeContent` seed; editor UI in `PostMetaBoxes`; seeder
+    `scripts/seed-service-teaser-meta.php`.
+  - **Hero ← front-page page meta:** `Content\HeroContent` registers 3 slide title/text pairs + CTA on the
+    `page` type; `HeroSliderRenderer` reads the queried front page (EN 42 / AR 97) with per-field seed
+    fallback; front-page-scoped hero meta box; seeder `scripts/seed-hero-content.php`.
+  - **Proven** via live edit round-trips (teaser label + hero title changed the homepage, then restored) and a
+    pixel-identical full-page capture (`output/playwright/012-en-homepage-noregression.png`). Pest 249/249.
+    Both seeders idempotent; DB backup `db-backup-20260714-220905.sql` (gitignored). Guards pass.
+- **Next spec:** **013** (Services archive + four service singles) — branch `feature/013-services-pages-completion`
+  off 012. Then 014–018 in order.
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
