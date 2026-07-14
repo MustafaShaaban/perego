@@ -2,6 +2,26 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE
+
+- **Date/time:** 2026-07-14 (~13:15 UTC)
+- **Branch:** `feature/009-cms-block-architecture-cleanup` (off `feature/008-visual-fidelity-recovery` @ `1b7ecda`)
+- **Latest pushed commit:** _pending this session's push_ (record the SHA after push)
+- **Active spec:** `specs/009-cms-block-architecture-cleanup/` — CMS block architecture + Global Sections removal
+- **Active task:** T004 done (dry-run tool, run locally); next is **T005** (footer-careers editable surface) then the runtime T006–T010
+- **Current objective:** replace the Global Sections CPT with block-first FSE-editable global content via a safe, idempotent, backup-gated migration; remove the CPT + dead code; cleanup report
+- **Completed this session:** startup audit; static + local-DB inventory (14 records, only `footer-careers` consumed); durable roadmap (`docs/final-completion-roadmap.md`); spec 009 spec/plan/tasks; read-only dry-run reporter (`scripts/migrate-global-sections.php`) built + run locally (0 anomalies); DECISIONS + this block
+- **Work in progress:** spec 009 foundation committed; migration not executed
+- **Exact next file/action:** build the `footer-careers` EN/AR editable FSE surface (spec 009 T005, plan Option A) and switch `SiteFooterRenderer::careersEditorial()` onto it; then, with live access, T006 (fingerprint deployed build) → T007 (live dry-run) → T008 (DB backup gate) → T010 (`apply`)
+- **Verification run:** `php -l` on the new script (clean); dry-run executed against local DB (14 records, 0 anomalies, footer-careers EN/AR present)
+- **Verification still required:** live-DB dry-run; full Pest/Jest/route-health/a11y/interactions after any code change; live footer editorial EN/AR unchanged post-migration
+- **Known blockers:** (1) deployed-commit identity unproven — needs runtime fingerprint; (2) migration `apply` blocked on a live DB backup gate; (3) CoreX admin Forms/Submissions/Data Models reportedly missing on live (spec 010)
+- **Live URL status:** `https://mower-hamstring-baggy.ngrok-free.dev/` — not yet verified against this branch
+- **DB migration status:** dry-run only (local); no writes performed; CPT + 14 records still present
+
+---
+
+
 ## Session summary (2026-07-14) — T003–T007 substantially closed; full 8-viewport × EN/AR matrix run; T008 Contact bug found and fixed
 
 Continuing the visual-fidelity recovery per `PEREGO_FINAL_COMPLETION_PROMPT.md`. All work this
