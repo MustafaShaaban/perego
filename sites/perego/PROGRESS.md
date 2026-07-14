@@ -42,11 +42,18 @@
   no-results) are **native WP posts + core search via FSE blocks** — already handoff-faithful (captures in
   `output/playwright/015-*`) and **natively editable** (3 EN + 3 AR posts). Search is per-language (Polylang),
   no-results state matches the handoff. **No code change needed** → Pest unchanged 256/256.
-- **Next spec:** **016** (Contact, forms, form states, email routing) — branch `feature/016-contact-forms-email`
-  off 015. This is the big one: three forms (contact/brief, quick-message, careers/join) editable + routed +
-  validated + stored via CoreX Forms/Submissions; Email Studio routing; form states (default/invalid/
-  submitting/success/server-error); real submissions. Depends on spec 010 (CoreX runtime). Verify Forms &
-  Flows/Submissions/Data Models visible + functional.
+- **Active spec:** **016** (Contact, forms, form states, email routing) — branch `feature/016-contact-forms-email`
+  (off 015). **T001 audit DONE.** The stack is **built**: 3 forms — `Forms\ProjectBriefForm` (contact brief +
+  service chooser, `?service=` preselect), `Forms\QuickMessageForm` (footer), careers/"Join us"
+  (`Careers\PeregoCareersController` REST + `join-form` block, CV upload); storage via CoreX submissions +
+  `…corex_applications`; email via `Email\PeregoFormMailListener` → `PeregoMailer` + `PeregoEmailRenderer`;
+  states carry `aria-live`. Spec 010 verified a real submission (id 150). **Spec 016 = lifecycle verification
+  + gap-fixing** (NOT a rebuild). **Next: T002** confirm Forms & Flows/Submissions/Data Models visible +
+  functional in wp-admin → **T003** validation (client+server, CV file-type) → **T004** all form states
+  (default/submitting/success/invalid/server-error, aria-live) via real interaction → **T005** real submit →
+  stored record (verify + clean up) → **T006** email routed (verify via captured mail/log) → **T007** EN/AR
+  RTL → **T008** guards/PR. Spec: `specs/016-contact-forms-email/`. Verify with REAL submissions (Playwright
+  fills), not hidden DOM. Runtime admin admin/password (never commit/log). GAP-1/2 stay documented.
 - **Then 017–018** (supporting pages/terms/privacy/generic/404; final acceptance + cleanup: remove remaining
   duplicate CSS/dead code/obsolete seeds/orphan DB data).
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
