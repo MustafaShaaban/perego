@@ -60,11 +60,35 @@
     already-active `perego-reference.scss` rules. Full-page live screenshot at 1440 now matches the
     handoff's process section closely (icons, arrows, gradient band, spacing, typography). Pest 224/224
     (new coverage for step/arrow counts + icons), route-health 72/0, a11y 12/0.
-  - [ ] **Known gap, not yet fixed:** the entire "Selected work" masonry section (`.portfolio.page-section`
-    / `.work-masonry` / `.work-card` with image/video/gallery lightbox triggers) is completely absent from
-    the rendered Services archive — `ServicesOverviewRenderer::render()` has no call for it at all. This
-    needs real Project CPT data (reuse `ProjectRepository`) and a lightbox integration; scoped as separate
-    follow-up work, not fabricated here.
+  - [x] **Selected work + site-wide media lightbox (2026-07-14):** built the missing `.portfolio.page-section`
+    / `.work-masonry` / `.work-card` section from real published projects (`ServicesOverviewRenderer`
+    stays a pure function of a pre-resolved `$selectedWork` array — real `WP_Query` + `ProjectRepository`
+    live in the render_callback, matching `ProjectGalleryLightboxRenderer`'s established testability
+    pattern). A project with 2+ gallery images opens as a gallery; otherwise its featured image opens
+    singly. Since no accessible mixed-media (image/video/gallery) lightbox existed anywhere in the
+    codebase, built `perego-theme/media-lightbox`: one dialog rendered once in both footer template
+    parts, whose plain-JS view script delegates a click listener to every `[data-image]`/`[data-video]`/
+    `[data-gallery]` trigger site-wide (ported from the handoff's own `main.js` lightbox IIFE — media-type
+    detection, prev/next, dots) with the accessible-dialog contract already proven by
+    `project-gallery-lightbox` (role="dialog", focus trap, Escape/backdrop close, focus restoration,
+    scroll lock) plus an `inert` background while open. 7 Pest + 7 Jest, all new.
+  - [x] **Critical fix found while verifying the above — the reference stylesheet's `.lightbox` was
+    invisible on BOTH lightboxes site-wide, including the already-shipped project gallery (2026-07-14):**
+    `perego-reference.scss`'s `.lightbox` rule is `opacity:0;visibility:hidden` by default and only
+    becomes visible via an `.is-open` class, which is how the static handoff's own demo JS toggles it —
+    but both Perego lightbox blocks instead toggle the WordPress-idiomatic `hidden` attribute, which that
+    rule never accounts for. Result: `project-gallery-lightbox` (already shipped, "verified" via 9/9
+    interaction checks) opened correctly in the DOM — `hidden` removed, focus trap, aria-modal, scroll
+    lock all fired — but was **completely invisible on screen** (confirmed via `getComputedStyle`:
+    `opacity:0`), and the new media-lightbox above would have shipped with the exact same defect. The
+    prior interaction checks never caught this because they only asserted DOM attributes, never computed
+    style. Fixed with one scoped adapter rule, `.lightbox:not([hidden]) { opacity:1; visibility:visible; }`
+    (higher specificity than the reference rule, so no `!important` needed), which fixes both lightboxes
+    at once. **Strengthened `verify-interactions.mjs`** to assert `getComputedStyle(...).opacity/visibility`
+    directly (not just the `hidden` attribute) for both lightboxes, so this exact bug class can never
+    silently regress again. Verified live with screenshots: both dialogs now render fully visible,
+    correctly styled (backdrop, close/prev/next controls, dots). Pest 230/230, Jest 76/76,
+    route-health 72/0, interactions 12/12, a11y 12/0.
   - [ ] **Known gap, not yet fixed:** the four service singles' own "Our Process" sections are seeded as
     plain editable `wp:list` blocks (`scripts/seed-services.php`) with the same missing icon/arrow design.
     Unlike the archive's render, this content is editor-canvas (already-seeded on 8 live EN/AR posts), so

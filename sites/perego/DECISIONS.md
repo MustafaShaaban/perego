@@ -433,3 +433,37 @@ Mode task to add `novalidate` to the renderer directly (removing the client work
 upstream). **Why**: the same pattern as the two framework quirks logged in the 2026-07-11 environment
 bootstrap note — work around in the client site, document, and flag upstream rather than either shipping
 the native-bubble defect or editing framework internals from a client-site session.
+
+**Decision 20 (2026-07-14) — Site-wide media lightbox as a plain-JS global block; `.lightbox` visibility
+bug found in the already-shipped project gallery too.** Building the Services archive's missing
+"Selected work" section needed an accessible image/video/gallery dialog, and no such shared component
+existed — the existing `project-gallery-lightbox` is scoped to one project's own gallery via the
+Interactivity API, tied to that block's own DOM/context. Rather than force a single-project pattern to
+work across disparate trigger buttons scattered in other blocks' markup, built `perego-theme/media-lightbox`:
+one dialog server-rendered once (in both footer template parts, so it's present on every route) whose
+view script is plain vanilla JS — not the Interactivity API — delegating a click listener to any
+`[data-image]`/`[data-video]`/`[data-gallery]` trigger anywhere on the page, ported from the handoff's own
+`main.js` lightbox IIFE (media-type detection, prev/next, dots) with the accessible-dialog contract already
+proven by `project-gallery-lightbox` (focus trap, Escape/backdrop close, focus restoration, scroll lock),
+plus an `inert` background while open. **Why plain JS instead of Interactivity API**: the Interactivity
+API's context model assumes triggers live inside the same store's DOM tree; a single global dialog reused
+by unrelated blocks (client cards, services masonry, future homepage lightboxes) doesn't fit that shape
+cleanly, while vanilla delegated-click matches exactly how the handoff's own reference implementation
+already works.
+
+Verifying it caught a much bigger, pre-existing bug: the dialog opened correctly in the DOM (`hidden`
+attribute removed, focus trap fired, `aria-modal` set) but was **completely invisible on screen**.
+Root cause: `perego-reference.scss`'s `.lightbox` rule is `opacity:0;visibility:hidden` by default,
+becoming visible only via an `.is-open` class — the mechanism the static handoff's own demo JS toggles —
+but both Perego lightbox blocks toggle the WordPress-idiomatic `hidden` attribute instead, which that rule
+never accounts for. Checking the **already-shipped** `project-gallery-lightbox` confirmed the identical
+defect: its 9/9 interaction checks had all passed because they only asserted the `hidden` DOM attribute,
+never the actual computed style — the project gallery lightbox had been "verified" while genuinely
+invisible to every real visitor. Fixed with one scoped rule in `perego-wordpress-adapter.scss`:
+`.lightbox:not([hidden]) { opacity:1; visibility:visible; }` (its specificity naturally beats the
+reference rule, so no `!important`), fixing both dialogs at once. Also strengthened
+`verify-interactions.mjs` to assert `getComputedStyle(...).opacity`/`.visibility` directly rather than
+just `hidden`, so this exact bug class cannot silently regress again. **Why this matters beyond the fix
+itself**: it's concrete evidence that "the interaction script passed" is not sufficient proof of visual
+correctness — matching the completion contract's own repeated warning not to treat functional/DOM checks
+as visual acceptance.

@@ -373,3 +373,15 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	border: 0;
 	padding: 12px 42px;
 }
+
+/* The reference stylesheet's .lightbox is invisible (opacity:0; visibility:hidden) until an
+ * .is-open class is added — the static prototype's own main.js does that, but both Perego lightbox
+ * blocks (project-gallery-lightbox, media-lightbox) instead toggle the WordPress-idiomatic `hidden`
+ * attribute, which the reference rule never accounts for. The result: the dialog opens correctly in
+ * the DOM (hidden removed, focus trap, aria-modal, scroll lock all fire) but stays fully transparent
+ * and non-visible on screen — a real, confirmed defect, not a display:none vs hidden nuance. Restore
+ * visibility whenever `hidden` is absent, regardless of `.is-open`. */
+.lightbox:not([hidden]) {
+	opacity: 1;
+	visibility: visible;
+}

@@ -102,21 +102,77 @@ const browser = await chromium.launch({
 	if (count > 0) {
 		await thumbs.first().click();
 		await page.waitForTimeout(100);
-		const opened = await page.locator('.lightbox').evaluate((dialog) => ({
-			hidden: dialog.hidden,
-			modal: dialog.getAttribute('aria-modal'),
-			bodyLocked: document.body.style.overflow === 'hidden',
-		}));
-		record('project lightbox: opens as a modal and locks scroll', opened.hidden === false && opened.modal === 'true' && opened.bodyLocked, JSON.stringify(opened));
+		const opened = await page.locator('.project-gallery .lightbox').evaluate((dialog) => {
+			const style = getComputedStyle(dialog);
+			return {
+				hidden: dialog.hidden,
+				modal: dialog.getAttribute('aria-modal'),
+				bodyLocked: document.body.style.overflow === 'hidden',
+				// DOM-level "open" (hidden removed) is not the same as visually open — the reference
+				// stylesheet's own .lightbox rule stays opacity:0/visibility:hidden unless an .is-open
+				// class is present, which nothing ever adds. Assert the computed style directly so a
+				// dialog that is "open" in the DOM but invisible on screen fails this check.
+				opacity: style.opacity,
+				visibility: style.visibility,
+			};
+		});
+		record(
+			'project lightbox: opens as a visible modal and locks scroll',
+			opened.hidden === false && opened.modal === 'true' && opened.bodyLocked && opened.opacity === '1' && opened.visibility === 'visible',
+			JSON.stringify(opened)
+		);
 
 		await page.keyboard.press('Escape');
 		await page.waitForTimeout(100);
-		const closed = await page.locator('.lightbox').evaluate((dialog) => ({
+		const closed = await page.locator('.project-gallery .lightbox').evaluate((dialog) => ({
 			hidden: dialog.hidden,
 			bodyLocked: document.body.style.overflow === 'hidden',
 			focusOnThumb: document.activeElement === document.querySelector('.project-gallery .work-card'),
 		}));
 		record('project lightbox: Escape closes and restores focus', closed.hidden === true && !closed.bodyLocked && closed.focusOnThumb, JSON.stringify(closed));
+	}
+	await context.close();
+}
+
+// The site-wide media lightbox (perego-theme/media-lightbox) — Services archive's real "Selected
+// work" project cards open it via a plain delegated click listener, not the Interactivity API.
+{
+	const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+	const page = await context.newPage();
+	await page.goto(`${BASE}/services/`, { waitUntil: 'networkidle' });
+	const cards = page.locator('.work-card[data-gallery], .work-card[data-image]');
+	const count = await cards.count();
+	record('media lightbox: Services archive renders real selected-work cards', count > 0, `count=${count}`);
+
+	if (count > 0) {
+		await cards.first().click();
+		await page.waitForTimeout(150);
+		const opened = await page.evaluate(() => {
+			const dialog = document.getElementById('perego-media-lightbox');
+			const style = getComputedStyle(dialog);
+			return {
+				hidden: dialog.hidden,
+				modal: dialog.getAttribute('aria-modal'),
+				opacity: style.opacity,
+				visibility: style.visibility,
+				bodyLocked: document.body.style.overflow === 'hidden',
+				mainInert: document.querySelector('.wp-site-blocks')?.hasAttribute('inert'),
+			};
+		});
+		record(
+			'media lightbox: opens as a visible modal, locks scroll, inerts the background',
+			opened.hidden === false && opened.modal === 'true' && opened.opacity === '1' && opened.visibility === 'visible' && opened.bodyLocked && opened.mainInert === true,
+			JSON.stringify(opened)
+		);
+
+		await page.keyboard.press('Escape');
+		await page.waitForTimeout(150);
+		const closed = await page.evaluate(() => ({
+			hidden: document.getElementById('perego-media-lightbox').hidden,
+			bodyLocked: document.body.style.overflow === 'hidden',
+			mainInert: document.querySelector('.wp-site-blocks')?.hasAttribute('inert'),
+		}));
+		record('media lightbox: Escape closes, unlocks scroll, and un-inerts the background', closed.hidden === true && !closed.bodyLocked && closed.mainInert === false, JSON.stringify(closed));
 	}
 	await context.close();
 }
