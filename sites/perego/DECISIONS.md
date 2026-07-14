@@ -1,5 +1,23 @@
 # Perego — Decision Log
 
+## 2026-07-14 — Runtime resolver + autonomous continuation (Final Completion Program)
+
+**Decision**: Canonical runtime is the local WAMP install at `http://perego.local/` (Chromium
+host-resolver-rules map it to 127.0.0.1; `PEREGO_LIVE_BASE` overrides). All DB inventory/dry-run/backup/
+migration run via wp-cli against `wp/` (siteurl/home = perego.local — same DB). The ngrok mirror
+`mower-hamstring-baggy.ngrok-free.dev` is an optional second host; use it when reachable, otherwise fall
+back to perego.local; never stop because ngrok is offline. Do not destructively change WP home/siteurl to
+switch hosts. Work continues autonomously through specs 009–018 in dependency order without pausing between
+tasks/specs; stop only for a genuine external blocker, after finishing other unblocked work and updating
+durable memory + commit/push.
+
+**Why**: The goal names `peregos.local`, but the real local vhost + hosts entry is `perego.local`; the
+established visual/interaction tooling already targets it robustly. Migrating the WAMP DB (wp-cli) while
+verifying visuals on the same host keeps DB and screenshots consistent. ngrok is a tunnel/mirror, not a
+proven-separate production DB.
+
+**Status**: adopted; recorded in roadmap + PROGRESS RESUME HERE + spec 009 evidence.
+
 ## 2026-07-14 — Final Completion Program: block-first global content; remove the Global Sections CPT (spec 009)
 
 **Decision**: Adopt the Final Completion Program (specs 009–018). Global content becomes block-first,

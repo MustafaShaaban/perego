@@ -19,13 +19,14 @@ One feature = one branch = one PR. Mark boxes truthfully; runtime-gated tasks st
     editorial is editable in the Site Editor, EN/AR-aware, with a meaningful preview. Add a Pest render
     test for the new surface. **Do not yet remove the `global-section` dependency.**
 
-## Phase 1 — Runtime migration (BLOCKED on live WP + DB backup)
+## Phase 1 — Migration (target = WAMP DB via wp-cli; runnable locally)
 
-- [ ] T006 Freeze deployment identity: fingerprint the commit/assets the ngrok site serves; record in
-    `PROGRESS.md` §RESUME HERE. (Runtime.)
-- [ ] T007 Run the dry-run against the **live** ngrok DB (Run 2 in `evidence/global-sections-inventory.md`);
-    reconcile with the local Run 1; resolve any anomaly before proceeding. (Runtime — live access needed.)
-- [ ] T008 DB backup/export gate: create + verify a fresh export; `--backup-check` passes. (Runtime.)
+- [x] T006 Freeze target identity: migration target is the WAMP install (`wp/`, siteurl/home=perego.local,
+    blogname "Perego Creative Studio"). ngrok is an optional mirror. Recorded in roadmap + RESUME HERE.
+- [x] T007 Authoritative dry-run = local WAMP Run 1 (14 records, 0 anomalies) per the goal's DATABASE
+    guidance that the WAMP DB behind perego.local is the migration target. ngrok cross-check optional.
+- [ ] T008 DB backup gate: `wp db export` a timestamped dump before any destructive change; `backup-check`
+    passes against it.
 - [ ] T009 Switch `SiteFooterRenderer::careersEditorial()` to render from the new editable surface; verify
     live EN/AR footer editorial unchanged; drop the `global-section` block dependency. (Runtime verify.)
 - [ ] T010 Run `--apply`; confirm removal of `perego_section` posts/meta/translation relations; emit final

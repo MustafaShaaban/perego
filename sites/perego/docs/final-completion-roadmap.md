@@ -30,6 +30,24 @@ Studio) — no hidden CPTs, seed-only content, or hard-coded editorial prose sta
 7. **Bilingual (EN/AR)** via Polylang Free where it already drives content; global editable blocks store
    EN+AR and render only the current language (never both in the DOM hidden by CSS).
 
+## Runtime resolver & autonomous-continuation rule (2026-07-14)
+
+- **Runtime resolver:** the canonical runtime is the **local WAMP install** reached at
+  `http://perego.local/` (Chromium `--host-resolver-rules=MAP perego.local 127.0.0.1`, already used by all
+  visual/interaction scripts; `PEREGO_LIVE_BASE` overrides). All DB work (inventory, dry-run, backup,
+  migration) runs via **wp-cli against `wp/`** — provably the same DB (siteurl/home = `http://perego.local`).
+  The ngrok mirror `https://mower-hamstring-baggy.ngrok-free.dev/` is optional: use it when reachable for a
+  second-host check, otherwise fall back to `perego.local`. **Never stop because ngrok is offline.**
+  Note: the goal names `peregos.local`, but the actual local vhost + hosts entry is `perego.local` — that is
+  the working canonical host. Do **not** destructively change WP home/siteurl to switch hosts.
+- **ngrok vs local:** ngrok serves the same site name but with ngrok-domain URLs; treat it as a tunnel/mirror.
+  Migration is performed on the WAMP DB (wp-cli), which is what matters.
+- **Autonomous continuation:** continue every unblocked task in specs 009–018 in dependency order without
+  pausing for approval between tasks/pages/specs. Stop only for a genuine external blocker that cannot be
+  solved locally — and first finish all other unblocked work, document evidence, update durable memory,
+  commit, and push. Before any context/session end: update roadmap + PROGRESS RESUME HERE + DECISIONS +
+  active spec tasks/evidence, run checks, commit, push. Never rely on chat memory.
+
 ## Deployment identity (freeze)
 
 - **Repo root:** `C:\wamp64\www\perego` (single checkout; no worktrees). Remotes: `origin` =

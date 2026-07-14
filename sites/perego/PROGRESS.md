@@ -16,8 +16,9 @@
 - **Verification run:** `php -l` on the new script (clean); dry-run executed against local DB (14 records, 0 anomalies, footer-careers EN/AR present)
 - **Verification still required:** live-DB dry-run; full Pest/Jest/route-health/a11y/interactions after any code change; live footer editorial EN/AR unchanged post-migration
 - **Known blockers:** (1) deployed-commit identity unproven — needs runtime fingerprint; (2) migration `apply` blocked on a live DB backup gate; (3) CoreX admin Forms/Submissions/Data Models reportedly missing on live (spec 010)
-- **Live URL status:** `https://mower-hamstring-baggy.ngrok-free.dev/` — not yet verified against this branch
+- **Live URL status:** canonical runtime `http://perego.local/` (local WAMP, 200, siteurl=perego.local — same DB as wp-cli). ngrok mirror `https://mower-hamstring-baggy.ngrok-free.dev/` 200 (tunnel; ngrok-domain URLs). Resolver: prefer perego.local; ngrok optional; never stop if ngrok offline. Do not change WP home/siteurl.
 - **DB migration status:** dry-run only (local); no writes performed; CPT + 14 records still present
+- **Autonomous mode:** continue specs 009–018 in dependency order without pausing between tasks/specs; stop only for a genuine external blocker (finish other unblocked work + update durable memory + commit/push first).
 
 ---
 

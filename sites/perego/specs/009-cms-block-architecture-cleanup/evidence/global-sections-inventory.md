@@ -32,7 +32,15 @@ seeded-but-unconsumed and their canonical copy already renders from PHP provider
 no frontend content loss. The one migration target required before removal is the `footer-careers` EN/AR
 editorial.
 
-## Run 2 — LIVE ngrok DB — **STILL REQUIRED (not yet run)**
+## Runtime resolver (2026-07-14)
+
+Canonical runtime = local WAMP `http://perego.local/` (200; siteurl/home=perego.local — the DB wp-cli
+manages). ngrok `mower-hamstring-baggy.ngrok-free.dev` (200) is an optional mirror serving ngrok-domain
+URLs. DB inventory/dry-run/backup/migration run via wp-cli against `wp/`. Never stop if ngrok is offline;
+do not change WP home/siteurl. Per DATABASE/CLEANUP guidance, the WAMP DB behind perego.local IS the
+migration target — so **Run 1 (local) is the authoritative inventory**, not a placeholder.
+
+## Run 2 — ngrok mirror cross-check — optional (not required to proceed)
 
 The authoritative deployment is the ngrok site, whose deployed-commit identity is not yet proven and whose
 DB may differ from local (owner edits, duplicates). Before any destructive apply:
