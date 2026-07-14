@@ -9,14 +9,51 @@
     Removed the orphaned `preloader/style.scss` + its `style` key/import (one visual authority = reference).
     Verified live: homepage renders all handoff parts; `main.css` (enqueued) styles them. Pest 243/243,
     Jest preloader 6/6. Updated the render test to the handoff structure.
-- [ ] T002 Header/desktop-nav/services-dropdown fidelity audit vs handoff (logo, spacing, active state).
-- [ ] T003 Sticky/scrolled header state exact.
-- [ ] T004 Mobile menu (slide-in, focus trap, scroll lock, Esc/backdrop/link close, services accordion).
-- [ ] T005 Language switcher (real nav, current marker, RTL flip) — verify against handoff.
-- [ ] T006 Standard footer fidelity (contact col, quick-message, careers, links, social, contact values).
-- [ ] T007 Contact flat footer (reduced composition, no quick-message column).
-- [ ] T008 Remove any hard-coded `/about`; replace generic social URLs with manageable values (owner handles
-    pending — keep as documented placeholders, not fabricated real accounts).
-- [ ] T009 FSE editability of header/footer (the 009 seam): editable template-part blocks + preview.
+- [x] T002 **Header/desktop-nav/services-dropdown fidelity — matched to the locked handoff.** The nav
+    diverged from the handoff on three points: About Us pointed at a hard-coded `/about` route (live 404),
+    the top-level Services pointed at `/services` instead of the homepage `#services` teaser anchor, and the
+    dropdown used long service names ("Video Editing & Post-Production") where the handoff uses short labels
+    ("Video Editing"). Fixed `SiteHeaderRenderer::navItems()`: About Us → `/#about`, Services → `/#services`,
+    dropdown → the four short handoff labels (hrefs unchanged: `/services/{slug}`). Generalized `isActive()`
+    to treat any `#`-anchor href as a non-route (never painting active/aria-current). Verified live: all
+    hrefs/labels match the handoff and every anchor target id (`#about #services #clients #hero #contact`)
+    exists on the homepage. Header tests 13/13.
+- [x] T003 **Sticky/scrolled header state — exact.** The reference stylesheet's `.site-header` /
+    `.site-header.is-scrolled` rules (`position:sticky; top:0; z-index:100`, blur/box-shadow on scroll) are
+    byte-identical to the handoff `css/styles.css`; the `is-scrolled` toggle is wired in the block's view.js
+    (verified in spec 008's `verify-interactions.mjs`). No change needed.
+- [x] T004 Mobile menu built + interaction-verified in spec 008 (`verify-interactions.mjs`): slide-in panel
+    (`#mainNav`), backdrop (`#navBackdrop`), hamburger (`#navToggle`), keydown trap
+    (`actions.handleMenuKeydown`), tap-accordion (`actions.toggleMobileDropdown`). Markup asserted in header
+    tests. No fidelity change needed.
+- [x] T005 **Language switcher — real nav, current marker, RTL flip — verified.** Live AR home
+    (`/ar/الرئيسية/`) renders `dir="rtl" lang="ar"`, Arabic nav labels (من نحن / خدماتنا / أعمالنا …), the
+    AR toggle button carries `is-active aria-current`, and the EN→AR switch is a real anchor to the
+    translated Polylang URL. See T010 follow-up for the separate nav-link localization gap.
+- [x] T006 **Standard footer — fidelity confirmed.** Live homepage footer renders the handoff's three
+    columns in order: `footer-contact` (logo, Contact us, channels, blurb, social) + `footer-quick-message`
+    (live CoreX form) + `footer-careers` (Join-us block + join form) + legal bottom bar. Matches the handoff
+    `index.html` composition. Footer tests pass.
+- [x] T007 **Contact flat footer — corrected.** The flat variant was inverted: it kept the quick-message
+    column and dropped careers, but the handoff `contact.html` keeps contact + the "Join us"/careers column
+    and drops quick-message. Fixed `SiteFooterRenderer::render()` to render quick-message only when
+    `! $flat`, and always render careers. Verified live: `/contact/` footer = `footer-contact` +
+    `footer-careers` (no quick-message); homepage still shows all three. Footer test updated.
+- [x] T008 **Hard-coded `/about` removed.** About Us now targets the `#about` homepage anchor (T002);
+    nothing links to the 404 `/about` route. Social URLs remain the handoff's documented placeholders
+    (`SiteFooterRenderer::SOCIAL_LINKS`, commented as pending real owner handles) — not fabricated accounts.
+- [x] T009 **FSE editability — header/footer are first-class template parts.** Declared `templateParts` in
+    `perego-theme/theme.json` (header→area `header`; footer, footer-flat→area `footer`), so the Site Editor
+    lists them by title in the correct areas. Verified: `get_block_templates(…, 'wp_template_part')` returns
+    all three with the right `area`. Parts embed the server-rendered blocks (`edit()` shows a labelled
+    preview; `save:null`).
 - [ ] T010 EN/AR × all required widths screenshot comparison; focus states; reduced motion. Evidence.
+    - Structural EN + AR parity verified via live HTML (T002/T005/T006/T007). Screenshot matrix pending.
+    - **Follow-up (documented, not a T011 blocker):** the primary-nav item hrefs are emitted with
+      `home_url()`, so on AR pages every nav link (Home/Work/Journal/services/Contact and the `#about`/
+      `#services`/`#clients` anchors) points at the **EN** base URL — an AR visitor clicking any nav item is
+      thrown back to English. This is a systemic Polylang nav-localization gap (needs a language-aware base,
+      e.g. `pll_home_url()` + translated permalinks for all items), out of scope for the shell-fidelity spec
+      and best fixed as a focused i18n-routing task; the language *switcher* itself works. Logged here so it
+      is not silently treated as done.
 - [ ] T011 Full suite + guards; update durable memory; open PR.

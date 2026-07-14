@@ -17,7 +17,8 @@ defined('ABSPATH') || exit;
 /**
  * Server-renders the perego/site-footer block: the standard 3-column layout (contact / quick-
  * message form / careers form entry point) + a bottom bar, or the flat 2-column variant used on
- * the contact page (spec 001 FR-005). The quick-message column embeds the live CoreX form
+ * the contact page (spec 001 FR-005) which keeps contact + careers and drops the quick-message
+ * column (the page already carries its own contact form). The quick-message column embeds the live CoreX form
  * (spec Phase 7, form 1) — the framework runtime drives its default/invalid/submitting/success/
  * server-error states — degrading to the heading-only entry point when CoreX Forms is inactive.
  */
@@ -67,11 +68,15 @@ final class SiteFooterRenderer
         $html = '<footer class="' . esc_attr($classes) . '" id="contact">';
         $html .= '<div class="container site-footer__grid">';
         $html .= $this->renderContactColumn();
-        $html .= $this->renderQuickMessageColumn();
 
+        // Standard footer: contact + quick-message + careers. The contact-page flat variant drops the
+        // quick-message column (a message form would be redundant beside the page's own contact form)
+        // and keeps only contact + the "Join us"/careers column — exactly the handoff's contact.html.
         if (! $flat) {
-            $html .= $this->renderCareersColumn();
+            $html .= $this->renderQuickMessageColumn();
         }
+
+        $html .= $this->renderCareersColumn();
 
         $html .= '</div>';
         $html .= $this->renderBottomBar();

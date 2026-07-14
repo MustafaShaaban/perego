@@ -57,10 +57,18 @@ it('renders the handoff skip link before the header landmark', function () {
 });
 
 it('marks the active nav item with aria-current', function () {
-    $html = renderHeader('/services');
+    $html = renderHeader('/work');
 
     expect($html)->toContain('aria-current="page"')
-        ->and($html)->toMatch('/<li class="[^"]*is-active[^"]*"[^>]*><a [^>]*aria-current="page"[^>]*>Services/');
+        ->and($html)->toMatch('/<li class="[^"]*is-active[^"]*"[^>]*><a [^>]*aria-current="page"[^>]*>Work/');
+});
+
+it('links About Us and Services to homepage anchors, never a hard-coded /about route', function () {
+    $html = renderHeader('/');
+
+    expect($html)->toContain('href="https://perego.local/#about"')
+        ->and($html)->toContain('href="https://perego.local/#services"')
+        ->and($html)->not->toContain('href="https://perego.local/about"');
 });
 
 it('does not mark any item active on an unmatched path', function () {

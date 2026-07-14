@@ -5,9 +5,18 @@
 ## RESUME HERE
 
 - **Date/time:** 2026-07-14 (~14:30 UTC)
-- **Branch:** `feature/010-corex-runtime-content-models` (off 009 off `feature/008-visual-fidelity-recovery`). `009` DONE → **PR #17** (base 008).
-- **Latest pushed commit:** `42942dc` (spec 010 editor meta boxes)
-- **Active spec:** `010` — largely complete.
+- **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
+- **Latest pushed commit:** `f49a3fe` (spec 011 T001 preloader) — **T002–T009 done locally, commit pending.**
+- **Active spec:** `011` (global shell + preloader) — **T001–T009 DONE.** T002 header/nav/dropdown matched to
+  handoff (About→`/#about`, Services→`/#services`, short dropdown labels, anchor `isActive` fix); T003 sticky
+  state byte-identical to handoff; T004 mobile menu (spec-008 verified); T005 lang switcher verified live
+  (AR RTL, Arabic labels, real switch URL); T006 standard footer confirmed; **T007 contact flat footer bug
+  fixed** (was keeping quick-message + dropping careers — inverted; now contact+careers, no quick-message);
+  T008 hard-coded `/about` removed; T009 FSE `templateParts` declared (header/footer editable in Site
+  Editor). **Next: T010** EN/AR × width screenshot matrix + the documented AR nav-link localization
+  follow-up (all nav hrefs use `home_url()` → point EN on AR pages; systemic Polylang gap, out of shell
+  scope), then **T011** guards + PR. **009 + 010 DONE (PRs #17/#18).**
+- **[historical] spec 010 summary:** largely complete.
   - **Done:** T001–T004 (audit; ACF not a dep; forms inventory), T006 (submissions pipeline works — id 150), **T009** (register_post_meta for Project/Service/Client + `PostMetaBoxes` editor UI with guarded save; Pest 243/243).
   - **Fixed release-blocker:** CoreX admin React bundle `corex-config/build/admin/index.js` was 404 (unbuilt) → built locally (gitignored). **Deploy must build CoreX admin assets** (GAP-2).
   - **Blocked:** T007/T008 — framework **GAP-1** (no public CPT-backed DataModels seam). See `docs/corex-framework-gaps.md`.

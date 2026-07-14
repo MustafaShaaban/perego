@@ -5,6 +5,11 @@
 		{ "name": "legal", "title": "Legal (Terms / Privacy)", "postTypes": ["page"] },
 		{ "name": "page-contact", "title": "Contact", "postTypes": ["page"] }
 	],
+	"templateParts": [
+		{ "name": "header", "title": "Header", "area": "header" },
+		{ "name": "footer", "title": "Footer", "area": "footer" },
+		{ "name": "footer-flat", "title": "Footer (contact, flat)", "area": "footer" }
+	],
 	"settings": {
 		"appearanceTools": true,
 		"useRootPaddingAwareAlignments": true,

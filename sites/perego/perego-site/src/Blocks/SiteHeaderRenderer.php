@@ -36,14 +36,14 @@ final class SiteHeaderRenderer
     {
         return [
             ['label' => __('Home', 'perego-site'), 'href' => '/'],
-            ['label' => __('About Us', 'perego-site'), 'href' => '/about'],
+            ['label' => __('About Us', 'perego-site'), 'href' => '/#about'],
             [
                 'label' => __('Services', 'perego-site'),
-                'href' => '/services',
+                'href' => '/#services',
                 'children' => [
-                    ['label' => __('Video Editing & Post-Production', 'perego-site'), 'href' => '/services/video-editing'],
-                    ['label' => __('2D Motion Graphics & Animation', 'perego-site'), 'href' => '/services/motion-graphics'],
-                    ['label' => __('Graphic Design & Brand Identity', 'perego-site'), 'href' => '/services/graphic-design'],
+                    ['label' => __('Video Editing', 'perego-site'), 'href' => '/services/video-editing'],
+                    ['label' => __('2D Motion Graphics', 'perego-site'), 'href' => '/services/motion-graphics'],
+                    ['label' => __('Graphic Design', 'perego-site'), 'href' => '/services/graphic-design'],
                     ['label' => __('Website Making', 'perego-site'), 'href' => '/services/website-making'],
                 ],
             ],
@@ -182,7 +182,9 @@ final class SiteHeaderRenderer
 
     private function isActive(string $href, string $currentPath): bool
     {
-        if ($href === '/#clients') {
+        // Homepage-anchor items (About, Services, Clients: `/#…`) are in-page jumps, never a
+        // route match — they must not paint an active/aria-current state on any page.
+        if (str_contains($href, '#')) {
             return false;
         }
 

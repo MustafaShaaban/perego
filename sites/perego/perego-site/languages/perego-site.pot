@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-14T13:53:36+00:00\n"
+"POT-Creation-Date: 2026-07-14T15:17:56+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: perego-site\n"
@@ -26,8 +26,49 @@ msgstr ""
 
 #. Author of the plugin
 #: perego-site.php:9
-#: src/Blocks/SiteFooterRenderer.php:232
+#: src/Blocks/SiteFooterRenderer.php:237
 msgid "Perego"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:39
+msgid "Project details"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:41
+#: src/PostTypes/ClientPostType.php:83
+msgid "Client"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:42
+msgid "Year"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:43
+msgid "Role"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:44
+msgid "Deliverables"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:48
+msgid "Service details"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:50
+msgid "Canonical service key (video/motion/design/web)"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:54
+msgid "Client details"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:56
+msgid "Statistic"
+msgstr ""
+
+#: src/Admin/PostMetaBoxes.php:57
+msgid "Video URL"
 msgstr ""
 
 #: src/Blocks/ClientsCarouselRenderer.php:64
@@ -112,7 +153,7 @@ msgid "Breadcrumb"
 msgstr ""
 
 #: src/Blocks/NotFoundRenderer.php:32
-#: src/Blocks/SiteFooterRenderer.php:90
+#: src/Blocks/SiteFooterRenderer.php:95
 #: src/Blocks/SiteHeaderRenderer.php:72
 msgid "Perego — home"
 msgstr ""
@@ -121,17 +162,13 @@ msgstr ""
 msgid "Perego بيريجو"
 msgstr ""
 
-#: src/Blocks/PreloaderRenderer.php:29
-msgid "Loading…"
-msgstr ""
-
 #: src/Blocks/ProjectGalleryLightboxRenderer.php:75
 #, php-format
 msgid "Open project media %d"
 msgstr ""
 
 #: src/Blocks/ProjectHeroRenderer.php:45
-#: src/PostTypes/ProjectPostType.php:53
+#: src/PostTypes/ProjectPostType.php:125
 msgid "Project"
 msgstr ""
 
@@ -159,29 +196,29 @@ msgstr ""
 msgid "Start your project"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:94
+#: src/Blocks/SiteFooterRenderer.php:99
 msgid "Contact us"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:121
+#: src/Blocks/SiteFooterRenderer.php:126
 msgid "Social media"
 msgstr ""
 
 #. translators: %s: social network name
-#: src/Blocks/SiteFooterRenderer.php:126
+#: src/Blocks/SiteFooterRenderer.php:131
 #, php-format
 msgid "Perego on %s"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:233
+#: src/Blocks/SiteFooterRenderer.php:238
 msgid "Legal"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:234
+#: src/Blocks/SiteFooterRenderer.php:239
 msgid "Terms & Conditions"
 msgstr ""
 
-#: src/Blocks/SiteFooterRenderer.php:235
+#: src/Blocks/SiteFooterRenderer.php:240
 msgid "Privacy Policy"
 msgstr ""
 
@@ -194,22 +231,22 @@ msgid "About Us"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:41
-#: src/PostTypes/ProjectPostType.php:74
-#: src/PostTypes/ServicePostType.php:47
-#: src/PostTypes/ServicePostType.php:51
+#: src/PostTypes/ProjectPostType.php:146
+#: src/PostTypes/ServicePostType.php:79
+#: src/PostTypes/ServicePostType.php:83
 msgid "Services"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:44
-msgid "Video Editing & Post-Production"
+msgid "Video Editing"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:45
-msgid "2D Motion Graphics & Animation"
+msgid "2D Motion Graphics"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:46
-msgid "Graphic Design & Brand Identity"
+msgid "Graphic Design"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:47
@@ -225,8 +262,8 @@ msgid "Journal"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:52
-#: src/PostTypes/ClientPostType.php:41
-#: src/PostTypes/ClientPostType.php:45
+#: src/PostTypes/ClientPostType.php:82
+#: src/PostTypes/ClientPostType.php:86
 msgid "Clients"
 msgstr ""
 
@@ -348,402 +385,474 @@ msgstr ""
 msgid "Say hello."
 msgstr ""
 
-#: src/PostTypes/ClientPostType.php:42
-msgid "Client"
-msgstr ""
-
-#: src/PostTypes/ClientPostType.php:43
+#: src/PostTypes/ClientPostType.php:84
 msgid "Add New Client"
 msgstr ""
 
-#: src/PostTypes/ClientPostType.php:44
+#: src/PostTypes/ClientPostType.php:85
 msgid "Edit Client"
 msgstr ""
 
-#: src/PostTypes/ClientPostType.php:61
+#: src/PostTypes/ClientPostType.php:102
 msgid "Client Types"
 msgstr ""
 
-#: src/PostTypes/ClientPostType.php:62
+#: src/PostTypes/ClientPostType.php:103
 msgid "Client Type"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:52
+#: src/PostTypes/ProjectPostType.php:124
 msgid "Projects"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:54
+#: src/PostTypes/ProjectPostType.php:126
 msgid "Add New Project"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:55
+#: src/PostTypes/ProjectPostType.php:127
 msgid "Edit Project"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:56
+#: src/PostTypes/ProjectPostType.php:128
 msgid "Portfolio"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:75
-#: src/PostTypes/ServicePostType.php:48
+#: src/PostTypes/ProjectPostType.php:147
+#: src/PostTypes/ServicePostType.php:80
 msgid "Service"
 msgstr ""
 
-#: src/PostTypes/ServicePostType.php:49
+#: src/PostTypes/ServicePostType.php:81
 msgid "Add New Service"
 msgstr ""
 
-#: src/PostTypes/ServicePostType.php:50
+#: src/PostTypes/ServicePostType.php:82
 msgid "Edit Service"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:11
 msgid "Clients carousels (Corporate + Individual). Rendered by ClientsCarouselRenderer."
 msgstr ""
 
+#: build/Blocks/contact-service-chooser/index.js:1
 #: src/Blocks/contact-service-chooser/index.js:6
 msgid "Contact service choices are rendered from published services."
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:19
 msgid "English"
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:26
 msgid "Careers heading (EN)"
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:34
 msgid "Careers blurb (EN)"
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:38
 msgid "Arabic"
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:45
 msgid "Careers heading (AR)"
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:53
 msgid "Careers blurb (AR)"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:12
 msgid "Hero slider — rotating homepage headlines. Rendered by HeroSliderRenderer."
 msgstr ""
 
+#: build/Blocks/home-about-bg/index.js:1
 #: src/Blocks/home-about-bg/index.js:12
 msgid "Home About Background — the About section’s background image. Rendered by HomeAboutBgRenderer."
 msgstr ""
 
+#: build/Blocks/join-form/index.js:1
 #: src/Blocks/join-form/index.js:14
 msgid "Join-us / CV form — rendered on the front end."
 msgstr ""
 
+#: build/Blocks/journal-header/index.js:1
 #: src/Blocks/journal-header/index.js:10
 msgid "Journal header. Rendered by JournalHeaderRenderer."
 msgstr ""
 
+#: build/Blocks/legal-toc/index.js:1
 #: src/Blocks/legal-toc/index.js:11
 msgid "Legal TOC (generated from the page headings). Rendered by LegalTocRenderer."
 msgstr ""
 
+#: build/Blocks/media-lightbox/index.js:1
 #: src/Blocks/media-lightbox/index.js:13
 msgid "Media lightbox — the site-wide accessible dialog for image/video/gallery triggers. Rendered once by MediaLightboxRenderer."
 msgstr ""
 
+#: build/Blocks/not-found/index.js:1
 #: src/Blocks/not-found/index.js:11
 msgid "404 composition. Rendered by NotFoundRenderer."
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/portfolio-grid/index.js:12
 msgid "Portfolio grid — filterable project cards. Rendered by PortfolioGridRenderer."
 msgstr ""
 
+#: build/Blocks/post-breadcrumb/index.js:1
 #: src/Blocks/post-breadcrumb/index.js:10
 msgid "Post breadcrumb. Rendered by PostBreadcrumbRenderer."
 msgstr ""
 
+#: build/Blocks/post-reading-time/index.js:1
 #: src/Blocks/post-reading-time/index.js:10
 msgid "Reading-time estimate. Rendered by PostReadingTimeRenderer."
 msgstr ""
 
-#: src/Blocks/preloader/index.js:11
+#: build/Blocks/preloader/index.js:1
+#: src/Blocks/preloader/index.js:10
 msgid "Preloader — shown on first homepage visit per session. Rendered by PreloaderRenderer."
 msgstr ""
 
+#: build/Blocks/project-gallery-lightbox/index.js:1
 #: src/Blocks/project-gallery-lightbox/index.js:12
 msgid "Project gallery lightbox — thumbnails that open an accessible dialog. Rendered by ProjectGalleryLightboxRenderer."
 msgstr ""
 
+#: build/Blocks/project-hero/index.js:1
 #: src/Blocks/project-hero/index.js:12
 msgid "Project hero — breadcrumb, category, title (H1), and meta. Rendered by ProjectHeroRenderer."
 msgstr ""
 
+#: build/Blocks/search-results/index.js:1
 #: src/Blocks/search-results/index.js:11
 msgid "Search results. Rendered by SearchResultsRenderer."
 msgstr ""
 
+#: build/Blocks/service-hero/index.js:1
 #: src/Blocks/service-hero/index.js:13
 msgid "Service hero — eyebrow, service name (H1), and the four-service tabs. Rendered by ServiceHeroRenderer."
 msgstr ""
 
+#: build/Blocks/service-selected-work/index.js:1
 #: src/Blocks/service-selected-work/index.js:12
 msgid "Selected work — real projects for this service, opening the media lightbox. Rendered by ServiceSelectedWorkRenderer."
 msgstr ""
 
+#: build/Blocks/services-overview/index.js:1
 #: src/Blocks/services-overview/index.js:12
 msgid "Services overview — Our Services intro, four cards, process, CTA. Rendered by ServicesOverviewRenderer."
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:12
 msgid "Services teaser — the four home service cards. Rendered by ServicesTeaserRenderer."
 msgstr ""
 
-#: src/Blocks/site-footer/index.js:11
+#: build/Blocks/site-footer/index.js:1
+#: src/Blocks/site-footer/index.js:10
 msgid "Site footer — rendered on the front end by SiteFooterRenderer."
 msgstr ""
 
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/site-header/index.js:11
 msgid "Site header — rendered on the front end by SiteHeaderRenderer."
 msgstr ""
 
+#: build/Blocks/clients-carousel/block.json
 #: src/Blocks/clients-carousel/block.json
 msgctxt "block title"
 msgid "Perego Clients Carousel"
 msgstr ""
 
+#: build/Blocks/clients-carousel/block.json
 #: src/Blocks/clients-carousel/block.json
 msgctxt "block description"
 msgid "The homepage Corporate + Individual client carousels. Cards are server-rendered (work without JS); Swiper (modular: Navigation, Pagination, Keyboard, A11y) enhances them. Language-aware."
 msgstr ""
 
+#: build/Blocks/contact-service-chooser/block.json
 #: src/Blocks/contact-service-chooser/block.json
 msgctxt "block title"
 msgid "Perego Contact Service Chooser"
 msgstr ""
 
+#: build/Blocks/contact-service-chooser/block.json
 #: src/Blocks/contact-service-chooser/block.json
 msgctxt "block description"
 msgid "Dynamic service choices for the Start a Project page."
 msgstr ""
 
+#: build/Blocks/footer-careers/block.json
 #: src/Blocks/footer-careers/block.json
 msgctxt "block title"
 msgid "Perego Footer Careers"
 msgstr ""
 
+#: build/Blocks/footer-careers/block.json
 #: src/Blocks/footer-careers/block.json
 msgctxt "block description"
 msgid "The footer 'Join us' careers heading and blurb, stored bilingually (EN + AR) in block attributes; renders only the current language on the frontend and shows both languages in the editor."
 msgstr ""
 
+#: build/Blocks/hero-slider/block.json
 #: src/Blocks/hero-slider/block.json
 msgctxt "block title"
 msgid "Perego Hero Slider"
 msgstr ""
 
+#: build/Blocks/hero-slider/block.json
 #: src/Blocks/hero-slider/block.json
 msgctxt "block description"
 msgid "The homepage hero: a rotating set of headline slides with dot tabs, prev/next and pause/play controls, an aria-live announcer, and a CTA. Auto-advances (6.5s), pauses on hover and when the tab is hidden, and never auto-advances under reduced motion. Server-rendered; interactivity via view.js."
 msgstr ""
 
+#: build/Blocks/home-about-bg/block.json
 #: src/Blocks/home-about-bg/block.json
 msgctxt "block title"
 msgid "Perego Home About Background"
 msgstr ""
 
+#: build/Blocks/home-about-bg/block.json
 #: src/Blocks/home-about-bg/block.json
 msgctxt "block description"
 msgid "The homepage About section's full-bleed background image, absolutely positioned behind the editor-canvas panel content. Server-rendered; no view script."
 msgstr ""
 
+#: build/Blocks/join-form/block.json
 #: src/Blocks/join-form/block.json
 msgctxt "block title"
 msgid "Perego Join Us Form"
 msgstr ""
 
+#: build/Blocks/join-form/block.json
 #: src/Blocks/join-form/block.json
 msgctxt "block description"
 msgid "The footer Join-us / CV submission form (secure upload to perego/v1/careers/apply)."
 msgstr ""
 
+#: build/Blocks/journal-header/block.json
 #: src/Blocks/journal-header/block.json
 msgctxt "block title"
 msgid "Perego Journal Header"
 msgstr ""
 
+#: build/Blocks/journal-header/block.json
 #: src/Blocks/journal-header/block.json
 msgctxt "block description"
 msgid "The journal index heading: 'The Perego Journal' (H1) + lead. Language-aware."
 msgstr ""
 
+#: build/Blocks/legal-toc/block.json
 #: src/Blocks/legal-toc/block.json
 msgctxt "block title"
 msgid "Perego Legal TOC"
 msgstr ""
 
+#: build/Blocks/legal-toc/block.json
 #: src/Blocks/legal-toc/block.json
 msgctxt "block description"
 msgid "The legal page aside: draft/review notice, last-updated line, and a table of contents generated from the page's own H2 anchors. Language-aware."
 msgstr ""
 
+#: build/Blocks/media-lightbox/block.json
 #: src/Blocks/media-lightbox/block.json
 msgctxt "block title"
 msgid "Perego Media Lightbox"
 msgstr ""
 
+#: build/Blocks/media-lightbox/block.json
 #: src/Blocks/media-lightbox/block.json
 msgctxt "block description"
 msgid "The site-wide accessible image/video/gallery lightbox dialog (ported from the handoff's main.js lightbox IIFE). Renders once per page in the footer template part; its view script delegates a click listener to every [data-image]/[data-video]/[data-gallery] trigger anywhere on the page, so any block can open it without wiring its own dialog."
 msgstr ""
 
+#: build/Blocks/not-found/block.json
 #: src/Blocks/not-found/block.json
 msgctxt "block title"
 msgid "Perego 404"
 msgstr ""
 
+#: build/Blocks/not-found/block.json
 #: src/Blocks/not-found/block.json
 msgctxt "block description"
 msgid "The 404 composition: code, title (H1), body, and Back-home / Contact actions. Server-rendered + language-aware."
 msgstr ""
 
+#: build/Blocks/portfolio-grid/block.json
 #: src/Blocks/portfolio-grid/block.json
 msgctxt "block title"
 msgid "Perego Portfolio Grid"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/block.json
 #: src/Blocks/portfolio-grid/block.json
 msgctxt "block description"
 msgid "The work/portfolio grid: a service-filter chip row and a masonry grid of project cards queried from the project CPT, with a no-results state. Server-rendered; the client-side filter is wired via view.js."
 msgstr ""
 
+#: build/Blocks/post-breadcrumb/block.json
 #: src/Blocks/post-breadcrumb/block.json
 msgctxt "block title"
 msgid "Perego Post Breadcrumb"
 msgstr ""
 
+#: build/Blocks/post-breadcrumb/block.json
 #: src/Blocks/post-breadcrumb/block.json
 msgctxt "block description"
 msgid "The single-post breadcrumb: Home / Journal / <post title>. Language-aware."
 msgstr ""
 
+#: build/Blocks/post-reading-time/block.json
 #: src/Blocks/post-reading-time/block.json
 msgctxt "block title"
 msgid "Perego Post Reading Time"
 msgstr ""
 
+#: build/Blocks/post-reading-time/block.json
 #: src/Blocks/post-reading-time/block.json
 msgctxt "block description"
 msgid "The single-post \"N min read\" meta estimate. Language-aware."
 msgstr ""
 
+#: build/Blocks/preloader/block.json
 #: src/Blocks/preloader/block.json
 msgctxt "block title"
 msgid "Perego Preloader"
 msgstr ""
 
+#: build/Blocks/preloader/block.json
 #: src/Blocks/preloader/block.json
 msgctxt "block description"
 msgid "Branded first-visit-per-session preload overlay for the homepage only. Reduced-motion-safe; hides itself with a hard 2.5s safety timeout regardless of asset load."
 msgstr ""
 
+#: build/Blocks/project-gallery-lightbox/block.json
 #: src/Blocks/project-gallery-lightbox/block.json
 msgctxt "block title"
 msgid "Perego Project Gallery Lightbox"
 msgstr ""
 
+#: build/Blocks/project-gallery-lightbox/block.json
 #: src/Blocks/project-gallery-lightbox/block.json
 msgctxt "block description"
 msgid "A project's gallery: a thumbnail grid that opens an accessible lightbox dialog (focus trap, counter, prev/next). Server-rendered; interaction via view.js."
 msgstr ""
 
+#: build/Blocks/project-hero/block.json
 #: src/Blocks/project-hero/block.json
 msgctxt "block title"
 msgid "Perego Project Hero"
 msgstr ""
 
+#: build/Blocks/project-hero/block.json
 #: src/Blocks/project-hero/block.json
 msgctxt "block description"
 msgid "The case-study hero: breadcrumb, service category, project title (H1), and the client/year/role/deliverables meta. Server-rendered from the queried project."
 msgstr ""
 
+#: build/Blocks/project-navigation/block.json
 #: src/Blocks/project-navigation/block.json
 msgctxt "block title"
 msgid "Perego Project Navigation"
 msgstr ""
 
+#: build/Blocks/project-navigation/block.json
 #: src/Blocks/project-navigation/block.json
 msgctxt "block description"
 msgid "Dynamic adjacent and related project links for a project single."
 msgstr ""
 
+#: build/Blocks/search-results/block.json
 #: src/Blocks/search-results/block.json
 msgctxt "block title"
 msgid "Perego Search Results"
 msgstr ""
 
+#: build/Blocks/search-results/block.json
 #: src/Blocks/search-results/block.json
 msgctxt "block description"
 msgid "The search page: title (H1), search form, results-for summary, server-rendered result list, and empty state. Language-aware."
 msgstr ""
 
+#: build/Blocks/service-hero/block.json
 #: src/Blocks/service-hero/block.json
 msgctxt "block title"
 msgid "Perego Service Hero"
 msgstr ""
 
+#: build/Blocks/service-hero/block.json
 #: src/Blocks/service-hero/block.json
 msgctxt "block description"
 msgid "The service single hero: an eyebrow, the current service's name as H1, and the shared four-service tabs (main link + Start-your-project CTA). Server-rendered; tab hover/active is pure CSS."
 msgstr ""
 
+#: build/Blocks/service-selected-work/block.json
 #: src/Blocks/service-selected-work/block.json
 msgctxt "block title"
 msgid "Perego Service Selected Work"
 msgstr ""
 
+#: build/Blocks/service-selected-work/block.json
 #: src/Blocks/service-selected-work/block.json
 msgctxt "block description"
 msgid "The service single's own \"Selected work\" masonry (handoff service-*.html): real published projects filtered to the current service's category, opening the site-wide media lightbox. Server-rendered."
 msgstr ""
 
+#: build/Blocks/services-overview/block.json
 #: src/Blocks/services-overview/block.json
 msgctxt "block title"
 msgid "Perego Services Overview"
 msgstr ""
 
+#: build/Blocks/services-overview/block.json
 #: src/Blocks/services-overview/block.json
 msgctxt "block description"
 msgid "The services archive: Our Services intro, four service cards, the shared process, and a closing CTA. Server-rendered + language-aware."
 msgstr ""
 
+#: build/Blocks/services-teaser/block.json
 #: src/Blocks/services-teaser/block.json
 msgctxt "block title"
 msgid "Perego Services Teaser"
 msgstr ""
 
+#: build/Blocks/services-teaser/block.json
 #: src/Blocks/services-teaser/block.json
 msgctxt "block description"
 msgid "The homepage services teaser: a heading, a See All Services link, and the four service cards (staggered offsets + hover lift). Server-rendered; hover is pure CSS (no view script)."
 msgstr ""
 
+#: build/Blocks/site-footer/block.json
 #: src/Blocks/site-footer/block.json
 msgctxt "block title"
 msgid "Perego Site Footer"
 msgstr ""
 
+#: build/Blocks/site-footer/block.json
 #: src/Blocks/site-footer/block.json
 msgctxt "block description"
 msgid "The global site footer: contact / quick-message / careers columns + bottom bar, or the flat 2-column variant on the contact page."
 msgstr ""
 
+#: build/Blocks/site-header/block.json
 #: src/Blocks/site-header/block.json
 msgctxt "block title"
 msgid "Perego Site Header"
 msgstr ""
 
+#: build/Blocks/site-header/block.json
 #: src/Blocks/site-header/block.json
 msgctxt "block description"
 msgid "The global site header: logo, primary nav with Services dropdown, Start a Project CTA, language toggle, mobile hamburger. Server-rendered; interactivity via view.js."
