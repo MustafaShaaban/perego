@@ -1,5 +1,24 @@
 # Perego — Decision Log
 
+## 2026-07-14 — CoreX admin bundle build gap (framework/deployment, not a Perego defect)
+
+**Decision**: The reported "CoreX dashboard does not expose Forms/Submissions/Data Models" is caused by the
+CoreX admin React bundle (`plugins/corex-config/build/admin/index.js`) being **unbuilt** — it 404s, so the
+admin pages render their PHP heading shell but the interactive app never mounts. Fixed by building it with
+the repo's hoisted `wp-scripts` (a deployment step; `build/` is gitignored; **no framework source edited**).
+This is a **CoreX/deployment gap**, not a Perego client defect: the deployment pipeline must build CoreX
+admin assets (`npm run build --workspaces` or per-plugin build). No private Perego duplicate was created.
+
+**Why**: Client Site Mode forbids editing framework internals, but building already-present framework assets
+to make the local runtime functional is a runtime/deployment action with no committed framework changes. The
+program explicitly lists "build/rebuild required admin assets" and "correct deployed CoreX/runtime mismatch"
+as spec 010 objectives. Backend REST (82 routes) and the admin menu were already healthy; only the built app
+was missing.
+
+**Status**: corex-config admin bundle built + serving 200 locally. **Durable action for the owner/deploy:**
+ensure the deploy builds CoreX admin assets (they are gitignored, so this local build does not persist in
+git). Tracked in `specs/010-.../evidence/runtime-audit.md`.
+
 ## 2026-07-14 — Runtime resolver + autonomous continuation (Final Completion Program)
 
 **Decision**: Canonical runtime is the local WAMP install at `http://perego.local/` (Chromium

@@ -34,6 +34,33 @@ read/query/schema/detail/delete/export_csv; create/update unsupported — no CPT
 Services, and Clients are NOT registered as CoreX data models.** Registering them via the public
 DataRegistry/extension seam (read + truthful capabilities only) is core spec 010 work.
 
+## ROOT CAUSE FOUND + FIXED — the CoreX admin JS bundle was unbuilt (2026-07-14)
+
+Browser session (admin login at perego.local/wp-admin): the CoreX admin pages render their **server-side
+PHP shell** (e.g. Forms & Flows shows its `<h1>` + description), but the browser console showed:
+
+```
+[ERROR] Failed to load resource: 404 (Not Found)
+  http://perego.local/wp-content/plugins/corex-config/build/admin/index.js?ver=dev
+```
+
+**Root cause:** the unified CoreX admin React app (`plugins/corex-config/build/admin/index.js`) was **never
+built** in this environment (`plugins/corex-*/build/` did not exist). So every CoreX admin page rendered
+its heading but the interactive app (the actual Forms/Submissions/Data-Models functionality) failed to
+mount — exactly the reported "dashboard does not expose Forms/Submissions/Data Models."
+
+**Fix (deployment step, in-bounds):** built the bundle with the repo's hoisted `wp-scripts`
+(`wp-scripts build --webpack-src-dir=src/admin --output-path=build/admin` in `plugins/corex-config`). The
+asset now serves **200** (140 KiB). **No framework source was edited; `build/` is gitignored** — this is a
+runtime/deployment build, not a code change. corex-config is the sole admin-app host (`src/admin`); other
+CoreX plugins register features via the working REST API, so this single bundle restores the dashboard.
+
+**⚠ Framework/deployment gap (durable):** the deployment pipeline must build CoreX admin assets
+(`npm run build --workspaces` / per-plugin `build`) — otherwise a fresh deploy 404s the admin app again.
+Since the build output is gitignored, this environment-local build does not persist in git. See DECISIONS
+2026-07-14 "CoreX admin bundle build gap". This is a CoreX/deployment concern, not a Perego client defect —
+no private Perego duplicate was created.
+
 ## Open questions / decisions
 
 1. **ACF active** — is it a hard dependency of an active CoreX kit (e.g. corex-kit-company) or the owner's

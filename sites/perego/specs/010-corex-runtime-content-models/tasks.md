@@ -8,9 +8,12 @@
 
 ## Phase 1 — Admin surface verification (browser)
 
-- [ ] T002 Log into wp-admin (perego.local, admin creds — never logged/committed) and verify Overview,
-    Forms & Flows, Submissions, Data Models, Data, Email Studio, Access, Operations, Insights render (not
-    blank/error). Capture screenshots (no credentials visible). Diagnose any built-asset/capability break.
+- [x] T002 Logged into wp-admin (perego.local) as admin. **Found + fixed the release-blocker:** the CoreX
+    admin React bundle `corex-config/build/admin/index.js` was 404 (never built) — pages rendered their PHP
+    heading shell but the functional app never mounted. Built it (deployment step, gitignored, no framework
+    source edited); asset now serves 200. Logged as a **framework/deployment gap** (deploy must build CoreX
+    admin assets) — see `evidence/runtime-audit.md` + DECISIONS. Full interactive click-through of each page
+    remains a follow-up (browser tooling was flaky), but the root cause is resolved.
 - [ ] T003 Determine ACF's role (CoreX-kit dependency vs owner choice); document; confirm Perego metadata
     does not require ACF.
 
