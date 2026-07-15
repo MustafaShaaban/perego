@@ -635,3 +635,29 @@ reproduced on deploy (add to the provisioning/deploy checklist) so AR dates loca
 label itself ("آخر تحديث") comes from `GlobalContent`, so it was never affected. **Pattern echo:** as with
 the spec-016 gettext gaps, an Arabic-context defect stayed invisible until the AR page was actually
 rendered — the fourth full-matrix catch this run.
+
+## 2026-07-15 — Spec 018: orphan cleanup, release requirements, and the accepted residual
+
+**Orphan removal is reversible + repointed, never blind.** The only orphan DB data at close-out was
+default WordPress content: `Sample Page` (id 2) and the default `privacy-policy` **draft** (id 3). Id 3
+was still wired as `wp_page_for_privacy_policy`, so it was repointed to the real EN privacy page (40)
+*before* trashing — deleting it first would have blanked the site's designated privacy page. Both were
+verified unreferenced (front/posts/privacy options, nav menus, Polylang translations) and **trashed**, not
+force-deleted, so the step is reversible; a timestamped DB export was taken first. The obsolete
+`perego_section` CPT was already fully migrated (0 posts) and there were 0 orphan postmeta rows, so no
+deeper surgery was warranted. Seeders were deliberately **kept** — they are re-provisioning/provenance
+infrastructure and there was no evidence any specific one is dead; deleting working seeders to chase a
+"remove obsolete seeds" line item would trade real reproducibility for cosmetic tidiness.
+
+**Two deploy steps are now mandatory** (a green local checkout is not enough): `npm run build` in
+`perego-site` (the `build/Blocks/` output, incl. spec-017's `legal-updated`, is gitignored and
+regenerated) and `wp language core install ar` (so `wp_date` localizes Arabic month names). Both are
+recorded in the spec-018 spec.md release section.
+
+**Accepted residual — AR primary-nav localization.** Header nav hrefs use `home_url()`, so on AR pages the
+links resolve to the EN base URLs. This is a systemic Polylang nav-routing gap (first logged in spec 011),
+not a per-page fidelity miss, and the language switcher + AR archives themselves work. It is deliberately
+**not** bundled into acceptance: the correct fix (`pll_home_url()` + translated permalinks for every nav
+item in `SiteHeaderRenderer`) is a focused i18n-routing task, and rushing a change to the header that
+renders on every page at the tail of a long session would risk a broad regression for a cosmetic-scope
+close-out. Documented as the recommended next task instead.
