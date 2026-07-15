@@ -19,14 +19,23 @@ use PeregoSite\Content\ServiceContent;
  * the contact page with the service pre-selected). Ported faithfully from the handoff `.svc-hero` /
  * `.svc-tabs`. Structural navigation only — the editorial service prose lives in the post content.
  *
+ * Spec 013 T003 — the H1 and tab labels are an editable projection of the `perego_service` CPT: the
+ * caller passes the current service's post title and a per-slug label map (from each Service's
+ * `_perego_teaser_label`), and this class falls back to the `ServiceContent` seed per field when they
+ * are empty — so output is byte-identical until an editor changes a Service, then it tracks the post.
  * The current service is marked `.is-active` + `aria-current="page"`.
  */
 final class ServiceHeroRenderer
 {
-    public function render(ServiceContent $content, string $currentSlug): string
+    /**
+     * @param string               $currentTitle the queried Service post's title (H1); '' → seed
+     * @param array<string, string> $tabLabels    canonical slug => editable tab label; missing → seed
+     */
+    public function render(ServiceContent $content, string $currentSlug, string $currentTitle = '', array $tabLabels = []): string
     {
         $eyebrow = $content->overview()['h1']; // "Our Services" / "خدماتنا"
-        $title = $currentSlug !== '' ? $content->fullName($currentSlug) : $eyebrow;
+        $seedTitle = $currentSlug !== '' ? $content->fullName($currentSlug) : $eyebrow;
+        $title = $currentTitle !== '' ? $currentTitle : $seedTitle;
 
         $html = '<section class="svc-hero">';
         $html .= '<div class="svc-hero__bg" aria-hidden="true">'
@@ -35,14 +44,17 @@ final class ServiceHeroRenderer
         $html .= '<div class="container svc-hero__inner">';
         $html .= '<p class="svc-hero__eyebrow reveal">' . esc_html($eyebrow) . '</p>';
         $html .= '<h1 class="svc-hero__title reveal" data-delay="1">' . esc_html($title) . '</h1>';
-        $html .= $this->renderTabs($content, $currentSlug);
+        $html .= $this->renderTabs($content, $currentSlug, $tabLabels);
         $html .= '</div>';
         $html .= '</section>';
 
         return $html;
     }
 
-    private function renderTabs(ServiceContent $content, string $currentSlug): string
+    /**
+     * @param array<string, string> $tabLabels
+     */
+    private function renderTabs(ServiceContent $content, string $currentSlug, array $tabLabels): string
     {
         $startLabel = $content->label('startYourProject');
 
@@ -56,10 +68,11 @@ final class ServiceHeroRenderer
             // whitelists), not the localized name — so the contact form preselects this service.
             $ctaHref = esc_url(home_url('/contact?service=' . rawurlencode($slug)));
             $aria = $isActive ? ' aria-current="page"' : '';
+            $label = ($tabLabels[$slug] ?? '') !== '' ? $tabLabels[$slug] : $content->name($slug);
 
             $html .= '<div class="' . $classes . '">';
             $html .= '<a class="svc-tab__main" href="' . $mainHref . '"' . $aria . '>';
-            $html .= '<span class="svc-tab__label">' . esc_html($content->name($slug)) . '</span>';
+            $html .= '<span class="svc-tab__label">' . esc_html($label) . '</span>';
             $html .= '</a>';
             $html .= '<a class="svc-tab__cta" href="' . $ctaHref . '">' . esc_html($startLabel) . '</a>';
             $html .= '</div>';

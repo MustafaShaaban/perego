@@ -69,3 +69,19 @@ it('falls back to the eyebrow as the title when no current service is resolved',
     expect($html)->toMatch('/<h1 class="svc-hero__title reveal" data-delay="1">Our Services<\/h1>/')
         ->and(substr_count($html, 'svc-tab is-active'))->toBe(0);
 });
+
+it('uses the CPT post title for the H1 and the editable tab labels when provided (per-field over seed)', function () {
+    // The Service post title + a couple of edited tab labels override the seed; unset labels keep it.
+    $html = (new ServiceHeroRenderer())->render(
+        new ServiceContent('en'),
+        'video-editing',
+        'Video Editing PRO',
+        ['video-editing' => 'VE', 'graphic-design' => 'GD'],
+    );
+
+    expect($html)->toContain('<h1 class="svc-hero__title reveal" data-delay="1">Video Editing PRO</h1>')
+        ->and($html)->toMatch('/svc-tab__label">VE</')          // edited
+        ->and($html)->toMatch('/svc-tab__label">GD</')          // edited
+        ->and($html)->toContain('2D Motion Graphics')           // unset -> ServiceContent seed
+        ->and($html)->toContain('Website Making');              // unset -> seed
+});

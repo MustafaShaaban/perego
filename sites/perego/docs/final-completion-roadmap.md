@@ -68,7 +68,7 @@ Studio) — no hidden CPTs, seed-only content, or hard-coded editorial prose sta
 | 010 | CoreX runtime, Forms, Submissions, Data Models | `feature/010-corex-runtime-content-models` | **DONE** (PR #18) — admin-bundle fix, metadata+editor controls; GAP-1/2 documented |
 | 011 | Global shell + preloader | `feature/011-global-shell-preloader` | **DONE** (PR #19) — preloader/header/footer to handoff; contact flat-footer bug fixed; FSE templateParts; AR i18n fixed; EN/AR visual acceptance. Follow-up: Polylang nav-link localization |
 | 012 | Homepage design + functional completion | `feature/012-home-page-fidelity` | **DONE** (PR #20) — hero + services teaser made genuinely editable (front-page page meta + Service CPT teaser meta, per-field HomeContent seed fallback → zero visual regression); EN/AR editable + proven via live edit round-trips; About/Clients already editable |
-| 013 | Services archive + four service singles | `feature/013-services-pages-completion` | Not started |
+| 013 | Services archive + four service singles | `feature/013-services-pages-completion` | **DONE** (PR #21) — service-single H1 ← post title (native editing), hero + archive tabs ← editable teaser labels (shared `ServiceCatalog`, per-field seed fallback → byte-identical EN/AR); selected work already ← Projects; fixed archive CTA `?service=` slug bug; whatwedo/process editable via post-content |
 | 014 | Work archive + project single | `feature/014-work-project-pages` | Not started |
 | 015 | Journal, single article, search | `feature/015-journal-search-pages` | Not started |
 | 016 | Contact, forms, form states, email routing | `feature/016-contact-forms-email` | Not started |
