@@ -4,7 +4,7 @@
 
 ## RESUME HERE
 
-- **Date/time:** 2026-07-15 (~00:30 UTC)
+- **Date/time:** 2026-07-15 (~00:45 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
 - **Latest pushed commit:** `203af28` (spec 011 done docs). **Spec 011 DONE → PR #19**. Now on
   `feature/012-home-page-fidelity` (branched off 011); spec 012 audit committed, implementation pending.
@@ -67,11 +67,23 @@
   seeded 2026-07-01 on pages 38/39/40/41. Installed the **`ar` core language pack** so `wp_date` localizes
   AR month names site-wide. Live: EN "Last updated: July 1, 2026", AR "آخر تحديث: يوليو 1, 2026". Block
   built; Pest **262/262** (803 assertions); guards pass. Captures `output/playwright/017-terms-{en,ar}.png`.
-- **➡ RESUME HERE → Spec 018** (final visual acceptance + cleanup/release): full route × viewport × language
-  visual matrix; remove remaining duplicate CSS / dead code / obsolete seeders / orphan DB data (e.g. the
-  stray `sample-page` id 2 + draft `privacy-policy` id 3 default WP pages); confirm the `ar` core language
-  pack as a deploy step. Branch `feature/018-final-acceptance-release` off `feature/017-supporting-pages`.
-  Take a timestamped DB backup before any destructive cleanup; dry-run + orphan report first.
+- **Active spec:** **018** (final visual acceptance + cleanup/release) — branch
+  `feature/018-final-acceptance-release` (off 017). **DONE (T001–T009), PR pending push confirm.** DB backup
+  `wp/db-backup-20260715-032449.sql` first. **Cleanup (reversible):** trashed the two default-WP orphans
+  `Sample Page` (id 2) + default `privacy-policy` draft (id 3), after repointing
+  `wp_page_for_privacy_policy` → the real EN privacy page (40); verified both unreferenced. Already clean:
+  `perego_section` fully migrated (0 posts), 0 orphan postmeta, Hello World trashed, no duplicate stylesheet
+  enqueues. Seeders kept (reproducibility infra). **Acceptance:** route health EN/AR (200s + translated
+  404), homepage visual EN/AR (`output/playwright/018-home-{en,ar}.png`) with no console errors/overflow;
+  prior routes covered by 011–017 captures. **Deploy requirements recorded:** `npm run build` +
+  `wp language core install ar` (DECISIONS.md). **Documented residual (out of scope):** AR primary-nav
+  localization (`home_url()` → EN base on AR pages) — a dedicated i18n-routing task (fix: `pll_home_url()` +
+  translated permalinks in `SiteHeaderRenderer`).
+- **➡ PROGRAM STATUS — specs 009–018 COMPLETE.** PRs #17→#25 form the stacked chain
+  (009→010→011→012→013→014→015→016→017→018). **Recommended next work** (each a fresh focused branch/spec):
+  (1) **AR nav i18n routing** — the one systemic known gap; (2) replace Client-CPT sample/seed content
+  ("Sample Creator"/"Example stat") with real client data (owner content task); (3) merge the stacked PR
+  chain in order once reviewed. No open blocker requires stopping the site's core build.
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
