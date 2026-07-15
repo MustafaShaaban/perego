@@ -32,9 +32,41 @@ final class ServicePostType
         'website-making' => 'Website Making',
     ];
 
+    public const META_SERVICE_SLUG = '_perego_service_slug';
+
     public function register(): void
     {
         register_post_type(self::POST_TYPE, $this->postTypeArgs());
+
+        foreach ($this->metaArgs() as $key => $args) {
+            register_post_meta(self::POST_TYPE, $key, $args);
+        }
+    }
+
+    /**
+     * Structured service metadata registered explicitly (REST schema + sanitization + auth) rather than
+     * seed-only `update_post_meta`. `_perego_service_slug` is the canonical service key
+     * (video/motion/design/web) the frontend and contact pre-selection resolve against.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    public function metaArgs(): array
+    {
+        return [
+            self::META_SERVICE_SLUG => [
+                'type' => 'string',
+                'single' => true,
+                'default' => '',
+                'show_in_rest' => true,
+                'sanitize_callback' => 'sanitize_key',
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+        ];
+    }
+
+    public static function authEdit(): bool
+    {
+        return function_exists('current_user_can') && current_user_can('edit_posts');
     }
 
     /**

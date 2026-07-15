@@ -80,6 +80,11 @@ final class PeregoSiteServiceProvider
         (new \PeregoSite\Seo\PeregoAgentReadiness())->register();
         (new \PeregoSite\Seo\PeregoMeta($this->languageService->driver()->currentLocale()))->register();
         (new \PeregoSite\Seo\PlaceholderPageIndexing())->register();
+
+        // spec 010 T009: editor controls for the structured Project/Service/Client metadata (admin only).
+        if (is_admin()) {
+            (new \PeregoSite\Admin\PostMetaBoxes())->register();
+        }
     }
 
     /**

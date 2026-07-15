@@ -41,10 +41,20 @@ it('calls register_post_type with the service slug and its args on register()', 
 
             return null;
         });
+    Functions\when('register_post_meta')->justReturn(true);
 
     (new ServicePostType())->register();
 
     expect($captured['slug'])->toBe(ServicePostType::POST_TYPE)
         ->and($captured['args'])->toBeArray()
         ->and($captured['args']['has_archive'])->toBe('services');
+});
+
+it('registers the canonical service-slug meta with REST, sanitization, and auth', function () {
+    $meta = (new ServicePostType())->metaArgs();
+
+    expect(array_keys($meta))->toBe([ServicePostType::META_SERVICE_SLUG]);
+    expect($meta[ServicePostType::META_SERVICE_SLUG]['show_in_rest'])->toBeTrue()
+        ->and($meta[ServicePostType::META_SERVICE_SLUG]['sanitize_callback'])->toBe('sanitize_key')
+        ->and($meta[ServicePostType::META_SERVICE_SLUG]['auth_callback'])->toBe([ServicePostType::class, 'authEdit']);
 });

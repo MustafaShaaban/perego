@@ -4,20 +4,20 @@
 
 ## RESUME HERE
 
-- **Date/time:** 2026-07-14 (~14:00 UTC)
-- **Branch:** `feature/009-cms-block-architecture-cleanup` (off `feature/008-visual-fidelity-recovery` @ `1b7ecda`)
-- **Latest pushed commit:** `4a5cfdc` (T011) — plus uncommitted T012–T016 cleanup about to be committed/pushed
-- **Active spec:** `009` **DONE** (migrated + removed + verified); **next spec: 010** (CoreX runtime, forms, content models)
-- **Active task:** spec 009 → open PR (T017), then start spec 010
-- **Current objective:** spec 009 complete; move to spec 010 — verify/restore CoreX Forms & Flows / Submissions / Data Models admin, provision the 3 flows, register Projects/Services/Clients models via public seams
-- **Completed this session:** spec 009 end-to-end — bilingual `footer-careers` block (byte-identical EN/AR, verified live perego.local + ngrok); backup-gated idempotent migration removed 14 `perego_section` records (0 orphans); removed CPT+resolver+renderer+block+seed+3 tests+provider wiring; removed orphan `site-footer/style.scss`; regenerated `.pot`; cleanup report. Pest 233/233, Jest 76/76; home+AR 200, no fatals.
-- **Exact next file/action:** commit+push T012–T016, open the spec 009 PR (base `feature/008-visual-fidelity-recovery`), then begin spec 010: audit CoreX admin routes at perego.local/wp-admin (Forms & Flows, Submissions, Data Models) and the deployed CoreX version/active plugins.
-- **Verification run:** Pest 233/233, Jest 76/76; `git diff --check` clean; home/work/services/contact/journal + AR home all 200; debug.log clean since marker; migration idempotent (2nd apply = 0); DB backup `db-backup-20260714-134449.sql` (rollback).
-- **Verification still required (spec 010):** CoreX admin routes render for admin; 3 flows visible; submissions land; models registered where supported.
-- **Known blockers:** none blocking spec 009 (complete). Spec 010 risk: CoreX admin Forms/Submissions/Data Models reportedly missing on live — to be diagnosed at runtime (perego.local wp-admin).
-- **Live URL status:** canonical runtime `http://perego.local/` (local WAMP, 200, siteurl=perego.local — same DB as wp-cli). ngrok mirror `https://mower-hamstring-baggy.ngrok-free.dev/` 200 (tunnel; ngrok-domain URLs). Resolver: prefer perego.local; ngrok optional; never stop if ngrok offline. Do not change WP home/siteurl.
-- **DB migration status:** dry-run only (local); no writes performed; CPT + 14 records still present
-- **Autonomous mode:** continue specs 009–018 in dependency order without pausing between tasks/specs; stop only for a genuine external blocker (finish other unblocked work + update durable memory + commit/push first).
+- **Date/time:** 2026-07-14 (~14:30 UTC)
+- **Branch:** `feature/010-corex-runtime-content-models` (off 009 off `feature/008-visual-fidelity-recovery`). `009` DONE → **PR #17** (base 008).
+- **Latest pushed commit:** `42942dc` (spec 010 editor meta boxes)
+- **Active spec:** `010` — largely complete.
+  - **Done:** T001–T004 (audit; ACF not a dep; forms inventory), T006 (submissions pipeline works — id 150), **T009** (register_post_meta for Project/Service/Client + `PostMetaBoxes` editor UI with guarded save; Pest 243/243).
+  - **Fixed release-blocker:** CoreX admin React bundle `corex-config/build/admin/index.js` was 404 (unbuilt) → built locally (gitignored). **Deploy must build CoreX admin assets** (GAP-2).
+  - **Blocked:** T007/T008 — framework **GAP-1** (no public CPT-backed DataModels seam). See `docs/corex-framework-gaps.md`.
+  - **Remaining unblocked:** T005 (interactive Forms&Flows screen check), T009 gallery wp.media UI, T010 (live browser proof of end-to-end record creation), then open spec 010 PR.
+- **Next spec after 010:** **011** (global shell + preloader) — also owns the footer/header/CTA/404 Site-Editor canvas rebuild (the 009 editability seam).
+- **Verification run:** Pest 243/243, Jest 76/76; home/work/services 200; all 3 CPT meta registered (show_in_rest) + meta boxes registered; migration idempotent; DB backup `db-backup-20260714-134449.sql` (rollback).
+- **Live URL status:** canonical `http://perego.local/` (local WAMP, siteurl=perego.local, same DB as wp-cli). ngrok mirror 200 (tunnel; proven same install). Prefer perego.local; never stop if ngrok offline; do not change WP home/siteurl.
+- **DB migration status (spec 009):** APPLIED — 14 `perego_section` records removed, 0 orphans, footer editorial intact via `footer-careers` block. Idempotent.
+- **Autonomous mode:** continue specs 009–018 in dependency order; stop only for a genuine external blocker (finish other unblocked work + update durable memory + commit/push first).
+- **Genuine external blockers surfaced:** GAP-1 (CoreX Data Models CPT seam — framework team) and GAP-2 (deploy must build CoreX admin assets) — both need owner/framework action; recorded in `docs/corex-framework-gaps.md`.
 
 ---
 

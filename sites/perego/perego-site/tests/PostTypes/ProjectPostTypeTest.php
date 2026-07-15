@@ -54,6 +54,7 @@ it('calls register_post_type and register_taxonomy on register()', function () {
 
             return null;
         });
+    Functions\when('register_post_meta')->justReturn(true);
 
     (new ProjectPostType())->register();
 
@@ -61,4 +62,33 @@ it('calls register_post_type and register_taxonomy on register()', function () {
         ->and($captured['pt']['args'])->toBeArray()
         ->and($captured['tax']['tax'])->toBe(ProjectPostType::TAXONOMY)
         ->and($captured['tax']['object'])->toBe(ProjectPostType::POST_TYPE);
+});
+
+it('registers every structured meta field with REST, sanitization, and auth', function () {
+    $meta = (new ProjectPostType())->metaArgs();
+
+    expect(array_keys($meta))->toBe([
+        ProjectPostType::META_CLIENT,
+        ProjectPostType::META_YEAR,
+        ProjectPostType::META_ROLE,
+        ProjectPostType::META_DELIVERABLES,
+        ProjectPostType::META_GALLERY,
+    ]);
+
+    foreach ($meta as $args) {
+        expect($args['single'])->toBeTrue()
+            ->and($args['show_in_rest'])->not->toBeFalse()
+            ->and($args)->toHaveKey('sanitize_callback')
+            ->and($args['auth_callback'])->toBe([ProjectPostType::class, 'authEdit']);
+    }
+
+    // The gallery is a typed integer list, not a scalar.
+    expect($meta[ProjectPostType::META_GALLERY]['type'])->toBe('array')
+        ->and($meta[ProjectPostType::META_CLIENT]['type'])->toBe('string');
+});
+
+it('sanitizes a gallery value to a clean list of positive attachment IDs', function () {
+    expect(ProjectPostType::sanitizeIntList(['118', 117, 0, -3, 'x', 116]))->toBe([118, 117, 116])
+        ->and(ProjectPostType::sanitizeIntList('42'))->toBe([42])
+        ->and(ProjectPostType::sanitizeIntList([]))->toBe([]);
 });
