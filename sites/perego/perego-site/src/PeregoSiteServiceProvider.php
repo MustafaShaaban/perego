@@ -32,14 +32,12 @@ use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
 use PeregoSite\Blocks\SiteHeaderRenderer;
-use PeregoSite\Blocks\GlobalSectionRenderer;
+use PeregoSite\Blocks\FooterCareersRenderer;
 use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\GlobalContent;
-use PeregoSite\Content\GlobalSectionResolver;
 use PeregoSite\Content\PortfolioContent;
 use PeregoSite\Content\ServiceContent;
 use PeregoSite\PostTypes\ClientPostType;
-use PeregoSite\PostTypes\GlobalSectionPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Repositories\ProjectRepository;
@@ -74,7 +72,6 @@ final class PeregoSiteServiceProvider
         $this->registerServices();
         $this->registerTranslatablePostTypes();
         $this->registerGlobalSurfaces();
-        $this->registerGlobalSections();
         $this->registerClients();
         $this->registerContactServiceChooser();
         $this->registerForms();
@@ -159,7 +156,6 @@ final class PeregoSiteServiceProvider
     private function registerTranslatablePostTypes(): void
     {
         $postTypes = [
-            GlobalSectionPostType::POST_TYPE,
             ServicePostType::POST_TYPE,
             ProjectPostType::POST_TYPE,
             ClientPostType::POST_TYPE,
@@ -174,29 +170,6 @@ final class PeregoSiteServiceProvider
 
             return $types;
         }, 10, 1);
-    }
-
-    /**
-     * spec Phase 5: the editor-managed, Polylang-translatable perego_global_section CPT and the
-     * perego-theme/global-section block that renders a role's current-language record inside the
-     * language-neutral FSE template parts.
-     */
-    private function registerGlobalSections(): void
-    {
-        add_action('init', function (): void {
-            (new GlobalSectionPostType())->register();
-
-            $languageService = $this->languageService;
-
-            register_block_type($this->blockDir('global-section'), [
-                'render_callback' => static function (array $attributes) use ($languageService): string {
-                    return (new GlobalSectionRenderer(
-                        $languageService->driver()->currentLocale(),
-                        new GlobalSectionResolver(),
-                    ))->render($attributes);
-                },
-            ]);
-        });
     }
 
     /**
@@ -234,6 +207,16 @@ final class PeregoSiteServiceProvider
                     return (new NotFoundRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
                     ))->render();
+                },
+            ]);
+
+            // spec 009: the footer "Join us" careers editorial, migrated off the perego_section CPT into
+            // a bilingual block whose EN/AR variants live in its own attributes.
+            register_block_type($this->blockDir('footer-careers'), [
+                'render_callback' => static function (array $attributes) use ($languageService): string {
+                    return (new FooterCareersRenderer(
+                        $languageService->driver()->currentLocale()
+                    ))->render($attributes);
                 },
             ]);
 

@@ -1,5 +1,44 @@
 # Perego — Decision Log
 
+## 2026-07-14 — Runtime resolver + autonomous continuation (Final Completion Program)
+
+**Decision**: Canonical runtime is the local WAMP install at `http://perego.local/` (Chromium
+host-resolver-rules map it to 127.0.0.1; `PEREGO_LIVE_BASE` overrides). All DB inventory/dry-run/backup/
+migration run via wp-cli against `wp/` (siteurl/home = perego.local — same DB). The ngrok mirror
+`mower-hamstring-baggy.ngrok-free.dev` is an optional second host; use it when reachable, otherwise fall
+back to perego.local; never stop because ngrok is offline. Do not destructively change WP home/siteurl to
+switch hosts. Work continues autonomously through specs 009–018 in dependency order without pausing between
+tasks/specs; stop only for a genuine external blocker, after finishing other unblocked work and updating
+durable memory + commit/push.
+
+**Why**: The goal names `peregos.local`, but the real local vhost + hosts entry is `perego.local`; the
+established visual/interaction tooling already targets it robustly. Migrating the WAMP DB (wp-cli) while
+verifying visuals on the same host keeps DB and screenshots consistent. ngrok is a tunnel/mirror, not a
+proven-separate production DB.
+
+**Status**: adopted; recorded in roadmap + PROGRESS RESUME HERE + spec 009 evidence.
+
+## 2026-07-14 — Final Completion Program: block-first global content; remove the Global Sections CPT (spec 009)
+
+**Decision**: Adopt the Final Completion Program (specs 009–018). Global content becomes block-first,
+FSE-editable; the `perego_section` ("Global Sections") CPT and all its code/records are removed after a
+safe, dry-run-gated, idempotent migration. Spec 009 branches off the current recovery tip
+(`feature/008-visual-fidelity-recovery` @ `1b7ecda`) as `feature/009-cms-block-architecture-cleanup`, so
+no unmerged recovery work is lost; each later spec gets its own branch/PR.
+
+**Why**: The Global Sections CPT is a hidden content store the block-first rule forbids for global
+fragments, and the read-only dry-run proved it is mostly inert — of 7 seeded roles (×EN/AR = 14 records),
+**only `footer-careers` renders on the frontend**; the real header/footer/CTA/404 copy renders from PHP
+providers. So the architecture is both wrong and largely unused, and removal is low-risk once
+`footer-careers` gets an editable home. Branching off 008 (not `main`) avoids discarding the substantial,
+unmerged spec-008 recovery.
+
+**Status**: foundation only. Migration reporter (`scripts/migrate-global-sections.php`, dry-run) built and
+run against the **local** DB (0 anomalies). NOT yet done: live-DB dry-run (deployed-commit identity
+unproven), backup gate, footer-careers editable surface, CPT/code removal, cleanup report. Destructive
+`apply` is intentionally unimplemented until the backup gate passes. This supersedes Decision 8
+(2026-07-12, which introduced the CPT) — that architecture is now being removed.
+
 ## 2026-07-13 — Serve the locked handoff fonts locally
 
 **Decision**: Perego serves Open Sans weights 300/400/600/700 and Cairo weights 400/600/700 from
