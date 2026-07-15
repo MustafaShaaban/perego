@@ -61,5 +61,9 @@ it('localizes the labels into Arabic', function () {
 
     expect($html)->toContain('الاسم الكامل')
         ->and($html)->toContain('قدّم الآن')
-        ->and($html)->toContain('السيرة الذاتية');
+        ->and($html)->toContain('السيرة الذاتية')
+        ->and($html)->toContain('placeholder="أدخل اسمك هنا"')
+        ->and($html)->toContain('placeholder="أدخل رابط ملف أعمالك أو موقعك"')
+        ->and($html)->not->toContain('Put your name here')
+        ->and($html)->not->toContain('Put your Portfolio/website link');
 });

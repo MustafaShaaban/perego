@@ -58,8 +58,10 @@ final class GlobalContent
             ],
             'join' => [
                 'name' => 'Full name',
+                'namePlaceholder' => 'Put your name here',
                 'email' => 'Email',
                 'portfolio' => 'Portfolio / website link',
+                'portfolioPlaceholder' => 'Put your Portfolio/website link',
                 'cv' => 'CV',
                 'cvHint' => 'Upload your CV here',
                 'submit' => 'Apply now',
@@ -111,8 +113,10 @@ final class GlobalContent
             ],
             'join' => [
                 'name' => 'الاسم الكامل',
+                'namePlaceholder' => 'أدخل اسمك هنا',
                 'email' => 'البريد الإلكتروني',
                 'portfolio' => 'رابط ملف الأعمال / الموقع',
+                'portfolioPlaceholder' => 'أدخل رابط ملف أعمالك أو موقعك',
                 'cv' => 'السيرة الذاتية',
                 'cvHint' => 'ارفع سيرتك الذاتية هنا',
                 'submit' => 'قدّم الآن',

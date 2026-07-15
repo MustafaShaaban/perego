@@ -4,7 +4,7 @@
 
 ## RESUME HERE
 
-- **Date/time:** 2026-07-14 (~14:30 UTC)
+- **Date/time:** 2026-07-14 (~20:30 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
 - **Latest pushed commit:** `203af28` (spec 011 done docs). **Spec 011 DONE → PR #19**. Now on
   `feature/012-home-page-fidelity` (branched off 011); spec 012 audit committed, implementation pending.
@@ -42,13 +42,23 @@
   no-results) are **native WP posts + core search via FSE blocks** — already handoff-faithful (captures in
   `output/playwright/015-*`) and **natively editable** (3 EN + 3 AR posts). Search is per-language (Polylang),
   no-results state matches the handoff. **No code change needed** → Pest unchanged 256/256.
-- **Next spec:** **016** (Contact, forms, form states, email routing) — branch `feature/016-contact-forms-email`
-  off 015. This is the big one: three forms (contact/brief, quick-message, careers/join) editable + routed +
-  validated + stored via CoreX Forms/Submissions; Email Studio routing; form states (default/invalid/
-  submitting/success/server-error); real submissions. Depends on spec 010 (CoreX runtime). Verify Forms &
-  Flows/Submissions/Data Models visible + functional.
-- **Then 017–018** (supporting pages/terms/privacy/generic/404; final acceptance + cleanup: remove remaining
-  duplicate CSS/dead code/obsolete seeds/orphan DB data).
+- **Active spec:** **016** (Contact, forms, form states, email routing) — branch `feature/016-contact-forms-email`
+  (off 015). **DONE (T001–T008), PR pending push confirm.** Verification + gap-fixing spec (stack was built in
+  004–010). Proven live: **Submissions/Forms & Flows/Data Models** all render + function in the CoreX admin
+  React app (inbox with 6 submissions across both flows + filters/retention; flow builder; "Form submissions"
+  data model exposing every field). **Validation** client (aria-required/required/type=email/maxlength) +
+  server (CoreX rules, sanitisers, `corex_hp`/`perego_hp` honeypots, careers `validateCv` size+MIME+ext+finfo).
+  **States**: success proven via REAL Playwright submit ("✓ Thank you…"); invalid/server-error via `fail()`
+  422/429/500 + `aria-live`. **Storage**: real submits stored (ids 150/159; careers `record()` + private CV
+  attachment); all test records cleaned. **Email**: dispatch+`pre_wp_mail` capture → quick-message 2 mails,
+  brief 2 mails, careers via same `PeregoMailer`. **EN/AR RTL**: fixed two real i18n gaps — join form's
+  hardcoded EN placeholders (→ `GlobalContent` `namePlaceholder`/`portfolioPlaceholder`) and missing AR
+  "Select a range"/"Say hello." gettext (added to `-ar.po`, recompiled `.mo`); re-verified live (no EN
+  placeholders, budget default "اختر نطاقًا"). Pest 256/256 (796 assertions); guards pass. GAP-1/2 documented.
+- **➡ RESUME HERE → Spec 017** (supporting pages: terms/privacy/generic/404 fidelity + editability), then
+  **018** (final acceptance + cleanup: remove remaining duplicate CSS/dead code/obsolete seeds/orphan DB
+  data). Branch `feature/017-*` off `feature/016-contact-forms-email`. Read `specs/` for 017 if present, else
+  audit the handoff `site/` for the remaining pages and specify first.
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to

@@ -589,3 +589,22 @@ this is the second time this session that a defect was invisible to narrow, sing
 review and only surfaced once the full route × viewport × language matrix was actually captured and
 looked at — reinforcing that partial/spot-check verification is not equivalent to the completion
 contract's required full-matrix visual proof.
+
+## 2026-07-14 — Spec 016: join-form placeholders + AR gettext gaps (i18n, third full-matrix catch)
+
+Spec 016's EN/AR pass (T007) surfaced two more i18n defects invisible to single-language review, both
+found only once the AR contact page was actually rendered and read. **(1)** `JoinFormRenderer` passed the
+name and portfolio input `placeholder`s as **hardcoded English literals** (`'Put your name here'`,
+`'Put your Portfolio/website link'`) rather than through the content seam — so the careers form showed
+translated *labels* above *English* placeholders in AR. Fixed by adding `namePlaceholder`/
+`portfolioPlaceholder` to both locale blocks of `Content\GlobalContent::join()` (the same locale-array
+source the labels already use) and reading `$t['namePlaceholder']`/`$t['portfolioPlaceholder']` in the
+renderer — no second divergent copy. **(2)** The project-brief budget `<select>` default `__('Select a
+range')` and the footer message placeholder `__('Say hello.')` were `__()`-wrapped correctly but had **no
+`msgstr` in `perego-site-ar.po`** (the AR catalog carried 68 of 172 pot msgids), so both fell back to
+English inside an otherwise-Arabic RTL form. Fixed by appending the two AR translations and recompiling
+`perego-site-ar.mo` (`wp i18n make-mo`). Locked in by strengthened `JoinFormRenderTest` AR assertions
+(placeholders now Arabic; no EN placeholder leakage). **Pattern (now three times this session):** a
+gettext string that "looks" translated because it is `__()`-wrapped is not translated unless the catalog
+actually carries its `msgstr` — and hardcoded UI literals bypass the catalog entirely. Both classes of bug
+are invisible until the AR viewport is rendered and inspected, not merely asserted in a hidden-DOM test.
