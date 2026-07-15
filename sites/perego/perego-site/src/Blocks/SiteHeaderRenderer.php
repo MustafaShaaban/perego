@@ -68,7 +68,7 @@ final class SiteHeaderRenderer
             . 'data-wp-init="callbacks.init">';
 
         $html .= '<div class="container site-header__inner">';
-        $html .= '<a class="logo" href="' . esc_url(home_url('/')) . '" '
+        $html .= '<a class="logo" href="' . esc_url($driver->localizedUrl('/')) . '" '
             . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" '
             . 'alt="" class="logo__img" />'
@@ -80,7 +80,7 @@ final class SiteHeaderRenderer
         $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath) . '</ul>';
         $html .= '</nav>';
 
-        $html .= '<a class="btn btn--accent header-cta" href="' . esc_url(home_url('/contact')) . '">'
+        $html .= '<a class="btn btn--accent header-cta" href="' . esc_url($driver->localizedUrl('/contact')) . '">'
             . esc_html__('Start a Project', 'perego-site') . '</a>';
 
         $html .= $this->renderLanguageToggle($driver->currentLocale());
@@ -100,6 +100,7 @@ final class SiteHeaderRenderer
 
     private function renderNavItems(string $currentPath): string
     {
+        $driver = $this->languageService->driver();
         $html = '';
 
         foreach ($this->navItems() as $item) {
@@ -109,7 +110,7 @@ final class SiteHeaderRenderer
             $ariaCurrent = $isActive ? ' aria-current="page"' : '';
 
             $html .= '<li' . ($classes !== '' ? ' class="' . esc_attr($classes) . '"' : '') . ($hasChildren ? ' data-wp-interactive="perego/site-header"' : '') . '>';
-            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url(home_url($item['href'])) . '"' . $ariaCurrent
+            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url($driver->localizedUrl($item['href'])) . '"' . $ariaCurrent
                 . ($hasChildren ? ' aria-haspopup="true" aria-expanded="false" data-wp-on--click="actions.toggleMobileDropdown"' : '') . '>'
                 . esc_html($item['label'])
                 . ($hasChildren ? ' <svg class="nav-caret" width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '')
@@ -118,7 +119,7 @@ final class SiteHeaderRenderer
             if ($hasChildren) {
                 $html .= '<ul class="dropdown">';
                 foreach ($item['children'] as $child) {
-                    $html .= '<li><a href="' . esc_url(home_url($child['href'])) . '">'
+                    $html .= '<li><a href="' . esc_url($driver->localizedUrl($child['href'])) . '">'
                         . esc_html($child['label']) . '</a></li>';
                 }
                 $html .= '</ul>';

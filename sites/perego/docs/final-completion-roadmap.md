@@ -75,7 +75,9 @@ Studio) — no hidden CPTs, seed-only content, or hard-coded editorial prose sta
 | 017 | Generic page, terms, privacy, 404 | `feature/017-supporting-pages` | **DONE** (PR #25) — generic page/404 (EN+AR)/legal already faithful+editable; closed the missing legal "Last updated" line as a new `legal-updated` block driven by editable `_perego_legal_updated` meta (modified-date fallback) + "Legal page" meta box; installed `ar` core language pack for `wp_date` |
 | 018 | Final visual acceptance, cleanup, release | `feature/018-final-acceptance-release` | **DONE** (PR #26) — acceptance EN/AR (route health + home captures, no console/overflow); reversible orphan cleanup (Sample Page + default privacy draft trashed, privacy setting repointed to real page); deploy reqs recorded (build + `ar` pack). Residual: AR nav i18n routing (documented follow-up) |
 
-**Program 009–018 COMPLETE (2026-07-15).** Stacked PR chain #17→#26. Remaining recommended work (fresh branches): AR primary-nav Polylang localization; replace Client-CPT sample seed content with real data; merge the PR chain in order.
+| 019 | AR primary-nav i18n routing (post-program residual fix) | `feature/019-ar-nav-i18n-routing` | **DONE** (PR #27) — `LanguageDriver::localizedUrl()` resolves nav hrefs to the current locale (Polylang adapter; fallback = `home_url`); header + footer nav now link to correct AR URLs (all 200), EN unchanged |
+
+**Program 009–019 COMPLETE (2026-07-15).** Stacked PR chain #17→#27; the AR primary-nav Polylang gap is now fixed (spec 019). Remaining (owner/optional): replace Client-CPT sample seed content with real data; merge the PR chain in order.
 
 **Dependencies:** 009 (architecture) is the foundation for 011/012/017 (which edit the now-block-first
 global areas). 010 (CoreX runtime + forms) is a hard dependency for 016 (contact/forms/email) and is

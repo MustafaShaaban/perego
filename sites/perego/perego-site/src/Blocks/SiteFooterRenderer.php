@@ -91,7 +91,7 @@ final class SiteFooterRenderer
 
         $html = '<div class="footer-col footer-contact">';
 
-        $html .= '<a class="logo" href="' . esc_url(home_url('/')) . '" '
+        $html .= '<a class="logo" href="' . esc_url($this->languageService->driver()->localizedUrl('/')) . '" '
             . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" alt="" class="logo__img" />'
             . '</a>';
@@ -236,8 +236,8 @@ final class SiteFooterRenderer
         return '<div class="container site-footer__bottom">'
             . '<p>&copy; ' . $year . ' ' . esc_html__('Perego', 'perego-site') . '</p>'
             . '<nav class="footer-legal" aria-label="' . esc_attr__('Legal', 'perego-site') . '">'
-            . '<a href="' . esc_url(home_url('/terms')) . '">' . esc_html__('Terms & Conditions', 'perego-site') . '</a>'
-            . '<a href="' . esc_url(home_url('/privacy')) . '">' . esc_html__('Privacy Policy', 'perego-site') . '</a>'
+            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/terms')) . '">' . esc_html__('Terms & Conditions', 'perego-site') . '</a>'
+            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/privacy')) . '">' . esc_html__('Privacy Policy', 'perego-site') . '</a>'
             . '</nav>'
             . '</div>';
     }

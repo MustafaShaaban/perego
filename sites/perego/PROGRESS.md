@@ -4,7 +4,7 @@
 
 ## RESUME HERE
 
-- **Date/time:** 2026-07-15 (~00:45 UTC)
+- **Date/time:** 2026-07-15 (~13:40 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
 - **Latest pushed commit:** `203af28` (spec 011 done docs). **Spec 011 DONE → PR #19**. Now on
   `feature/012-home-page-fidelity` (branched off 011); spec 012 audit committed, implementation pending.
@@ -79,11 +79,21 @@
   `wp language core install ar` (DECISIONS.md). **Documented residual (out of scope):** AR primary-nav
   localization (`home_url()` → EN base on AR pages) — a dedicated i18n-routing task (fix: `pll_home_url()` +
   translated permalinks in `SiteHeaderRenderer`).
-- **➡ PROGRAM STATUS — specs 009–018 COMPLETE.** PRs #17→#25 form the stacked chain
-  (009→010→011→012→013→014→015→016→017→018). **Recommended next work** (each a fresh focused branch/spec):
-  (1) **AR nav i18n routing** — the one systemic known gap; (2) replace Client-CPT sample/seed content
-  ("Sample Creator"/"Example stat") with real client data (owner content task); (3) merge the stacked PR
-  chain in order once reviewed. No open blocker requires stopping the site's core build.
+- **Active spec:** **019** (AR primary-nav i18n routing) — branch `feature/019-ar-nav-i18n-routing` (off
+  018). **DONE (T001–T006), PR pending push confirm.** Closed the spec-018 residual: header + footer nav
+  built links with `home_url($path)`, so AR pages linked to EN base URLs. Added `localizedUrl(string): string`
+  to the `LanguageDriver` interface (consumers stay off Polylang, constitution IX); Fallback → `home_url`,
+  Polylang → four-shape resolver (home/anchor via `pll_home_url`; page/CPT-single via
+  `url_to_postid`+`pll_get_post`; blog index via default-language-normalised posts-page translation →
+  `/ar/المدونة/`; CPT archive via language prefix → `/ar/work/`), degrading to the plain URL on failure.
+  `SiteHeaderRenderer` + `SiteFooterRenderer` use it. Live: every AR nav target resolves **200** (no more
+  301-to-EN); EN unchanged (canonical permalinks). Pest **268/268** (812 assertions); guards pass. Evidence
+  `output/playwright/019-ar-home-nav.png`.
+- **➡ PROGRAM STATUS — specs 009–019 COMPLETE.** Stacked PR chain #17→#27
+  (009→010→011→012→013→014→015→016→017→018→019). The documented systemic AR-nav gap is now **fixed**.
+  **Recommended remaining work** (owner/optional): (1) replace Client-CPT sample seed content
+  ("Sample Creator"/"Example stat") with real client data; (2) merge the stacked PR chain in order once
+  reviewed. No open engineering blocker.
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to

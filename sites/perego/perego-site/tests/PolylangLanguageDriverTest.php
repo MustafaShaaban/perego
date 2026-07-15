@@ -59,3 +59,60 @@ it('rejects a locale Polylang does not offer a translation for', function () {
 
     expect(fn () => $driver->urlFor('ar'))->toThrow(InvalidArgumentException::class);
 });
+
+/**
+ * Shared stubs for localizedUrl(): a small in-memory site where EN 57=contact, 43=journal (posts page),
+ * and their AR translations are 58 and 96; the AR home is /ar/, and the default language is English.
+ */
+function stubLocalizedUrlSite(string $locale): void
+{
+    Functions\when('pll_current_language')->justReturn($locale);
+    Functions\when('pll_default_language')->justReturn('en');
+    Functions\when('pll_home_url')->alias(fn (string $l) => "https://perego.local/$l/");
+    Functions\when('home_url')->alias(fn (string $p = '') => 'https://perego.local' . $p);
+    Functions\when('untrailingslashit')->alias(fn (string $u) => rtrim($u, '/'));
+    Functions\when('get_option')->alias(fn (string $k) => $k === 'page_for_posts' ? 43 : false);
+    Functions\when('url_to_postid')->alias(fn (string $url) => $url === 'https://perego.local/contact' ? 57 : 0);
+    // A post's own-language lookup returns itself; the AR lookup returns the translation.
+    Functions\when('pll_get_post')->alias(fn (int $id, string $l) => $l === 'en' ? $id : ([57 => 58, 43 => 96][$id] ?? 0));
+    Functions\when('get_permalink')->alias(fn (int $id) => [
+        57 => 'https://perego.local/contact/',
+        58 => 'https://perego.local/ar/contact-2/',
+        43 => 'https://perego.local/journal/',
+        96 => 'https://perego.local/ar/blog/',
+    ][$id] ?? false);
+}
+
+it('resolves the home path and its in-page anchors against the localized home', function () {
+    stubLocalizedUrlSite('ar');
+    $driver = new PolylangLanguageDriver();
+
+    expect($driver->localizedUrl('/'))->toBe('https://perego.local/ar/')
+        ->and($driver->localizedUrl('/#about'))->toBe('https://perego.local/ar/#about');
+});
+
+it('resolves a real page/CPT-single path to its translation permalink', function () {
+    stubLocalizedUrlSite('ar');
+
+    expect((new PolylangLanguageDriver())->localizedUrl('/contact'))->toBe('https://perego.local/ar/contact-2/');
+});
+
+it('resolves the blog index to the posts page translation, not a language-prefixed guess', function () {
+    stubLocalizedUrlSite('ar');
+
+    expect((new PolylangLanguageDriver())->localizedUrl('/journal'))->toBe('https://perego.local/ar/blog/');
+});
+
+it('resolves a CPT archive under the language directory prefix', function () {
+    stubLocalizedUrlSite('ar');
+
+    expect((new PolylangLanguageDriver())->localizedUrl('/work'))->toBe('https://perego.local/ar/work/');
+});
+
+it('leaves paths bare in the default language (no prefix, no broken translation)', function () {
+    stubLocalizedUrlSite('en');
+    $driver = new PolylangLanguageDriver();
+
+    expect($driver->localizedUrl('/work'))->toBe('https://perego.local/work')
+        ->and($driver->localizedUrl('/contact'))->toBe('https://perego.local/contact/');
+});
