@@ -40,6 +40,15 @@ interface LanguageDriver
     public function urlFor(string $locale): string;
 
     /**
+     * Resolve a stable internal site path ('/', '/#about', '/contact', '/work', '/journal',
+     * '/services/<slug>') to its absolute URL **in the current locale**. This is what nav links use so
+     * they stay within the active language (e.g. on `/ar/` the Work link points at the Arabic archive,
+     * not the English one). Any `#fragment` is preserved. Implementations must never return a broken
+     * link — degrade to the site path on failure.
+     */
+    public function localizedUrl(string $path): string;
+
+    /**
      * Whether the driver's own URLs fully carry the language (so switching is real navigation and
      * the client must NOT persist/override the language). True for Polylang (directory URLs like
      * /ar/…); false for the cookie/query fallback, which relies on client-side persistence.

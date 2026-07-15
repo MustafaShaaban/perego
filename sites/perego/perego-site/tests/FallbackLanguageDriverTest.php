@@ -6,7 +6,17 @@
 
 declare(strict_types=1);
 
+use Brain\Monkey\Functions;
 use PeregoSite\Language\FallbackLanguageDriver;
+
+it('resolves a nav path to the plain site URL (single URL set, language swapped client-side)', function () {
+    Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
+
+    $driver = new FallbackLanguageDriver(cookie: ['perego_lang' => 'ar']);
+
+    expect($driver->localizedUrl('/work'))->toBe('https://perego.local/work')
+        ->and($driver->localizedUrl('/'))->toBe('https://perego.local/');
+});
 
 it('defaults to English when no cookie is set', function () {
     $driver = new FallbackLanguageDriver(cookie: []);

@@ -661,3 +661,25 @@ not a per-page fidelity miss, and the language switcher + AR archives themselves
 item in `SiteHeaderRenderer`) is a focused i18n-routing task, and rushing a change to the header that
 renders on every page at the tail of a long session would risk a broad regression for a cosmetic-scope
 close-out. Documented as the recommended next task instead.
+
+## 2026-07-15 — Spec 019: AR nav routing via a driver method, not Polylang-in-the-renderer
+
+The header/footer nav built every link with `home_url($path)`, which is language-agnostic, so on `/ar/`
+pages the nav pointed at the English URLs. The fix had to localize hrefs **without** making Polylang a
+hard dependency of the renderers (constitution IX). So instead of sprinkling `pll_*` calls into
+`SiteHeaderRenderer`, a new `localizedUrl(string $path): string` was added to the `LanguageDriver`
+interface: the Polylang adapter owns all the plugin-specific resolution, the fallback adapter returns
+`home_url($path)` (single-URL, client-side swap), and the renderers depend only on the interface as before.
+
+**Two non-obvious Polylang behaviours drove the resolver's shape.** (1) `url_to_postid()` never
+reverse-resolves the **posts page** (blog index), so `/journal` fell through to a naive language-prefix
+guess `/ar/journal`, which Polylang 301-redirects *back to the English* journal — a broken nav link that
+looked fine until the resolved URL was actually followed. Fixed by matching the posts page via its
+**default-language** permalink: on a non-default request Polylang filters both `get_option('page_for_posts')`
+and `get_permalink()` to the current language, so the code normalises to the default post first
+(`pll_get_post(get_option('page_for_posts'), pll_default_language())`), compares against the
+default-language nav path, then translates → `/ar/المدونة/`. (2) CPT **archives** (`/work`) also don't
+reverse-resolve to a post, so they take the language directory prefix (`/ar/work/`) — which is the exact
+target Polylang's own canonical redirect points at. Everything degrades to the plain URL on any failure,
+so a missing translation is a same-language link, never a broken one. **Pattern:** an HTTP 200 on the nav
+href's *raw* form is not proof — the link has to be followed to catch a 301-to-the-wrong-language.

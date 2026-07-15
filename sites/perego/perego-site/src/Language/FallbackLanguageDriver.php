@@ -90,4 +90,13 @@ final class FallbackLanguageDriver implements LanguageDriver
     {
         return false;
     }
+
+    /**
+     * With no Polylang, the site serves a single set of URLs and swaps language client-side, so a nav
+     * target's URL is simply the site path — the same link in either locale.
+     */
+    public function localizedUrl(string $path): string
+    {
+        return (string) home_url($path);
+    }
 }
