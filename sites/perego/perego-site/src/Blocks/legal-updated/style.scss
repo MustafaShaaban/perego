@@ -1,0 +1,10 @@
+/**
+ * perego-theme/legal-updated — the "Last updated" line under the legal page H1. The `.legal-hero p`
+ * reference rule already sets the muted colour, size and top margin; this only guards the spacing when
+ * the block is rendered outside that exact selector context.
+ */
+.legal-hero .legal-updated {
+	margin-block-start: 14px;
+	color: var(--muted);
+	font-size: 15px;
+}

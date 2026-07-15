@@ -4,7 +4,7 @@
 
 ## RESUME HERE
 
-- **Date/time:** 2026-07-14 (~20:30 UTC)
+- **Date/time:** 2026-07-15 (~00:30 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
 - **Latest pushed commit:** `203af28` (spec 011 done docs). **Spec 011 DONE → PR #19**. Now on
   `feature/012-home-page-fidelity` (branched off 011); spec 012 audit committed, implementation pending.
@@ -55,10 +55,23 @@
   hardcoded EN placeholders (→ `GlobalContent` `namePlaceholder`/`portfolioPlaceholder`) and missing AR
   "Select a range"/"Say hello." gettext (added to `-ar.po`, recompiled `.mo`); re-verified live (no EN
   placeholders, budget default "اختر نطاقًا"). Pest 256/256 (796 assertions); guards pass. GAP-1/2 documented.
-- **➡ RESUME HERE → Spec 017** (supporting pages: terms/privacy/generic/404 fidelity + editability), then
-  **018** (final acceptance + cleanup: remove remaining duplicate CSS/dead code/obsolete seeds/orphan DB
-  data). Branch `feature/017-*` off `feature/016-contact-forms-email`. Read `specs/` for 017 if present, else
-  audit the handoff `site/` for the remaining pages and specify first.
+- **Active spec:** **017** (supporting pages: generic page, terms, privacy, 404) — branch
+  `feature/017-supporting-pages` (off 016). **DONE (T001–T007), PR pending push confirm.** Audit found
+  three of four page types already handoff-faithful + natively editable: **generic page** (`page.html`
+  breadcrumb/title/prose), **404** (`not-found` block, fully translated **EN + AR**), **legal**
+  (`legal-hero`+auto-`legal-toc`+`legal-body`, native post-content, per-language pages). **Closed the one
+  real gap**: the handoff legal-hero's `<p>Last updated: …</p>` was missing → new
+  `perego-theme/legal-updated` server block in the legal-hero, driven by editable `_perego_legal_updated`
+  page meta (blank → modified-date fallback), per-locale via `wp_date`; new **"Legal page" meta box**
+  (`PostMetaBoxes` `page:legal` pseudo-schema scoped to `legal`-template pages) for genuine editor control;
+  seeded 2026-07-01 on pages 38/39/40/41. Installed the **`ar` core language pack** so `wp_date` localizes
+  AR month names site-wide. Live: EN "Last updated: July 1, 2026", AR "آخر تحديث: يوليو 1, 2026". Block
+  built; Pest **262/262** (803 assertions); guards pass. Captures `output/playwright/017-terms-{en,ar}.png`.
+- **➡ RESUME HERE → Spec 018** (final visual acceptance + cleanup/release): full route × viewport × language
+  visual matrix; remove remaining duplicate CSS / dead code / obsolete seeders / orphan DB data (e.g. the
+  stray `sample-page` id 2 + draft `privacy-policy` id 3 default WP pages); confirm the `ar` core language
+  pack as a deploy step. Branch `feature/018-final-acceptance-release` off `feature/017-supporting-pages`.
+  Take a timestamped DB backup before any destructive cleanup; dry-run + orphan report first.
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
