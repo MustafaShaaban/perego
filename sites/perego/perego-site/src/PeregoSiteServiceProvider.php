@@ -245,6 +245,21 @@ final class PeregoSiteServiceProvider
                 },
             ]);
 
+            // spec 017: the legal-hero "Last updated: <date>" line, an editable projection of the page's
+            // curated `_perego_legal_updated` meta (falls back to the modified date), per the handoff.
+            (new \PeregoSite\Blocks\LegalUpdatedRenderer(
+                new GlobalContent($languageService->driver()->currentLocale())
+            ))->register();
+            register_block_type($this->blockDir('legal-updated'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+
+                    return (new \PeregoSite\Blocks\LegalUpdatedRenderer(
+                        new GlobalContent($languageService->driver()->currentLocale())
+                    ))->render($queried instanceof \WP_Post ? $queried : null);
+                },
+            ]);
+
             register_block_type($this->blockDir('journal-header'), [
                 'render_callback' => static function () use ($languageService): string {
                     return (new JournalHeaderRenderer(

@@ -608,3 +608,30 @@ English inside an otherwise-Arabic RTL form. Fixed by appending the two AR trans
 gettext string that "looks" translated because it is `__()`-wrapped is not translated unless the catalog
 actually carries its `msgstr` — and hardcoded UI literals bypass the catalog entirely. Both classes of bug
 are invisible until the AR viewport is rendered and inspected, not merely asserted in a hidden-DOM test.
+
+## 2026-07-15 — Spec 017: legal "Last updated" as an editable projection + `ar` language pack
+
+The handoff legal pages show `<p>Last updated: July 1, 2026</p>` under the H1, but the `legal.html`
+template never rendered it — and `LegalTocRenderer`'s docblock had promised a "Last updated line (from
+page meta)" that was left unimplemented. Rather than hardcode a date into the template (dead the moment
+the client revises a policy), it is now a **`perego-theme/legal-updated`** server-rendered block in the
+legal-hero backed by editable page meta `_perego_legal_updated`: an editor sets the curated review date
+in a new **"Legal page"** meta box, and when blank it falls back to the page's own `post_modified`. This
+keeps the visible line faithful *and* genuinely editable, matching the CPT-projection + per-field-seed
+pattern used across specs 012–014.
+
+**PostMetaBoxes `page:legal` pseudo-schema.** The metabox map is keyed by post type, but two different
+boxes now live on the `page` type (front-page hero + legal date) with different scoping. Instead of
+restructuring, a `page:legal` schema key maps to the real `page` type via a small `realType()` helper;
+`addBoxes` scopes it to `legal`-template pages (`get_page_template_slug === 'legal'`) and `save` processes
+every schema entry whose real type matches the post being saved. Clean, additive, no churn to the
+existing hero box.
+
+**`ar` core language pack is now a deploy requirement.** `wp_date` localizes month names from the
+installed core translations; the environment had **no** language packs installed, so every Arabic date on
+the site (not just this line) rendered English month names. Fixed at runtime with
+`wp language core install ar`. This is an additive, non-destructive environment change and must be
+reproduced on deploy (add to the provisioning/deploy checklist) so AR dates localize in production. The
+label itself ("آخر تحديث") comes from `GlobalContent`, so it was never affected. **Pattern echo:** as with
+the spec-016 gettext gaps, an Arabic-context defect stayed invisible until the AR page was actually
+rendered — the fourth full-matrix catch this run.

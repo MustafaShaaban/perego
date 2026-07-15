@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PeregoSite\Admin;
 
+use PeregoSite\Blocks\LegalUpdatedRenderer;
 use PeregoSite\Content\HeroContent;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
@@ -76,7 +77,24 @@ final class PostMetaBoxes
                     HeroContent::META_CTA => ['label' => __('CTA button label', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
                 ],
             ],
+            // spec 017 — the legal pages' curated "Last updated" date. Lives on the `page` type but the
+            // box is scoped to legal-template pages in addBoxes(); empty falls back to the modified date
+            // in LegalUpdatedRenderer.
+            'page:legal' => [
+                'title' => __('Legal page', 'perego-site'),
+                'fields' => [
+                    LegalUpdatedRenderer::META_UPDATED => ['label' => __('Last updated (e.g. 2026-07-01) — blank uses the modified date', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                ],
+            ],
         ];
+    }
+
+    /** The real WordPress post type for a schema key (`page:legal` → `page`). */
+    private function realType(string $schemaKey): string
+    {
+        $colon = strpos($schemaKey, ':');
+
+        return $colon === false ? $schemaKey : substr($schemaKey, 0, $colon);
     }
 
     public function register(): void
@@ -97,14 +115,18 @@ final class PostMetaBoxes
             if ($type === 'page' && ! $this->isFrontPage($post)) {
                 continue;
             }
+            // The legal box also lives on `page` but only on legal-template pages.
+            if ($type === 'page:legal' && ! $this->isLegalPage($post)) {
+                continue;
+            }
 
             add_meta_box(
-                'perego-meta-' . $type,
+                'perego-meta-' . sanitize_key($type),
                 $box['title'],
                 function ($boxPost) use ($type): void {
                     $this->renderBox($type, (int) $boxPost->ID);
                 },
-                $type,
+                $this->realType($type),
                 'normal',
                 'default'
             );
@@ -132,6 +154,16 @@ final class PostMetaBoxes
         }
 
         return in_array((int) $post->ID, $ids, true);
+    }
+
+    /** Is the given post a legal page (the `legal` page template)? The "Last updated" meta only applies there. */
+    private function isLegalPage($post): bool
+    {
+        if (! is_object($post) || ! isset($post->ID)) {
+            return false;
+        }
+
+        return get_page_template_slug((int) $post->ID) === 'legal';
     }
 
     private function renderBox(string $postType, int $postId): void
@@ -165,8 +197,14 @@ final class PostMetaBoxes
         $postId = (int) $postId;
         $postType = is_object($post) ? (string) $post->post_type : (string) get_post_type($postId);
 
-        $schema = $this->schema();
-        if (! isset($schema[$postType])) {
+        // Every schema entry whose real post type matches this save (e.g. both `page` and `page:legal`
+        // apply to a `page`).
+        $boxes = array_filter(
+            $this->schema(),
+            fn (string $type): bool => $this->realType($type) === $postType,
+            ARRAY_FILTER_USE_KEY
+        );
+        if ($boxes === []) {
             return;
         }
 
@@ -185,16 +223,18 @@ final class PostMetaBoxes
             return;
         }
 
-        foreach ($schema[$postType]['fields'] as $key => $field) {
-            if (! array_key_exists($key, $_POST)) {
-                continue;
-            }
-            $raw = wp_unslash((string) $_POST[$key]);
-            $clean = call_user_func($field['sanitize'], $raw);
-            if ($clean === '') {
-                delete_post_meta($postId, $key);
-            } else {
-                update_post_meta($postId, $key, $clean);
+        foreach ($boxes as $box) {
+            foreach ($box['fields'] as $key => $field) {
+                if (! array_key_exists($key, $_POST)) {
+                    continue;
+                }
+                $raw = wp_unslash((string) $_POST[$key]);
+                $clean = call_user_func($field['sanitize'], $raw);
+                if ($clean === '') {
+                    delete_post_meta($postId, $key);
+                } else {
+                    update_post_meta($postId, $key, $clean);
+                }
             }
         }
     }

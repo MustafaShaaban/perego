@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 use Brain\Monkey\Functions;
 use PeregoSite\Admin\PostMetaBoxes;
+use PeregoSite\Blocks\LegalUpdatedRenderer;
 use PeregoSite\Content\HeroContent;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
@@ -59,7 +60,7 @@ function pmbSave(string $type, array $post_data): array
     return ['updated' => $updated, 'deleted' => $deleted];
 }
 
-it('covers the three collection CPTs plus the front-page hero, with scalar fields', function () {
+it('covers the three collection CPTs, the front-page hero, and the legal page, with scalar fields', function () {
     $schema = (new PostMetaBoxes())->schema();
 
     expect(array_keys($schema))->toBe([
@@ -67,10 +68,24 @@ it('covers the three collection CPTs plus the front-page hero, with scalar field
         ServicePostType::POST_TYPE,
         ClientPostType::POST_TYPE,
         'page',
+        'page:legal',
     ]);
     expect(array_keys($schema[ProjectPostType::POST_TYPE]['fields']))->toContain(ProjectPostType::META_CLIENT)
         ->and(array_keys($schema[ClientPostType::POST_TYPE]['fields']))->toContain(ClientPostType::META_VIDEO_URL)
-        ->and(array_keys($schema['page']['fields']))->toContain(HeroContent::META_CTA);
+        ->and(array_keys($schema['page']['fields']))->toContain(HeroContent::META_CTA)
+        ->and(array_keys($schema['page:legal']['fields']))->toContain(LegalUpdatedRenderer::META_UPDATED);
+});
+
+it('saves the legal "Last updated" meta on a page (page:legal shares the page type)', function () {
+    Functions\when('wp_verify_nonce')->justReturn(true);
+    Functions\when('current_user_can')->justReturn(true);
+
+    $result = pmbSave('page', [
+        'perego_meta_nonce' => 'n',
+        LegalUpdatedRenderer::META_UPDATED => '2026-07-01',
+    ]);
+
+    expect($result['updated'])->toBe([LegalUpdatedRenderer::META_UPDATED => '2026-07-01']);
 });
 
 it('ignores post types it does not manage', function () {

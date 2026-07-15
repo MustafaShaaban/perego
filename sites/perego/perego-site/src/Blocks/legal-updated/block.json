@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/legal-updated",
+	"title": "Perego Legal Updated Date",
+	"category": "theme",
+	"icon": "calendar-alt",
+	"description": "The legal page's \"Last updated: <date>\" line. Reads the curated page meta, else the modified date. Language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}
