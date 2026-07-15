@@ -29,11 +29,19 @@
   Projects. Fixed a latent bug: the archive tab CTA passed `?service=<name>` (contact chooser needs the slug)
   → now `?service=<slug>`. whatwedo/process editable via `post-content`. Proven via a live title edit
   round-trip; Pest 251/251; guards pass. Evidence `output/playwright/013-service-single-hero.png`.
-- **Next spec:** **014** (Work archive + project single) — branch `feature/014-work-project-pages` off 013.
-  Then 015–018 in order. Reuse the projection + seed-fallback + live-edit-proof pattern; the Project CPT
-  already backs the work grid + selected work, so 014 is likely fidelity + editability verification of the
-  project single (hero/meta/gallery) similar to 013.
-- **Then 015–018 in order.**
+- **Active spec:** **014** (Work archive + project single) — **DONE (T001–T006), PR pending push confirm.**
+  The project pages were already an editable CPT projection (H1 ← post title, client/year/role/deliverables ←
+  spec-010 meta boxes, body ← post-content, work grid + prev/next/related ← Project CPT). Spec 014 added the
+  one deferred gap — the **project gallery wp.media picker** (`Admin\ProjectGalleryMetaBox`: native modal,
+  thumbnail strip, nonce/cap-guarded save → clean int list; 5/5 save tests + server-side render verified) —
+  and verified work-archive + project-single fidelity EN/AR (captures in `output/playwright/014-*`). Pest
+  256/256; guards pass.
+- **Next spec:** **015** (Journal, single article, search) — branch `feature/015-journal-search-pages` off
+  014. Native Journal posts (WP core posts) + search. Likely fidelity + editability verification (native post
+  editing) similar in spirit; check the journal archive, single article, and search results vs the handoff
+  (`archive.html`/`journal.html`/`search`), EN/AR.
+- **Then 016–018 in order** (contact/forms/email, supporting pages/legal/404, final acceptance + cleanup:
+  remove any remaining duplicate CSS/dead code/obsolete seeds/orphan DB data).
 - **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
   /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
