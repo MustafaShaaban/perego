@@ -6,8 +6,25 @@
 
 - **Date/time:** 2026-07-14 (~14:30 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
-- **Latest pushed commit:** `8036f7b` (spec 011 T010 docs). **Spec 011 DONE → PR #19** (base = spec 010 branch).
-- **Next spec:** **012** (homepage fidelity + editability) — start here. Continue specs 012–018 in order.
+- **Latest pushed commit:** `203af28` (spec 011 done docs). **Spec 011 DONE → PR #19**. Now on
+  `feature/012-home-page-fidelity` (branched off 011); spec 012 audit committed, implementation pending.
+- **Active spec:** **012** (homepage fidelity + editability) — **DONE (T001–T008), PR pending push confirm.**
+  The homepage was visually complete; spec 012 closed the **editability** gap. About + Clients already edited
+  (post-content / Client CPT). Now **hero + services teaser are genuinely editable too**, with zero visual
+  regression (EN + AR):
+  - **Services teaser ← Service CPT:** teaser meta (`_perego_teaser_label`/`_image_id`/`_alt`) on
+    `perego_service`, overlaid per field on the `HomeContent` seed; editor UI in `PostMetaBoxes`; seeder
+    `scripts/seed-service-teaser-meta.php`.
+  - **Hero ← front-page page meta:** `Content\HeroContent` registers 3 slide title/text pairs + CTA on the
+    `page` type; `HeroSliderRenderer` reads the queried front page (EN 42 / AR 97) with per-field seed
+    fallback; front-page-scoped hero meta box; seeder `scripts/seed-hero-content.php`.
+  - **Proven** via live edit round-trips (teaser label + hero title changed the homepage, then restored) and a
+    pixel-identical full-page capture (`output/playwright/012-en-homepage-noregression.png`). Pest 249/249.
+    Both seeders idempotent; DB backup `db-backup-20260714-220905.sql` (gitignored). Guards pass.
+- **Next spec:** **013** (Services archive + four service singles) — branch `feature/013-services-pages-completion`
+  off 012. Then 014–018 in order.
+- **Continue after 012:** specs 013–018 in order (services pages, work/project, journal/search, contact/forms
+  /email, supporting pages, final acceptance).
 - **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
   handoff (About→`/#about`, Services→`/#services`, short dropdown labels, anchor `isActive` fix); T003 sticky
   state byte-identical to handoff; T004 mobile menu (spec-008 verified); T005 lang switcher verified live

@@ -554,6 +554,10 @@ final class PeregoSiteServiceProvider
     private function registerHomeBlocks(): void
     {
         add_action('init', function (): void {
+            // spec 012 T004: the hero is an editable projection of the front page — register its
+            // slide/CTA meta so each language's Home page can override the HomeContent seed.
+            (new \PeregoSite\Content\HeroContent())->register();
+
             $heroRenderer = new HeroSliderRenderer($this->languageService);
             register_block_type($this->blockDir('hero-slider'), [
                 'render_callback' => static fn (): string => $heroRenderer->render(),

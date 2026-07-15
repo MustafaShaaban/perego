@@ -1,5 +1,40 @@
 # Perego — Decision Log
 
+## 2026-07-14 — Homepage editable seam: teaser ← Service CPT meta; hero ← block attributes (spec 012 T002)
+
+**Context**: Spec 012 T001 audit found the homepage renders to the handoff visually, but hero slides/CTA and
+the services-teaser (title, "See All", four cards) are hardcoded in `HomeContent::COPY` (EN+AR) — not
+WordPress-editable. About (`post-content`) and Clients (Client-CPT `WP_Query`) already edit. The teaser card
+presentation — short **two-line** label ("Video<br>Editing"), a teaser card image (`card-*.png`), and a
+teaser alt — is semantically distinct from the Service post's title ("Video Editing & Post-Production") and
+featured image, so a naive "use post title/thumbnail" rebind would be a visual regression (violates FR-4).
+
+**Decision**:
+- **Services teaser (T003) ← `perego_service` CPT, keyed by slug.** Register teaser-presentation post meta on
+  `perego_service`: `_perego_teaser_label` (short card label, may hold the two-line form),
+  `_perego_teaser_image_id` (attachment id for the card image), `_perego_teaser_alt` (card alt). Seed them
+  idempotently from `HomeContent` + the handoff `card-*.png` assets. `ServicesTeaserRenderer` queries the four
+  published Services for the current Polylang locale in fixed order, reads the teaser meta, and falls back to
+  the `HomeContent` seed **per field** when a post or its meta is absent — output stays byte-identical and
+  non-fatal. Extend spec 010's `PostMetaBoxes` with the teaser fields (registered editor controls). Teaser
+  heading + "See All" stay as the `HomeContent` seed default, exposed as editable in a later pass (lower
+  priority than the cards).
+- **Hero (T004) ← block attributes on the hero-slider block.** The hero is homepage-level (not a CPT), so the
+  FSE-native seam is the block's own attributes (slides: title/text; plus CTA), seeded from `HomeContent`,
+  edited in the block editor. Requires a `wp-scripts` build. Sequenced after T003.
+- **`HomeContent::COPY` becomes the seed/default only**, never the sole live source — mirrors the spec 009
+  block-first, seeded-then-editable pattern. No `perego_section` CPT revival, no private CoreX duplicate; a
+  missing CoreX capability is logged in `docs/corex-framework-gaps.md`, not forked.
+
+**Why**: Matches the program's "CPTs only for Services/Projects/Clients + registered editor controls for
+structured metadata" and "global content through FSE blocks/template parts" while guaranteeing zero visual
+regression via per-field seed fallback. Keeps the teaser a projection of the Service CPT (edit a Service →
+teaser updates), the architecturally consistent choice next to the already-CPT-driven Clients carousel.
+
+**Status**: adopted (T002). Implementation (T003 meta+renderer+seeder+PostMetaBoxes+Pest) pending — gated on
+verification (Pest + wp-cli seed + EN/AR visual diff) since it must not ship unverified.
+
+
 ## 2026-07-14 — CoreX admin bundle build gap (framework/deployment, not a Perego defect)
 
 **Decision**: The reported "CoreX dashboard does not expose Forms/Submissions/Data Models" is caused by the

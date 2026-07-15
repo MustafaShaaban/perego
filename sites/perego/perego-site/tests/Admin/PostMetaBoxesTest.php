@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 use Brain\Monkey\Functions;
 use PeregoSite\Admin\PostMetaBoxes;
+use PeregoSite\Content\HeroContent;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
@@ -58,23 +59,25 @@ function pmbSave(string $type, array $post_data): array
     return ['updated' => $updated, 'deleted' => $deleted];
 }
 
-it('covers exactly the three collection CPTs with scalar fields', function () {
+it('covers the three collection CPTs plus the front-page hero, with scalar fields', function () {
     $schema = (new PostMetaBoxes())->schema();
 
     expect(array_keys($schema))->toBe([
         ProjectPostType::POST_TYPE,
         ServicePostType::POST_TYPE,
         ClientPostType::POST_TYPE,
+        'page',
     ]);
     expect(array_keys($schema[ProjectPostType::POST_TYPE]['fields']))->toContain(ProjectPostType::META_CLIENT)
-        ->and(array_keys($schema[ClientPostType::POST_TYPE]['fields']))->toContain(ClientPostType::META_VIDEO_URL);
+        ->and(array_keys($schema[ClientPostType::POST_TYPE]['fields']))->toContain(ClientPostType::META_VIDEO_URL)
+        ->and(array_keys($schema['page']['fields']))->toContain(HeroContent::META_CTA);
 });
 
 it('ignores post types it does not manage', function () {
     Functions\when('wp_verify_nonce')->justReturn(true);
     Functions\when('current_user_can')->justReturn(true);
 
-    $result = pmbSave('page', ['perego_meta_nonce' => 'n', ProjectPostType::META_CLIENT => 'Acme']);
+    $result = pmbSave('post', ['perego_meta_nonce' => 'n', ProjectPostType::META_CLIENT => 'Acme']);
 
     expect($result['updated'])->toBe([])->and($result['deleted'])->toBe([]);
 });

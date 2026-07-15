@@ -34,6 +34,14 @@ final class ServicePostType
 
     public const META_SERVICE_SLUG = '_perego_service_slug';
 
+    // Homepage services-teaser card presentation (spec 012 T003). These are teaser-specific — the short
+    // card label and card image differ from the post title / featured image — so the teaser is an editable
+    // projection of the Service. Unset meta makes the renderer fall back to the HomeContent seed (no
+    // visual change), so registering them is safe before any seeding.
+    public const META_TEASER_LABEL = '_perego_teaser_label';
+    public const META_TEASER_IMAGE_ID = '_perego_teaser_image_id';
+    public const META_TEASER_ALT = '_perego_teaser_alt';
+
     public function register(): void
     {
         register_post_type(self::POST_TYPE, $this->postTypeArgs());
@@ -59,6 +67,30 @@ final class ServicePostType
                 'default' => '',
                 'show_in_rest' => true,
                 'sanitize_callback' => 'sanitize_key',
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+            self::META_TEASER_LABEL => [
+                'type' => 'string',
+                'single' => true,
+                'default' => '',
+                'show_in_rest' => true,
+                'sanitize_callback' => 'sanitize_text_field',
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+            self::META_TEASER_IMAGE_ID => [
+                'type' => 'integer',
+                'single' => true,
+                'default' => 0,
+                'show_in_rest' => true,
+                'sanitize_callback' => 'absint',
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+            self::META_TEASER_ALT => [
+                'type' => 'string',
+                'single' => true,
+                'default' => '',
+                'show_in_rest' => true,
+                'sanitize_callback' => 'sanitize_text_field',
                 'auth_callback' => [self::class, 'authEdit'],
             ],
         ];
