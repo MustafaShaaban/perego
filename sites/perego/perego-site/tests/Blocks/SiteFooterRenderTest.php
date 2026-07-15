@@ -52,9 +52,13 @@ it('renders the bottom bar with the current year and legal links', function () {
         ->and($html)->toContain('/privacy');
 });
 
-it('renders the flat 2-column variant on the contact page', function () {
+it('renders the flat 2-column variant on the contact page: contact + careers, no quick-message', function () {
+    // The handoff's contact.html keeps the contact and "Join us"/careers columns and drops the
+    // quick-message form (the contact page already carries its own message form).
     $html = renderFooter(flat: true);
 
     expect($html)->toContain('site-footer--flat')
-        ->and($html)->not->toContain('footer-col footer-careers');
+        ->and($html)->toContain('footer-col footer-contact')
+        ->and($html)->toContain('footer-col footer-careers')
+        ->and($html)->not->toContain('footer-col footer-quick-message');
 });

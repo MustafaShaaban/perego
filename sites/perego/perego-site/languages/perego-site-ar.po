@@ -23,6 +23,16 @@ msgstr "من نحن"
 msgid "Services"
 msgstr "خدماتنا"
 
+# Services dropdown — short nav labels (the long forms below are the service pages' full titles)
+msgid "Video Editing"
+msgstr "مونتاج الفيديو"
+
+msgid "2D Motion Graphics"
+msgstr "موشن جرافيك ثنائي الأبعاد"
+
+msgid "Graphic Design"
+msgstr "التصميم الجرافيكي"
+
 msgid "Video Editing & Post-Production"
 msgstr "مونتاج الفيديو وما بعد الإنتاج"
 

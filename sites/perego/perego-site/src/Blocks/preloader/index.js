@@ -5,7 +5,6 @@
 import { registerBlockType } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
 import metadata from './block.json';
-import './style.scss';
 
 registerBlockType( metadata.name, {
 	edit: () => __( 'Preloader — shown on first homepage visit per session. Rendered by PreloaderRenderer.', 'perego-site' ),

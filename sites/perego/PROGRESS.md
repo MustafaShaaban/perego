@@ -5,9 +5,24 @@
 ## RESUME HERE
 
 - **Date/time:** 2026-07-14 (~14:30 UTC)
-- **Branch:** `feature/010-corex-runtime-content-models` (off 009 off `feature/008-visual-fidelity-recovery`). `009` DONE → **PR #17** (base 008).
-- **Latest pushed commit:** `42942dc` (spec 010 editor meta boxes)
-- **Active spec:** `010` — largely complete.
+- **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).
+- **Latest pushed commit:** `8036f7b` (spec 011 T010 docs). **Spec 011 DONE → PR #19** (base = spec 010 branch).
+- **Next spec:** **012** (homepage fidelity + editability) — start here. Continue specs 012–018 in order.
+- **Active spec:** `011` (global shell + preloader) — **T001–T011 DONE (PR #19).** T002 header/nav/dropdown matched to
+  handoff (About→`/#about`, Services→`/#services`, short dropdown labels, anchor `isActive` fix); T003 sticky
+  state byte-identical to handoff; T004 mobile menu (spec-008 verified); T005 lang switcher verified live
+  (AR RTL, Arabic labels, real switch URL); T006 standard footer confirmed; **T007 contact flat footer bug
+  fixed** (was keeping quick-message + dropping careers — inverted; now contact+careers, no quick-message);
+  T008 hard-coded `/about` removed; T009 FSE `templateParts` declared (header/footer editable in Site
+  Editor); **i18n regression fixed** (short dropdown source strings orphaned AR — re-added msgids, recompiled
+  `.mo`, verified AR dropdown Arabic again); T010 EN/AR visual acceptance captured (4 Playwright shots in
+  gitignored `output/playwright/`: EN header, EN 3-col footer, AR RTL header, contact 2-col flat footer).
+  **Next: T011** = open spec 011 PR (base = spec 010 branch). **009 + 010 DONE (PRs #17/#18).**
+- **Documented follow-up (not blocking):** primary-nav hrefs use `home_url()`, so on AR pages every nav link
+  points at the EN base — systemic Polylang nav-localization gap (needs `pll_home_url()` + translated
+  permalinks for all items); out of shell-fidelity scope, best as a focused i18n-routing task. The language
+  *switcher* itself works. Logged in spec 011 tasks T010.
+- **[historical] spec 010 summary:** largely complete.
   - **Done:** T001–T004 (audit; ACF not a dep; forms inventory), T006 (submissions pipeline works — id 150), **T009** (register_post_meta for Project/Service/Client + `PostMetaBoxes` editor UI with guarded save; Pest 243/243).
   - **Fixed release-blocker:** CoreX admin React bundle `corex-config/build/admin/index.js` was 404 (unbuilt) → built locally (gitignored). **Deploy must build CoreX admin assets** (GAP-2).
   - **Blocked:** T007/T008 — framework **GAP-1** (no public CPT-backed DataModels seam). See `docs/corex-framework-gaps.md`.
