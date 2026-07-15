@@ -1,0 +1,1189 @@
+/**
+ * Perego theme styles. Consume Corex/theme.json design tokens exclusively:
+ * `--wp--preset--*` (color/typography/spacing from theme.json settings) and
+ * `--wp--custom--perego--*` (the values from theme.json settings.custom.perego, sourced from
+ * design-tokens.json). Never hardcode a colour, size, duration, or font — if a token is missing
+ * add it to theme.json first (single source of truth), not here.
+ *
+ * The `--perego-*` block below just aliases the `--wp--custom--perego--*` tokens under the
+ * client's own CSS prefix (spec 049 `--perego-`) for readability in component CSS; it does not
+ * duplicate values.
+ *
+ * Logical properties only (RTL-correct — corex's Polylang wiring switches `dir` on <html>, never
+ * a separate stylesheet).
+ */
+
+:root {
+	/* Gradients + glass (theme.json settings.custom.perego.* aliased under --perego-) */
+	--perego-gradient-bg: var(--wp--custom--perego--gradient--bg);
+	--perego-gradient-violet-band: var(--wp--custom--perego--gradient--violet-band);
+	--perego-gradient-banner: var(--wp--custom--perego--gradient--banner);
+	--perego-gradient-card-media: var(--wp--custom--perego--gradient--card-media);
+	--perego-gradient-card-overlay: var(--wp--custom--perego--gradient--card-overlay);
+	--perego-glass-fill: var(--wp--custom--perego--color--glass-fill);
+	--perego-glass-panel-fill: var(--wp--custom--perego--color--glass-panel-fill);
+	--perego-glass-border: var(--wp--custom--perego--color--glass-border);
+	--perego-glass-blur: var(--wp--custom--perego--glass-blur);
+	--perego-muted: var(--wp--custom--perego--color--muted);
+	--perego-muted-2: var(--wp--custom--perego--color--muted-2);
+
+	/* Radius / shadow */
+	--perego-radius-card: var(--wp--custom--perego--radius--card);
+	--perego-radius-btn: var(--wp--custom--perego--radius--btn);
+	--perego-radius-pill: var(--wp--custom--perego--radius--pill);
+	--perego-shadow-card: var(--wp--custom--perego--shadow--card);
+	--perego-shadow-service-card: var(--wp--custom--perego--shadow--service-card);
+	--perego-shadow-featured: var(--wp--custom--perego--shadow--featured);
+	--perego-shadow-glow-accent: var(--wp--custom--perego--shadow--glow-accent);
+	--perego-shadow-glass-panel-inset: var(--wp--custom--perego--shadow--glass-panel-inset);
+
+	/* Motion */
+	--perego-ease: var(--wp--custom--perego--motion--ease);
+	--perego-dur-fast: var(--wp--custom--perego--motion--dur-fast);
+	--perego-dur-medium: var(--wp--custom--perego--motion--dur-medium);
+	--perego-hero-slide-delay: var(--wp--custom--perego--motion--hero-slide-delay);
+
+	/* Breakpoints (used by JS via getComputedStyle; CSS itself uses literal px in @media) */
+	--perego-bp-nav: var(--wp--custom--perego--breakpoint--nav);
+	--perego-bp-mobile-nav: var(--wp--custom--perego--breakpoint--mobile-nav);
+
+	/* Z-index scale */
+	--perego-z-header: var(--wp--custom--perego--z--header);
+	--perego-z-nav-panel: var(--wp--custom--perego--z--nav-panel);
+	--perego-z-nav-backdrop: var(--wp--custom--perego--z--nav-backdrop);
+	--perego-z-skip-link: var(--wp--custom--perego--z--skip-link);
+	--perego-z-lightbox: var(--wp--custom--perego--z--lightbox);
+	--perego-z-preloader: var(--wp--custom--perego--z--preloader);
+
+	/* Heading font-size presets — resilient re-declaration. WordPress 7.0.1 in this install drops
+	   the h1/h2/h3 font-size presets from `wp_get_global_stylesheet()`'s emitted CSS variables,
+	   verified deterministic (present in theme.json + get_merged_data settings, absent from the
+	   emitted stylesheet; survives clean_cached_data/transient purge; no data_theme filter touches
+	   them — brand.json is absent so corex's filter no-ops). Without this, every heading using these
+	   presets falls back to 16px. Values mirror theme.json settings.typography.fontSizes exactly, so
+	   this stays consistent with the single source of truth and is harmless if a future core/build
+	   fix emits the presets. See specs/004-design-fidelity/evidence/legal.md. */
+	--wp--preset--font-size--h1: clamp(34px, 4vw, 56px);
+	--wp--preset--font-size--h2: clamp(28px, 3vw, 40px);
+	--wp--preset--font-size--h3: clamp(20px, 1.8vw, 26px);
+}
+
+/* Arabic pages swap the font stack (Interactivity API sets lang/dir on <html>; this just follows it) */
+:root:lang(ar) {
+	--wp--preset--font-family--latin: var(--wp--preset--font-family--arabic);
+}
+
+/* Global box-sizing reset: our layout containers set both max-inline-size (= the contentSize
+   token) and padding-inline (= the gutter token); without border-box those add up and overflow the
+   viewport (a ~144px white strip at desktop). WP core sets border-box on blocks but not on plain
+   theme markup, so make it universal. */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	background: var(--perego-gradient-bg);
+	background-attachment: fixed;
+}
+
+body {
+	min-block-size: 100vh;
+	// The gradient lives on both html and body: html alone with background-attachment:fixed can
+	// leave thin unpainted bands between full-bleed sections (root block-gap), which then flash
+	// the white canvas. body carries it too so any inter-section gap reads as the brand gradient.
+	background: var(--perego-gradient-bg);
+	background-attachment: fixed;
+}
+
+/* Reduced motion: decorative loops/parallax/auto-rotation are opt-out globally, matching
+   design-tokens.json `motion.reducedMotion`. Interactive blocks (hero slider, preloader) check
+   this again in JS before starting a timer, since this alone can't stop JS-driven intervals. */
+@media (prefers-reduced-motion: reduce) {
+	*, *::before, *::after {
+		animation-duration: 0.001ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.001ms !important;
+		scroll-behavior: auto !important;
+	}
+}
+
+.perego-theme-app {
+	color: var(--wp--preset--color--text, inherit);
+	font-family: var(--wp--preset--font-family--latin, inherit);
+}
+
+/* Skip link — first focusable element on every page (ACCESSIBILITY_HANDOFF.md) */
+.perego-skip-link {
+	position: absolute;
+	inset-inline-start: 1rem;
+	inset-block-start: -3rem;
+	z-index: var(--perego-z-skip-link);
+	padding: 0.75rem 1.25rem;
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+	border-radius: var(--perego-radius-btn);
+	font-weight: 700;
+	text-decoration: none;
+	transition: inset-block-start var(--perego-dur-fast) var(--perego-ease);
+}
+
+.perego-skip-link:focus {
+	inset-block-start: 1rem;
+}
+
+/* ============================================================
+   Shared primitives (used across pages per COMPONENTS.md)
+   ============================================================ */
+
+/* Button (handoff `.btn` / `.btn--accent`). */
+.perego-btn,
+.corex-form__submit {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	border: 0;
+	border-radius: var(--perego-radius-btn);
+	padding: 16px 34px;
+	color: var(--wp--preset--color--text);
+	text-transform: uppercase;
+	text-decoration: none;
+	cursor: pointer;
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease),
+		background var(--perego-dur-fast) var(--perego-ease);
+}
+
+.perego-btn--accent,
+.corex-form__submit {
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+
+	&:hover,
+	&:focus-visible {
+		transform: translateY(-2px);
+		box-shadow: var(--perego-shadow-glow-accent);
+	}
+}
+
+.perego-btn--dark {
+	background: var(--wp--preset--color--bg-deep);
+	color: var(--wp--preset--color--text);
+
+	&:hover,
+	&:focus-visible {
+		transform: translateY(-2px);
+		box-shadow: 0 0 22px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--wp--preset--color--accent);
+	}
+}
+
+/* Universal page breadcrumb (handoff `.page-crumb`) — used site-wide wherever a route needs a
+   "Home / Section" trail, not owned by any one block. */
+.page-crumb {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2);
+
+	a {
+		color: var(--perego-muted);
+		text-decoration: none;
+
+		&:hover {
+			color: var(--wp--preset--color--accent-soft);
+		}
+	}
+
+	/* Only the "/" separator dims — the current-page label (aria-current) needs full contrast. */
+	span[aria-hidden] {
+		opacity: 0.5;
+	}
+
+	span[aria-current="page"] {
+		color: var(--wp--preset--color--text);
+	}
+}
+
+/* Universal card grid + card (handoff `.blog-grid`/`.post-card`) — shared by the portfolio-grid
+   block (its own stylesheet also adds .post-cards.portfolio-grid's specific column count) and the
+   journal archive's native WP query-loop blocks, which don't load any custom block's stylesheet. */
+.blog-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: clamp(20px, 2.4vw, 30px);
+}
+
+.post-card {
+	display: flex;
+	flex-direction: column;
+	border-radius: 16px;
+	overflow: hidden;
+	background: var(--wp--preset--color--card-surface-1);
+	border: 1px solid var(--perego-glass-border);
+	text-decoration: none;
+	color: var(--wp--preset--color--text);
+	transition: transform var(--perego-dur-medium) var(--perego-ease),
+		box-shadow var(--perego-dur-medium) var(--perego-ease),
+		border-color var(--perego-dur-fast) var(--perego-ease);
+
+	&:hover {
+		transform: translateY(-6px);
+		box-shadow: var(--perego-shadow-featured);
+		border-color: var(--wp--preset--color--accent);
+	}
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.post-card__media {
+	aspect-ratio: 16 / 10;
+	overflow: hidden;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		transition: transform var(--perego-dur-medium) var(--perego-ease);
+	}
+}
+
+.post-card:hover .post-card__media img {
+	transform: scale(1.06);
+}
+
+.post-card__body {
+	padding: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	flex: 1;
+}
+
+.post-card__cat {
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: var(--wp--preset--color--accent-soft);
+}
+
+.post-card__title {
+	font-size: var(--wp--preset--font-size--h3);
+	font-weight: 700;
+	line-height: 1.25;
+	margin: 0;
+}
+
+.post-card__excerpt {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted);
+	line-height: 1.6;
+	margin: 0;
+}
+
+.post-card__meta {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2);
+}
+
+@media (max-width: 900px) {
+	.blog-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (max-width: 560px) {
+	.blog-grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+/* Single journal post (single.html) — the native WP query/post blocks used theme-default class
+   names (post-single*) with no CSS anywhere, same gap as the journal archive before this pass. */
+.post-single {
+	max-inline-size: 820px;
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--wp--preset--color--bg-deep);
+	text-align: center;
+}
+
+.post-single__cat {
+	display: inline-block;
+	white-space: nowrap;
+	padding: 6px 16px;
+	border-radius: var(--perego-radius-pill);
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	color: var(--wp--preset--color--accent-soft);
+	font-size: 12.5px;
+	font-weight: 700;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.post-single__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.08;
+	margin: 20px 0 0;
+}
+
+.post-single__meta {
+	justify-content: center;
+	gap: 10px 22px;
+	margin-block-start: 22px;
+	color: var(--perego-muted);
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.post-single .wp-block-post-featured-image {
+	max-inline-size: 1000px;
+	margin: clamp(24px, 4vw, 42px) auto 0;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	box-shadow: var(--perego-shadow-featured);
+}
+
+.post-single .entry-content,
+.post-single > .wp-block-post-terms {
+	text-align: start;
+	margin-block-start: clamp(28px, 4vw, 44px);
+}
+
+/* Post tags — the handoff renders each tag as a pill (`.post-tag`). The native wp:post-terms block
+   for post_tag emits the "Tags: " prefix + anchors inside `.post-single__tags`. */
+.post-single__tags a {
+	display: inline-block;
+	margin-inline-end: 8px;
+	margin-block-start: 8px;
+	padding: 7px 15px;
+	border-radius: var(--perego-radius-pill);
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted);
+	text-decoration: none;
+}
+
+.post-single__tags a:hover {
+	border-color: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--text);
+}
+
+/* ===================================================================
+ * CoreX Forms engine (spec 004 T016) — the shared .corex-form__* markup for BOTH the contact
+ * "Start a Project" brief and the footer "Send a quick message" form. The framework ships these
+ * styles only as a Gutenberg-block stylesheet (loads with the editor block, not the server-rendered
+ * forms) and against framework tokens (--ink/--surface/--primary) the Perego dark theme does not
+ * define — so on the client both forms rendered as raw, unstyled browser controls. These rules port
+ * the handoff form treatment (`.field`/`.field-row` underlined inputs) onto Perego tokens, logical
+ * properties, RTL-safe. The 12-column grid mirrors the framework block's own grid so the schema's
+ * per-field `width` (half/third/…) lays out identically to the block context.
+ * =================================================================== */
+.corex-form {
+	display: grid;
+	grid-template-columns: repeat(12, 1fr);
+	gap: 22px 24px;
+	text-align: start;
+}
+
+.corex-form__field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	grid-column: span 12;
+}
+
+.corex-form__field--half {
+	grid-column: span 6;
+}
+
+.corex-form__field--third {
+	grid-column: span 4;
+}
+
+.corex-form__field--two-thirds {
+	grid-column: span 8;
+}
+
+.corex-form__field--quarter {
+	grid-column: span 3;
+}
+
+@media (max-width: 600px) {
+	.corex-form__field {
+		grid-column: span 12;
+	}
+}
+
+.corex-form__label {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--wp--preset--color--text);
+}
+
+.corex-form__required {
+	color: var(--wp--preset--color--accent);
+}
+
+.corex-form__input {
+	inline-size: 100%;
+	padding: 10px 4px;
+	color: var(--wp--preset--color--text);
+	background: transparent;
+	border: 0;
+	border-block-end: 1.5px solid var(--perego-glass-border);
+	border-radius: 0;
+	font: inherit;
+	font-size: 15px;
+}
+
+.corex-form__input::placeholder {
+	color: var(--perego-muted-2);
+}
+
+.corex-form__input:focus-visible {
+	outline: none;
+	border-block-end-color: var(--wp--preset--color--accent);
+}
+
+select.corex-form__input {
+	cursor: pointer;
+}
+
+/* The service chooser is a native multi-select (a framework field type) — give it a comfortable
+   height and readable options on the dark canvas; the handoff's toggle-button styling is a separate
+   enhancement (see evidence). */
+select.corex-form__input[multiple] {
+	min-block-size: 140px;
+	padding-inline: 4px;
+}
+
+select.corex-form__input option {
+	padding: 6px 4px;
+	color: var(--wp--preset--color--text);
+	background: var(--wp--preset--color--panel-overlay);
+}
+
+textarea.corex-form__input {
+	min-block-size: 120px;
+	resize: vertical;
+}
+
+/* Honeypot — the framework hides this off-screen in its block stylesheet (which the server-rendered
+   forms don't load), so without this it renders as a visible raw input and defeats the spam trap.
+   Same off-screen technique as core's .screen-reader-text (literal offset is functional a11y
+   plumbing, not a design value). */
+.corex-form__hp {
+	position: absolute;
+	inset-inline-start: -9999px;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+}
+
+.corex-form__submit {
+	justify-self: start;
+	grid-column: span 12;
+	margin-block-start: 4px;
+}
+
+.corex-form__status {
+	grid-column: span 12;
+	margin-block-start: 4px;
+	color: var(--perego-muted);
+	font-size: var(--wp--preset--font-size--small);
+}
+
+.corex-form__status.is-error {
+	color: var(--wp--preset--color--error);
+}
+
+.corex-form__status.is-success {
+	color: var(--wp--preset--color--success);
+}
+
+.corex-form__error {
+	color: var(--wp--preset--color--error);
+	font-size: 12.5px;
+	min-block-size: 1em;
+}
+
+.corex-form__error:empty {
+	display: none;
+}
+
+.corex-form__input[aria-invalid="true"] {
+	border-block-end-color: var(--wp--preset--color--error);
+}
+
+/* Contact "Start a Project" brief — the handoff wraps this form in a glass card
+   (`.contact-form-wrap`); the footer quick-message form is inline (no card). Target the brief form
+   specifically via its stable data attribute. */
+.corex-form[data-corex-form="perego-project-brief"] {
+	background: var(--perego-glass-panel-fill);
+	backdrop-filter: blur(12px);
+	border: 1px solid var(--perego-glass-border);
+	border-radius: var(--perego-radius-card);
+	padding: clamp(28px, 3vw, 44px);
+}
+
+/* ===================================================================
+ * spec 004 T012 — Home "About Us" section (editable post content)
+ * The editorial About Us / Our mission prose is authored on the editor
+ * canvas (the front page's own post content, `.home-about__panels` >
+ * wp:post-content) inside .glass-panel groups; these rules give the
+ * section its handoff layout (background image + two panels). The
+ * background image itself is the perego-theme/home-about-bg block, a
+ * sibling of the post-content group inside this same .home-about section.
+ * =================================================================== */
+
+.home-about {
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
+	min-block-size: 78vh;
+	padding-block: var(--wp--preset--spacing--section-y);
+	background: var(--perego-gradient-bg);
+}
+
+.home-about__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	display: grid;
+	grid-template-columns: 1fr minmax(0, 620px);
+}
+
+.home-about__panels {
+	grid-column: 2;
+	display: flex;
+	flex-direction: column;
+	gap: clamp(18px, 2.4vw, 30px);
+}
+
+[dir="rtl"] .home-about__panels {
+	grid-column: 1;
+}
+
+.glass-panel {
+	border: 1px solid var(--perego-glass-border);
+	border-radius: var(--perego-radius-card);
+	background: var(--perego-glass-panel-fill);
+	backdrop-filter: blur(var(--perego-glass-blur));
+	padding: clamp(26px, 3vw, 44px);
+	box-shadow: var(--perego-shadow-glass-panel-inset);
+}
+
+.panel-title {
+	font-size: var(--wp--preset--font-size--h2);
+	font-weight: 700;
+	line-height: 1.08;
+	margin: 0 0 0.6em;
+}
+
+@media (max-width: 900px) {
+	.home-about {
+		min-block-size: 0;
+	}
+
+	.home-about__inner {
+		grid-template-columns: 1fr;
+	}
+
+	.home-about__panels {
+		grid-column: 1;
+	}
+}
+
+/* ===================================================================
+ * spec 003 / M3 US3 — Service single (editable post content) + archive
+ * The editorial "What we do" / "Our Process" prose is authored on the
+ * editor canvas (post content) inside .svc-whatwedo / .svc-process groups;
+ * these rules give those groups the approved dark/gradient section look.
+ *
+ * spec 004 T014/T015 — .svc-hero/.svc-tabs live here (not in either the
+ * services-overview or service-hero block's own stylesheet) because both
+ * the archive and every service single render them, and a block's own
+ * compiled stylesheet only loads on pages using that specific block —
+ * duplicating this ruleset per block risks the two drifting apart.
+ * =================================================================== */
+
+.svc-single__body {
+	--wp--style--block-gap: 0;
+}
+
+/* Project single's free-form prose has no enclosing colored section of its own (unlike service
+   singles' .svc-whatwedo/.svc-process groups) — give it an explicit background rather than rely on
+   body's (broken, see spec 004 T014 evidence) page-wide background. */
+.project-single__body {
+	background: var(--wp--preset--color--bg-deep);
+	padding-block: var(--wp--preset--spacing--section-y);
+}
+
+.svc-hero {
+	position: relative;
+	overflow: hidden;
+	text-align: center;
+	min-block-size: 92vh;
+	display: flex;
+	align-items: center;
+	padding-block-end: clamp(48px, 6vw, 90px);
+	background: var(--wp--preset--color--bg-deep);
+}
+
+.svc-hero__bg {
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+
+	img {
+		inline-size: 100%;
+		block-size: 100%;
+		object-fit: cover;
+		object-position: center top;
+		opacity: 0.95;
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		background: linear-gradient(
+			180deg,
+			rgba(12, 0, 32, 0.25) 0%,
+			rgba(12, 0, 32, 0.4) 45%,
+			rgba(12, 0, 32, 0.9) 100%
+		);
+	}
+}
+
+.svc-hero__inner {
+	position: relative;
+	z-index: 2;
+	inline-size: 100%;
+	padding-block-start: clamp(70px, 9vw, 120px);
+}
+
+.svc-hero__eyebrow {
+	margin: 0 0 10px;
+	font-size: 14px;
+	font-weight: 600;
+	letter-spacing: 0.18em;
+	text-transform: uppercase;
+	color: var(--wp--preset--color--accent-soft);
+}
+
+.svc-hero__title {
+	font-size: var(--wp--preset--font-size--hero);
+	font-weight: 700;
+	line-height: 1.02;
+	text-shadow: 0 4px 40px rgba(0, 0, 0, 0.5);
+	margin: 0;
+}
+
+.svc-tabs {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: clamp(16px, 1.8vw, 26px);
+	margin-block-start: clamp(40px, 6vw, 76px);
+	max-inline-size: 1120px;
+	margin-inline: auto;
+}
+
+.svc-tab {
+	position: relative;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	color: var(--wp--preset--color--text);
+	backdrop-filter: blur(var(--perego-glass-blur));
+	box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 20px 50px rgba(0, 0, 0, 0.35);
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		background var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease),
+		border-color var(--perego-dur-fast) var(--perego-ease);
+
+	&:hover,
+	&:focus-within,
+	&.is-active {
+		z-index: 5;
+		background: linear-gradient(155deg, #e98bf7 0%, var(--wp--preset--color--accent) 52%, #c24fe0 100%);
+		border-color: rgba(255, 255, 255, 0.55);
+		transform: translateY(-6px);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 16px 26px -14px rgba(216, 106, 243, 0.45),
+			0 10px 22px rgba(0, 0, 0, 0.42);
+
+		.svc-tab__label,
+		.svc-tab__cta {
+			color: var(--wp--preset--color--cta-text-on-accent);
+		}
+
+		.svc-tab__cta {
+			max-block-size: 60px;
+			opacity: 1;
+			padding: 15px 12px;
+		}
+	}
+}
+
+.svc-tab__main {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 14px;
+	padding: 20px;
+	inline-size: 100%;
+	flex: 1;
+	color: inherit;
+	text-decoration: none;
+}
+
+.svc-tab__label {
+	font-weight: 700;
+	font-size: clamp(15px, 1.3vw, 21px);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	text-align: center;
+	line-height: 1.2;
+}
+
+.svc-tab__cta {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	inline-size: 100%;
+	font-size: 12px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--wp--preset--color--text);
+	max-block-size: 0;
+	opacity: 0;
+	padding-block: 0;
+	padding-inline: 12px;
+	overflow: hidden;
+	background: rgba(0, 0, 0, 0.22);
+	text-decoration: none;
+	transition: max-block-size var(--perego-dur-fast) var(--perego-ease),
+		opacity var(--perego-dur-fast) var(--perego-ease),
+		padding var(--perego-dur-fast) var(--perego-ease);
+}
+
+@media (max-width: 900px) {
+	.svc-tabs {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.svc-tab {
+		transition: none;
+	}
+
+	.svc-tab:hover,
+	.svc-tab:focus-within {
+		transform: none;
+	}
+}
+
+.section-title,
+.svc-whatwedo .wp-block-heading,
+.svc-process .wp-block-heading {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	line-height: 1.05;
+}
+
+.svc-whatwedo {
+	position: relative;
+	overflow: hidden;
+	background: linear-gradient(180deg, #160435 0%, #1c0743 50%, #10002b 100%);
+	padding-block: var(--wp--preset--spacing--section-y);
+	color: var(--wp--preset--color--text, #fff);
+
+	.wp-block-heading {
+		margin-block-end: 8px;
+	}
+
+	/* the bold sub-line under "What we do" */
+	p strong {
+		color: var(--wp--preset--color--accent-soft);
+		font-size: var(--wp--preset--font-size--h3);
+	}
+
+	p {
+		color: var(--perego-muted);
+		font-size: var(--wp--preset--font-size--lead);
+		margin-block-end: 16px;
+	}
+}
+
+/* Two-column "what we do" layout: text beside a media image. Used by both the archive
+   (ServicesOverviewRenderer) and every service single's canvas content (seed-services.php). */
+.svc-whatwedo__grid {
+	position: relative;
+	z-index: 1;
+	max-inline-size: var(--wp--style--global--content-size, 1240px);
+	margin-inline: auto;
+	padding-inline: var(--wp--preset--spacing--gutter);
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: clamp(30px, 5vw, 72px);
+	align-items: center;
+}
+
+.svc-whatwedo__media {
+	border-radius: var(--perego-radius-card);
+	overflow: hidden;
+	box-shadow: var(--perego-shadow-featured);
+	transform: rotate(-1.2deg);
+
+	img {
+		inline-size: 100%;
+		block-size: auto;
+		display: block;
+	}
+}
+
+@media (max-width: 900px) {
+	.svc-whatwedo__grid {
+		grid-template-columns: 1fr;
+	}
+}
+
+.svc-process {
+	background: linear-gradient(105deg, #1f0748 0%, #3f1173 34%, #6c1eae 66%, #9a45dd 88%, #b473ee 100%);
+	padding-block: clamp(52px, 7vw, 96px);
+	color: var(--wp--preset--color--text, #fff);
+
+	.wp-block-heading {
+		text-align: center;
+		margin-block-end: clamp(34px, 4.5vw, 56px);
+	}
+
+	ol {
+		display: grid;
+		grid-template-columns: repeat(4, 1fr);
+		gap: clamp(16px, 2vw, 30px);
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		counter-reset: step;
+	}
+
+	li {
+		counter-increment: step;
+		text-align: center;
+		font-size: 15px;
+		line-height: 1.55;
+
+		&::before {
+			content: counter(step);
+			display: grid;
+			place-items: center;
+			inline-size: 46px;
+			block-size: 46px;
+			margin-inline: auto;
+			margin-block-end: 14px;
+			border-radius: var(--perego-radius-pill, 999px);
+			background: rgba(255, 255, 255, 0.14);
+			border: 1px solid rgba(255, 255, 255, 0.35);
+			font-weight: 700;
+			font-size: 18px;
+		}
+	}
+}
+
+@media (max-width: 768px) {
+	.svc-process ol {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+
+/* Services archive (interim query-loop overview) */
+.svc-archive {
+	padding-block: var(--wp--preset--spacing--section-y);
+}
+
+.svc-archive__title {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	margin-block-end: clamp(24px, 4vw, 44px);
+}
+
+.svc-archive__card {
+	padding: clamp(20px, 2.4vw, 30px);
+	border-radius: var(--perego-radius-card, 20px);
+	background: var(--perego-glass-fill, rgba(34, 12, 58, 0.55));
+	border: 1px solid var(--perego-glass-border, rgba(255, 255, 255, 0.18));
+}
+
+/* Legal pages (M4) — the constrained title + TOC-aside / body columns */
+.legal {
+	padding-block: var(--wp--preset--spacing--section-y);
+	/* Same defensive full-canvas background applied to every route: the body's fixed-attachment
+	   gradient leaves a white gap under a short page otherwise. */
+	background: var(--wp--preset--color--bg-deep);
+}
+.legal__title {
+	font-size: var(--wp--preset--font-size--h1);
+	font-weight: 700;
+	text-align: center;
+	margin-block-end: clamp(24px, 4vw, 44px);
+}
+.legal__lead {
+	color: var(--wp--preset--color--accent-soft);
+	font-size: var(--wp--preset--font-size--small);
+}
+.legal-layout__body h2 {
+	scroll-margin-block-start: 100px;
+	margin-block-start: 1.4em;
+}
+
+/* ===================================================================
+   Journal comments (Phase 7, form 4) — the native WordPress comment
+   blocks (single.html) styled to the handoff `.comments`/`.comment`/
+   `.comment-form` design. Tokens + logical properties only (RTL-safe;
+   no hardcoded colors, per the constitution).
+   =================================================================== */
+.wp-block-comments {
+	max-inline-size: 760px;
+	margin-block-start: clamp(34px, 4vw, 54px);
+	margin-inline: auto;
+}
+
+.wp-block-comments-title {
+	font-size: clamp(22px, 2.6vw, 28px);
+	font-weight: 700;
+	margin-block-end: clamp(20px, 2.5vw, 30px);
+}
+
+/* Comment list + nested-reply indent */
+.wp-block-comment-template {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+
+	ol {
+		list-style: none;
+		margin: 22px 0 0;
+		margin-inline-start: clamp(28px, 5vw, 58px);
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 22px;
+	}
+
+	li {
+		margin: 0;
+	}
+}
+
+.wp-block-comment-template .wp-block-columns {
+	gap: 15px;
+	margin: 0;
+	align-items: flex-start;
+}
+
+/* Round avatar (WordPress renders a Gravatar <img>). */
+.wp-block-comment-template .wp-block-avatar,
+.wp-block-comment-template .wp-block-avatar img {
+	border-radius: 50%;
+	overflow: hidden;
+}
+
+/* The comment body column reads as a glass card (handoff `.comment__body`). */
+.wp-block-comment-template .wp-block-columns > .wp-block-column:last-child {
+	padding: 16px 18px;
+	border-radius: 14px;
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+}
+
+.wp-block-comment-author-name {
+	font-weight: 700;
+}
+
+.wp-block-comment-date {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted-2);
+	margin-block-start: 2px;
+}
+
+.wp-block-comment-content {
+	line-height: 1.65;
+	color: var(--perego-muted);
+	margin-block: 8px 0;
+}
+
+.wp-block-comment-reply-link {
+	margin-block-start: 10px;
+	font-size: var(--wp--preset--font-size--small);
+	font-weight: 700;
+
+	a {
+		color: var(--wp--preset--color--accent-soft);
+		text-decoration: none;
+	}
+
+	a:hover,
+	a:focus-visible {
+		color: var(--wp--preset--color--text);
+	}
+}
+
+.wp-block-comments-pagination {
+	margin-block-start: 24px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+}
+
+/* Comment form = glass panel with tokenized fields + accent submit. */
+.wp-block-post-comments-form {
+	margin-block-start: clamp(30px, 4vw, 44px);
+	padding: clamp(22px, 3vw, 32px);
+	border-radius: 18px;
+	background: var(--perego-glass-panel-fill);
+	border: 1px solid var(--perego-glass-border);
+	backdrop-filter: blur(var(--perego-glass-blur));
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+}
+
+.wp-block-post-comments-form .comment-reply-title {
+	font-size: var(--wp--preset--font-size--h3, 19px);
+	font-weight: 700;
+	margin: 0;
+}
+
+.wp-block-post-comments-form :where(input[type="text"], input[type="email"], input[type="url"], textarea) {
+	inline-size: 100%;
+	padding: 12px 14px;
+	border-radius: var(--perego-radius-btn);
+	background: var(--perego-glass-fill);
+	border: 1px solid var(--perego-glass-border);
+	color: var(--wp--preset--color--text);
+	font: inherit;
+}
+
+.wp-block-post-comments-form :where(input, textarea):focus-visible {
+	outline: 2px solid var(--wp--preset--color--accent);
+	outline-offset: 2px;
+}
+
+.wp-block-post-comments-form textarea {
+	min-block-size: 120px;
+	resize: vertical;
+}
+
+.wp-block-post-comments-form .form-submit .submit,
+.wp-block-post-comments-form input[type="submit"] {
+	align-self: flex-start;
+	border: 0;
+	border-radius: var(--perego-radius-btn);
+	padding: 14px 30px;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	cursor: pointer;
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+	transition: transform var(--perego-dur-fast) var(--perego-ease),
+		box-shadow var(--perego-dur-fast) var(--perego-ease);
+}
+
+.wp-block-post-comments-form .form-submit .submit:hover,
+.wp-block-post-comments-form input[type="submit"]:hover,
+.wp-block-post-comments-form .form-submit .submit:focus-visible,
+.wp-block-post-comments-form input[type="submit"]:focus-visible {
+	transform: translateY(-2px);
+	box-shadow: var(--perego-shadow-glow-accent);
+}
+/* Locked handoff typefaces, served locally so typography is deterministic and no route depends on Google Fonts. */
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-300-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Open Sans';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('../fonts/open-sans-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Cairo';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('../fonts/cairo-arabic-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Cairo';
+	font-style: normal;
+	font-weight: 600;
+	font-display: swap;
+	src: url('../fonts/cairo-arabic-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Cairo';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('../fonts/cairo-arabic-700-normal.woff2') format('woff2');
+}

@@ -46,7 +46,7 @@ it('renders a filter chip per label with All active by default', function () {
 it('renders one card per project with its category and excerpt', function () {
     $html = renderGrid();
 
-    expect(substr_count($html, 'class="post-card"'))->toBe(3)
+    expect(substr_count($html, 'class="post-card reveal"'))->toBe(3)
         ->and($html)->toContain('Brand Film')
         ->and($html)->toContain('data-category="video"')
         ->and($html)->toContain('Client: Sample · 2026');
@@ -76,8 +76,8 @@ it('uses an image when a thumbnail url is present and a placeholder otherwise', 
 it('renders an empty grid with no cards when there are no projects', function () {
     $html = renderGrid([]);
 
-    expect(substr_count($html, 'class="post-card"'))->toBe(0)
-        ->and($html)->toContain('portfolio__empty')
+    expect(substr_count($html, 'class="post-card reveal"'))->toBe(0)
+        ->and($html)->toContain('id="portfolioEmpty"')
         ->and($html)->toMatch('/"present":\[\]/');
 });
 
@@ -87,12 +87,12 @@ it('renders an optional heading + intro when provided', function () {
 
     $html = (new PortfolioGridRenderer())->render(sampleProjects(), $filters, $strings);
 
-    expect($html)->toMatch('/<h1 class="portfolio__title">Our Work<\/h1>/')
+    expect($html)->toMatch('/<h1 class="post-title"[^>]*>Our Work<\/h1>/')
         ->and($html)->toContain('A selection.');
 });
 
 it('omits the heading when none is provided', function () {
-    expect(renderGrid())->not->toContain('portfolio__title');
+    expect(renderGrid())->not->toContain('class="post-title"');
 });
 
 it('renders a Home breadcrumb and the demo-content note when provided', function () {
@@ -111,10 +111,32 @@ it('renders a Home breadcrumb and the demo-content note when provided', function
     expect($html)->toContain('class="page-crumb"')
         ->and($html)->toMatch('/<a href="[^"]*\/">Home<\/a>/')
         ->and($html)->toContain('aria-current="page">Our Work')
-        ->and($html)->toContain('portfolio__demo-note')
+        ->and($html)->toContain('class="section-lead"')
         ->and($html)->toContain('Example projects shown below.');
 });
 
 it('omits the breadcrumb when uiHome is not provided', function () {
     expect(renderGrid())->not->toContain('page-crumb');
+});
+
+it('renders the closing "have a project in mind" CTA when cta strings are provided', function () {
+    $filters = ['all' => 'All Projects'];
+    $strings = [
+        'groupLabel' => 'Filter',
+        'noResults' => 'None',
+        'ctaTitle' => 'Have a project in mind?',
+        'ctaBody' => "Tell us what you're working on and we'll help you shape the plan.",
+        'ctaButton' => 'Start a Project',
+    ];
+
+    $html = (new PortfolioGridRenderer())->render(sampleProjects(), $filters, $strings);
+
+    expect($html)->toContain('id="pfCta"')
+        ->and($html)->toContain('Have a project in mind?')
+        ->and($html)->toContain("Tell us what you're working on and we'll help you shape the plan.")
+        ->and($html)->toMatch('/<a class="btn btn--accent" href="[^"]*\/contact">Start a Project<\/a>/');
+});
+
+it('omits the CTA section entirely when no cta title is provided', function () {
+    expect(renderGrid())->not->toContain('id="pfCta"');
 });

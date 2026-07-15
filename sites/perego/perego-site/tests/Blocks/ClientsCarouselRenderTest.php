@@ -60,6 +60,7 @@ beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_attr__')->returnArg();
+    Functions\when('__')->returnArg();
     Functions\when('esc_url')->returnArg();
     Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
     Functions\when('has_post_thumbnail')->justReturn(false);
@@ -116,7 +117,8 @@ it('renders one #clients section with the two carousels and no competing H1', fu
 
     expect(substr_count($html, 'id="clients"'))->toBe(1)
         ->and(substr_count($html, '<h1'))->toBe(0)
-        ->and(substr_count($html, 'data-clients-swiper'))->toBe(2)
+        ->and(substr_count($html, 'class="corp-slider reveal"'))->toBe(1)
+        ->and(substr_count($html, 'class="indiv-slider reveal"'))->toBe(1)
         ->and($html)->toContain('Corporate Clients')
         ->and($html)->toContain('Individual Clients');
 });
@@ -124,43 +126,78 @@ it('renders one #clients section with the two carousels and no competing H1', fu
 it('renders a corporate card as an icon tile labelled by the client name', function () {
     $html = renderClients();
 
-    expect(substr_count($html, 'client-card--corporate'))->toBe(2)
+    expect(substr_count($html, 'class="corp-card"'))->toBe(2)
         ->and($html)->toContain('aria-label="Sample Corporate Client A"')
-        ->and($html)->toContain('client-card__icon')
+        ->and($html)->toContain('class="eq-icon"')
         ->and($html)->not->toContain('>Sample Corporate Client A<');
 });
 
 it('renders an individual card with a visible name and a thumbnail placeholder when there is none', function () {
     $html = renderClients();
 
-    expect(substr_count($html, 'client-card__name'))->toBe(1)
+    expect(substr_count($html, 'class="indiv-card__title"'))->toBe(1)
         ->and($html)->toContain('Sample Creator One')
-        ->and($html)->toContain('client-card__media--placeholder');
+        ->and($html)->toContain('client-review-crop.png');
+});
+
+it('renders a non-interactive card with no play affordance when a client has no video URL', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('<div class="indiv-card"')
+        ->and($html)->not->toContain('class="play-btn"')
+        ->and($html)->not->toContain('data-video=');
+});
+
+it('opens the site-wide media lightbox with a visible play affordance when a client has a real video URL', function () {
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key) => match (true) {
+        $id === 21 && $key === '_perego_client_stat' => 'Example stat',
+        $id === 21 && $key === '_perego_client_video_url' => 'https://www.youtube.com/embed/example',
+        default => '',
+    });
+
+    $html = renderClients();
+
+    expect($html)->toContain('<a class="indiv-card"')
+        ->and($html)->toContain('data-video="https://www.youtube.com/embed/example"')
+        ->and($html)->toContain('href="https://www.youtube.com/embed/example"')
+        ->and($html)->toContain('class="play-btn" aria-hidden="true"');
 });
 
 it('shows the client stat only when one is set', function () {
     $html = renderClients();
 
-    expect(substr_count($html, 'client-card__stat'))->toBe(1)
+    expect(substr_count($html, 'class="indiv-card__stat"'))->toBe(1)
         ->and($html)->toContain('Example stat');
 });
 
-it('renders the swiper navigation controls and pagination for a populated carousel', function () {
+it('renders the handoff navigation controls for populated tracks', function () {
     $html = renderClients();
 
-    expect($html)->toContain('swiper-button-prev')
-        ->and($html)->toContain('swiper-button-next')
-        ->and($html)->toContain('swiper-pagination');
+    expect(substr_count($html, 'corp-arrow corp-arrow--prev'))->toBe(2)
+        ->and(substr_count($html, 'corp-arrow corp-arrow--next'))->toBe(2)
+        ->and($html)->toContain('class="corp-track"')
+        ->and($html)->toContain('class="indiv-track"');
 });
 
-it('omits the swiper shell for a client type with no posts, keeping the heading', function () {
+it('preserves the handoff track identifiers, labels, and arrow SVG controls', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('id="corporateTrack" tabindex="0" role="list"')
+        ->and($html)->toContain('id="individualTrack" tabindex="0" role="list"')
+        ->and($html)->toContain('aria-label="Previous clients"')
+        ->and($html)->toContain('aria-label="More clients"')
+        ->and($html)->toContain('<circle class="eq-bar"')
+        ->and($html)->toContain('<svg viewBox="0 0 24 24" aria-hidden="true">');
+});
+
+it('omits the handoff track shell for a client type with no posts, keeping the heading', function () {
     $GLOBALS['__perego_clients_by_term_id'] = [PEREGO_TEST_CORP_EN => [], PEREGO_TEST_INDIV_EN => []];
 
     $html = renderClients();
 
     expect($html)->toContain('Corporate Clients')
-        ->and(substr_count($html, 'data-clients-swiper'))->toBe(0)
-        ->and(substr_count($html, 'client-card__name'))->toBe(0);
+        ->and(substr_count($html, 'corp-slider reveal'))->toBe(0)
+        ->and(substr_count($html, 'indiv-card__title'))->toBe(0);
 });
 
 it('localizes the section into Arabic', function () {
@@ -175,6 +212,6 @@ it('queries the Arabic-language taxonomy term, not the English one, on the Arabi
     // Arabic carousels always queried zero posts even when AR-tagged client posts existed.
     $html = renderClients('ar');
 
-    expect(substr_count($html, 'client-card--corporate'))->toBe(1)
-        ->and(substr_count($html, 'client-card--individual'))->toBe(1);
+    expect(substr_count($html, 'class="corp-card"'))->toBe(1)
+        ->and(substr_count($html, 'class="indiv-card"'))->toBe(1);
 });

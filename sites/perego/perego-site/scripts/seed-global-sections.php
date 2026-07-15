@@ -43,6 +43,10 @@ $sections = [
         'en' => ['title' => 'Contact (flat) footer (EN)', 'blocks' => "<!-- wp:heading {\"level\":2} --><h2>Contact us</h2><!-- /wp:heading --><!-- wp:paragraph --><p>We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.</p><!-- /wp:paragraph -->"],
         'ar' => ['title' => 'فوتر التواصل المسطّح (AR)', 'blocks' => "<!-- wp:heading {\"level\":2} --><h2>تواصل معنا</h2><!-- /wp:heading --><!-- wp:paragraph --><p>يسعدنا أن نسمع منك لنقدّم حلولًا تقنية إبداعية، ومساعدة، وتوصيات مخصصة تناسب احتياجاتك.</p><!-- /wp:paragraph -->"],
     ],
+    'footer-careers' => [
+        'en' => ['title' => 'Footer careers (EN)', 'blocks' => "<!-- wp:heading {\"level\":2,\"className\":\"footer-heading\"} --><h2 class=\"wp-block-heading footer-heading\">Join us</h2><!-- /wp:heading --><!-- wp:paragraph {\"className\":\"footer-blurb\"} --><p class=\"footer-blurb\">We're constantly evolving. If you're ready to grow with us, share your CV and portfolio.</p><!-- /wp:paragraph -->"],
+        'ar' => ['title' => 'الانضمام إلينا في الفوتر (AR)', 'blocks' => "<!-- wp:heading {\"level\":2,\"className\":\"footer-heading\"} --><h2 class=\"wp-block-heading footer-heading\">انضم إلينا</h2><!-- /wp:heading --><!-- wp:paragraph {\"className\":\"footer-blurb\"} --><p class=\"footer-blurb\">نحن في تطوّر مستمر. إن كنت مستعدًا للنمو معنا، شاركنا سيرتك الذاتية وأعمالك.</p><!-- /wp:paragraph -->"],
+    ],
     'global-cta' => [
         'en' => ['title' => 'Global project CTA (EN)', 'blocks' => "<!-- wp:heading {\"level\":2} --><h2>Start a Project</h2><!-- /wp:heading --><!-- wp:paragraph --><p>We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.</p><!-- /wp:paragraph -->"],
         'ar' => ['title' => 'دعوة بدء المشروع (AR)', 'blocks' => "<!-- wp:heading {\"level\":2} --><h2>ابدأ مشروعك</h2><!-- /wp:heading --><!-- wp:paragraph --><p>يسعدنا أن نسمع منك لنقدّم حلولًا تقنية إبداعية، ومساعدة، وتوصيات مخصصة تناسب احتياجاتك.</p><!-- /wp:paragraph -->"],

@@ -17,7 +17,7 @@ use WP_REST_Response;
 /**
  * The "Join us" / CV submission endpoint (spec Phase 7) at POST `perego/v1/careers/apply`. A public,
  * anonymous form, so it is gated by a honeypot + a per-IP rate limit rather than a nonce. It applies
- * the same CV policy as CoreX Careers (pdf/doc/docx ≤ 5 MB) via WordPress's own filetype check plus a
+ * the approved handoff CV policy (pdf/doc/docx ≤ 10 MB) via WordPress's own filetype check plus a
  * finfo content-type sniff (never trusting the browser-supplied MIME), stores the CV as a private
  * attachment, records the application against the standing "Open Application" job, and sends the
  * applicant Perego's branded join-confirmation plus the team an admin-notification. Every handoff
@@ -33,7 +33,7 @@ final class PeregoCareersController
         'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => ['docx'],
     ];
 
-    private const MAX_BYTES = 5 * 1024 * 1024;
+    private const MAX_BYTES = 10 * 1024 * 1024;
 
     private const RATE_LIMIT = 5;         // submissions
     private const RATE_WINDOW = 600;      // per 10 minutes, per IP

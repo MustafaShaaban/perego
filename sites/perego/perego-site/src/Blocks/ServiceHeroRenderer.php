@@ -32,9 +32,9 @@ final class ServiceHeroRenderer
         $html .= '<div class="svc-hero__bg" aria-hidden="true">'
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/svc-hero-bg.png') . '" alt="" />'
             . '</div>';
-        $html .= '<div class="svc-hero__inner">';
-        $html .= '<p class="svc-hero__eyebrow">' . esc_html($eyebrow) . '</p>';
-        $html .= '<h1 class="svc-hero__title">' . esc_html($title) . '</h1>';
+        $html .= '<div class="container svc-hero__inner">';
+        $html .= '<p class="svc-hero__eyebrow reveal">' . esc_html($eyebrow) . '</p>';
+        $html .= '<h1 class="svc-hero__title reveal" data-delay="1">' . esc_html($title) . '</h1>';
         $html .= $this->renderTabs($content, $currentSlug);
         $html .= '</div>';
         $html .= '</section>';
@@ -46,7 +46,7 @@ final class ServiceHeroRenderer
     {
         $startLabel = $content->label('startYourProject');
 
-        $html = '<nav class="svc-tabs" aria-label="' . esc_attr($content->overview()['h1']) . '">';
+        $html = '<nav class="svc-tabs reveal" data-delay="1" aria-label="' . esc_attr($content->overview()['h1']) . '">';
 
         foreach ($content->slugs() as $slug) {
             $isActive = $slug === $currentSlug;

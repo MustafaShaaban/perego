@@ -1,15 +1,26 @@
 <!-- wp:template-part {"slug":"header"} /-->
 
-<!-- wp:perego-theme/project-hero /-->
+<main id="main" tabindex="-1">
+	<article class="post page-section">
+		<div class="container">
+			<!-- wp:perego-theme/project-hero /-->
+			<div class="prose" style="max-width:920px;">
+				<!-- wp:post-content {"layout":{"type":"default"}} /-->
+			</div>
+			<!-- wp:perego-theme/project-gallery-lightbox /-->
+			<!-- wp:perego-theme/project-navigation {"surface":"adjacent"} /-->
+		</div>
+	</article>
 
-<!-- wp:group {"tagName":"main","className":"project-single__body","layout":{"type":"constrained"}} -->
-<main class="wp-block-group project-single__body">
-	<!-- wp:post-content {"layout":{"type":"constrained"}} /-->
+	<!-- wp:group {"tagName":"section","className":"page-section","style":{"border":{"top":{"color":"rgba(255,255,255,0.08)","width":"1px"}}},"layout":{"type":"default"}} -->
+	<section class="wp-block-group page-section" style="border-top-color:rgba(255,255,255,0.08);border-top-width:1px">
+		<!-- wp:group {"className":"container","layout":{"type":"default"}} -->
+		<div class="wp-block-group container">
+			<!-- wp:perego-theme/project-navigation {"surface":"related"} /-->
+		</div>
+		<!-- /wp:group -->
+	</section>
+	<!-- /wp:group -->
 </main>
-<!-- /wp:group -->
-
-<!-- wp:perego-theme/project-gallery-lightbox /-->
-
-<!-- wp:perego-theme/project-navigation /-->
 
 <!-- wp:template-part {"slug":"footer"} /-->

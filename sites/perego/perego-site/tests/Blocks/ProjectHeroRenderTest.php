@@ -23,6 +23,7 @@ beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_url')->returnArg();
+    Functions\when('__')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
     Functions\when('get_the_title')->justReturn('Brand Film — Launch Campaign');
     Functions\when('get_the_terms')->justReturn([(object) ['slug' => 'video', 'name' => 'Video Editing']]);
@@ -56,7 +57,8 @@ it('renders one H1 (the project title), a breadcrumb, and the service-category e
 
     expect(substr_count($html, '<h1'))->toBe(1)
         ->and($html)->toContain('Brand Film — Launch Campaign')
-        ->and($html)->toContain('project-hero__crumb')
+        ->and($html)->toContain('class="page-crumb"')
+        ->and($html)->toContain('class="post-cat"')
         ->and($html)->toContain('Video Editing')
         ->and($html)->toMatch('/href="[^"]*\/work"/');
 });
@@ -84,10 +86,10 @@ it('renders the featured image when the project has a thumbnail', function () {
     Functions\when('has_post_thumbnail')->justReturn(true);
     Functions\when('get_the_post_thumbnail')->justReturn('<img src="https://perego.local/x.png" alt="" />');
 
-    expect(renderProjectHero())->toContain('project-hero__featured')
+    expect(renderProjectHero())->toContain('class="post-featured"')
         ->and(renderProjectHero())->toContain('https://perego.local/x.png');
 });
 
 it('omits the featured-image wrapper when the project has no thumbnail', function () {
-    expect(renderProjectHero())->not->toContain('project-hero__featured');
+    expect(renderProjectHero())->not->toContain('class="post-featured"');
 });

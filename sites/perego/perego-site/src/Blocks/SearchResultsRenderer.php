@@ -1,8 +1,6 @@
 <?php
 
-/**
- * @package PeregoSite
- */
+/** @package PeregoSite */
 
 declare(strict_types=1);
 
@@ -14,11 +12,8 @@ use PeregoSite\Content\GlobalContent;
 use WP_Query;
 
 /**
- * Server-renders the perego-theme/search-results block (M4): the search page — a breadcrumb, the
- * "Search results" H1, a "Showing results for <q> — N matches found" line, a search form, the result
- * cards (featured image / placeholder, kicker tag, title, excerpt, date) in a grid, pagination, and
- * the empty state. Language-aware via GlobalContent. Real WordPress search, bounded query, results
- * server-rendered (crawlable, works without JS). Ported from the handoff `search.html`.
+ * Renders the real WordPress search query with the locked handoff's presentation structure.
+ * Results remain crawlable and editor-managed; only the public DOM contract is handoff-specific.
  */
 final class SearchResultsRenderer
 {
@@ -30,77 +25,83 @@ final class SearchResultsRenderer
 
     public function render(): string
     {
-        $s = $this->content->search();
+        $copy = $this->content->search();
         $query = function_exists('get_search_query') ? (string) get_search_query() : '';
 
-        $html = '<section class="search-page" aria-labelledby="search-title">';
-        $html .= $this->breadcrumb($s);
-        $html .= '<h1 class="search-page__title" id="search-title">' . esc_html($s['h1']) . '</h1>';
-
-        $html .= $this->searchForm($s, $query);
+        $html = '<section class="page-section" aria-labelledby="search-title"><div class="container">';
+        $html .= '<div class="post-hero__inner" style="text-align:center;">';
+        $html .= $this->breadcrumb($copy);
+        $html .= '<h1 class="post-title" id="search-title" style="font-size:clamp(30px,4vw,52px);margin-top:14px;">'
+            . esc_html($copy['h1']) . '</h1>';
 
         if ($query === '') {
-            $html .= '<p class="search-page__hint">' . esc_html($s['emptyHint']) . '</p>';
+            $html .= '<p class="section-lead">' . esc_html($copy['emptyHint']) . '</p>';
+            $html .= $this->searchForm($copy, $query);
 
-            return $html . '</section>';
+            return $html . '</div></div></section>';
         }
 
         $paged = max(1, (int) (get_query_var('paged') ?: get_query_var('page') ?: 1));
-        $results = new WP_Query([
+        $queryArgs = [
             's' => $query,
             'posts_per_page' => self::PER_PAGE,
             'paged' => $paged,
             'no_found_rows' => false,
             'post_status' => 'publish',
             'ignore_sticky_posts' => true,
-        ]);
+            // The handoff promises a search across editorial journal posts, services, and projects;
+            // pages such as Home are navigation surfaces, not result cards.
+            'post_type' => ['post', 'perego_service', 'perego_project'],
+        ];
 
-        $count = (int) $results->found_posts;
-        $html .= '<p class="search-page__summary">'
-            . esc_html($s['resultsFor']) . ' <strong>' . esc_html($query) . '</strong> — '
-            . esc_html((string) $count) . ' ' . esc_html($s['matchesFound']) . '</p>';
-
-        if (! $results->have_posts()) {
-            $html .= '<p class="search-page__empty" role="status">' . esc_html($s['empty']) . '</p>';
-            $html .= '<p class="search-page__hint">' . esc_html($s['emptyHint']) . '</p>';
-
-            return $html . '</section>';
+        if (function_exists('pll_current_language')) {
+            $locale = pll_current_language('slug');
+            if (is_string($locale) && $locale !== '') {
+                $queryArgs['lang'] = $locale;
+            }
         }
 
-        $html .= '<div class="post-cards blog-grid search-page__results">';
+        $results = new WP_Query($queryArgs);
+
+        $html .= '<p class="section-lead">'
+            . esc_html($copy['resultsFor']) . ' <strong>' . esc_html($query) . '</strong> &mdash; '
+            . esc_html((string) $results->found_posts) . ' ' . esc_html($copy['matchesFound']) . '</p>';
+        $html .= $this->searchForm($copy, $query) . '</div>';
+
+        if (! $results->have_posts()) {
+            $html .= '<p class="section-lead" role="status">' . esc_html($copy['empty']) . '</p>';
+            $html .= '<p class="section-lead">' . esc_html($copy['emptyHint']) . '</p>';
+
+            return $html . '</div></section>';
+        }
+
+        $html .= '<div class="blog-grid" style="margin-top:clamp(32px,4vw,52px);">';
         foreach ($results->posts as $post) {
             $html .= $this->resultCard($post);
         }
-        $html .= '</div>';
-
-        $html .= $this->pagination((int) $results->max_num_pages, $paged);
+        $html .= '</div>' . $this->pagination((int) $results->max_num_pages, $paged);
 
         wp_reset_postdata();
 
-        return $html . '</section>';
+        return $html . '</div></section>';
     }
 
-    /** One result rendered with the shared `.post-card` treatment used by the work/journal archives. */
     private function resultCard(\WP_Post $post): string
     {
         $url = esc_url((string) get_permalink($post));
-
-        $card = '<article class="post-card">';
-        $card .= '<a class="post-card__media" href="' . $url . '" tabindex="-1" aria-hidden="true">';
+        $card = '<a class="post-card reveal" href="' . $url . '"><div class="post-card__media">';
         if (has_post_thumbnail($post)) {
             $card .= get_the_post_thumbnail($post, 'medium_large', ['alt' => '', 'loading' => 'lazy']);
         } else {
             $card .= '<span class="post-card__media-placeholder" aria-hidden="true"></span>';
         }
-        $card .= '</a>';
+        $card .= '</div><div class="post-card__body">';
 
-        $card .= '<div class="post-card__body">';
         $kicker = $this->kicker($post);
         if ($kicker !== '') {
-            $card .= '<p class="post-card__cat">' . esc_html($kicker) . '</p>';
+            $card .= '<span class="post-card__cat">' . esc_html($kicker) . '</span>';
         }
-        $card .= '<h2 class="post-card__title"><a href="' . $url . '">'
-            . esc_html((string) get_the_title($post)) . '</a></h2>';
+        $card .= '<h3 class="post-card__title">' . esc_html((string) get_the_title($post)) . '</h3>';
 
         $excerpt = wp_strip_all_tags((string) get_the_excerpt($post));
         if ($excerpt !== '') {
@@ -109,18 +110,12 @@ final class SearchResultsRenderer
 
         $date = (string) get_the_date('', $post);
         if ($date !== '') {
-            $card .= '<p class="post-card__meta">' . esc_html($date) . '</p>';
+            $card .= '<span class="post-card__meta">' . esc_html($date) . '</span>';
         }
-        $card .= '</div></article>';
 
-        return $card;
+        return $card . '</div></a>';
     }
 
-    /**
-     * Short kicker tag for a result: the post's first category term for posts, otherwise the post
-     * type's singular label (Journal / Service / Project / Page) — the handoff shows a short kicker
-     * above each result title.
-     */
     private function kicker(\WP_Post $post): string
     {
         $terms = get_the_category($post->ID);
@@ -128,55 +123,50 @@ final class SearchResultsRenderer
             return $terms[0]->name;
         }
 
-        $obj = get_post_type_object((string) get_post_type($post));
+        $type = get_post_type_object((string) get_post_type($post));
 
-        return $obj !== null ? (string) $obj->labels->singular_name : '';
+        return $type !== null ? (string) $type->labels->singular_name : '';
     }
 
-    /** Prev / numbered / Next pagination, rendered only when there is more than one page. */
     private function pagination(int $totalPages, int $current): string
     {
         if ($totalPages < 2) {
             return '';
         }
 
-        $links = paginate_links([
-            'total' => $totalPages,
-            'current' => $current,
-            'type' => 'array',
-            'prev_text' => esc_html__('Prev', 'perego-site'),
-            'next_text' => esc_html__('Next', 'perego-site'),
-        ]);
+        $html = '<nav class="pagination" aria-label="' . esc_attr__('Search results pages', 'perego-site') . '">';
+        $html .= $current === 1
+            ? '<span class="is-disabled">' . esc_html__('Prev', 'perego-site') . '</span>'
+            : '<a href="' . esc_url(get_pagenum_link($current - 1)) . '">' . esc_html__('Prev', 'perego-site') . '</a>';
 
-        if (empty($links) || ! is_array($links)) {
-            return '';
+        for ($page = 1; $page <= $totalPages; $page++) {
+            $html .= $page === $current
+                ? '<span class="is-current">' . esc_html((string) $page) . '</span>'
+                : '<a href="' . esc_url(get_pagenum_link($page)) . '">' . esc_html((string) $page) . '</a>';
         }
 
-        return '<nav class="search-page__pagination" aria-label="'
-            . esc_attr__('Search results pages', 'perego-site') . '">'
-            . implode('', $links) . '</nav>';
+        $html .= $current === $totalPages
+            ? '<span class="is-disabled">' . esc_html__('Next', 'perego-site') . '</span>'
+            : '<a href="' . esc_url(get_pagenum_link($current + 1)) . '">' . esc_html__('Next', 'perego-site') . '</a>';
+
+        return $html . '</nav>';
     }
 
-    /** @param array<string, string> $s */
-    private function breadcrumb(array $s): string
+    /** @param array<string, string> $copy */
+    private function breadcrumb(array $copy): string
     {
-        return '<nav class="page-crumb" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">'
+        return '<nav class="page-crumb" style="justify-content:center;" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">'
             . '<a href="' . esc_url(home_url('/')) . '">' . esc_html($this->content->uiHome()) . '</a>'
-            . '<span aria-hidden="true">/</span>'
-            . '<span aria-current="page">' . esc_html($s['h1']) . '</span>'
-            . '</nav>';
+            . '<span aria-hidden="true">/</span><span aria-current="page">' . esc_html($copy['h1']) . '</span></nav>';
     }
 
-    /**
-     * @param array<string, string> $s
-     */
-    private function searchForm(array $s, string $query): string
+    /** @param array<string, string> $copy */
+    private function searchForm(array $copy, string $query): string
     {
-        return '<form class="search-page__form" role="search" method="get" action="' . esc_url(home_url('/')) . '">'
-            . '<label class="screen-reader-text" for="perego-search-field">' . esc_html($s['h1']) . '</label>'
-            . '<input type="search" id="perego-search-field" name="s" value="' . esc_attr($query) . '" '
-            . 'placeholder="' . esc_attr($s['placeholder']) . '" />'
-            . '<button type="submit" class="perego-btn perego-btn--accent">' . esc_html($s['button']) . '</button>'
-            . '</form>';
+        return '<form class="search-bar" role="search" method="get" action="' . esc_url(home_url('/')) . '" style="margin:clamp(22px,3vw,34px) auto 0;">'
+            . '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+            . '<label class="screen-reader-text" for="perego-search-field">' . esc_html($copy['h1']) . '</label>'
+            . '<input type="search" id="perego-search-field" name="s" value="' . esc_attr($query) . '" placeholder="' . esc_attr($copy['placeholder']) . '" />'
+            . '<button type="submit" class="btn btn--accent">' . esc_html($copy['button']) . '</button></form>';
     }
 }

@@ -109,6 +109,7 @@ final class ProjectBriefForm extends Form
     private function budgetOptions(): array
     {
         $labels = [
+            '' => __('Select a range', 'perego-site'),
             'under-1k' => __('Under $1,000', 'perego-site'),
             '1k-5k' => __('$1,000 – $5,000', 'perego-site'),
             '5k-15k' => __('$5,000 – $15,000', 'perego-site'),
@@ -117,7 +118,7 @@ final class ProjectBriefForm extends Form
         ];
 
         $options = [];
-        foreach (self::BUDGET_VALUES as $value) {
+        foreach (array_merge([''], self::BUDGET_VALUES) as $value) {
             $options[$value] = $labels[$value];
         }
 

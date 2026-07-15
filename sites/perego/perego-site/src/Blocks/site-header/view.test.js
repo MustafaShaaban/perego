@@ -17,15 +17,15 @@ function loadStore( { context, element } ) {
 
 function buildHeader() {
 	document.body.innerHTML = `
-		<div class="perego-header">
-			<div class="perego-header__nav-backdrop"></div>
-			<nav class="perego-header__nav">
+		<header class="site-header">
+			<button id="navToggle" class="nav-toggle"></button>
+			<nav id="mainNav" class="main-nav">
 				<a href="#one">One</a>
 				<a href="#two">Two</a>
 			</nav>
-		</div>`;
+		</header><div id="navBackdrop" class="nav-backdrop"></div>`;
 
-	return document.querySelector( '.perego-header' );
+	return document.querySelector( '.site-header' );
 }
 
 beforeEach( () => {
@@ -88,7 +88,7 @@ describe( 'callbacks.init — backdrop and nav-link close', () => {
 		callbacks.init();
 		document.body.style.overflow = 'hidden';
 
-		ref.querySelector( '.perego-header__nav-backdrop' ).dispatchEvent(
+		document.getElementById( 'navBackdrop' ).dispatchEvent(
 			new Event( 'click' )
 		);
 
@@ -102,7 +102,7 @@ describe( 'callbacks.init — backdrop and nav-link close', () => {
 		const { callbacks } = loadStore( { context, element: { ref } } );
 
 		callbacks.init();
-		ref.querySelector( '.perego-header__nav a' ).dispatchEvent(
+		ref.querySelector( '.main-nav a' ).dispatchEvent(
 			new Event( 'click' )
 		);
 
@@ -135,7 +135,7 @@ describe( 'actions.toggleMenu / closeMenu — scroll lock + focus restore', () =
 
 		actions.toggleMenu();
 
-		const firstLink = ref.querySelector( '.perego-header__nav a[href]' );
+		const firstLink = ref.querySelector( '.main-nav a[href]' );
 		expect( document.activeElement ).toBe( firstLink );
 	} );
 
@@ -251,11 +251,11 @@ describe( 'actions.handleMenuKeydown — focus trap + Escape', () => {
 describe( 'actions.toggleMobileDropdown — mobile tap-accordion', () => {
 	function buildNavItem() {
 		document.body.innerHTML = `
-			<div class="perego-header__nav-item">
-				<a class="perego-header__nav-toggle" href="#services">Services</a>
+			<div class="has-dropdown">
+				<a class="main-nav__link" href="#services" aria-expanded="false">Services</a>
 			</div>`;
 
-		return document.querySelector( '.perego-header__nav-toggle' );
+		return document.querySelector( '.main-nav__link' );
 	}
 
 	test( 'toggles is-open on mobile viewports', () => {
@@ -266,7 +266,7 @@ describe( 'actions.toggleMobileDropdown — mobile tap-accordion', () => {
 			element: { ref },
 		} );
 		const link = buildNavItem();
-		const item = link.closest( '.perego-header__nav-item' );
+		const item = link.closest( '.has-dropdown' );
 		const preventDefault = jest.fn();
 
 		actions.toggleMobileDropdown( {
@@ -276,6 +276,7 @@ describe( 'actions.toggleMobileDropdown — mobile tap-accordion', () => {
 
 		expect( preventDefault ).toHaveBeenCalled();
 		expect( item.classList.contains( 'is-open' ) ).toBe( true );
+		expect( link.getAttribute( 'aria-expanded' ) ).toBe( 'true' );
 	} );
 
 	test( 'does nothing on desktop viewports (pure-CSS hover/focus handles it there)', () => {
@@ -286,7 +287,7 @@ describe( 'actions.toggleMobileDropdown — mobile tap-accordion', () => {
 			element: { ref },
 		} );
 		const link = buildNavItem();
-		const item = link.closest( '.perego-header__nav-item' );
+		const item = link.closest( '.has-dropdown' );
 		const preventDefault = jest.fn();
 
 		actions.toggleMobileDropdown( {

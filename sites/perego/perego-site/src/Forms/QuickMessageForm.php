@@ -31,7 +31,7 @@ final class QuickMessageForm extends Form
     }
 
     /**
-     * @return array<string,array{type:string,rules:list<string>,label:string}>
+     * @return array<string,array{type:string,rules:list<string>,label:string,placeholder:string}>
      */
     public function fields(): array
     {
@@ -39,17 +39,20 @@ final class QuickMessageForm extends Form
             'name' => [
                 'type' => 'text',
                 'rules' => ['required', 'max:120'],
-                'label' => __('Your name', 'perego-site'),
+                'label' => __('Full name', 'perego-site'),
+                'placeholder' => __('Put your name here', 'perego-site'),
             ],
             'email' => [
                 'type' => 'email',
                 'rules' => ['required', 'email', 'max:190'],
-                'label' => __('Email address', 'perego-site'),
+                'label' => __('E-mail', 'perego-site'),
+                'placeholder' => __('Put your E-mail here', 'perego-site'),
             ],
             'message' => [
                 'type' => 'textarea',
                 'rules' => ['required', 'max:2000'],
-                'label' => __('How can we help?', 'perego-site'),
+                'label' => __('Your message', 'perego-site'),
+                'placeholder' => __('Say hello.', 'perego-site'),
             ],
         ];
     }

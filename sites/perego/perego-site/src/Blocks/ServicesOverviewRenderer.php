@@ -20,12 +20,19 @@ use PeregoSite\Content\ServiceContent;
  *
  * Structure ported from the handoff `services.html`: a hero (background image + H1 + four service
  * tabs, each with a "start your project" sub-link), a "what we do" intro (H2 + subline + two
- * paragraphs + a media image), the shared four-step process (reuses the theme's `.svc-process`
- * styling), and the closing "Have a project in mind?" CTA. Exactly one H1.
+ * paragraphs + a media image), the shared four-step process, a "Selected work" masonry drawn from
+ * real published projects (opening the site-wide media lightbox), and the closing "Have a project in
+ * mind?" CTA. Exactly one H1.
  */
 final class ServicesOverviewRenderer
 {
-    public function render(ServiceContent $content): string
+    /**
+     * @param list<array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>}> $selectedWork
+     *        Pre-resolved by the caller (real WP_Query + ProjectRepository::galleryFor()) so this
+     *        class stays a pure, unit-testable function of its inputs — the same pattern
+     *        ProjectGalleryLightboxRenderer uses for its own resolved images array.
+     */
+    public function render(ServiceContent $content, array $selectedWork): string
     {
         $o = $content->overview();
 
@@ -33,6 +40,7 @@ final class ServicesOverviewRenderer
         $html .= $this->renderHero($o, $content);
         $html .= $this->renderWhatWeDo($o);
         $html .= $this->renderProcess($o);
+        $html .= $this->renderSelectedWork($content, $selectedWork);
         $html .= $this->renderCta($o);
         $html .= '</section>';
 
@@ -96,19 +104,93 @@ final class ServicesOverviewRenderer
         return $html;
     }
 
+    /** Icon file, in the handoff's fixed Discover/Concept/Create/Deliver step order. */
+    private const PROCESS_ICONS = ['icon-clapper.png', 'icon-film-l.png', 'icon-star.png', 'icon-film-h.png'];
+
+    private const ARROW_SVG = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" '
+        . 'stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
     /** @param array<string, mixed> $o */
     private function renderProcess(array $o): string
     {
-        $html = '<section class="svc-process" aria-labelledby="services-overview-process">';
-        $html .= '<h2 class="wp-block-heading" id="services-overview-process">' . esc_html($o['processTitle']) . '</h2>';
-        $html .= '<ol>';
-        foreach ($o['processSteps'] as $step) {
-            $html .= '<li><strong>' . esc_html($step['label']) . '</strong> — ' . esc_html($step['desc']) . '</li>';
+        $html = '<section class="process" aria-labelledby="services-overview-process">';
+        $html .= '<div class="container">';
+        $html .= '<h2 class="section-title reveal" id="services-overview-process">' . esc_html($o['processTitle']) . '</h2>';
+        $html .= '<ol class="process-list">';
+
+        $steps = $o['processSteps'];
+        $lastIndex = count($steps) - 1;
+        $iconBase = get_stylesheet_directory_uri() . '/assets/images/';
+
+        foreach ($steps as $index => $step) {
+            $icon = self::PROCESS_ICONS[$index] ?? self::PROCESS_ICONS[0];
+            $html .= '<li class="process-step reveal" data-delay="' . (int) $index . '">'
+                . '<span class="process-step__icon"><img src="' . esc_url($iconBase . $icon) . '" alt="" /></span>'
+                . '<span class="process-step__label">' . esc_html($step['label']) . '</span>'
+                . '<span class="process-step__desc">' . esc_html($step['desc']) . '</span>'
+                . '</li>';
+
+            if ($index !== $lastIndex) {
+                $html .= '<li class="process-arrow" aria-hidden="true">' . self::ARROW_SVG . '</li>';
+            }
         }
+
         $html .= '</ol>';
+        $html .= '</div>';
         $html .= '</section>';
 
         return $html;
+    }
+
+    /**
+     * "Selected work" — real published projects opening the site-wide media lightbox
+     * (perego-theme/media-lightbox). A project with 2+ gallery images opens as a gallery; otherwise
+     * its featured image opens as a single image. Renders nothing when no project has usable media,
+     * rather than an empty heading over a blank grid.
+     *
+     * @param list<array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>}> $selectedWork
+     */
+    private function renderSelectedWork(ServiceContent $content, array $selectedWork): string
+    {
+        $cards = array_filter(array_map(
+            fn (array $project): string => $this->selectedWorkCard($project),
+            $selectedWork,
+        ));
+
+        if ($cards === []) {
+            return '';
+        }
+
+        $html = '<section class="portfolio page-section" aria-labelledby="services-overview-selected-work">';
+        $html .= '<div class="container">';
+        $html .= '<h2 class="section-title reveal" id="services-overview-selected-work" style="margin-bottom:clamp(24px,3vw,40px);">'
+            . esc_html($content->label('selectedWork')) . '</h2>';
+        $html .= '<div class="work-masonry" aria-label="' . esc_attr($content->label('selectedWork')) . '">';
+        $html .= implode('', $cards);
+        $html .= '</div>';
+        $html .= '</div>';
+        $html .= '</section>';
+
+        return $html;
+    }
+
+    /**
+     * @param array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>} $project
+     */
+    private function selectedWorkCard(array $project): string
+    {
+        if (count($project['gallerySrcs']) > 1) {
+            $trigger = 'data-gallery="' . esc_attr(implode(',', $project['gallerySrcs'])) . '"';
+        } elseif ($project['thumbUrl'] !== '') {
+            $trigger = 'data-image="' . esc_attr($project['thumbUrl']) . '"';
+        } else {
+            return '';
+        }
+
+        return '<button type="button" class="work-card reveal" ' . $trigger . ' '
+            . 'aria-label="' . esc_attr(sprintf(__('Open %s', 'perego-site'), $project['title'])) . '">'
+            . '<img src="' . esc_url($project['thumbUrl']) . '" alt="' . esc_attr($project['thumbAlt']) . '" loading="lazy" />'
+            . '<span class="work-card__overlay"></span><span class="work-zoom" aria-hidden="true"></span></button>';
     }
 
     /** @param array<string, mixed> $o */

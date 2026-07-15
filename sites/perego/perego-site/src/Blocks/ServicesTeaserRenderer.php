@@ -40,20 +40,20 @@ final class ServicesTeaserRenderer
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" />'
             . '</div>';
 
-        $html .= '<div class="services-teaser__inner">';
+        $html .= '<div class="container services-teaser__inner">';
 
         $html .= '<div class="services-teaser__head">';
-        $html .= '<h2 class="services-teaser__title" id="' . self::HEADING_ID . '">'
+        $html .= '<h2 class="services-teaser__title reveal" id="' . self::HEADING_ID . '">'
             . esc_html($content->servicesTeaserTitle()) . '</h2>';
-        $html .= '<a class="perego-link-arrow services-teaser__link" href="' . esc_url(home_url('/services')) . '">'
+        $html .= '<a class="link-arrow services-teaser__link reveal" data-delay="1" href="' . esc_url(home_url('/services')) . '">'
             . esc_html($content->servicesTeaserSeeAll())
             . $this->arrowSvg()
             . '</a>';
         $html .= '</div>';
 
         $html .= '<div class="service-cards">';
-        foreach ($content->services() as $service) {
-            $html .= $this->renderCard($service);
+        foreach ($content->services() as $index => $service) {
+            $html .= $this->renderCard($service, $index);
         }
         $html .= '</div>';
 
@@ -66,14 +66,14 @@ final class ServicesTeaserRenderer
     /**
      * @param array{slug: string, name: string, image: string, alt: string} $service
      */
-    private function renderCard(array $service): string
+    private function renderCard(array $service, int $index): string
     {
         $href = esc_url(home_url('/services/' . $service['slug']));
 
         $imageUrl = get_stylesheet_directory_uri() . '/assets/images/' . $service['image'] . '.png';
         $media    = '<img src="' . esc_url($imageUrl) . '" alt="' . esc_attr($service['alt']) . '" loading="lazy" />';
 
-        return '<a class="service-card" href="' . $href . '">'
+        return '<a class="service-card reveal"' . ($index > 0 ? ' data-delay="' . esc_attr((string) $index) . '"' : '') . ' href="' . $href . '">'
             . $media
             . '<span class="service-card__overlay"></span>'
             . '<span class="service-card__label">' . esc_html($service['name']) . '</span>'

@@ -1,0 +1,406 @@
+/* Minimal compatibility layer for FSE wrappers; recorded in Spec 008 T003. */
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 300; font-display: swap; src: url("../fonts/open-sans-latin-300-normal.woff2") format("woff2"); }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/open-sans-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 600; font-display: swap; src: url("../fonts/open-sans-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Open Sans"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/open-sans-latin-700-normal.woff2") format("woff2"); }
+@font-face { font-family: "Cairo"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/cairo-arabic-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Cairo"; font-style: normal; font-weight: 600; font-display: swap; src: url("../fonts/cairo-arabic-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Cairo"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/cairo-arabic-700-normal.woff2") format("woff2"); }
+
+/* FSE structural wrappers must not introduce a second layout system around the reference DOM. */
+html {
+	overflow-x: clip;
+}
+
+.wp-site-blocks,
+.wp-site-blocks > .wp-block-template-part,
+.wp-site-blocks > main {
+	margin-block-start: 0;
+	margin-block-end: 0;
+}
+
+.wp-site-blocks .is-layout-constrained > :where(:not(.alignleft):not(.alignright):not(.alignfull)),
+.wp-site-blocks .is-layout-flow > * {
+	max-inline-size: none;
+	margin-inline: 0;
+}
+
+.wp-site-blocks .wp-block-group__inner-container {
+	margin: 0;
+}
+
+/* WP wraps the header in a template-part box that is only header-height; flatten it so sticky
+ * positioning is measured against the page, as in the locked static handoff. */
+.wp-block-template-part:has(> .site-header) {
+	display: contents;
+}
+
+/* A sticky header is a stacking context. Keep its fixed mobile panel above the handoff backdrop
+ * while the panel is open; otherwise the sibling backdrop (z-index:150) intercepts every nav tap. */
+.site-header.is-menu-open {
+	z-index: 201;
+}
+
+/* The reference file's white text on the active language pill's accent background is 2.9:1 — below
+ * WCAG AA. Every other accent-background control in the reference (.pagination .is-current,
+ * .web-filter.is-active, .svc-tab .svc-tab__cta) already pairs it with a dark ink; align this one. */
+.lang-toggle__btn.is-active {
+	color: #2a0148;
+}
+
+/* The reference dims every breadcrumb span (including the current-page label) to 50% of
+ * `--muted-2`, which drops the current-page text on `--bg-deep` to ~2.3:1. Only the decorative
+ * separators are meant to be dimmed; give the current page the same full-strength `--muted` the
+ * breadcrumb's own links already use. */
+.page-crumb span[aria-current="page"] {
+	opacity: 1;
+	color: var(--muted);
+}
+
+/* Every CoreX form on the site (contact/project-brief, footer quick-message, join-us) shares one
+ * real submission engine (window.Corex, spec 043); style its state classes/attributes once here so
+ * the handoff's field-error, form-summary banner, and button-loading contract look the same
+ * everywhere instead of only on whichever page happened to get bespoke CSS first. */
+.corex-form__input[aria-invalid="true"] {
+	border-color: #ff6ba6;
+}
+
+.corex-form__status {
+	border-radius: 10px;
+	transition: background-color var(--perego-dur-medium, 0.3s) var(--perego-ease, ease);
+}
+
+.corex-form__status.is-success,
+.corex-form__status.is-error {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 16px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.corex-form__status.is-success::before,
+.corex-form__status.is-error::before {
+	flex: none;
+	font-size: 15px;
+	line-height: 1;
+}
+
+.corex-form__status.is-success {
+	background: rgba(31, 138, 91, 0.18);
+	border: 1px solid rgba(80, 220, 150, 0.4);
+}
+
+.corex-form__status.is-success::before {
+	content: "\2713";
+}
+
+.corex-form__status.is-error {
+	background: rgba(216, 39, 91, 0.14);
+	border: 1px solid rgba(255, 107, 166, 0.4);
+}
+
+.corex-form__status.is-error::before {
+	content: "\26A0";
+}
+
+/* The button dims and its sibling .corex-spinner (Corex.loading, spec 043) spins in currentColor
+ * right after it — a branded, disabled-looking loading state without touching the framework's
+ * spinner-after-the-button DOM order. */
+form.corex-is-loading .corex-form__submit {
+	opacity: 0.65;
+}
+
+form.corex-is-loading .corex-form__submit + .corex-spinner {
+	color: var(--accent);
+}
+
+/* Keep the editable post-content wrapper transparent to the handoff's two-panel flex contract. */
+.home-about__panels > .wp-block-post-content {
+	display: flex;
+	flex-direction: column;
+	gap: clamp(18px, 2.4vw, 30px);
+	inline-size: 100%;
+}
+
+.home-about__panels > .wp-block-post-content > * {
+	margin-block: 0;
+}
+
+/* The handoff's reference CSS expects its own classed controls, not browser defaults. */
+.perego-theme-app :where(input, textarea, select, button) {
+	font: inherit;
+}
+
+/* CoreX emits this anti-spam field inside the live footer form; it must remain unavailable to people. */
+.site-footer .corex-form__hp {
+	position: absolute;
+	inset-inline-start: -9999px;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+}
+
+/* CoreX state classes remain attached, while the locked footer button remains the visual authority. */
+.site-footer .footer-form .corex-form__submit {
+	background: var(--accent);
+	color: #2a0148;
+}
+
+/* Requiredness remains native and announced by the controls; the locked footer keeps markers out of view. */
+.site-footer .corex-form__required,
+.site-footer .join-form__req {
+	display: none;
+}
+
+/* The CV constraint stays programmatically associated with the native input; the reference
+ * file-drop is the only visible prompt. */
+.site-footer .join-form__hint {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
+/* The contact page keeps CoreX's real form endpoint/schema markup, but projects the locked
+ * contact.html layout onto its structural field wrappers. */
+.contact-form-wrap .contact__lead {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
+.contact-form-wrap .corex-form {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 20px;
+}
+
+/* The post-content block is only the editable carrier for the live form. Its flow gap is not
+ * part of the locked contact form DOM. */
+.contact-form-wrap .wp-block-post-content.is-layout-flow > .corex-form {
+	margin-block-start: 0;
+}
+
+/* The handoff grid owns vertical alignment; the FSE flow wrapper must not offset its chooser. */
+.contact-hero__grid.is-layout-flow > .contact-choose {
+	margin-block-start: 0;
+}
+
+.contact-form-wrap .corex-form__field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	min-inline-size: 0;
+}
+
+.contact-form-wrap .corex-form__field:not(.corex-form__field--half),
+.contact-form-wrap .corex-form__status,
+.contact-form-wrap .corex-form__hp {
+	grid-column: 1 / -1;
+}
+
+.contact-form-wrap [data-corex-field="services"] {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
+.contact-form-wrap [data-corex-field="services"] * {
+	display: none;
+}
+
+.contact-form-wrap .corex-form__hp {
+	position: absolute;
+	inset-inline-start: -9999px;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+}
+
+.contact-form-wrap .corex-form__error:empty,
+.contact-form-wrap .corex-form__status:empty {
+	display: none;
+}
+
+.contact-form-wrap .corex-form__required {
+	display: none;
+}
+
+.contact-form-wrap .corex-form__label {
+	font-weight: 600;
+	font-size: 15px;
+}
+
+/* The form schema stays CoreX-owned; these two editorial qualifiers are presentation-only
+ * text from the locked contact handoff. */
+.contact-form-wrap [data-corex-field="phone"] .corex-form__label::after,
+.contact-form-wrap [data-corex-field="company"] .corex-form__label::after {
+	content: " (optional)";
+	color: var(--muted-2);
+	font-weight: 400;
+}
+
+.contact-form-wrap .corex-form__input {
+	width: 100%;
+	padding: 10px 4px;
+	background: transparent;
+	border: 0;
+	border-bottom: 1.5px solid rgba(216, 106, 243, 0.5);
+	border-radius: 0;
+	color: #fff;
+	font: inherit;
+}
+
+.contact-form-wrap textarea.corex-form__input {
+	min-block-size: 143px;
+	padding: 14px;
+	border: 1px solid rgba(255,255,255,0.3);
+	border-radius: 14px;
+	resize: vertical;
+}
+
+.contact-form-wrap select.corex-form__input {
+	border-bottom-color: rgba(216, 106, 243, 0.5);
+	padding-block: 10px;
+	padding-inline: 4px 24px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23d86af3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: right 4px center;
+	appearance: none;
+}
+
+[dir="rtl"] .contact-form-wrap select.corex-form__input {
+	background-position: left 4px center;
+}
+
+.contact-form-wrap [data-corex-field="message"]::after {
+	content: attr(data-perego-counter);
+	position: absolute;
+	inset-inline-end: 2px;
+	top: 100%;
+	margin-top: 6px;
+	color: var(--muted-2);
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	text-align: end;
+}
+
+.contact-form-wrap [data-corex-field="message"] {
+	position: relative;
+	margin-bottom: 22px;
+}
+
+.contact-form-wrap .corex-form__submit {
+	justify-self: start;
+	padding: 12px 42px;
+	border: 0;
+	border-radius: 9px;
+	background: var(--accent);
+	color: #2a0148;
+	font: inherit;
+	font-size: 15px;
+	font-weight: 700;
+	letter-spacing: .04em;
+	text-transform: uppercase;
+	cursor: pointer;
+}
+
+@media (max-width: 760px) {
+	.contact-form-wrap .corex-form { grid-template-columns: 1fr; }
+	.contact-form-wrap .corex-form__field--half { grid-column: 1 / -1; }
+}
+
+/* Journal single: WordPress's core comment blocks (wp:comments/wp:post-comments-form) already pick
+ * up the handoff's own .comment-form/.comment-list card styling verbatim (perego-reference.scss is
+ * an untouched copy, and WP emits those exact class names) — but core ships its own input/textarea
+ * with a hardcoded white background and grey border, which is the "native white comment fields"
+ * defect. Restyle only the bare form controls to the same look every other Perego form field uses. */
+.wp-block-comments .comment-form,
+.wp-block-post-comments-form .comment-form {
+	color: var(--text, #fff);
+}
+
+.wp-block-comments .comment-form label,
+.wp-block-post-comments-form .comment-form label {
+	font-weight: 600;
+	font-size: 15px;
+}
+
+.wp-block-comments .comment-form input:not([type="submit"]):not([type="checkbox"]),
+.wp-block-comments .comment-form textarea,
+.wp-block-post-comments-form .comment-form input:not([type="submit"]):not([type="checkbox"]),
+.wp-block-post-comments-form .comment-form textarea {
+	background: transparent;
+	border: 1px solid rgba(255, 255, 255, 0.35);
+	border-radius: 10px;
+	color: #fff;
+	font: inherit;
+	padding: 11px 14px;
+}
+
+.wp-block-comments .comment-form input:focus-visible,
+.wp-block-comments .comment-form textarea:focus-visible,
+.wp-block-post-comments-form .comment-form input:focus-visible,
+.wp-block-post-comments-form .comment-form textarea:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+}
+
+.wp-block-comments .comment-notes,
+.wp-block-post-comments-form .comment-notes {
+	color: var(--muted, rgba(255, 255, 255, 0.72));
+	font-size: 13px;
+}
+
+.wp-block-comments .comment-form .form-submit .wp-block-button__link,
+.wp-block-post-comments-form .comment-form .form-submit .wp-block-button__link {
+	background: var(--accent);
+	color: #2a0148;
+	border-radius: 9px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border: 0;
+	padding: 12px 42px;
+}
+
+/* The reference stylesheet's .lightbox is invisible (opacity:0; visibility:hidden) until an
+ * .is-open class is added — the static prototype's own main.js does that, but both Perego lightbox
+ * blocks (project-gallery-lightbox, media-lightbox) instead toggle the WordPress-idiomatic `hidden`
+ * attribute, which the reference rule never accounts for. The result: the dialog opens correctly in
+ * the DOM (hidden removed, focus trap, aria-modal, scroll lock all fire) but stays fully transparent
+ * and non-visible on screen — a real, confirmed defect, not a display:none vs hidden nuance. Restore
+ * visibility whenever `hidden` is absent, regardless of `.is-open`. */
+.lightbox:not([hidden]) {
+	opacity: 1;
+	visibility: visible;
+}
+
+/* Perego addition, not in the reference stylesheet: the seeded demo projects always carry a real
+ * (placeholder-labelled) featured image, but content types with no photo at all yet — e.g. a service
+ * post surfaced in Search — have nothing to show in a .post-card__media box, and
+ * .post-card__media-placeholder has no visual backing anywhere. A blank box reads as a broken image;
+ * a branded diagonal pattern (matching the seeded portfolio-N.png placeholders' own look) reads as an
+ * intentional "no photo yet" state instead. */
+.post-card__media-placeholder {
+	display: block;
+	inline-size: 100%;
+	block-size: 100%;
+	background: repeating-linear-gradient(
+		135deg,
+		var(--bg-deep),
+		var(--bg-deep) 10px,
+		rgba(216, 106, 243, 0.08) 10px,
+		rgba(216, 106, 243, 0.08) 20px
+	);
+}

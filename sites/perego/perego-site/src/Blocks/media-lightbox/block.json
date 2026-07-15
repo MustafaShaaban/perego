@@ -1,0 +1,16 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/media-lightbox",
+	"title": "Perego Media Lightbox",
+	"category": "theme",
+	"icon": "format-video",
+	"description": "The site-wide accessible image/video/gallery lightbox dialog (ported from the handoff's main.js lightbox IIFE). Renders once per page in the footer template part; its view script delegates a click listener to every [data-image]/[data-video]/[data-gallery] trigger anywhere on the page, so any block can open it without wiring its own dialog.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"style": "file:./style-index.css",
+	"supports": {
+		"html": false
+	}
+}

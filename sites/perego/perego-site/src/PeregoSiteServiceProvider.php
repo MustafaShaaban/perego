@@ -16,8 +16,10 @@ use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PostBreadcrumbRenderer;
 use PeregoSite\Blocks\PostReadingTimeRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
+use PeregoSite\Blocks\ContactServiceChooserRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
 use PeregoSite\Blocks\LegalTocRenderer;
+use PeregoSite\Blocks\MediaLightboxRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
 use PeregoSite\Blocks\PreloaderRenderer;
 use PeregoSite\Blocks\ProjectHeroRenderer;
@@ -25,6 +27,7 @@ use PeregoSite\Blocks\ProjectGalleryLightboxRenderer;
 use PeregoSite\Blocks\ProjectNavigationRenderer;
 use PeregoSite\Blocks\SearchResultsRenderer;
 use PeregoSite\Blocks\ServiceHeroRenderer;
+use PeregoSite\Blocks\ServiceSelectedWorkRenderer;
 use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Blocks\ServicesTeaserRenderer;
 use PeregoSite\Blocks\SiteFooterRenderer;
@@ -73,6 +76,7 @@ final class PeregoSiteServiceProvider
         $this->registerGlobalSurfaces();
         $this->registerGlobalSections();
         $this->registerClients();
+        $this->registerContactServiceChooser();
         $this->registerForms();
 
         (new StructuredData())->register();
@@ -271,11 +275,15 @@ final class PeregoSiteServiceProvider
 
             register_block_type($this->blockDir('post-reading-time'), [
                 'render_callback' => static function () use ($languageService): string {
-                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    // get_queried_object() is only correct on a singular page; inside a Query Loop
+                    // (e.g. the journal archive's post-template) it still points at the archive
+                    // itself, not the post currently being rendered. get_post() correctly resolves
+                    // the loop's current global $post in both contexts.
+                    $current = function_exists('get_post') ? get_post() : null;
 
                     return (new PostReadingTimeRenderer(
                         new GlobalContent($languageService->driver()->currentLocale())
-                    ))->render($queried instanceof \WP_Post ? $queried : null);
+                    ))->render($current instanceof \WP_Post ? $current : null);
                 },
             ]);
 
@@ -307,8 +315,33 @@ final class PeregoSiteServiceProvider
 
             register_block_type($this->blockDir('services-overview'), [
                 'render_callback' => static function () use ($overviewRenderer, $languageService): string {
+                    $projects = new ProjectRepository();
+                    $portfolioContent = new PortfolioContent($languageService->driver()->currentLocale());
+
+                    $posts = (new \WP_Query([
+                        'post_type' => ProjectPostType::POST_TYPE,
+                        'post_status' => 'publish',
+                        'posts_per_page' => 9,
+                        'no_found_rows' => true,
+                        'orderby' => 'date',
+                        'order' => 'DESC',
+                    ]))->posts;
+
+                    $selectedWork = array_map(static function (\WP_Post $post) use ($projects, $portfolioContent): array {
+                        $card = $projects->toGridCard($post, $portfolioContent);
+                        $gallery = $projects->galleryFor($post);
+
+                        return [
+                            'title' => $card['title'],
+                            'thumbUrl' => $card['thumbUrl'],
+                            'thumbAlt' => $card['thumbAlt'],
+                            'gallerySrcs' => array_column($gallery, 'src'),
+                        ];
+                    }, $posts);
+
                     return $overviewRenderer->render(
-                        new ServiceContent($languageService->driver()->currentLocale())
+                        new ServiceContent($languageService->driver()->currentLocale()),
+                        $selectedWork
                     );
                 },
             ]);
@@ -329,6 +362,79 @@ final class PeregoSiteServiceProvider
                     }
 
                     return $heroRenderer->render($content, $currentSlug);
+                },
+            ]);
+
+            $selectedWorkRenderer = new ServiceSelectedWorkRenderer();
+
+            register_block_type($this->blockDir('service-selected-work'), [
+                'render_callback' => static function () use ($selectedWorkRenderer, $languageService): string {
+                    // The service and project CPTs use different (but 1:1) slugs for the same four
+                    // disciplines — map the current service to its matching project category.
+                    $serviceToCategory = [
+                        'video-editing' => 'video',
+                        'motion-graphics' => 'motion',
+                        'graphic-design' => 'design',
+                        'website-making' => 'web',
+                    ];
+
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    $currentSlug = '';
+                    if ($queried instanceof \WP_Post) {
+                        $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
+                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                    }
+                    $category = $serviceToCategory[$currentSlug] ?? '';
+                    if ($category === '') {
+                        return '';
+                    }
+
+                    $locale = $languageService->driver()->currentLocale();
+
+                    // Polylang gives every language its own category term (e.g. "video" for en, a
+                    // separate "video-ar" term for ar, linked as translations) — querying by the
+                    // English slug alone would only ever match English-tagged projects, leaving the
+                    // Arabic service singles with an empty (correctly hidden) section.
+                    $enTerm = get_term_by('slug', $category, ProjectPostType::TAXONOMY);
+                    $termId = $enTerm ? (int) $enTerm->term_id : 0;
+                    if ($termId !== 0 && function_exists('pll_get_term')) {
+                        $localized = pll_get_term($termId, $locale);
+                        $termId = $localized ? (int) $localized : $termId;
+                    }
+                    if ($termId === 0) {
+                        return '';
+                    }
+
+                    $projects = new ProjectRepository();
+                    $portfolioContent = new PortfolioContent($locale);
+
+                    $posts = (new \WP_Query([
+                        'post_type' => ProjectPostType::POST_TYPE,
+                        'post_status' => 'publish',
+                        'posts_per_page' => 9,
+                        'no_found_rows' => true,
+                        'orderby' => 'date',
+                        'order' => 'DESC',
+                        'tax_query' => [[
+                            'taxonomy' => ProjectPostType::TAXONOMY,
+                            'field' => 'term_id',
+                            'terms' => $termId,
+                        ]],
+                    ]))->posts;
+
+                    $selectedWork = array_map(static function (\WP_Post $post) use ($projects, $portfolioContent): array {
+                        $card = $projects->toGridCard($post, $portfolioContent);
+                        $gallery = $projects->galleryFor($post);
+
+                        return [
+                            'title' => $card['title'],
+                            'thumbUrl' => $card['thumbUrl'],
+                            'thumbAlt' => $card['thumbAlt'],
+                            'gallerySrcs' => array_column($gallery, 'src'),
+                        ];
+                    }, $posts);
+
+                    return $selectedWorkRenderer->render($selectedWork);
                 },
             ]);
         });
@@ -393,13 +499,13 @@ final class PeregoSiteServiceProvider
             ]);
 
             register_block_type($this->blockDir('project-navigation'), [
-                'render_callback' => static function () use ($languageService): string {
+                'render_callback' => static function (array $attributes) use ($languageService): string {
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
 
                     return (new ProjectNavigationRenderer(
                         new ProjectRepository(),
                         new PortfolioContent($languageService->driver()->currentLocale()),
-                    ))->render($queried instanceof \WP_Post ? $queried : null);
+                    ))->render($queried instanceof \WP_Post ? $queried : null, (string) ($attributes['surface'] ?? 'all'));
                 },
             ]);
         });
@@ -430,6 +536,26 @@ final class PeregoSiteServiceProvider
             $preloaderRenderer = new PreloaderRenderer();
             register_block_type($this->blockDir('preloader'), [
                 'render_callback' => static fn (): string => $preloaderRenderer->render(),
+            ]);
+
+            $lightboxRenderer = new MediaLightboxRenderer();
+            $languageService = $this->languageService;
+            register_block_type($this->blockDir('media-lightbox'), [
+                'render_callback' => static function () use ($lightboxRenderer, $languageService): string {
+                    $content = new GlobalContent($languageService->driver()->currentLocale());
+
+                    return $lightboxRenderer->render($content->lightbox());
+                },
+            ]);
+        });
+    }
+
+    private function registerContactServiceChooser(): void
+    {
+        add_action('init', function (): void {
+            $chooserRenderer = new ContactServiceChooserRenderer($this->languageService);
+            register_block_type($this->blockDir('contact-service-chooser'), [
+                'render_callback' => static fn (): string => $chooserRenderer->render(),
             ]);
         });
     }

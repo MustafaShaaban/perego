@@ -416,3 +416,83 @@ disturbing the fixture; the checklist already sanctioned "exclude from indexing"
 to the well-known WP default slug and documented as removable once the fixture is deleted at launch
 (LAUNCH-CHECKLIST §4). Verified live: the page emits `noindex,nofollow` and no longer appears in the
 sitemap, while real pages (e.g. `/contact/`) are unaffected.
+
+**Decision 19 (2026-07-14) — CoreX Forms framework bug: no `novalidate`, worked around client-side.**
+Manually driving the Contact form through its required states (spec 008 T005) reproduced the exact
+defect the completion contract flagged: submitting with an empty required field shows the browser's
+native "Please fill out this field" bubble instead of the handoff's custom inline `.corex-form__error` +
+form-summary UI. Root cause: `corex-forms`' `FormBlockRenderer`/`FlowBlockRenderer` render
+`<form class="corex-form">` without a `novalidate` attribute, so the browser's own constraint validation
+intercepts the submit before `window.Corex.forms`' own schema-mirrored validator (spec 043) ever runs —
+the framework's validation/loading/error/success JS is otherwise fully wired and correct. This is a CoreX
+**framework** bug (`plugins/corex-forms/src/Block/{FormBlockRenderer,FlowBlockRenderer}.php`), out of
+Client Site Mode scope to fix directly. **Worked around** in the client layer: `perego-theme/assets/src/js/
+main.js` sets `form.noValidate = true` on every `.corex-form` at `DOMContentLoaded`, before any user
+interaction is possible — no race condition, no framework file touched. Flagging for a CoreX Framework
+Mode task to add `novalidate` to the renderer directly (removing the client workaround once fixed
+upstream). **Why**: the same pattern as the two framework quirks logged in the 2026-07-11 environment
+bootstrap note — work around in the client site, document, and flag upstream rather than either shipping
+the native-bubble defect or editing framework internals from a client-site session.
+
+**Decision 20 (2026-07-14) — Site-wide media lightbox as a plain-JS global block; `.lightbox` visibility
+bug found in the already-shipped project gallery too.** Building the Services archive's missing
+"Selected work" section needed an accessible image/video/gallery dialog, and no such shared component
+existed — the existing `project-gallery-lightbox` is scoped to one project's own gallery via the
+Interactivity API, tied to that block's own DOM/context. Rather than force a single-project pattern to
+work across disparate trigger buttons scattered in other blocks' markup, built `perego-theme/media-lightbox`:
+one dialog server-rendered once (in both footer template parts, so it's present on every route) whose
+view script is plain vanilla JS — not the Interactivity API — delegating a click listener to any
+`[data-image]`/`[data-video]`/`[data-gallery]` trigger anywhere on the page, ported from the handoff's own
+`main.js` lightbox IIFE (media-type detection, prev/next, dots) with the accessible-dialog contract already
+proven by `project-gallery-lightbox` (focus trap, Escape/backdrop close, focus restoration, scroll lock),
+plus an `inert` background while open. **Why plain JS instead of Interactivity API**: the Interactivity
+API's context model assumes triggers live inside the same store's DOM tree; a single global dialog reused
+by unrelated blocks (client cards, services masonry, future homepage lightboxes) doesn't fit that shape
+cleanly, while vanilla delegated-click matches exactly how the handoff's own reference implementation
+already works.
+
+Verifying it caught a much bigger, pre-existing bug: the dialog opened correctly in the DOM (`hidden`
+attribute removed, focus trap fired, `aria-modal` set) but was **completely invisible on screen**.
+Root cause: `perego-reference.scss`'s `.lightbox` rule is `opacity:0;visibility:hidden` by default,
+becoming visible only via an `.is-open` class — the mechanism the static handoff's own demo JS toggles —
+but both Perego lightbox blocks toggle the WordPress-idiomatic `hidden` attribute instead, which that rule
+never accounts for. Checking the **already-shipped** `project-gallery-lightbox` confirmed the identical
+defect: its 9/9 interaction checks had all passed because they only asserted the `hidden` DOM attribute,
+never the actual computed style — the project gallery lightbox had been "verified" while genuinely
+invisible to every real visitor. Fixed with one scoped rule in `perego-wordpress-adapter.scss`:
+`.lightbox:not([hidden]) { opacity:1; visibility:visible; }` (its specificity naturally beats the
+reference rule, so no `!important`), fixing both dialogs at once. Also strengthened
+`verify-interactions.mjs` to assert `getComputedStyle(...).opacity`/`.visibility` directly rather than
+just `hidden`, so this exact bug class cannot silently regress again. **Why this matters beyond the fix
+itself**: it's concrete evidence that "the interaction script passed" is not sufficient proof of visual
+correctness — matching the completion contract's own repeated warning not to treat functional/DOM checks
+as visual acceptance.
+
+**Decision 21 (2026-07-14) — AR Contact page silently lost its custom template because block-theme
+template hierarchy matches page templates by slug, and Polylang mutates translated slugs.** Running the
+full 8-viewport × EN/AR visual-recovery capture (previously only spot-checked at 1440/375) surfaced a
+severe regression invisible to every prior manual check: the Arabic Contact page rendered as a bare,
+unstyled list of native `corex-form__*` fields with no service-chooser buttons and no card container,
+while English rendered the full designed layout. Root cause: `page-contact.html` was never registered as
+a named custom template (unlike `legal.html`, already correctly registered in `theme.json`'s
+`customTemplates` and explicitly assigned via `_wp_page_template` on both the `terms`/`terms-2` and
+`privacy`/`privacy-2` pairs) — instead it relied on WordPress's implicit `page-{slug}.html` template-hierarchy
+match. That works for the English page (slug `contact`) but Polylang appends `-2` to a translation's slug
+to avoid a global slug collision (`contact` → `contact-2`), so the AR page's slug never matches
+`page-contact.html` and WordPress silently falls back to the generic `page.html` template — no error, no
+warning, just a completely different, undesigned page. Fixed by registering
+`{ "name": "page-contact", "title": "Contact", "postTypes": ["page"] }` in `theme.json` and explicitly
+setting `_wp_page_template = page-contact` on both page 57 (EN) and page 58 (AR) via `wp post meta
+update`, mirroring the legal pages' already-correct pattern — template selection no longer depends on a
+slug that Polylang is free to mutate. Verifying the fix also surfaced a second, smaller bug: the
+service-chooser buttons' concise labels (`ContactServiceChooserRenderer::HANDOFF_LABELS`) were hardcoded
+English strings passed through a bare `__()` call with no matching `.po` catalog entries for three of the
+four labels (only `"Website Making"` happened to coincidentally already exist in the catalog as a
+full-name string), so AR rendered three buttons in English and one in Arabic. Fixed by having the renderer
+take the injected `LanguageService` and reuse `HomeContent::services()`'s already-correct, already-translated
+locale-aware short names (the same source the home services-teaser cards use) instead of maintaining a
+second, divergent, untranslated copy of the same four labels. **Why this matters beyond the fix itself**:
+this is the second time this session that a defect was invisible to narrow, single-viewport manual
+review and only surfaced once the full route × viewport × language matrix was actually captured and
+looked at — reinforcing that partial/spot-check verification is not equivalent to the completion
+contract's required full-matrix visual proof.

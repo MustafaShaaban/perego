@@ -45,7 +45,7 @@ it('renders exactly four service cards in the fixed order', function () {
     $design  = strpos($html, '/services/graphic-design');
     $website = strpos($html, '/services/website-making');
 
-    expect(substr_count($html, 'class="service-card"'))->toBe(4)
+    expect(substr_count($html, 'class="service-card reveal"'))->toBe(4)
         ->and([$video, $motion, $design, $website])->each->toBeInt()
         ->and($video)->toBeLessThan($motion)
         ->and($motion)->toBeLessThan($design)
@@ -73,7 +73,15 @@ it('exposes the heading via aria-labelledby for the section landmark', function 
     $html = renderServicesTeaser();
 
     expect($html)->toMatch('/aria-labelledby="[^"]+"/')
-        ->and($html)->toMatch('/id="[^"]+"[^>]*class="services-teaser__title"|class="services-teaser__title" id="[^"]+"/');
+        ->and($html)->toMatch('/class="services-teaser__title(?: [^"]+)?" id="[^"]+"/');
+});
+
+it('preserves the handoff container and staggered reveal contract', function () {
+    $html = renderServicesTeaser();
+
+    expect($html)->toContain('class="container services-teaser__inner"')
+        ->and($html)->toContain('class="link-arrow services-teaser__link reveal" data-delay="1"')
+        ->and($html)->toContain('class="service-card reveal" data-delay="3"');
 });
 
 it('renders localized Arabic copy when the locale resolves to ar', function () {

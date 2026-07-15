@@ -1,96 +1,184 @@
 /**
- * Interaction-state verification (spec Phase 12). Drives the live header's Interactivity-API behaviour
- * in headless Chromium and asserts the handoff's documented states:
- *   - sticky header: scrolling past the threshold adds `is-scrolled` to `.perego-header`
- *   - mobile nav (≤1024): the hamburger opens the panel (aria-expanded=true, body scroll locked);
- *     Escape closes it and returns focus to the hamburger
- *   - desktop language switch: the AR pill is a real anchor to an `/ar/...` URL
- *
- * Reaches the WAMP vhost via Chromium host-resolver-rules (perego.local → 127.0.0.1). Writes JSON
- * evidence to output/verify-interactions.json and exits non-zero on any failure.
- * Run: node sites/perego/perego-site/scripts/verify-interactions.mjs
+ * Live interaction evidence for the locked handoff header contract. It intentionally uses the
+ * handoff selectors, records JSON under the Perego output tree, and exits non-zero on failure.
  */
 import { chromium } from 'playwright';
-import { writeFileSync, mkdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const BASE = 'http://perego.local';
+const OUTPUT = 'sites/perego/output/verify-interactions.json';
 const results = [];
 let failures = 0;
 
-function record( name, ok, detail = '' ) {
-	results.push( { name, ok, detail } );
-	if ( ! ok ) {
-		failures++;
+function record(name, ok, detail = '') {
+	results.push({ name, ok, detail });
+	if (!ok) failures++;
+	console.log(`[${ok ? 'PASS' : 'FAIL'}] ${name}${ok || !detail ? '' : ` — ${detail}`}`);
+}
+
+const browser = await chromium.launch({
+	args: ['--host-resolver-rules=MAP perego.local 127.0.0.1'],
+});
+
+// Sticky/scrolled desktop header and desktop Services hover menu.
+{
+	const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+	const page = await context.newPage();
+	await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+	const before = await page.locator('.site-header').evaluate((header) => header.classList.contains('is-scrolled'));
+	await page.evaluate(() => window.scrollTo(0, 400));
+	await page.waitForTimeout(250);
+	const after = await page.locator('.site-header').evaluate((header) => header.classList.contains('is-scrolled'));
+	record('sticky header: handoff is-scrolled state toggles', before === false && after === true, `before=${before} after=${after}`);
+
+	const services = page.locator('.has-dropdown').first();
+	await services.hover();
+	await page.waitForTimeout(250);
+	const dropdown = await services.locator('.dropdown').evaluate((element) => {
+		const style = getComputedStyle(element);
+		return { opacity: style.opacity, visibility: style.visibility };
+	});
+	record('desktop Services: hover opens handoff dropdown', dropdown.opacity === '1' && dropdown.visibility === 'visible', JSON.stringify(dropdown));
+	await context.close();
+}
+
+// Mobile panel, Services accordion, Escape close, and focus return.
+{
+	const context = await browser.newContext({ viewport: { width: 375, height: 812 } });
+	const page = await context.newPage();
+	await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+	const toggle = page.locator('#navToggle');
+	await toggle.click();
+	await page.waitForTimeout(200);
+	const opened = await page.evaluate(() => ({
+		expanded: document.querySelector('#navToggle')?.getAttribute('aria-expanded'),
+		navOpen: document.querySelector('#mainNav')?.classList.contains('is-open'),
+		headerOpen: document.querySelector('.site-header')?.classList.contains('is-menu-open'),
+		bodyLocked: document.body.style.overflow === 'hidden',
+	}));
+	record('mobile nav: hamburger opens panel and locks scroll', opened.expanded === 'true' && opened.navOpen === true && opened.headerOpen === true && opened.bodyLocked, JSON.stringify(opened));
+
+	const servicesLink = page.locator('.has-dropdown > .main-nav__link').first();
+	await servicesLink.click();
+	await page.waitForTimeout(100);
+	const accordion = await page.evaluate(() => ({
+		open: document.querySelector('.has-dropdown')?.classList.contains('is-open'),
+		expanded: document.querySelector('.has-dropdown > .main-nav__link')?.getAttribute('aria-expanded'),
+	}));
+	record('mobile Services: tap opens the accordion', accordion.open === true && accordion.expanded === 'true', JSON.stringify(accordion));
+
+	await page.keyboard.press('Escape');
+	await page.waitForTimeout(150);
+	const closed = await page.evaluate(() => ({
+		expanded: document.querySelector('#navToggle')?.getAttribute('aria-expanded'),
+		navOpen: document.querySelector('#mainNav')?.classList.contains('is-open'),
+		headerOpen: document.querySelector('.site-header')?.classList.contains('is-menu-open'),
+		bodyLocked: document.body.style.overflow === 'hidden',
+		focusOnToggle: document.activeElement === document.querySelector('#navToggle'),
+	}));
+	record('mobile nav: Escape closes and restores focus', closed.expanded === 'false' && closed.navOpen === false && closed.headerOpen === false && !closed.bodyLocked && closed.focusOnToggle, JSON.stringify(closed));
+	await context.close();
+}
+
+// Language switching is URL-managed, not a local-storage-only visual toggle.
+{
+	const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+	const page = await context.newPage();
+	await page.goto(`${BASE}/`, { waitUntil: 'networkidle' });
+	const href = await page.locator('.lang-toggle a[data-locale="ar"]').getAttribute('href');
+	record('language switch: AR control is a real locale URL', /\/ar\//.test(href ?? ''), `href=${href ?? ''}`);
+	await context.close();
+}
+
+// The project gallery is server-rendered from editor-owned attachment metadata and opens an accessible lightbox.
+{
+	const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+	const page = await context.newPage();
+	await page.goto(`${BASE}/work/brand-film-launch-campaign/`, { waitUntil: 'networkidle' });
+	const thumbs = page.locator('.project-gallery .work-card');
+	const count = await thumbs.count();
+	record('project gallery: representative project renders seeded thumbnails', count >= 3, `count=${count}`);
+
+	if (count > 0) {
+		await thumbs.first().click();
+		await page.waitForTimeout(100);
+		const opened = await page.locator('.project-gallery .lightbox').evaluate((dialog) => {
+			const style = getComputedStyle(dialog);
+			return {
+				hidden: dialog.hidden,
+				modal: dialog.getAttribute('aria-modal'),
+				bodyLocked: document.body.style.overflow === 'hidden',
+				// DOM-level "open" (hidden removed) is not the same as visually open — the reference
+				// stylesheet's own .lightbox rule stays opacity:0/visibility:hidden unless an .is-open
+				// class is present, which nothing ever adds. Assert the computed style directly so a
+				// dialog that is "open" in the DOM but invisible on screen fails this check.
+				opacity: style.opacity,
+				visibility: style.visibility,
+			};
+		});
+		record(
+			'project lightbox: opens as a visible modal and locks scroll',
+			opened.hidden === false && opened.modal === 'true' && opened.bodyLocked && opened.opacity === '1' && opened.visibility === 'visible',
+			JSON.stringify(opened)
+		);
+
+		await page.keyboard.press('Escape');
+		await page.waitForTimeout(100);
+		const closed = await page.locator('.project-gallery .lightbox').evaluate((dialog) => ({
+			hidden: dialog.hidden,
+			bodyLocked: document.body.style.overflow === 'hidden',
+			focusOnThumb: document.activeElement === document.querySelector('.project-gallery .work-card'),
+		}));
+		record('project lightbox: Escape closes and restores focus', closed.hidden === true && !closed.bodyLocked && closed.focusOnThumb, JSON.stringify(closed));
 	}
-	console.log( `[${ ok ? 'PASS' : 'FAIL' }] ${ name }${ ok || ! detail ? '' : ` — ${ detail }` }` );
-}
-
-const browser = await chromium.launch( {
-	args: [ '--host-resolver-rules=MAP perego.local 127.0.0.1' ],
-} );
-
-// 1) Sticky header on scroll (desktop).
-{
-	const context = await browser.newContext( { viewport: { width: 1280, height: 800 } } );
-	const page = await context.newPage();
-	await page.goto( `${ BASE }/`, { waitUntil: 'networkidle' } );
-	const before = await page.evaluate( () => document.querySelector( '.perego-header' )?.classList.contains( 'is-scrolled' ) );
-	await page.evaluate( () => window.scrollTo( 0, 400 ) );
-	await page.waitForTimeout( 250 );
-	const after = await page.evaluate( () => document.querySelector( '.perego-header' )?.classList.contains( 'is-scrolled' ) );
-	record( 'sticky header: is-scrolled toggles on scroll', before === false && after === true, `before=${ before } after=${ after }` );
 	await context.close();
 }
 
-// 2) Mobile nav open/close + focus restore (mobile).
+// The site-wide media lightbox (perego-theme/media-lightbox) — Services archive's real "Selected
+// work" project cards open it via a plain delegated click listener, not the Interactivity API.
 {
-	const context = await browser.newContext( { viewport: { width: 375, height: 812 } } );
+	const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 	const page = await context.newPage();
-	await page.goto( `${ BASE }/`, { waitUntil: 'networkidle' } );
-	const hamburger = page.locator( '.perego-header__hamburger' );
-	await hamburger.click();
-	await page.waitForTimeout( 200 );
-	const opened = await page.evaluate( () => ( {
-		expanded: document.querySelector( '.perego-header__hamburger' )?.getAttribute( 'aria-expanded' ),
-		menuOpen: document.querySelector( '.perego-header' )?.classList.contains( 'is-menu-open' ),
-		bodyLocked: document.body.style.overflow === 'hidden',
-	} ) );
-	record(
-		'mobile nav: hamburger opens the panel + locks scroll',
-		opened.expanded === 'true' && opened.menuOpen === true && opened.bodyLocked,
-		JSON.stringify( opened )
-	);
+	await page.goto(`${BASE}/services/`, { waitUntil: 'networkidle' });
+	const cards = page.locator('.work-card[data-gallery], .work-card[data-image]');
+	const count = await cards.count();
+	record('media lightbox: Services archive renders real selected-work cards', count > 0, `count=${count}`);
 
-	await page.keyboard.press( 'Escape' );
-	await page.waitForTimeout( 200 );
-	const closed = await page.evaluate( () => ( {
-		menuOpen: document.querySelector( '.perego-header' )?.classList.contains( 'is-menu-open' ),
-		bodyLocked: document.body.style.overflow === 'hidden',
-		focusOnHamburger: document.activeElement === document.querySelector( '.perego-header__hamburger' ),
-	} ) );
-	record(
-		'mobile nav: Escape closes + restores focus to the hamburger',
-		closed.menuOpen === false && ! closed.bodyLocked && closed.focusOnHamburger,
-		JSON.stringify( closed )
-	);
-	await context.close();
-}
+	if (count > 0) {
+		await cards.first().click();
+		await page.waitForTimeout(150);
+		const opened = await page.evaluate(() => {
+			const dialog = document.getElementById('perego-media-lightbox');
+			const style = getComputedStyle(dialog);
+			return {
+				hidden: dialog.hidden,
+				modal: dialog.getAttribute('aria-modal'),
+				opacity: style.opacity,
+				visibility: style.visibility,
+				bodyLocked: document.body.style.overflow === 'hidden',
+				mainInert: document.querySelector('.wp-site-blocks')?.hasAttribute('inert'),
+			};
+		});
+		record(
+			'media lightbox: opens as a visible modal, locks scroll, inerts the background',
+			opened.hidden === false && opened.modal === 'true' && opened.opacity === '1' && opened.visibility === 'visible' && opened.bodyLocked && opened.mainInert === true,
+			JSON.stringify(opened)
+		);
 
-// 3) Language switch is a real anchor to an /ar/ URL (desktop).
-{
-	const context = await browser.newContext( { viewport: { width: 1280, height: 800 } } );
-	const page = await context.newPage();
-	await page.goto( `${ BASE }/`, { waitUntil: 'networkidle' } );
-	const href = await page.evaluate( () =>
-		document.querySelector( '.perego-language-toggle a[data-locale="ar"]' )?.getAttribute( 'href' ) || ''
-	);
-	record( 'language switch: AR pill is a real /ar anchor', /\/ar\//.test( href ), `href=${ href }` );
+		await page.keyboard.press('Escape');
+		await page.waitForTimeout(150);
+		const closed = await page.evaluate(() => ({
+			hidden: document.getElementById('perego-media-lightbox').hidden,
+			bodyLocked: document.body.style.overflow === 'hidden',
+			mainInert: document.querySelector('.wp-site-blocks')?.hasAttribute('inert'),
+		}));
+		record('media lightbox: Escape closes, unlocks scroll, and un-inerts the background', closed.hidden === true && !closed.bodyLocked && closed.mainInert === false, JSON.stringify(closed));
+	}
 	await context.close();
 }
 
 await browser.close();
-
-mkdirSync( 'output', { recursive: true } );
-writeFileSync( 'output/verify-interactions.json', JSON.stringify( { results, failures }, null, 2 ) );
-console.log( `\n${ results.length } interaction checks, ${ failures } failure(s). Evidence: output/verify-interactions.json` );
-process.exit( failures > 0 ? 1 : 0 );
+mkdirSync('sites/perego/output', { recursive: true });
+writeFileSync(OUTPUT, JSON.stringify({ results, failures }, null, 2));
+console.log(`\n${results.length} interaction checks, ${failures} failure(s). Evidence: ${OUTPUT}`);
+process.exit(failures > 0 ? 1 : 0);

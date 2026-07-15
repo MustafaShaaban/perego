@@ -1,0 +1,112 @@
+/**
+ * perego-theme/media-lightbox — the site-wide image/video/gallery dialog. Tokens only, logical
+ * properties. Mirrors project-gallery-lightbox's proven .lightbox contract (spec 003 US2) plus the
+ * handoff's iframe/video frame support for triggers outside a single project's own gallery.
+ */
+
+.lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: var(--perego-z-lightbox);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.lightbox__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(6, 0, 16, 0.86);
+	backdrop-filter: blur(6px);
+}
+
+.lightbox__inner {
+	position: relative;
+	z-index: 1;
+	inline-size: min(92vw, 1100px);
+	max-block-size: 88vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.lightbox__frame {
+	inline-size: 100%;
+	max-inline-size: 100%;
+	max-block-size: 88vh;
+	display: grid;
+	place-items: center;
+
+	img,
+	.lightbox__media {
+		max-inline-size: 100%;
+		max-block-size: 88vh;
+		border-radius: 12px;
+		object-fit: contain;
+	}
+
+	iframe {
+		inline-size: 100%;
+		aspect-ratio: 16 / 9;
+		border: 0;
+		border-radius: 12px;
+		box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+	}
+
+	.lightbox__media {
+		inline-size: 100%;
+		aspect-ratio: 16 / 9;
+		background: #000;
+	}
+}
+
+.lightbox__close,
+.lightbox__nav {
+	position: absolute;
+	z-index: 2;
+	border: 1px solid var(--perego-glass-border);
+	background: var(--perego-glass-fill);
+	color: var(--wp--preset--color--text);
+	border-radius: var(--perego-radius-pill);
+	cursor: pointer;
+	inline-size: 48px;
+	block-size: 48px;
+	font-size: 26px;
+	line-height: 1;
+	transition: background var(--perego-dur-fast) var(--perego-ease);
+
+	&:hover,
+	&:focus-visible {
+		background: var(--wp--preset--color--accent);
+	}
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.lightbox__close {
+	inset-block-start: -8px;
+	inset-inline-end: -8px;
+}
+
+.lightbox__nav--prev {
+	inset-inline-start: -8px;
+}
+
+.lightbox__nav--next {
+	inset-inline-end: -8px;
+}
+
+.lightbox__counter {
+	position: absolute;
+	inset-block-end: -36px;
+	inset-inline: 0;
+	text-align: center;
+	color: var(--perego-muted);
+	font-size: var(--wp--preset--font-size--small);
+}

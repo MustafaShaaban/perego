@@ -60,40 +60,40 @@ final class SiteHeaderRenderer
 
         $context = esc_attr((string) wp_json_encode(['isScrolled' => false, 'isMenuOpen' => false]));
 
-        $html = '<header class="perego-header" data-wp-interactive="perego/site-header" '
+        $html = '<a class="skip-link" href="#main">' . esc_html__('Skip to content', 'perego-site') . '</a>';
+        $html .= '<header id="siteHeader" class="site-header" data-wp-interactive="perego/site-header" '
             . "data-wp-context='" . $context . "' "
             . 'data-wp-class--is-scrolled="context.isScrolled" '
             . 'data-wp-class--is-menu-open="context.isMenuOpen" '
             . 'data-wp-init="callbacks.init">';
 
-        $html .= '<div class="perego-header__bar">';
-        $html .= '<a class="perego-header__logo" href="' . esc_url(home_url('/')) . '" '
+        $html .= '<div class="container site-header__inner">';
+        $html .= '<a class="logo" href="' . esc_url(home_url('/')) . '" '
             . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" '
-            . 'alt="" />'
+            . 'alt="" class="logo__img" />'
             . '</a>';
 
-        $html .= '<div class="perego-header__nav-backdrop"></div>';
-        $html .= '<nav id="perego-mobile-nav" class="perego-header__nav" '
+        $html .= '<nav id="mainNav" class="main-nav" '
             . 'aria-label="' . esc_attr__('Primary', 'perego-site') . '" '
             . 'data-wp-on--keydown="actions.handleMenuKeydown">';
-        $html .= '<ul>' . $this->renderNavItems($currentPath) . '</ul>';
+        $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath) . '</ul>';
         $html .= '</nav>';
 
-        $html .= '<a class="perego-btn perego-btn--accent perego-header__cta" href="' . esc_url(home_url('/contact')) . '">'
+        $html .= '<a class="btn btn--accent header-cta" href="' . esc_url(home_url('/contact')) . '">'
             . esc_html__('Start a Project', 'perego-site') . '</a>';
 
         $html .= $this->renderLanguageToggle($driver->currentLocale());
 
-        $html .= '<button type="button" class="perego-header__hamburger" '
-            . 'aria-expanded="false" aria-controls="perego-mobile-nav" '
+        $html .= '<button id="navToggle" type="button" class="nav-toggle" '
+            . 'aria-label="' . esc_attr__('Menu', 'perego-site') . '" aria-expanded="false" aria-controls="mainNav" '
             . 'data-wp-bind--aria-expanded="context.isMenuOpen" '
             . 'data-wp-on--click="actions.toggleMenu">'
-            . '<span class="screen-reader-text">' . esc_html__('Menu', 'perego-site') . '</span>'
+            . '<span><span class="screen-reader-text">' . esc_html__('Menu', 'perego-site') . '</span></span>'
             . '</button>';
 
         $html .= '</div>';
-        $html .= '</header>';
+        $html .= '</header><div id="navBackdrop" class="nav-backdrop" data-wp-on--click="actions.closeMenu"></div>';
 
         return $html;
     }
@@ -104,17 +104,19 @@ final class SiteHeaderRenderer
 
         foreach ($this->navItems() as $item) {
             $isActive  = $this->isActive($item['href'], $currentPath);
-            $classes   = 'perego-header__nav-item' . ($isActive ? ' is-active' : '');
-            $ariaCurrent = $isActive ? ' aria-current="page"' : '';
             $hasChildren = ! empty($item['children']);
+            $classes   = ($hasChildren ? 'has-dropdown' : '') . ($isActive ? ' is-active' : '');
+            $ariaCurrent = $isActive ? ' aria-current="page"' : '';
 
-            $html .= '<li class="' . esc_attr($classes) . '"' . ($hasChildren ? ' data-wp-interactive="perego/site-header"' : '') . '>';
-            $html .= '<a href="' . esc_url(home_url($item['href'])) . '"' . $ariaCurrent
-                . ($hasChildren ? ' data-wp-on--click="actions.toggleMobileDropdown"' : '') . '>'
-                . esc_html($item['label']) . '</a>';
+            $html .= '<li' . ($classes !== '' ? ' class="' . esc_attr($classes) . '"' : '') . ($hasChildren ? ' data-wp-interactive="perego/site-header"' : '') . '>';
+            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url(home_url($item['href'])) . '"' . $ariaCurrent
+                . ($hasChildren ? ' aria-haspopup="true" aria-expanded="false" data-wp-on--click="actions.toggleMobileDropdown"' : '') . '>'
+                . esc_html($item['label'])
+                . ($hasChildren ? ' <svg class="nav-caret" width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '')
+                . '</a>';
 
             if ($hasChildren) {
-                $html .= '<ul class="perego-header__dropdown">';
+                $html .= '<ul class="dropdown">';
                 foreach ($item['children'] as $child) {
                     $html .= '<li><a href="' . esc_url(home_url($child['href'])) . '">'
                         . esc_html($child['label']) . '</a></li>';
@@ -140,19 +142,20 @@ final class SiteHeaderRenderer
         $driver = $this->languageService->driver();
         $urlManaged = $driver->managesLanguageViaUrl() ? '1' : '0';
 
-        $html = '<div class="perego-language-toggle" data-wp-interactive="perego/site-header" '
+        $html = '<div class="lang-toggle" role="group" aria-label="' . esc_attr__('Language', 'perego-site') . '" data-wp-interactive="perego/site-header" '
             . 'data-lang-url-managed="' . $urlManaged . '">';
 
-        foreach ($driver->availableLocales() as $locale) {
+        $availableLocales = $driver->availableLocales();
+        foreach (array_values(array_intersect(['ar', 'en'], $availableLocales)) as $locale) {
             $label = esc_html(strtoupper($locale));
 
             if ($locale === $currentLocale) {
-                $html .= '<span class="perego-language-toggle__current is-current" '
+                $html .= '<span class="lang-toggle__btn is-active" '
                     . 'aria-current="true" lang="' . esc_attr($locale) . '">' . $label . '</span>';
                 continue;
             }
 
-            $html .= '<a class="perego-language-toggle__link" '
+            $html .= '<a class="lang-toggle__btn" '
                 . 'href="' . esc_url($this->switchUrl($locale)) . '" '
                 . 'data-locale="' . esc_attr($locale) . '" '
                 . 'hreflang="' . esc_attr($locale) . '" lang="' . esc_attr($locale) . '">'

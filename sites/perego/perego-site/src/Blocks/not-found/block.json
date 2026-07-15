@@ -8,6 +8,7 @@
 	"description": "The 404 composition: code, title (H1), body, and Back-home / Contact actions. Server-rendered + language-aware.",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
+	"viewScript": "file:./view.js",
 	"style": "file:./style-index.css",
 	"supports": { "html": false }
 }
