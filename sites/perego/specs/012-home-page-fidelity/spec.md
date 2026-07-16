@@ -2,7 +2,7 @@
 
 **Branch:** `feature/012-home-page-fidelity`
 **Mode:** Client Site Mode
-**Status:** In progress (audit complete 2026-07-14)
+**Status:** Done (merged in PR #20; acceptance recorded 2026-07-16 during spec 020's audit)
 **Depends on:** 009 (block-first architecture), 010 (Service/Client CPT + meta), 011 (global shell).
 
 ## Goal
@@ -45,11 +45,15 @@ So hero + services-teaser are the gap. About + Clients already edit through Word
 
 ## Acceptance
 
-- [ ] Hero + services-teaser content editable via a real WordPress workflow (block attrs and/or options/CPT).
-- [ ] Services teaser reflects Service CPT edits; degrades cleanly with no Services.
-- [ ] EN + AR both editable and correct; no hardcoded copy left as the *only* source.
-- [ ] Homepage visually identical to the spec 011 baseline (EN + AR), verified by capture.
-- [ ] Pest + Jest green; clean-code-guard + wp-guard pass.
+- [x] Hero + services-teaser content editable via a real WordPress workflow (block attrs and/or options/CPT).
+- [x] Services teaser reflects Service CPT edits; degrades cleanly with no Services.
+- [x] EN + AR both editable and correct; no hardcoded copy left as the *only* source.
+- [x] Homepage visually identical to the spec 011 baseline (EN + AR), verified by capture
+  (`output/playwright/012-en-homepage-noregression` evidence, tasks T001–T008).
+- [x] Pest + Jest green; clean-code-guard + wp-guard pass.
+
+*(Boxes ticked 2026-07-16: the work itself completed and merged in PR #20 — see `tasks.md` T001–T008 —
+but the acceptance checklist was never updated. Recorded during spec 020's fresh home audit.)*
 
 ## Notes
 

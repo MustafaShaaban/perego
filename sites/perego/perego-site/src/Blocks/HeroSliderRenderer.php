@@ -62,7 +62,7 @@ final class HeroSliderRenderer
         $html .= '<div class="hero__content hero-enter">';
         $html .= $this->renderSlides($slides);
         $html .= '<div class="hero__cta">'
-            . '<a class="btn btn--accent" href="' . esc_url(home_url('/contact')) . '">'
+            . '<a class="btn btn--accent" href="' . esc_url($this->languageService->driver()->localizedUrl('/contact')) . '">'
             . esc_html($hero['cta']) . '</a>'
             . '</div>';
         $html .= '</div>'; // .hero__content

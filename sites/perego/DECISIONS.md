@@ -683,3 +683,30 @@ reverse-resolve to a post, so they take the language directory prefix (`/ar/work
 target Polylang's own canonical redirect points at. Everything degrades to the plain URL on any failure,
 so a missing translation is a same-language link, never a broken one. **Pattern:** an HTTP 200 on the nav
 href's *raw* form is not proof — the link has to be followed to catch a 301-to-the-wrong-language.
+
+## 2026-07-16 — Spec 020: fresh audit before fixes; join-form Email kept as a documented divergence
+
+**Re-audit instead of trusting merged evidence.** The owner reported "the home page isn't finished per the
+handoff" although specs 002/012 recorded pixel fidelity. Rather than argue from the merged evidence, spec
+020 re-captured live-vs-handoff from scratch — and the old evidence had two blind spots worth recording.
+(1) The spec-008 full-page baselines were captured with the handoff's reveal-on-scroll **unfired**, so
+whole sections render empty in them; any comparison must scroll the page first. (2) Element screenshots
+taken right after a CSS rebuild can rasterize with the **stale cached stylesheet** even after a reload —
+a wrap/color fix that is live in the DOM can look unchanged in the capture. Verify wrap changes with
+`Range.getClientRects()` line boxes plus a fresh viewport capture, not an element shot alone. The re-audit
+found three visual drifts (footer bottom bar, message counter, teaser label color/wrap) and one functional
+one (AR home links on `home_url()`), all real, all previously signed off.
+
+**Join-us Email field stays although the handoff has no such field.** A careers application without a
+reply address is dead data: the field is required, wired to storage + the `perego/v1/careers/apply`
+contract, and removing it to chase pixel parity would break a working flow. Kept as a **documented
+divergence** (audit D4) and visually reconciled instead (pattern-consistent placeholder, label copy
+aligned to the handoff's `Portfolio/website link`). The handoff is the authority on how things look, not
+a reason to delete owner-serving function that was deliberately added.
+
+**Teaser label wrap is CSS measure, not markup `<br>`.** The handoff hard-breaks the four card labels
+(`Video<br>Editing`). Since spec 012 made labels editor-supplied meta, a markup break would corrupt the
+editing seam, so the two-line rendering is reproduced with `max-inline-size: calc(6.2em + 48px)` (em
+tracks the clamped font; 48px is the fixed inline padding under border-box). Sized between the widest
+first line ("2D Motion" ≈ 5.9em) and the narrowest one-liner ("Video Editing" ≈ 7.4em), so any
+similar-length label — EN or AR — breaks like the design without special-casing the seed strings.

@@ -49,7 +49,7 @@ final class JoinFormRenderer
             . ' aria-describedby="join-form-status" novalidate>';
 
         $html .= $this->field('jf-name', 'name', 'text', $t['name'], true, ['autocomplete' => 'name', 'maxlength' => '80', 'placeholder' => $t['namePlaceholder']]);
-        $html .= $this->field('jf-email', 'email', 'email', $t['email'], true, ['autocomplete' => 'email', 'maxlength' => '120']);
+        $html .= $this->field('jf-email', 'email', 'email', $t['email'], true, ['autocomplete' => 'email', 'maxlength' => '120', 'placeholder' => $t['emailPlaceholder']]);
         $html .= $this->field('jf-portfolio', 'portfolio', 'url', $t['portfolio'], false, ['inputmode' => 'url', 'placeholder' => $t['portfolioPlaceholder']]);
 
         // CV file input + accessible constraint hint.

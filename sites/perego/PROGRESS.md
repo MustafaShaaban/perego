@@ -2,7 +2,37 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE
+## RESUME HERE (2026-07-16) — Spec 020: home fresh visual audit + drift fixes
+
+- **Branch:** `feature/020-home-visual-audit` (off the merged default `feature/001-global-foundation`
+  head `b0dd7c2`). Page-by-page finish pass, starting with home.
+- **Spec 020 DONE** (`specs/020-home-visual-audit/`): fresh side-by-side audit of live home vs the
+  handoff `site/` (served statically so reveal-on-scroll fires — the old spec-008 full-page baselines
+  captured *unrevealed* sections and must not be trusted for comparisons). EN+AR × 1440/375 captures in
+  `output/020-home-audit/`. Findings D1–D7 in `audit.md`; structural metrics (corp tile 115×77,
+  indiv card 413×150, 56px section headings) proved identical before fixes.
+- **Real drift fixed:** D1 footer bottom bar (full studio copyright via translatable `sprintf` + the
+  missing Journal link, localized); D2 quick-message cap `max:1200` + `maxlength` + the handoff's live
+  `n / 1200` counter (new `site-footer/view.js` viewScriptModule reusing the `data-perego-counter`
+  pattern); D3 services-teaser labels to the accent token + two-line measure
+  (`calc(6.2em + 48px)`) matching the handoff's `Video<br>Editing` breaks; D4 join-form email
+  placeholder + label copy aligned; **D7 AR home links** — hero CTA + services teaser still built hrefs
+  with `home_url()` (same class as spec 019's nav gap) → `LanguageDriver::localizedUrl()`; AR targets
+  verified 200 (`/ar/contact-2/`, `/ar/services/`, `/ar/services/<slug>-2/`).
+- **Not drift:** hero prev/pause/next (mandated by the handoff's INTERACTIONS.md build notes); clients
+  sparsity (placeholder data — FR-006 owner-blocked launch item, spec 004 T020 stays open).
+- **Bookkeeping:** spec 012's acceptance boxes ticked + status Done (work merged in PR #20; checklist lag).
+- **Verified:** Pest 268/268 (816 assertions), Jest 80/80 (12 suites incl. 4 new counter tests); theme
+  Sass + blocks builds clean; guards run (wp-guard i18n composition fix applied; clean-code/test/docs
+  guards clean). Post-fix captures `live-*-after.png`.
+- **Known residual (deferred to those pages' passes):** `home_url()` link-building remains in
+  non-home renderers — breadcrumbs (`PostBreadcrumbRenderer`, `ProjectHeroRenderer`,
+  `JournalHeaderRenderer`), `NotFoundRenderer`, `PortfolioGridRenderer`, `ServicesOverviewRenderer`,
+  `ServiceHeroRenderer`, `ProjectNavigationRenderer`, `SearchResultsRenderer` — same fix shape as D7.
+- **Next:** open the PR for spec 020, then the next page pass (about/services/work/journal/clients/
+  contact) picking up the residual `localizedUrl` migrations per page.
+
+## (previous) RESUME HERE
 
 - **Date/time:** 2026-07-15 (~13:40 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).

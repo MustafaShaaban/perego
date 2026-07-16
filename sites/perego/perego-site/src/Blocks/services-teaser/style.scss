@@ -151,7 +151,16 @@
 	line-height: 1.12;
 	text-transform: uppercase;
 	text-align: start;
-	color: var(--wp--preset--color--text);
+
+	/* The handoff label inherits the prototype's accent link color and hard-breaks onto two lines
+	 * (`Video<br>Editing`, `2D Motion<br>Graphics`); the accent token plus a snug balanced measure
+	 * reproduces both without markup-level line breaks, so editor-supplied labels (spec 012) keep
+	 * wrapping correctly in any language. */
+	color: var(--wp--preset--color--accent);
+	/* Border-box: 48px is the two 24px inline paddings; the 6.2em measure scales with the clamped
+	 * font-size and sits between the widest first line ("2D Motion", ~5.9em) and the shortest
+	 * one-line label ("Video Editing", ~7.4em), so every seed label breaks exactly like the handoff. */
+	max-inline-size: calc(6.2em + 48px);
 }
 
 @media (max-width: 900px) {

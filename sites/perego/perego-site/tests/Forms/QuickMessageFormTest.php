@@ -28,7 +28,9 @@ it('defines name, email, and message with server-enforceable rules', function ()
         ->and($fields['email']['type'])->toBe('email')
         ->and($fields['email']['rules'])->toContain('email')
         ->and($fields['message']['type'])->toBe('textarea')
-        ->and($fields['message']['rules'])->toContain('max:2000');
+        // The handoff caps the message at 1200 (spec 020 D2) — server rule + browser maxlength agree.
+        ->and($fields['message']['rules'])->toContain('max:1200')
+        ->and($fields['message']['attrs'])->toBe(['maxlength' => '1200']);
 });
 
 it('bounds every field so no rule is unlimited (spec Phase 7 limits)', function () {

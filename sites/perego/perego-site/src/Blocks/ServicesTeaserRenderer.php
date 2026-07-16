@@ -53,7 +53,7 @@ final class ServicesTeaserRenderer
         $html .= '<div class="services-teaser__head">';
         $html .= '<h2 class="services-teaser__title reveal" id="' . self::HEADING_ID . '">'
             . esc_html($content->servicesTeaserTitle()) . '</h2>';
-        $html .= '<a class="link-arrow services-teaser__link reveal" data-delay="1" href="' . esc_url(home_url('/services')) . '">'
+        $html .= '<a class="link-arrow services-teaser__link reveal" data-delay="1" href="' . esc_url($this->languageService->driver()->localizedUrl('/services')) . '">'
             . esc_html($content->servicesTeaserSeeAll())
             . $this->arrowSvg()
             . '</a>';
@@ -118,7 +118,7 @@ final class ServicesTeaserRenderer
      */
     private function renderCard(array $service, int $index): string
     {
-        $href = esc_url(home_url('/services/' . $service['slug']));
+        $href = esc_url($this->languageService->driver()->localizedUrl('/services/' . $service['slug']));
 
         $media = '<img src="' . esc_url($service['imageUrl']) . '" alt="' . esc_attr($service['alt']) . '" loading="lazy" />';
 

@@ -50,9 +50,12 @@ final class QuickMessageForm extends Form
             ],
             'message' => [
                 'type' => 'textarea',
-                'rules' => ['required', 'max:2000'],
+                // 1200 is the handoff's message cap (site/js/main.js CAPS); the maxlength attribute
+                // makes the browser enforce it and drives the visible "n / 1200" counter (spec 020 D2).
+                'rules' => ['required', 'max:1200'],
                 'label' => __('Your message', 'perego-site'),
                 'placeholder' => __('Say hello.', 'perego-site'),
+                'attrs' => ['maxlength' => '1200'],
             ],
         ];
     }

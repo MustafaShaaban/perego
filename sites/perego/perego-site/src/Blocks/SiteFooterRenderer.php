@@ -231,11 +231,19 @@ final class SiteFooterRenderer
 
     private function renderBottomBar(): string
     {
-        $year = esc_html(gmdate('Y'));
+        $copyright = sprintf(
+            /* translators: %s: current year. */
+            __('© %s Perego Creative Studio — بيريجو. All rights reserved.', 'perego-site'),
+            gmdate('Y')
+        );
 
+        // The exact handoff bottom bar (spec 020 D1): the full studio copyright line — the bilingual
+        // brand name is part of the fixed identity, not translatable prose — and the Journal link
+        // ahead of the two legal links.
         return '<div class="container site-footer__bottom">'
-            . '<p>&copy; ' . $year . ' ' . esc_html__('Perego', 'perego-site') . '</p>'
+            . '<p>' . esc_html($copyright) . '</p>'
             . '<nav class="footer-legal" aria-label="' . esc_attr__('Legal', 'perego-site') . '">'
+            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/journal')) . '">' . esc_html__('Journal', 'perego-site') . '</a>'
             . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/terms')) . '">' . esc_html__('Terms & Conditions', 'perego-site') . '</a>'
             . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/privacy')) . '">' . esc_html__('Privacy Policy', 'perego-site') . '</a>'
             . '</nav>'

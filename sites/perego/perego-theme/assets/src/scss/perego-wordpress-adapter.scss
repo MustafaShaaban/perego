@@ -148,6 +148,26 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	color: #2a0148;
 }
 
+/* The handoff's live "n / 1200" character counter under the quick-message textarea (spec 020 D2):
+ * the site-footer view script projects the value onto the field wrapper; this renders it exactly
+ * like the contact page's counter. */
+.site-footer .footer-form [data-corex-field="message"] {
+	position: relative;
+	margin-block-end: 22px;
+}
+
+.site-footer .footer-form [data-corex-field="message"]::after {
+	content: attr(data-perego-counter);
+	position: absolute;
+	inset-inline-end: 2px;
+	inset-block-start: 100%;
+	margin-block-start: 6px;
+	color: var(--muted-2);
+	font-size: 11px;
+	letter-spacing: 0.02em;
+	text-align: end;
+}
+
 /* Requiredness remains native and announced by the controls; the locked footer keeps markers out of view. */
 .site-footer .corex-form__required,
 .site-footer .join-form__req {

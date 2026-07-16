@@ -44,10 +44,12 @@ it('renders the approved contact channels and social links', function () {
         ->and($html)->toContain('footer-social');
 });
 
-it('renders the bottom bar with the current year and legal links', function () {
+it('renders the handoff bottom bar: full studio copyright, Journal, and the legal links', function () {
     $html = renderFooter();
 
     expect($html)->toContain((string) gmdate('Y'))
+        ->and($html)->toContain('Perego Creative Studio — بيريجو. All rights reserved.')
+        ->and($html)->toContain('/journal')
         ->and($html)->toContain('/terms')
         ->and($html)->toContain('/privacy');
 });
