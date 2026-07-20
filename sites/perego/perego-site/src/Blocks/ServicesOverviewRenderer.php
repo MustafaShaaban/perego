@@ -26,14 +26,15 @@ use PeregoSite\Content\ServiceContent;
  */
 final class ServicesOverviewRenderer
 {
+    public function __construct(private readonly ServiceSelectedWorkRenderer $selectedWorkRenderer)
+    {
+    }
+
     /**
      * @param list<array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>}> $selectedWork
      *        Pre-resolved by the caller (real WP_Query + ProjectRepository::galleryFor()) so this
      *        class stays a pure, unit-testable function of its inputs — the same pattern
      *        ProjectGalleryLightboxRenderer uses for its own resolved images array.
-     */
-    /**
-     * @param list<array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>}> $selectedWork
      * @param array<string, string> $tabLabels canonical slug => editable tab label (spec 013); missing → seed
      */
     public function render(ServiceContent $content, array $selectedWork, array $tabLabels = []): string
@@ -155,20 +156,21 @@ final class ServicesOverviewRenderer
 
     /**
      * "Selected work" — real published projects opening the site-wide media lightbox
-     * (perego-theme/media-lightbox). A project with 2+ gallery images opens as a gallery; otherwise
-     * its featured image opens as a single image. Renders nothing when no project has usable media,
-     * rather than an empty heading over a blank grid.
+     * (perego-theme/media-lightbox). The mosaic itself (designed `.m1`–`.m15` placements, brand card,
+     * hidden overflow grid + Load more) is the same component the service singles use
+     * (ServiceSelectedWorkRenderer::masonry()); only this heading wrapper differs. Renders nothing
+     * when no project has usable media, rather than an empty heading over a blank grid.
      *
      * @param list<array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>}> $selectedWork
      */
     private function renderSelectedWork(ServiceContent $content, array $selectedWork): string
     {
-        $cards = array_filter(array_map(
-            fn (array $project): string => $this->selectedWorkCard($project),
-            $selectedWork,
-        ));
+        $masonry = $this->selectedWorkRenderer->masonry($selectedWork, [
+            'loadMore' => $content->label('loadMore'),
+            'galleryBadge' => $content->label('galleryBadge'),
+        ]);
 
-        if ($cards === []) {
+        if ($masonry === '') {
             return '';
         }
 
@@ -176,32 +178,11 @@ final class ServicesOverviewRenderer
         $html .= '<div class="container">';
         $html .= '<h2 class="section-title reveal" id="services-overview-selected-work" style="margin-bottom:clamp(24px,3vw,40px);">'
             . esc_html($content->label('selectedWork')) . '</h2>';
-        $html .= '<div class="work-masonry" aria-label="' . esc_attr($content->label('selectedWork')) . '">';
-        $html .= implode('', $cards);
-        $html .= '</div>';
+        $html .= $masonry;
         $html .= '</div>';
         $html .= '</section>';
 
         return $html;
-    }
-
-    /**
-     * @param array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>} $project
-     */
-    private function selectedWorkCard(array $project): string
-    {
-        if (count($project['gallerySrcs']) > 1) {
-            $trigger = 'data-gallery="' . esc_attr(implode(',', $project['gallerySrcs'])) . '"';
-        } elseif ($project['thumbUrl'] !== '') {
-            $trigger = 'data-image="' . esc_attr($project['thumbUrl']) . '"';
-        } else {
-            return '';
-        }
-
-        return '<button type="button" class="work-card reveal" ' . $trigger . ' '
-            . 'aria-label="' . esc_attr(sprintf(__('Open %s', 'perego-site'), $project['title'])) . '">'
-            . '<img src="' . esc_url($project['thumbUrl']) . '" alt="' . esc_attr($project['thumbAlt']) . '" loading="lazy" />'
-            . '<span class="work-card__overlay"></span><span class="work-zoom" aria-hidden="true"></span></button>';
     }
 
     /** @param array<string, mixed> $o */

@@ -5,11 +5,17 @@
 	"title": "Perego Site Header",
 	"category": "theme",
 	"icon": "menu",
-	"description": "The global site header: logo, primary nav with Services dropdown, Start a Project CTA, language toggle, mobile hamburger. Server-rendered; interactivity via view.js.",
+	"description": "The global site header: logo, primary nav with Services dropdown, Start a Project CTA, language toggle, mobile hamburger. Server-rendered; interactivity via view.js. Nav links, logo, and sticky-vs-static are editable via the block's Inspector controls (spec 020 round 4).",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
 	"viewScriptModule": "file:./view.js",
 	"style": "file:./style-index.css",
+	"attributes": {
+		"navItemsEn": { "type": "string", "default": "" },
+		"navItemsAr": { "type": "string", "default": "" },
+		"logoId": { "type": "number", "default": 0 },
+		"isSticky": { "type": "boolean", "default": true }
+	},
 	"supports": {
 		"html": false
 	}

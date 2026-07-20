@@ -7,10 +7,15 @@
 .hero {
 	position: relative;
 	min-height: 100vh;
+	min-height: 100svh; /* small-viewport unit — stable under mobile browser chrome */
 	display: flex;
 	align-items: center;
-	margin-block-start: -94px;
-	padding-block-start: 94px;
+	/* Pulls the hero up under the transparent/overlay header so its artwork shows through. Matches
+	   the header's actual rendered height (90px, from its 22px padding-block + ~46px logo — see
+	   site-header/style.scss) so no seam shows between the header's bottom edge and the hero. The
+	   previous 94px left a 4px gap (handoff CONFLICTS_REGISTER C-09). */
+	margin-block-start: -90px;
+	padding-block-start: 90px;
 	overflow: hidden;
 	background: var(--perego-gradient-bg);
 }
@@ -90,69 +95,6 @@
 
 .hero__cta {
 	margin-block-start: 44px;
-}
-
-/* Controls: prev / play-pause / next (a11y build additions). */
-.hero__controls {
-	position: absolute;
-	z-index: 3;
-	inset-block-end: 40px;
-	inset-inline-end: var(--wp--preset--spacing--gutter);
-	display: flex;
-	gap: 12px;
-}
-
-.hero__control {
-	inline-size: 44px;
-	block-size: 44px;
-	border: 1px solid var(--perego-glass-border);
-	border-radius: var(--perego-radius-pill);
-	background: var(--perego-glass-fill);
-	color: var(--wp--preset--color--text);
-	cursor: pointer;
-	transition: background var(--perego-dur-fast) var(--perego-ease),
-		box-shadow var(--perego-dur-fast) var(--perego-ease);
-
-	&::before {
-		content: "";
-		display: block;
-		inline-size: 100%;
-		block-size: 100%;
-		background: currentColor;
-		mask-repeat: no-repeat;
-		mask-position: center;
-		mask-size: 40%;
-	}
-
-	&:hover,
-	&:focus-visible {
-		background: var(--wp--preset--color--accent);
-		box-shadow: var(--perego-shadow-glow-accent);
-	}
-}
-
-/* Simple CSS-drawn glyphs so no image asset is needed. */
-.hero__control--prev::before {
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M15 5l-7 7 7 7' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-.hero__control--next::before {
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 5l7 7-7 7' fill='none' stroke='%23fff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-}
-
-/* Pause glyph by default; play glyph when the show is paused (aria-pressed=true). */
-.hero__control--play::before {
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='7' y='5' width='3.5' height='14' fill='%23fff'/%3E%3Crect x='13.5' y='5' width='3.5' height='14' fill='%23fff'/%3E%3C/svg%3E");
-}
-
-.hero__control--play[aria-pressed="true"]::before {
-	mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 5l11 7-11 7z' fill='%23fff'/%3E%3C/svg%3E");
-}
-
-/* RTL: prev/next glyphs mirror. */
-[dir="rtl"] .hero__control--prev::before,
-[dir="rtl"] .hero__control--next::before {
-	transform: scaleX(-1);
 }
 
 /* Dot tablist. */

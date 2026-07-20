@@ -11,14 +11,18 @@ namespace PeregoSite\Content;
 defined('ABSPATH') || exit;
 
 /**
- * Resolves the homepage hero content (three slides + CTA) as an editable projection of the front-page
- * page (spec 012 T004). The handoff copy in {@see HomeContent} is the seed/default; each language's
- * front page (a real translated `page`, e.g. EN 42 / AR 97) can override any field via post meta, so
- * the hero edits per locale in the block/page editor. Missing or empty meta falls back to the seed
- * PER FIELD, so output stays byte-identical until an editor sets a value.
+ * Resolves the homepage hero content (three slides + CTA) as an editable projection, in fallback
+ * order: **block attribute → front-page post meta → seed**, per field.
  *
- * The design is a fixed three-slide hero (matching the locked handoff), so the meta is three
- * scalar title/text pairs plus the CTA — simple to register, sanitise, edit and seed.
+ * spec 020 round 4: the hero-slider block lives in the shared `front-page.html` FSE template, so —
+ * matching `footer-careers`'/`ClientsCarouselRenderer`'s pattern for the same problem — RichText
+ * block attributes (`slide{1,2,3}{Title,Text}{En,Ar}`, `cta{En,Ar}`) are now the primary, in-canvas-
+ * editable source, checked first. The original spec 012 T004 mechanism (front-page post meta,
+ * `_perego_hero_s*`, edited via a `PostMetaBoxes` sidebar box) is kept as the *second* fallback so any
+ * hero copy an editor already entered there keeps rendering unchanged until re-edited via the new
+ * RichText fields. The handoff copy in {@see HomeContent} is the final seed/default.
+ *
+ * The design is a fixed three-slide hero (matching the locked handoff).
  */
 final class HeroContent
 {
@@ -52,36 +56,40 @@ final class HeroContent
     }
 
     /**
-     * The hero slides + CTA for the given locale, overlaying the front page's meta on the seed.
+     * The hero slides + CTA for the given locale: block attribute → front-page post meta → seed.
      *
+     * @param array<string,string> $attributes
      * @return array{slides: list<array{title: string, text: string}>, cta: string}
      */
-    public function resolve(int $frontPageId, string $locale): array
+    public function resolve(int $frontPageId, string $locale, array $attributes = []): array
     {
-        $home  = new HomeContent($locale);
-        $seed  = $home->heroSlides();
-        $cta   = $home->heroCta();
-
-        if ($frontPageId <= 0 || ! function_exists('get_post_meta')) {
-            return ['slides' => $seed, 'cta' => $cta];
-        }
+        $home   = new HomeContent($locale);
+        $seed   = $home->heroSlides();
+        $cta    = $home->heroCta();
+        $suffix = $locale === 'ar' ? 'Ar' : 'En';
+        $hasMeta = $frontPageId > 0 && function_exists('get_post_meta');
 
         $slides = [];
         foreach ($seed as $index => $slide) {
-            $title = $this->meta($frontPageId, self::META_SLIDE_TITLE[$index] ?? '');
-            $text  = $this->meta($frontPageId, self::META_SLIDE_TEXT[$index] ?? '');
+            $slideNumber = $index + 1;
+            $metaTitle = $hasMeta ? $this->meta($frontPageId, self::META_SLIDE_TITLE[$index] ?? '') : '';
+            $metaText  = $hasMeta ? $this->meta($frontPageId, self::META_SLIDE_TEXT[$index] ?? '') : '';
+
+            $attrTitle = trim((string) ($attributes["slide{$slideNumber}Title{$suffix}"] ?? ''));
+            $attrText  = trim((string) ($attributes["slide{$slideNumber}Text{$suffix}"] ?? ''));
 
             $slides[] = [
-                'title' => $title !== '' ? $title : $slide['title'],
-                'text'  => $text !== '' ? $text : $slide['text'],
+                'title' => $attrTitle !== '' ? $attrTitle : ($metaTitle !== '' ? $metaTitle : $slide['title']),
+                'text'  => $attrText !== '' ? $attrText : ($metaText !== '' ? $metaText : $slide['text']),
             ];
         }
 
-        $metaCta = $this->meta($frontPageId, self::META_CTA);
+        $metaCta = $hasMeta ? $this->meta($frontPageId, self::META_CTA) : '';
+        $attrCta = trim((string) ($attributes["cta{$suffix}"] ?? ''));
 
         return [
             'slides' => $slides,
-            'cta'    => $metaCta !== '' ? $metaCta : $cta,
+            'cta'    => $attrCta !== '' ? $attrCta : ($metaCta !== '' ? $metaCta : $cta),
         ];
     }
 

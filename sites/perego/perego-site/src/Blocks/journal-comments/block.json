@@ -1,0 +1,13 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/journal-comments",
+	"title": "Perego Journal Comments",
+	"category": "theme",
+	"icon": "admin-comments",
+	"description": "The journal single's approved-comment list in the handoff's card design (initials avatar + bordered body, indented replies). Server-rendered from the current post's comments.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"supports": { "html": false }
+}

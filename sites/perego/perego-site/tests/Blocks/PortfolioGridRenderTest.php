@@ -13,6 +13,7 @@ beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_attr__')->returnArg();
+    Functions\when('__')->returnArg();
     Functions\when('esc_url')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
     Functions\when('wp_json_encode')->alias('json_encode');
@@ -40,7 +41,7 @@ it('renders a filter chip per label with All active by default', function () {
 
     expect(substr_count($html, 'data-filter="'))->toBe(5)
         ->and($html)->toMatch('/data-filter="all"[^>]*aria-pressed="true"/')
-        ->and($html)->toContain('data-wp-on--click="actions.setFilter"');
+        ->and($html)->toContain('class="web-filter portfolio-filter is-active"');
 });
 
 it('renders one card per project with its category and excerpt', function () {
@@ -52,18 +53,18 @@ it('renders one card per project with its category and excerpt', function () {
         ->and($html)->toContain('Client: Sample · 2026');
 });
 
-it('binds each card hidden state and the no-results message to the store', function () {
+it('exposes the per-page size on the grid and a no-results message for view.js', function () {
     $html = renderGrid();
 
-    expect($html)->toContain('data-wp-bind--hidden="callbacks.cardHidden"')
-        ->and($html)->toContain('data-wp-bind--hidden="callbacks.noResultsHidden"');
+    expect($html)->toContain('id="portfolioGrid" data-per-page="9"')
+        ->and($html)->toContain('id="portfolioEmpty"')
+        ->and($html)->toContain('hidden');
 });
 
-it('records only the categories that actually have projects in the context', function () {
-    $html = renderGrid();
-
-    // sample has video/motion/design but no web project
-    expect($html)->toMatch('/"present":\["video","motion","design"\]/');
+it('renders plain server markup with no Interactivity API directives', function () {
+    // The filter/pagination is plain-DOM view.js (like service-selected-work); the block must not
+    // emit data-wp-* directives, which crashed hydration and wiped the chips on WP 7.0.2.
+    expect(renderGrid())->not->toContain('data-wp-');
 });
 
 it('uses an image when a thumbnail url is present and a placeholder otherwise', function () {
@@ -78,7 +79,46 @@ it('renders an empty grid with no cards when there are no projects', function ()
 
     expect(substr_count($html, 'class="post-card reveal"'))->toBe(0)
         ->and($html)->toContain('id="portfolioEmpty"')
-        ->and($html)->toMatch('/"present":\[\]/');
+        ->and($html)->not->toContain('class="pagination"');
+});
+
+function manyProjects(int $count): array
+{
+    $projects = [];
+    for ($i = 0; $i < $count; $i++) {
+        $projects[] = [
+            'title' => 'Project ' . $i,
+            'url' => '/work/p-' . $i,
+            'category' => 'video',
+            'categoryLabel' => 'Video Editing',
+            'excerpt' => 'Client: Sample · 2026',
+            'thumbUrl' => '',
+            'thumbAlt' => '',
+        ];
+    }
+
+    return $projects;
+}
+
+it('renders a numbered pager (prev, one button per page, next) when projects exceed the per-page cap', function () {
+    $filters = ['all' => 'All Projects', 'video' => 'Video Editing'];
+    $strings = ['groupLabel' => 'Filter', 'noResults' => 'None'];
+
+    // 20 projects at 9/page → 3 pages.
+    $html = (new PortfolioGridRenderer())->render(manyProjects(20), $filters, $strings);
+
+    // Hidden until view.js runs (progressive enhancement), one button per page, prev/next controls.
+    expect($html)->toContain('<nav class="pagination" hidden')
+        ->and($html)->toContain('class="pagination__prev"')
+        ->and($html)->toContain('class="pagination__next"')
+        ->and(substr_count($html, 'data-page="'))->toBe(3)
+        ->and($html)->toContain('data-page="3"')
+        ->and($html)->not->toContain('data-page="4"');
+});
+
+it('omits the pager when all projects fit on a single page', function () {
+    // sampleProjects has 3 (≤ 9/page).
+    expect(renderGrid())->not->toContain('class="pagination"');
 });
 
 it('renders an optional heading + intro when provided', function () {

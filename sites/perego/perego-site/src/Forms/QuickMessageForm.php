@@ -50,12 +50,15 @@ final class QuickMessageForm extends Form
             ],
             'message' => [
                 'type' => 'textarea',
-                // 1200 is the handoff's message cap (site/js/main.js CAPS); the maxlength attribute
-                // makes the browser enforce it and drives the visible "n / 1200" counter (spec 020 D2).
-                'rules' => ['required', 'max:1200'],
+                // 200 words ≈ the handoff's original 1200-character cap (spec 020 D2) at typical
+                // English/Arabic prose density — a word budget reads more meaningfully to a writer
+                // than a character count (spec 020 round 4). `data-max-words` (not `maxlength`,
+                // which is inherently character-based and would silently cap input below the word
+                // limit) is the live counter's (site-footer/view.js) source of truth for the limit.
+                'rules' => ['required', 'max_words:200'],
                 'label' => __('Your message', 'perego-site'),
                 'placeholder' => __('Say hello.', 'perego-site'),
-                'attrs' => ['maxlength' => '1200'],
+                'attrs' => ['data-max-words' => '200'],
             ],
         ];
     }

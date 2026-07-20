@@ -27,6 +27,12 @@ use PeregoSite\Services\LanguageService;
  * (`_perego_teaser_label`/`_perego_teaser_image_id`/`_perego_teaser_alt`, keyed by
  * `_perego_service_slug` for the current locale). Missing post or unset meta falls back to the seed,
  * so output is byte-identical until an editor sets a value — then editing a Service updates the card.
+ *
+ * spec 020 round 4 — the section heading + "See All Services" link text are real block attributes,
+ * RichText-editable in the canvas (previously 100% hardcoded with zero admin UI). This block instance
+ * lives in the shared `front-page.html` FSE template, so — matching `footer-careers`'/
+ * `ClientsCarouselRenderer`'s pattern for the same problem — each string is an En/Ar attribute pair;
+ * an empty attribute falls back to the locale-aware `HomeContent` seed.
  */
 final class ServicesTeaserRenderer
 {
@@ -36,11 +42,15 @@ final class ServicesTeaserRenderer
     {
     }
 
-    public function render(): string
+    /** @param array<string,string> $attributes */
+    public function render(array $attributes = []): string
     {
         $locale  = $this->languageService->driver()->currentLocale();
         $content = new HomeContent($locale);
         $posts   = (new ServiceCatalog())->postsBySlug($locale);
+        $suffix  = $locale === 'ar' ? 'Ar' : 'En';
+        $heading = trim((string) ($attributes['heading' . $suffix] ?? '')) ?: $content->servicesTeaserTitle();
+        $seeAll  = trim((string) ($attributes['seeAll' . $suffix] ?? '')) ?: $content->servicesTeaserSeeAll();
 
         $html = '<section class="services-teaser" id="services" aria-labelledby="' . self::HEADING_ID . '">';
 
@@ -52,9 +62,9 @@ final class ServicesTeaserRenderer
 
         $html .= '<div class="services-teaser__head">';
         $html .= '<h2 class="services-teaser__title reveal" id="' . self::HEADING_ID . '">'
-            . esc_html($content->servicesTeaserTitle()) . '</h2>';
+            . wp_kses_post($heading) . '</h2>';
         $html .= '<a class="link-arrow services-teaser__link reveal" data-delay="1" href="' . esc_url($this->languageService->driver()->localizedUrl('/services')) . '">'
-            . esc_html($content->servicesTeaserSeeAll())
+            . esc_html($seeAll)
             . $this->arrowSvg()
             . '</a>';
         $html .= '</div>';

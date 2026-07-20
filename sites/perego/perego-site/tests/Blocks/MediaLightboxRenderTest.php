@@ -59,3 +59,11 @@ it('starts with prev/next hidden until a gallery with more than one item opens',
     expect($html)->toMatch('/lightbox__nav--prev"[^>]*hidden/')
         ->and($html)->toMatch('/lightbox__nav--next"[^>]*hidden/');
 });
+
+it('renders the position counter visibly (handoff "3 / 8"), still announced as a live region', function () {
+    $html = renderLightbox();
+
+    expect($html)->toContain('class="lightbox__counter"')
+        ->and($html)->not->toContain('screen-reader-text')
+        ->and($html)->toMatch('/lightbox__counter"[^>]*aria-live="polite"/');
+});

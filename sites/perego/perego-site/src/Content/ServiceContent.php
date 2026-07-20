@@ -45,6 +45,8 @@ final class ServiceContent
                 'ourProcess' => 'Our Process',
                 'startYourProject' => 'Start your project',
                 'selectedWork' => 'Selected work',
+                'loadMore' => 'Load more',
+                'galleryBadge' => 'Gallery',
             ],
             'names' => [
                 'videoEditing' => ['name' => 'Video Editing', 'fullName' => 'Video Editing & Post-Production'],
@@ -115,6 +117,22 @@ final class ServiceContent
                 'ctaBody' => "Tell us what you're working on and we'll help you choose the right service and shape the plan.",
                 'ctaButton' => 'Start a Project',
             ],
+            // The website-making single's unique last section (handoff service-website-making.html).
+            'webShowcase' => [
+                'title' => 'Websites we’ve built',
+                'intro' => 'A selection of responsive, fast, brand-driven sites we designed and developed — from storefronts to web apps.',
+                'filterAria' => 'Filter projects by type',
+                'filterAll' => 'All',
+                'types' => [
+                    'ecommerce' => 'E-Commerce',
+                    'corporate' => 'Corporate',
+                    'landing' => 'Landing',
+                    'webapp' => 'Web App',
+                    'portfolio' => 'Portfolio',
+                ],
+                'preview' => 'Preview',
+                'visit' => 'Visit',
+            ],
         ],
         'ar' => [
             'labels' => [
@@ -122,6 +140,8 @@ final class ServiceContent
                 'ourProcess' => 'منهجية عملنا',
                 'startYourProject' => 'ابدأ مشروعك',
                 'selectedWork' => 'أعمال مختارة',
+                'loadMore' => 'عرض المزيد',
+                'galleryBadge' => 'معرض',
             ],
             'names' => [
                 'videoEditing' => ['name' => 'مونتاج الفيديو', 'fullName' => 'مونتاج الفيديو وما بعد الإنتاج'],
@@ -192,6 +212,22 @@ final class ServiceContent
                 'ctaBody' => 'أخبرنا بما تعمل عليه وسنساعدك في اختيار الخدمة المناسبة وبلورة الخطة.',
                 'ctaButton' => 'ابدأ مشروعك',
             ],
+            // القسم الأخير الخاص بصفحة إنشاء المواقع (handoff service-website-making.html).
+            'webShowcase' => [
+                'title' => 'مواقع أنشأناها',
+                'intro' => 'مجموعة مختارة من مواقع متجاوبة وسريعة تعكس الهوية، صممناها وطوّرناها — من المتاجر الإلكترونية إلى تطبيقات الويب.',
+                'filterAria' => 'تصفية المشاريع حسب النوع',
+                'filterAll' => 'الكل',
+                'types' => [
+                    'ecommerce' => 'متجر إلكتروني',
+                    'corporate' => 'موقع شركة',
+                    'landing' => 'صفحة هبوط',
+                    'webapp' => 'تطبيق ويب',
+                    'portfolio' => 'معرض أعمال',
+                ],
+                'preview' => 'معاينة',
+                'visit' => 'زيارة',
+            ],
         ],
     ];
 
@@ -246,6 +282,12 @@ final class ServiceContent
     public function overview(): array
     {
         return self::COPY[$this->locale]['overview'];
+    }
+
+    /** @return array<string, mixed> the website-making single's web-showcase copy. */
+    public function webShowcase(): array
+    {
+        return self::COPY[$this->locale]['webShowcase'];
     }
 
     /** @return array<string, string> */

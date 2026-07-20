@@ -12,6 +12,26 @@ declare(strict_types=1);
 
 use PeregoSite\Content\ServiceContent;
 
+if (! function_exists('serviceProcessIcons')) {
+    /**
+     * The handoff's per-service process-step icon files, in step order (design matrix
+     * docs/sections/service-pages.md lines 21–24). All files ship in the theme's assets/images.
+     *
+     * @return list<string>
+     */
+    function serviceProcessIcons(string $slug): array
+    {
+        $iconsBySlug = [
+            'video-editing' => ['icon-clapper.png', 'icon-film-l.png', 'icon-star.png', 'icon-film-h.png'],
+            'motion-graphics' => ['icon-hands.png', 'icon-pen.png', 'icon-star.png', 'icon-film-h.png'],
+            'graphic-design' => ['icon-hands.png', 'icon-star.png', 'icon-pen.png', 'icon-film-h.png'],
+            'website-making' => ['icon-hands.png', 'icon-browser.png', 'icon-laptop.png', 'icon-film-h.png'],
+        ];
+
+        return $iconsBySlug[$slug] ?? $iconsBySlug['video-editing'];
+    }
+}
+
 if (! function_exists('buildProcessBlocks')) {
     /**
      * The handoff's designed icon/card/arrow process contract (matching the Services archive's
@@ -22,8 +42,10 @@ if (! function_exists('buildProcessBlocks')) {
      */
     function buildProcessBlocks(ServiceContent $content, string $slug): string
     {
-        // Icon file, in the handoff's fixed step order (mirrors ServicesOverviewRenderer::PROCESS_ICONS).
-        $icons = ['icon-clapper.png', 'icon-film-l.png', 'icon-star.png', 'icon-film-h.png'];
+        // Icon files per service, in the handoff's fixed step order (design matrix
+        // docs/sections/service-pages.md — each service page has its own step iconography;
+        // only the archive overview uses the clapper/film set).
+        $icons = serviceProcessIcons($slug);
         $arrowSvg = '<svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" '
             . 'stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
         $iconBase = get_stylesheet_directory_uri() . '/assets/images/';

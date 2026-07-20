@@ -5,10 +5,20 @@
 	"title": "Perego Clients Carousel",
 	"category": "theme",
 	"icon": "groups",
-	"description": "The homepage Corporate + Individual client carousels. Cards are server-rendered (work without JS); Swiper (modular: Navigation, Pagination, Keyboard, A11y) enhances them. Language-aware.",
+	"description": "The homepage Corporate + Individual client carousels. Cards are server-rendered (work without JS); a scroll-snap track + arrow buttons enhance them (see view.js). Styled by the theme's perego-reference.scss. Language-aware.",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
 	"viewScriptModule": "file:./view.js",
 	"style": "file:./style-index.css",
+	"attributes": {
+		"corporateHeadingEn": { "type": "string", "default": "" },
+		"corporateSubtitleEn": { "type": "string", "default": "" },
+		"individualHeadingEn": { "type": "string", "default": "" },
+		"individualSubtitleEn": { "type": "string", "default": "" },
+		"corporateHeadingAr": { "type": "string", "default": "" },
+		"corporateSubtitleAr": { "type": "string", "default": "" },
+		"individualHeadingAr": { "type": "string", "default": "" },
+		"individualSubtitleAr": { "type": "string", "default": "" }
+	},
 	"supports": { "html": false }
 }

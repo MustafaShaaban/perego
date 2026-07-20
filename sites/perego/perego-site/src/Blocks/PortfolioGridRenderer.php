@@ -23,6 +23,9 @@ defined('ABSPATH') || exit;
  */
 final class PortfolioGridRenderer
 {
+    /** Cards shown per page (client-side numbered pagination, spec 020 owner review). */
+    private const PER_PAGE = 9;
+
     /**
      * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}> $projects
      * @param array<string, string> $filterLabels ordered, keyed by slug ('all' first); values are labels
@@ -30,15 +33,7 @@ final class PortfolioGridRenderer
      */
     public function render(array $projects, array $filterLabels, array $strings): string
     {
-        $present = $this->presentCategories($projects);
-
-        $context = esc_attr((string) wp_json_encode([
-            'activeFilter' => 'all',
-            'present' => $present,
-        ]));
-
-        $html = '<section class="page-section" data-wp-interactive="perego/portfolio-grid" '
-            . "data-wp-context='" . $context . "'>";
+        $html = '<section class="page-section">';
         $html .= '<div class="container">';
 
         if (! empty($strings['heading'])) {
@@ -62,9 +57,10 @@ final class PortfolioGridRenderer
 
         $html .= $this->renderFilters($filterLabels, $strings['groupLabel']);
         $html .= $this->renderGrid($projects);
-        $html .= '<p id="portfolioEmpty" hidden class="section-lead" role="status" data-wp-bind--hidden="callbacks.noResultsHidden" '
+        $html .= '<p id="portfolioEmpty" hidden class="section-lead" role="status" '
             . 'style="font-size:var(--fs-lead);padding:clamp(40px,6vw,80px) 0;">'
             . esc_html($strings['noResults']) . '</p>';
+        $html .= $this->renderPager(count($projects));
         $html .= '</div></section>';
 
         $html .= $this->renderCta($strings);
@@ -106,13 +102,10 @@ final class PortfolioGridRenderer
         foreach ($filterLabels as $slug => $label) {
             $isAll = $slug === 'all';
 
+            // view.js binds the click and toggles is-active/aria-pressed by reading data-filter.
             $html .= '<button type="button" class="web-filter portfolio-filter' . ($isAll ? ' is-active' : '') . '" '
                 . 'data-filter="' . esc_attr($slug) . '" '
-                . 'aria-pressed="' . ($isAll ? 'true' : 'false') . '" '
-                . "data-wp-context='" . esc_attr((string) wp_json_encode(['filter' => $slug])) . "' "
-                . 'data-wp-on--click="actions.setFilter" '
-                . 'data-wp-bind--aria-pressed="callbacks.filterPressed" '
-                . 'data-wp-class--is-active="callbacks.filterPressed">'
+                . 'aria-pressed="' . ($isAll ? 'true' : 'false') . '">'
                 . esc_html($label) . '</button>';
         }
 
@@ -126,17 +119,16 @@ final class PortfolioGridRenderer
      */
     private function renderGrid(array $projects): string
     {
-        $html = '<div class="blog-grid" id="portfolioGrid">';
+        $html = '<div class="blog-grid" id="portfolioGrid" data-per-page="' . esc_attr((string) self::PER_PAGE) . '">';
 
         foreach ($projects as $project) {
             $media = $project['thumbUrl'] !== ''
                 ? '<img src="' . esc_url($project['thumbUrl']) . '" alt="' . esc_attr($project['thumbAlt']) . '" loading="lazy" />'
                 : '<span class="post-card__media-placeholder" data-category="' . esc_attr($project['category']) . '" aria-hidden="true"></span>';
 
+            // view.js filters/paginates by reading data-category and toggling the hidden attribute.
             $html .= '<a class="post-card reveal" href="' . esc_url($project['url']) . '" '
-                . 'data-category="' . esc_attr($project['category']) . '" '
-                . "data-wp-context='" . esc_attr((string) wp_json_encode(['category' => $project['category']])) . "' "
-                . 'data-wp-bind--hidden="callbacks.cardHidden">';
+                . 'data-category="' . esc_attr($project['category']) . '">';
             $html .= '<div class="post-card__media">' . $media . '</div>';
             $html .= '<div class="post-card__body">';
             $html .= '<span class="post-card__cat">' . esc_html($project['categoryLabel']) . '</span>';
@@ -151,14 +143,35 @@ final class PortfolioGridRenderer
     }
 
     /**
-     * The distinct category slugs that actually have at least one project — view.js uses this to
-     * decide when to show the no-results message.
-     *
-     * @param list<array{category: string}> $projects
-     * @return list<string>
+     * Numbered pagination (spec 020 owner review). Rendered up to the unfiltered max page count; view.js
+     * hides page numbers beyond the filtered set's page count and hides the whole pager at a single page.
+     * Purely client-side (no query/URL change) so it cooperates with the client-side service filter.
      */
-    private function presentCategories(array $projects): array
+    private function renderPager(int $projectCount): string
     {
-        return array_values(array_unique(array_column($projects, 'category')));
+        $maxPages = (int) max(1, (int) ceil($projectCount / self::PER_PAGE));
+
+        if ($maxPages <= 1) {
+            return '';
+        }
+
+        // Hidden until view.js runs, so no-JS clients see the full grid rather than a dead control.
+        $html = '<nav class="pagination" hidden aria-label="' . esc_attr__('Projects pagination', 'perego-site') . '">';
+
+        $html .= '<button type="button" class="pagination__prev" '
+            . 'aria-label="' . esc_attr__('Previous page', 'perego-site') . '">&#8249;</button>';
+
+        for ($page = 1; $page <= $maxPages; $page++) {
+            $html .= '<button type="button" data-page="' . esc_attr((string) $page) . '" '
+                . 'aria-label="' . esc_attr(sprintf(/* translators: %d: page number */ __('Page %d', 'perego-site'), $page)) . '">'
+                . esc_html((string) $page) . '</button>';
+        }
+
+        $html .= '<button type="button" class="pagination__next" '
+            . 'aria-label="' . esc_attr__('Next page', 'perego-site') . '">&#8250;</button>';
+
+        $html .= '</nav>';
+
+        return $html;
     }
 }

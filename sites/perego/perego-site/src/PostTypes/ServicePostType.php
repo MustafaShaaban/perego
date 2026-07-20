@@ -115,7 +115,10 @@ final class ServicePostType
                 'menu_name' => __('Services', 'perego-site'),
             ],
             'public' => true,
-            'has_archive' => 'services',
+            // Archive disabled (spec 020): the 4 service singles at /services/<slug> are the canonical
+            // service pages; the auto-generated /services/ archive is retired → 404. Singles keep working
+            // because they come from `rewrite.slug`, not `has_archive`.
+            'has_archive' => false,
             'menu_icon' => 'dashicons-screenoptions',
             'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'custom-fields'],
             'rewrite' => ['slug' => 'services'],

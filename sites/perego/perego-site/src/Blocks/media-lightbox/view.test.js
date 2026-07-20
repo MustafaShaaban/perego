@@ -14,6 +14,7 @@ function loadLightbox() {
 			<button type="button" data-image="https://perego.local/a.jpg">Open image</button>
 			<button type="button" data-video="https://www.youtube.com/embed/abc123">Open video</button>
 			<button type="button" data-gallery="https://perego.local/a.jpg, https://perego.local/b.jpg, https://perego.local/c.jpg">Open gallery</button>
+			<button type="button" id="thumb-b" data-gallery="https://perego.local/a.jpg, https://perego.local/b.jpg, https://perego.local/c.jpg" data-gallery-index="1">Open gallery at b</button>
 		</div>
 		<div class="lightbox" id="perego-media-lightbox" role="dialog" aria-modal="true" aria-label="Close" hidden>
 			<div class="lightbox__backdrop" data-lightbox-close></div>
@@ -43,13 +44,72 @@ test( 'opens on an image trigger, showing an image frame with no gallery nav', (
 	expect( document.body.style.overflow ).toBe( 'hidden' );
 } );
 
-test( 'opens a YouTube trigger as an autoplaying iframe embed', () => {
+test( 'opens a YouTube trigger as a MUTED autoplaying iframe embed (no autoplay with sound)', () => {
 	loadLightbox();
 	document.querySelector( '[data-video]' ).click();
 
 	const iframe = dialog().querySelector( '.lightbox__frame iframe' );
 	expect( iframe ).not.toBeNull();
 	expect( iframe.src ).toContain( 'autoplay=1' );
+	expect( iframe.src ).toContain( 'mute=1' );
+} );
+
+test( 'a direct video file autoplays muted', () => {
+	loadLightbox();
+	const trigger = document.querySelector( '[data-video]' );
+	trigger.setAttribute( 'data-video', 'https://perego.local/reel.mp4' );
+	trigger.click();
+
+	const video = dialog().querySelector( '.lightbox__frame video' );
+	expect( video ).not.toBeNull();
+	expect( video.hasAttribute( 'muted' ) ).toBe( true );
+	expect( video.hasAttribute( 'autoplay' ) ).toBe( true );
+} );
+
+test( 'a gallery trigger with data-gallery-index opens on that image (project-gallery thumbs)', () => {
+	loadLightbox();
+	document.getElementById( 'thumb-b' ).click();
+
+	expect( dialog().querySelector( '.lightbox__img' ).src ).toContain( 'b.jpg' );
+	const dots = dialog().querySelectorAll( '.lightbox__dot' );
+	expect( dots[ 1 ].classList.contains( 'is-active' ) ).toBe( true );
+} );
+
+describe( 'normalizes pasted watch/page URLs to their embeddable form (prevents YouTube Error 153)', () => {
+	// A normal "watch?v=" URL is what an editor naturally copies from the address bar — it is NOT
+	// embeddable; loading it in an iframe is exactly what produces YouTube's own error page instead
+	// of the video.
+	test.each( [
+		[ 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', 'https://www.youtube.com/embed/dQw4w9WgXcQ' ],
+		[ 'https://www.youtube.com/watch?list=PL123&v=dQw4w9WgXcQ', 'https://www.youtube.com/embed/dQw4w9WgXcQ' ],
+		[ 'https://youtu.be/dQw4w9WgXcQ', 'https://www.youtube.com/embed/dQw4w9WgXcQ' ],
+		[ 'https://www.youtube.com/shorts/dQw4w9WgXcQ', 'https://www.youtube.com/embed/dQw4w9WgXcQ' ],
+		[ 'https://vimeo.com/76979871', 'https://player.vimeo.com/video/76979871' ],
+	] )( '%s -> %s', ( pasted, expectedEmbed ) => {
+		loadLightbox();
+		document.querySelector( '[data-video]' ).setAttribute( 'data-video', pasted );
+		document.querySelector( '[data-video]' ).click();
+
+		const iframe = dialog().querySelector( '.lightbox__frame iframe' );
+		expect( iframe.src ).toContain( expectedEmbed );
+	} );
+
+	test( 'leaves an already-embeddable YouTube URL unchanged', () => {
+		loadLightbox();
+		document.querySelector( '[data-video]' ).click(); // fixture already uses .../embed/abc123
+
+		const iframe = dialog().querySelector( '.lightbox__frame iframe' );
+		expect( iframe.src ).toContain( 'youtube.com/embed/abc123' );
+	} );
+
+	test( 'leaves an already-embeddable Vimeo player URL unchanged', () => {
+		loadLightbox();
+		document.querySelector( '[data-video]' ).setAttribute( 'data-video', 'https://player.vimeo.com/video/76979871' );
+		document.querySelector( '[data-video]' ).click();
+
+		const iframe = dialog().querySelector( '.lightbox__frame iframe' );
+		expect( iframe.src ).toContain( 'player.vimeo.com/video/76979871' );
+	} );
 } );
 
 test( 'opens a gallery trigger with working prev/next/dots and wraparound', () => {

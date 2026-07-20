@@ -12,6 +12,7 @@ use PeregoSite\Services\LanguageService;
 
 beforeEach(function () {
     Functions\when('esc_html')->returnArg();
+    Functions\when('wp_kses_post')->returnArg();
     Functions\when('esc_html__')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_attr__')->returnArg();
@@ -22,11 +23,13 @@ beforeEach(function () {
     Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
 });
 
-function renderHero(string $locale = 'en'): string
+/** @param array<string,string> $attributes */
+function renderHero(string $locale = 'en', array $attributes = []): string
 {
-    $service = new LanguageService(cookie: [], requestUri: '/', polylangActive: false);
+    $cookie  = $locale === 'en' ? [] : ['perego_lang' => $locale];
+    $service = new LanguageService(cookie: $cookie, requestUri: '/', polylangActive: false);
 
-    return (new HeroSliderRenderer($service))->render();
+    return (new HeroSliderRenderer($service))->render($attributes);
 }
 
 it('renders exactly three slides, the first as an h1 and the rest hidden', function () {
@@ -55,12 +58,13 @@ it('renders a dot tablist with one tab per slide and the first selected', functi
         ->and($html)->toContain('data-wp-on--click="actions.goTo"');
 });
 
-it('renders prev/next and a pause/play control', function () {
+it('renders dots only — no prev/next or pause/play controls (owner-directed divergence from the handoff)', function () {
     $html = renderHero();
 
-    expect($html)->toContain('data-wp-on--click="actions.prev"')
-        ->and($html)->toContain('data-wp-on--click="actions.next"')
-        ->and($html)->toContain('data-wp-on--click="actions.togglePlay"');
+    expect($html)->not->toContain('hero__controls')
+        ->and($html)->not->toContain('data-wp-on--click="actions.prev"')
+        ->and($html)->not->toContain('data-wp-on--click="actions.next"')
+        ->and($html)->not->toContain('data-wp-on--click="actions.togglePlay"');
 });
 
 it('renders a polite live region for slide announcements', function () {
@@ -97,8 +101,13 @@ it('uses no hardcoded hex colors in the rendered markup', function () {
 });
 
 it('renders Arabic hero copy when the locale resolves to ar', function () {
-    $service = new LanguageService(cookie: ['perego_lang' => 'ar'], requestUri: '/', polylangActive: false);
-    $html = (new HeroSliderRenderer($service))->render();
+    expect(renderHero('ar'))->toContain('قل مرحبًا!');
+});
 
-    expect($html)->toContain('قل مرحبًا!');
+it('prefers an editor-set En/Ar block attribute over the seed, per locale', function () {
+    $htmlEn = renderHero('en', ['slide1TitleEn' => 'A Bold New Headline', 'ctaEn' => 'Talk to us']);
+    $htmlAr = renderHero('ar', ['slide1TitleAr' => 'عنوان جديد جريء', 'ctaAr' => 'تحدث معنا']);
+
+    expect($htmlEn)->toContain('A Bold New Headline')->toContain('Talk to us')->not->toContain('What We Believe')
+        ->and($htmlAr)->toContain('عنوان جديد جريء')->toContain('تحدث معنا');
 });

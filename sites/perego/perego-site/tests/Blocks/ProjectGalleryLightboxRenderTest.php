@@ -13,8 +13,7 @@ beforeEach(function () {
     Functions\when('esc_html')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_url')->returnArg();
-	Functions\when('__')->returnArg();
-    Functions\when('wp_json_encode')->alias('json_encode');
+    Functions\when('__')->returnArg();
 });
 
 function sampleImages(): array
@@ -25,28 +24,37 @@ function sampleImages(): array
     ];
 }
 
-function galleryStrings(): array
-{
-    return ['sectionLabel' => 'Project gallery', 'close' => 'Close', 'prev' => 'Previous', 'next' => 'Next', 'counter' => '%1$s / %2$s'];
-}
-
 function renderGallery(?array $images = null): string
 {
-    return (new ProjectGalleryLightboxRenderer())->render($images ?? sampleImages(), galleryStrings());
+    return (new ProjectGalleryLightboxRenderer())->render($images ?? sampleImages(), 'Project gallery');
 }
 
 it('renders nothing when there are no images', function () {
     expect(renderGallery([]))->toBe('');
 });
 
-it('renders one thumbnail button per image, opening the lightbox', function () {
+it('renders one thumbnail button per image as a site-wide lightbox gallery trigger', function () {
     $html = renderGallery();
 
     expect(substr_count($html, 'class="work-card reveal"'))->toBe(2)
-        ->and($html)->toContain('data-wp-on--click="actions.open"')
         ->and($html)->toContain('class="work-masonry"')
         ->and($html)->toContain('data-gallery="https://perego.local/a.jpg,https://perego.local/b.jpg"')
         ->and($html)->toContain('Frame A');
+});
+
+it('tells the global dialog which image each thumb represents', function () {
+    $html = renderGallery();
+
+    expect($html)->toContain('data-gallery-index="0"')
+        ->and($html)->toContain('data-gallery-index="1"');
+});
+
+it('renders NO embedded dialog of its own — the page has exactly one lightbox instance', function () {
+    $html = renderGallery();
+
+    expect($html)->not->toContain('class="lightbox"')
+        ->and($html)->not->toContain('role="dialog"')
+        ->and($html)->not->toContain('data-wp-interactive');
 });
 
 it('renders the localized gallery heading as the section label', function () {
@@ -59,32 +67,4 @@ it('falls back to the full src for a thumbnail when no thumb is set', function (
 
     // Second image has no thumb → its src is used for the thumbnail.
     expect($html)->toContain('https://perego.local/b.jpg');
-});
-
-it('renders an accessible dialog with a focus-trap keydown and modal semantics', function () {
-    $html = renderGallery();
-
-    expect($html)->toContain('role="dialog"')
-        ->and($html)->toContain('aria-modal="true"')
-        ->and($html)->toContain('data-wp-init="callbacks.init"')
-        ->and($html)->toContain('data-wp-on--keydown="actions.onKeydown"')
-        ->and($html)->toContain('data-wp-bind--hidden="callbacks.lightboxHidden"');
-});
-
-it('wires prev/next/close and binds the image + counter to the store', function () {
-    $html = renderGallery();
-
-    expect($html)->toContain('data-wp-on--click="actions.prev"')
-        ->and($html)->toContain('data-wp-on--click="actions.next"')
-        ->and($html)->toContain('data-wp-on--click="actions.close"')
-        ->and($html)->toContain('data-wp-bind--src="state.currentSrc"')
-        ->and($html)->toContain('data-wp-text="state.counterLabel"');
-});
-
-it('embeds the image srcs + initial state in the interactivity context', function () {
-    $html = renderGallery();
-
-    expect($html)->toMatch('/"isOpen":false/')
-        ->and($html)->toMatch('/"count":2/')
-        ->and($html)->toContain('https:\/\/perego.local\/a.jpg');
 });

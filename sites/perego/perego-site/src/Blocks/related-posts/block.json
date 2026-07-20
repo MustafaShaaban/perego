@@ -1,0 +1,12 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/related-posts",
+	"title": "Perego Related Articles",
+	"category": "theme",
+	"icon": "admin-page",
+	"description": "The journal single's 'Related articles' band (handoff single-post.html): three same-category post cards, back-filled when the category is thin. Cards navigate — never the lightbox. Language-aware.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"supports": { "html": false }
+}

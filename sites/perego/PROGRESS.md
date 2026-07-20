@@ -2,7 +2,525 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-16) — Spec 020: home fresh visual audit + drift fixes
+## RESUME HERE (2026-07-20) — Spec 020 round 15: work filters/pager + lightbox nav (live-verified)
+
+- **Branch:** `feature/020-home-visual-audit`. Owner re-tested round 14: work filters still didn't filter,
+  the pager still showed page numbers for pages that don't exist, and the lightbox arrows sat at the wrong
+  place. Both were real CSS bugs round 14 missed — and this time **verified live in a real browser**
+  (Playwright, host-mapped `perego.local`), which is exactly the check round 14 couldn't run.
+- **Fixed (CSS/SCSS only — no JS/PHP change):**
+  - **Work filters + pagination** — the *same* `[hidden]`-override bug round 14 fixed for the reply-chip, but
+    on `.post-card` and `.pagination`. `portfolio-grid/view.js` toggles the native `[hidden]` attribute, but
+    the reference stylesheet's author-origin `display` on `.post-card`/`.pagination`/`.pagination button` beat
+    the UA `[hidden]{display:none}` — so nothing hid (dead filters + phantom pages). Added four author-origin
+    `[hidden]` overrides in `perego-wordpress-adapter.scss`. Block JS/PHP + page-count math were already correct.
+  - **Lightbox nav** — re-anchored to the handoff placement (`position:absolute` on `.lightbox__inner`, ∓70px
+    outside on desktop, 8px inside ≤1120px), superseding round 14's viewport-edge decision. Applied the owner's
+    `padding:20px 17px 20px 15px` on `.lightbox__nav:not([hidden])`, made proper with `box-sizing:border-box`
+    (52px circle preserved, chevron centered). `shared/_lightbox-chrome.scss`.
+- **Verified:** rebuilt theme CSS (`perego-theme: npm run styles`) + blocks (`perego-site: npm run build`);
+  Jest **94 pass**; guard gate (clean-code-guard) clean. Live Playwright probe: filter shows only the chosen
+  category; pager shows exactly the real page numbers (video = 23 → 3 pages, no phantoms) and hides at one
+  page; lightbox arrows `absolute`, padded, anchored to `.lightbox__inner`, outside the frame on desktop,
+  tucked inside at ≤1120px. Screenshot eyeballed against the handoff.
+- **Next:** open/update the spec 020 PR (this closes the work-page + lightbox items owner re-reported).
+
+## RESUME HERE (2026-07-20) — Spec 020 round 14: owner re-report — real code bugs fixed
+
+- **Branch:** `feature/020-home-visual-audit`. Owner re-tested round-13 items in a fresh browser; they still
+  failed. All were **real code bugs** (round 13 wrongly blamed cache). All fixes in `sites/perego/`; rebuilt
+  theme CSS (`perego-theme: npm run styles`) + blocks (`perego-site: npm run build`).
+- **Fixed:**
+  - **Cancel-reply chip** — `.comment-form__reply-chip` guarded `:not([hidden])` so the `hidden` attr works
+    (author `display:flex` was overriding the UA `[hidden]` rule). `perego-wordpress-adapter.scss`.
+  - **Nav active on inner pages** — home scroll-spy gated to the front page (`body.home`/`front-page`); it
+    was firing everywhere via the sitewide footer `#contact` and defaulting to Home. Added ancestor match in
+    `SiteHeaderRenderer::isActive()` (single post lights its parent). `site-header/view.js`, `SiteHeaderRenderer.php`.
+  - **Mobile drawer** — moved the scrolled `backdrop-filter` to `.site-header::before` so the header no
+    longer forms a containing block for the `position:fixed` drawer (was opening at page-top after scroll).
+    Hamburger right spacing 6→16px. `perego-reference.scss`, `perego-wordpress-adapter.scss`.
+  - **Work filter** — the Interactivity region crashed on hydration (WP 7.0.2), wiping the chips (proven via
+    live browser probe). **Converted portfolio-grid to plain-DOM `view.js`** (like `service-selected-work`);
+    renderer emits plain markup, block no longer needs `@wordpress/interactivity`.
+  - **Work pagination** — added client-side numbered pager (9/page) cooperating with the filter, in the same
+    `view.js`; server renders it `hidden` (progressive enhancement). `PortfolioGridRenderer.php`.
+  - **Legal TOC sticky** — `.page-section` `overflow:hidden` → `overflow-x: clip` (was trapping the sticky
+    child). `perego-reference.scss`.
+  - **Lightbox arrows** — `.lightbox__nav` now `position:fixed`, viewport-centered, hugging far L/R edges
+    (`clamp(8px,2vw,24px)`). `shared/_lightbox-chrome.scss`.
+- **Verified:** Pest **347 pass**; Jest **94 pass** (portfolio-grid rewritten to 9 plain-DOM tests driving
+  real clicks through filter + pagination). Served `/work/` markup confirmed via curl (plain DOM,
+  `data-per-page="9"`, hidden pager w/ 9 pages, 5 chips). Live click-through could not be captured — the
+  browser MCP hung (infrastructure), but the exact rendered markup is covered by the Jest suite.
+- **Next:** hard-refresh `/work/`, a journal single, a legal page, and a mobile viewport on a real device to
+  eyeball filter+pager, cancel-reply, sticky TOC, drawer, and lightbox; then open/update the spec 020 PR.
+
+## RESUME HERE (2026-07-20) — Spec 020 round 13: pre-FSE QA punch-list
+
+- **Branch:** `feature/020-home-visual-audit`. Owner review before FSE work — a batch of nav/AR/template/
+  journal/lightbox/legal/work-filter/spacing fixes. All in `sites/perego/`; rebuilt theme (`npm run styles`
+  + `scripts`) and perego-site blocks (`npm run build`).
+- **Fixed & verified (Playwright/curl):**
+  - **Services archive → 404** (`ServicePostType::has_archive=false` + rewrite flush); singles at
+    `/services/<slug>` still 200. Tests updated.
+  - **Journal category/archive design** — new `templates/archive.html` reusing the journal blog-grid +
+    archive title (e.g. `/category/behind-the-scenes/` now renders cards + pagination).
+  - **Header scroll-spy** — `site-header/view.js` highlights the in-view home section's nav link
+    (About/Services/Clients/Contact; verified at each). Client-side only.
+  - **Mobile header** — burger gains inline-end padding (26px gap); tapping it no longer scrolls to top
+    (`focus({preventScroll:true})`); Services dropdown force-hidden when closed (`max-height:0;visibility:hidden`);
+    stale `.is-open` cleared on resize. Sticky header confirmed staying put on mobile scroll (top:0).
+  - **Global `.container` cap** — re-asserted over the constrained-layout reset, so legal pages
+    (layout 1080 / prose 760) and the **home About cards** sit within 1440 centered (were edge-drifting on
+    wide screens). Journal-single **breadcrumb→title** gap restored (`.post-hero .page-crumb` 14px).
+  - **Legal pages** — real professional EN + AR Privacy/Terms boilerplate seeded (marked draft-for-counsel);
+    fixed the `_perego_legal_updated` meta-key mismatch; AR resolved via Polylang link (no duplicate pages);
+    **TOC sticky on desktop + scroll-spy highlight** (default first, verified highlighting section 5).
+  - **Lightbox arrows** — replaced off-centre `‹ ›` glyphs with centered CSS chevrons (RTL-aware) in
+    `shared/_lightbox-chrome.scss`; verified centered.
+  - **Work filter & journal Cancel-reply** — both already correct in code; verified working in a clean
+    browser (54/77 cards filtered; chip shows on Reply, hides on Cancel). Owner's "not working" was a
+    stale build/cache — rebuild + hard-refresh resolves.
+  - **AR home About** — de-conflicted seeding (`seed-ar-content.php` no longer copies EN body into the AR
+    home; `seed-home-about.php` owns the Arabic About).
+- **Verified:** Pest 344 pass; guards clean. Screenshots in `output/playwright/spec020-batch/`.
+- **Still open (iterative, follow-up):** (1) full EN↔AR parity sweep across *every* page + RTL mirroring of
+  the home-About panel side; (2) global font/padding/margin audit vs the handoff. The concrete high-value
+  parts are done; these two are open-ended passes.
+- **Next:** hard-refresh + eyeball on a real device (mobile header, scroll-spy, legal TOC); do the two
+  iterative passes above; open/update the spec 020 PR.
+
+## RESUME HERE (2026-07-20) — Spec 020 round 12: service pages — "What we do" fidelity + masonry fill
+
+- **Branch:** `feature/020-home-visual-audit`.
+- **Trigger:** owner review of the 4 service singles — "What we do" image looked wrong/oversized; the
+  selected-work masonry was sparse ("not filled / not working") and showed a hover **"+"** on every tile.
+- **Root causes:** (1) round-7 override `.svc-whatwedo__media { aspect-ratio:7/5; object-fit:cover }`
+  cropped/enlarged the mockup vs the handoff's natural sizing; (2) the DB was at **round-5 data state** —
+  2–3 projects/category and **zero `_perego_video_url`** — so each service rendered 3 tiles, all
+  gallery/image variant (the hover "+" zoom `.work-zoom`), no ▶, no Load More.
+- **Fixed:**
+  - **"What we do" media** — reverted to handoff-natural sizing (`width:100%; height:auto`, no crop) in
+    `perego-wordpress-adapter.scss`; rebuilt `main.css`. Grid stays 1440px (= handoff).
+  - **"+" removed** (owner decision) — `ServiceSelectedWorkRenderer::card()` no longer emits `.work-zoom`
+    on gallery/image cards (▶ on video, Gallery badge on gallery kept). Updated the render test.
+  - **Masonry data** — ran the round-6 pipeline: `seed-projects.php` (video/motion/design → 23 each +
+    video meta) → `seed-project-media.php` → `seed-project-galleries.php` → `migrate-project-video-meta.php`
+    → `seed-ar-content.php` (AR translations). EN & AR now render the full 15-tile mosaic + 8-card Load More.
+  - **Arabic media** — `ProjectRepository::toGridCard()` (thumbnail) and `galleryFor()` now EN-translation
+    fall back (mirroring `videoUrlFor`), so AR tiles reuse the linked EN post's media (AR seed sets none).
+  - **(addendum) "What we do" width on wide screens** — the adapter's constrained-layout reset
+    out-specified `.svc-whatwedo__grid { max-inline-size:var(--maxw) }` (computed `none`), so it stretched
+    past 1440px above 1440 viewport. Re-asserted the cap via `.wp-site-blocks .svc-whatwedo
+    .svc-whatwedo__grid`. Verified @1920: width 1440, centered — identical to the handoff file.
+  - **(addendum) brand-card logo hover** — the reference `.work-card:hover img { scale(1.07) }` clobbered
+    the vertical logo's `translate/rotate`, making it jump on hover. Added `.work-brand:hover
+    .work-brand__logo { …translate…rotate…scale(1.06) }` so it zooms in place (translate offset unchanged;
+    scale 1→1.06). Both CSS-only in `perego-wordpress-adapter.scss`; rebuilt `main.css`.
+- **Verified:** curl EN `/services/video-editing/` = 15 `m1..m15`, 19 ▶, **0 `work-zoom`**, 1 badge, brand
+  card, Load More; AR `/ar/services/video-editing-2/` = 15 tiles (EN-media fallback), 0 zoom. Playwright
+  screenshots (EN what-we-do natural image; masonry mosaic; brand-logo before/after hover) in
+  `output/playwright/spec020-services/`. Pest 344 pass; wp/clean-code/test guards clean.
+- **Next:** eyeball the other 3 services (motion/graphic/website) EN+AR (hard-refresh for `main.css`);
+  open/update the spec 020 PR. Note: the Services **archive** (`ServicesOverviewRenderer`) still hardcodes
+  `ui-video-editing.png` for every service's what-we-do image — separate small fix if desired.
+
+## RESUME HERE (2026-07-20) — Spec 020 round 12: AJAX secure comments + preloader/scrollbar
+
+- **Branch:** `feature/020-home-visual-audit`.
+- **Trigger:** owner — after Reply worked, (a) reply was a one-way trap (no way back to a top-level
+  comment), (b) no submit feedback, (c) wanted AJAX/no-reload with approved comments appearing live,
+  (d) anti-spam best practices reusing CoreX, plus (e) preloader not full-screen (top gap) and
+  (f) brand-purple + smooth scrollbar.
+- **Comments — now a Perego-owned AJAX system** (replaces core `wp:post-comments-form` +
+  `comment-reply.js`):
+  - New `src/Comments/PeregoCommentController.php` — `POST perego/v1/comments`, mirroring the
+    `PeregoCareersController` security recipe: `wp_rest` nonce + honeypot (`perego_hp`) + per-IP/post
+    transient rate limit (5/300s) **then** WordPress's own `wp_handle_comment_submission()` (flood,
+    duplicate, blocklist/Akismet, moderation). Returns `{ok,status,commentHtml?,count}`.
+  - `JournalCommentsRenderer` now renders the whole section incl. the handoff `.comment-form`
+    (honeypot, hidden `comment_post_ID`/`comment_parent`, `action=wp-comments-post.php` no-JS
+    fallback, data-endpoint/nonce/messages) and a public `renderCard()` reused by the controller to
+    return an approved card for live insertion.
+  - New `journal-comments/view.js`: **Reply without moving the DOM** — sets `comment_parent`, shows a
+    "Replying to X — Cancel" chip; Cancel clears it → back to a normal comment (fixes the trap). AJAX
+    submit with aria-live status; approved comment injected on the fly + count bumped; held comment
+    shows "awaiting review" and is **not** injected (owner's choice). Distinct friendly errors
+    (flood/duplicate/rate_limit/spam/invalid/session).
+  - `single.html` now just `<!-- wp:perego-theme/journal-comments /-->`; removed the dead
+    `registerJournalComments()` core-form filters + `.wp-block-post-comments-form` CSS.
+  - Strings added to `GlobalContent` (EN+AR): form labels/placeholders + status/error set.
+- **Preloader** — covered the viewport except a 24px top strip: WordPress's global
+  `.wp-site-blocks > *{margin-block-start:24px}` was adding a top margin (adapter only zeroed it for
+  header/main). Fixed with `.preloader{margin:0; inset:0; block-size:100dvh; z-index:100000}` (+
+  `.admin-bar .preloader{inset-block-start:0}` to also cover the admin bar). Verified `top:0`.
+- **Scrollbar** — brand-purple (`scrollbar-color` + `::-webkit-scrollbar*` = accent→violet gradient
+  thumb on bg-deep) in the adapter; native `scroll-behavior:smooth` (already reduced-motion-guarded)
+  kept — owner chose the lightweight approach (no JS momentum lib).
+- **Verified (real browser, Playwright):** reply chip + cancel; new-author submit → held +
+  "awaiting review", no reload, not injected (DB comment `approved=0`, then deleted); known-approved
+  author → injected live + count 3→4 (then deleted); WP flood check fires on rapid repeats;
+  preloader full-screen (top 0); scrollbar `rgb(216,106,243)`. 344 Pest + 20 Jest green; both builds
+  clean.
+- **Note:** posts 36/37/39 on post 235 are leftover dummy test comments (approved) from earlier
+  manual testing — offer to remove.
+- **Next:** owner review in a browser (post a comment + a reply).
+
+## (previous) RESUME HERE (2026-07-19) — Spec 020 round 11: journal comments section = handoff cards
+
+- **Branch:** `feature/020-home-visual-audit`.
+- **Trigger:** owner — the comments section "must be identical and same cards" as the handoff
+  (`single-post.html:110-146`).
+- **Root cause:** WordPress's `wp:comment-template` emits `.wp-block-comment` cards with gravatar
+  **image** avatars + `depth-N` nesting — nothing like the handoff's `.comment` cards (initials in a
+  gradient circle + bordered body, indented reply). The reference `.comment*` CSS existed but never
+  matched core's markup. Only 3 mismatched demo comments (one author, no reply) existed, on an old
+  post.
+- **Fixed:**
+  - New server-rendered block **`perego-theme/journal-comments`** (`JournalCommentsRenderer`,
+    mirrors `RelatedPostsRenderer`) emits the handoff's exact `.comments` → `.comments__title`
+    ("N Comments") → `.comment-list` of `.comment`/`.comment--reply` cards, initials avatar derived
+    from the author name, name/date head, text, Reply link. Reuses the reference `.comment*` CSS.
+  - `single.html` swaps core's `wp:comments-title` + `wp:comment-template` (+pagination) for the new
+    block; keeps `wp:post-comments-form` for the working, trimmed form. The provider callback pulls
+    approved comments and **threads** them (each top-level followed by its replies, insertion order)
+    so the reply sits under its parent, not scattered by date.
+  - Comment form reshaped to the handoff card via CSS (`perego-wordpress-adapter.scss`): the
+    `.comment-respond` wrapper is now the 760px-centered card (aligned under the 760px comment list),
+    heading "Leave a comment" inside it (set via `comment_form_defaults` `title_reply`), fields
+    re-laid on a grid — Name + E-mail side by side, Comment full width, then POST COMMENT; the
+    "email not published" notes line hidden.
+  - New idempotent `scripts/seed-journal-comments.php` seeds the handoff's 3 demo comments (Sara
+    Adel; Mostafa Emam as a reply; Karim Hassan) on every EN journal post with none. Deleted the 3
+    old mismatched demo comments on post 45 so it gets the correct set too.
+  - Strings added to `GlobalContent` (EN+AR): commentsTitle/commentsTitleOne/reply/leaveComment.
+- **Verified (real browser, Playwright, vs handoff):** "3 Comments", SA/ME/KH initials cards, the
+  indented reply, Reply links, then the 760px-centered "Leave a comment" card with Name|E-mail row +
+  Comment. 339 Pest passing (new `JournalCommentsRenderTest`, 6 cases); perego-site + theme builds
+  clean; no console errors. (Avatar shows "ME" for Mostafa Emam — correct initials; the handoff mock
+  said "MP".)
+- **Follow-up (same day): threaded replies now actually work.** The custom Reply links were plain
+  `#respond` anchors, so a "reply" posted as a new top-level comment. `JournalCommentsRenderer` now
+  emits each `<li id="comment-{ID}">` and a `comment-reply-link` with the `data-*` attributes
+  WordPress's `comment-reply.js` reads (commentid/postid/belowelement/respondelement/replyto); the
+  provider passes the comment + post IDs. Clicking Reply now moves the `#respond` form under the
+  comment, shows "Cancel reply", and sets `comment_parent`. Removed the CSS rule that hid the Cancel
+  link (it broke canceling). E2E-verified in a real browser: a submitted reply persisted with
+  `comment_parent` = the parent comment's ID (test comment then deleted). 344 Pest passing.
+- **Next:** owner review; `seed-journal-comments.php` must be run on other environments (like the
+  other journal seeders). Continue the spec 020 finish pass.
+
+## (previous) RESUME HERE (2026-07-19) — Spec 020 round 10: journal archive + single page to the handoff
+
+- **Branch:** `feature/020-home-visual-audit`.
+- **Trigger:** owner — journal archive cards "not in the same line… missing padding," and the single
+  post "not identical." Verified with Playwright vs the handoff (`archive.html` + `single-post.html`).
+- **Fixed:**
+  - **Archive card stagger** — the `/journal` post-template carries `.blog-grid` (display:grid) AND
+    WP's `is-layout-flow`, whose `:where(...) > * + *` injects `margin-block-start` on cards 2, 3, …
+    On grid items that pushed each down within its row → the "not in the same line" bug. Killed it
+    with `.blog-grid > * + * { margin-block-start: 0 }` (real specificity beats core's `:where()`)
+    in `perego-wordpress-adapter.scss`. Now a clean top-aligned grid.
+  - **Only 3 posts existed** (old "(example)" placeholders) — the round-6 journal seed had never run
+    on this DB. Ran `seed-journal.php` (→ 9 posts, 2 rows), `seed-journal-media.php` (featured
+    images), `fix-journal-post-authors.php` (author + bio → populates the single's author box).
+  - **Single tags row empty** — no script assigned `post_tag` terms. New idempotent
+    `scripts/seed-journal-tags.php` assigns 2–4 locale-appropriate tags per post (EN + AR, Polylang
+    term language set). Ported the handoff's pill styling (`.post-single__tags a`, from the dead
+    legacy SCSS, rebuilt on real tokens) into the adapter and dropped the block's "Tags:" prefix +
+    comma separator so it matches the handoff's bare pill row.
+  - **Comment form** — trimmed to the handoff's Name + E-mail + Comment (removed WP's Website field
+    and "save my info" cookies checkbox) via `comment_form_default_fields` **and**
+    `comment_form_fields` filters in the provider (`registerJournalComments()`); the block
+    comment-form path bypasses the first filter, so both are needed. Styling was already in the
+    adapter.
+  - **Related articles** — was never broken: the 3 cards render but use `.reveal` (opacity:0 until
+    scrolled into view), so fullPage screenshots missed them. Confirmed they appear on scroll.
+- **Verified (real browser, Playwright):** archive = aligned 3×3 grid of 9 cards; single = tag pills
+  (no commas), author box with bio, related cards on scroll, comment form Name/E-mail/Comment only.
+  333 Pest passing; theme styles rebuilt. NOTE: `curl` intermittently showed the old comment fields
+  due to WAMP opcache worker/keep-alive staleness — the actual browser render (and isolated
+  `comment_form()` render) are correct; trust the browser, not curl, here.
+- **Next:** owner review in a browser; the new `seed-journal-tags.php` must be run on any other
+  environment (like the other journal seeds). Continue the spec 020 finish pass.
+
+## (previous) RESUME HERE (2026-07-19) — Spec 020 round 9: lightbox/masonry-card visual bugs were a stale build
+
+- **Branch:** `feature/020-home-visual-audit`.
+- **Trigger:** owner reported, after round 7's masonry/what-we-do work: the lightbox opens but isn't
+  visually right and isn't on top of everything; masonry cards look wrong with "a weird border";
+  explicit instruction to verify with a real browser + screenshots, not just by reading code.
+- **Root cause (found via Playwright, not guessed):** `sites/perego/perego-site` (the block plugin)
+  has its own `npm run build` separate from `perego-theme`'s, and it hadn't been run in hours —
+  `build/Blocks/media-lightbox/style-index.css` still held the pre-refactor lightbox CSS (the one
+  round 6 already described as having an unstyled dot rail + undefined `--perego-*` vars) even
+  though `media-lightbox/style.scss` had been gutted down to `@use "../shared/lightbox-chrome"` and
+  that new `shared/_lightbox-chrome.scss` had never been compiled at all. ~40 other source files
+  across the plugin (service-selected-work, clients-carousel, hero-slider, site-header, etc.) were
+  similarly ahead of `build/`.
+- **Blocker found + fixed:** `npm run build` itself was failing — `project-gallery-lightbox/index.js`
+  still `import`ed a `./style.scss` that round 6 had intentionally deleted (the block now renders
+  thumbs only, no block-scoped CSS/JS; see round 6's "one lightbox instance" decision). That webpack
+  error silently aborted the CSS bundle for *every* block, which is why the build had been stuck
+  stale. Removed the dangling import; build now compiles clean.
+- **Verified visually, not just by re-reading source:** wrote a throwaway Playwright script
+  (`http://perego.local`, same host-resolver pattern as `verify-visual.mjs`) that opens
+  video-editing/motion-graphics/graphic-design, screenshots the "What We Do" section and the open
+  lightbox, and inspects computed styles + the `.lightbox`'s ancestor chain for any
+  transform/filter/contain/backdrop-filter that would trap its `position: fixed`. Result: `.lightbox`
+  z-index 3000, no trapped ancestors, fills the full viewport; `.work-card` has `border: 0 none`, no
+  outline; screenshots show the accent close/nav circles, dot rail, and counter all rendering exactly
+  like the handoff. No further CSS changes were needed — the stale build was the entire bug.
+- **Verified:** 30 Pest (`ServiceSelectedWork`, `ServicesOverview`, `MediaLightbox`,
+  `ProjectGalleryLightbox`) + 20 Jest (`service-selected-work`, `media-lightbox`) green; both
+  `perego-theme` and `perego-site` builds clean.
+- **Lesson for next session:** this repo has **two separate build steps**
+  (`perego-theme`'s `npm run build` for SCSS/theme JS, `perego-site`'s `npm run build` for block
+  PHP-adjacent JS/CSS) — running only one leaves the other's changes invisible on the live site with
+  no error, just silently stale output. Always run both before calling visual work done, and prefer
+  a real browser check over re-reading source when the owner reports something "doesn't look right"
+  after a build.
+- **Next:** owner review of the actual page in a browser; continue the spec 020 finish pass.
+
+## (previous) RESUME HERE (2026-07-19) — Spec 020 round 8: home clients section = reference image
+
+- **Branch:** `feature/020-home-visual-audit`.
+- **Trigger:** owner shared the reference image of the home clients section — two rows of ~20 corporate
+  eq-icon tiles + three `REVIEW EL ETNEN` / `intertainment show` / **+1M** `views` individual cards with
+  a ▶ play button — and asked to match it exactly. Owner confirmed: keep the dark background (image is a
+  crop on white) and seed full demo content.
+- **Fixed:**
+  - **Missing subtitle line** — individual cards only rendered title + stat; the handoff's middle
+    `.indiv-card__sub` line had CSS but was never emitted and had no field. New `_perego_client_sub`
+    meta (`ClientPostType::META_SUB`) + a "Subtitle" admin field (`PostMetaBoxes`) + renderer output.
+  - **Bold "+1M"** — the stat rendered as plain escaped text. New `ClientPostType::sanitizeStat()`
+    (`wp_kses` strong-only) lets the number bold; renderer switched `esc_html` → matching `wp_kses`.
+  - **Tile density** — corporate query cap raised 12 → 20 (`CORP_MAX`/`INDIV_MAX` split); `seed-clients.php`
+    now seeds 20 icon-only corporate tiles + 3 `REVIEW EL ETNEN` cards (owner-approved demo stat "+1M
+    views"), retiring the legacy 4+4 placeholders. `seed-client-media.php` still layers corp galleries +
+    card thumbnails on top (selects by taxonomy term, so it picks up the new posts unchanged).
+  - **▶ behavior confirmed** (no code change): embed/upload cards are `<button data-video>` + `.play-btn`
+    → open the site-wide media lightbox from `footer.html`; external cards redirect (handoff C-04).
+  - **Lightbox not on top + card "weird border" (owner follow-up)** — root cause: the `--perego-*`
+    token bridge (`--perego-*: var(--wp--custom--perego--*)`) lived only in the un-imported
+    `perego-legacy-pre-recovery.scss`, so at runtime **every `--perego-*` var was undefined** — the
+    shared lightbox's `z-index: var(--perego-z-lightbox)` collapsed to `auto` and it rendered below the
+    header/nav/preloader, and its glass chrome was unstyled. Re-declared the alias bridge in
+    `perego-wordpress-adapter.scss` (values still only in theme.json) → lightbox now `z-index:3000`,
+    on top of everything. Separately, the lightbox-trigger card renders as a native `<button>` whose
+    UA `2px outset` border showed because its reset lived in the block's `style.scss` (the build emits
+    no block stylesheet); moved `button.indiv-card` reset into the adapter. Grid (`1fr 42%`, text left /
+    thumb right) was already correct. Rebuilt `main.css` (`npm run styles`).
+- **Verified:** Pest (`ClientsCarouselRenderTest`, `ClientPostTypeTest`, `PostMetaBoxesTest`) — 39 pass;
+  wp-guard / clean-code-guard / test-guard clean. Lightbox/border fix verified via `curl`: WP emits
+  `--wp--custom--perego--z--lightbox: 3000`, served `main.css` carries the bridge + `button.indiv-card`
+  reset. (Note: `main.css?ver=0.1.0` is a static cache key — hard-refresh to see the change.)
+- **Next:** eyeball the home page EN/AR (hard refresh); open/update the spec 020 PR. Consider bumping
+  the theme asset version so returning visitors get the rebuilt `main.css` without a manual refresh.
+
+## RESUME HERE (2026-07-19) — Spec 020 round 7: service-page masonry verified + "What we do" sizing fix
+
+- **Branch:** `feature/020-home-visual-audit` (same branch as rounds 1–6 below).
+- **Trigger:** owner review — the 3 masonry service singles (video-editing, motion-graphics,
+  graphic-design) must render the **identical** `.work-masonry`/`m1`–`m15` grid, and the "What we
+  do" section's image/section sizing wasn't consistent across the 4 singles. (`website-making`
+  intentionally keeps its own handoff "web showcase" layout, confirmed with owner — out of scope.)
+- **Found:** the masonry-identity fix was already implemented but uncommitted on this branch
+  (`ServiceSelectedWorkRenderer::masonry()` shared by the 3 singles + the Services archive via
+  `ServicesOverviewRenderer`, seed data padded to the full 15+8 tiles per category) — verified
+  correct rather than redone: 19 Pest + 4 Jest tests pass, `npm run build` compiles clean.
+- **Fixed:** `.svc-whatwedo__media` had no fixed `aspect-ratio`, so each service's "what we do"
+  mockup image (natural ratios 1.40/1.38/1.63) rendered the section at a different height per page.
+  Added `aspect-ratio: 7/5` + `object-fit: cover` (`perego-wordpress-adapter.scss`) so the media box
+  — and the whole section — is the same size on every service single, at a small crop cost on the
+  wider graphic-design/website-making image.
+- **Verified:** Pest (`ServiceSelectedWorkRenderTest`, `ServicesOverviewRenderTest`, 19 passed) +
+  Jest (`service-selected-work/view.test.js`, 4 passed) green; `npm run styles`/`npm run scripts`
+  compiled clean; confirmed `svc-whatwedo__media{aspect-ratio:7/5;...}` in the built `main.css`.
+- **Next:** owner visual check of the 3 masonry singles + all 4 "what we do" sections in a browser;
+  continue the spec 020 page-by-page finish pass (about/contact remaining, per round 6's Next).
+
+## (previous) RESUME HERE (2026-07-16) — Spec 020 round 6: lightbox/video-card/clients/journal parity + full demo data
+
+- **Branch:** `feature/020-home-visual-audit` (same branch as rounds 1–5 below).
+- **Trigger:** owner review of round 5 — masonry still sparse ("add dummy data to retrieve the full
+  design"), lightbox off-design, ▶ play icons missing on video cards, home clients inert (no lightbox,
+  no play), website-making Preview verified, header Contact Us must anchor to the footer, journal +
+  work singles need checking; "do a deep review for the design handoff".
+- **Fixed:**
+  - **Lightbox** — shared reference chrome (`src/Blocks/shared/_lightbox-chrome.scss`): accent nav
+    circles (gallery mode only), accent close w/ glow, dot rail (previously UNSTYLED — no CSS existed),
+    visible "n / total" counter (was screen-reader-only), muted autoplay (C-03). Root-cause find: both
+    lightbox stylesheets referenced `--perego-*` variables defined only in the dead legacy SCSS —
+    undefined at runtime. **Double-dialog bug fixed structurally**: project-gallery thumbs are now pure
+    global-lightbox triggers (`data-gallery` + new `data-gallery-index`); the block's embedded
+    Interactivity dialog, view.js, and style.scss were removed (one GlobalMediaLightbox per page, per
+    the handoff contract).
+  - **▶ video cards** — new `_perego_video_url` project meta (+ PostMetaBoxes field, REST, sanitizer),
+    `ProjectRepository::videoUrlFor()` (EN fallback), `ServiceSelectedWorkRenderer` card variants per
+    the handoff: video → `data-video` + `.play-btn`; gallery → zoom + badge; image → zoom.
+  - **Full demo data** — video/motion/design each fill to 23 projects (15-tile mosaic + 8-card Load
+    more) with the designed variant mix from new `scripts/lib-project-variants.php`; journal fills to
+    9 posts (handoff archive titles); AR titles generated for all; media/galleries seeds extended;
+    new `migrate-project-video-meta.php` backfills the curated posts; caps 60→120.
+  - **Home clients** — new `scripts/seed-client-media.php`: corp tiles get 4-item mixed galleries
+    (3 stills + 1 embed, prototype pool), individual cards get embed video + thumbs → ▶ lightbox
+    cards. C-04 fix: embed/upload video cards are now `<button>` lightbox triggers (no href double
+    action); external links lose the misleading ▶. Carousel arrows gained the prototype edge behavior
+    (`.at-start`/`.at-end` + disabled at extremes, RTL-safe) + corp drag-to-scroll w/ click suppression.
+  - **Header** — Contact Us → bare `#contact` footer anchor on every page/locale (fragment bypasses
+    `localizedUrl`, which would have absolutized it to the homepage).
+  - **Journal single** — hero avatar chip, author-box (avatar + name + bio; bio seeded via extended
+    `fix-journal-post-authors.php`), and the "Related articles" band via new
+    `perego-theme/related-posts` block + `JournalRepository::relatedFor()`.
+- **Verified:** (round-6 verification pass — see below for commands) Pest + Jest suites, builds,
+  seeds/migrations run twice (idempotent), verify-visual / verify-interactions (updated for the
+  one-dialog contract) / verify-a11y, guards, EN+AR screenshots vs the handoff.
+- **Next:** owner review; footer legal links/copyright → block attributes (carried); open/update the
+  spec 020 PR; continue the page-by-page finish pass (about/contact remaining).
+
+## (previous) RESUME HERE — Spec 020 round 5: the 4 service pages rebuilt to the handoff + home 100vh
+
+- **Branch:** `feature/020-home-visual-audit` (same branch as rounds 1–4 below).
+- **Trigger:** owner review — "the 4 services pages don't relate to the design with anything": the last
+  section's grid missing, the text+image section unstyled, the process steps wrong, everything drifted
+  from the handoff's `service-*.html`. Plus: each home section should fill the viewport when possible.
+- **Root causes found + fixed:**
+  - **"What we do" unstyled** — the seeded/archive markup uses `.svc-whatwedo` classes but the compiled
+    theme CSS had ZERO rules for them (they lived only in the dead, un-imported
+    `perego-legacy-pre-recovery.scss`). Ported to `perego-wordpress-adapter.scss` incl. the reference's
+    wavy-corners overlay, 2-col grid, rotated media card, and ≤900px media-first stack.
+  - **Process steps** — WP's emitted flex-layout container CSS was overriding the reference
+    `.process-list` contract (align/gap); adapter now wins it back with 2-class selectors (incl. ≤620px
+    vertical stack + rotated arrows + RTL). And all 4 pages were seeded with the same video icons —
+    `lib-service-process-blocks.php` now carries the per-service icon map from the design matrix;
+    new `scripts/migrate-service-process-icons.php` retrofitted the 8 seeded posts (6 changed, EN+AR).
+  - **Selected-work masonry** — `ServiceSelectedWorkRenderer` emitted cards with no `.m1`–`.m15`
+    placements, no brand card, no Load-more, so the reference 7-col mosaic CSS never matched. Rewritten:
+    designed placements in order, the non-interactive rotated-logo brand card after the lead tile,
+    overflow (>15) into the hidden `#workMore` grid behind a real Load-more (new block `view.js`), and
+    the Services archive now shares the same `masonry()` (DI'd into `ServicesOverviewRenderer`).
+  - **Website-making unique last section** — built the handoff's web-showcase for real: new
+    `WebShowcaseRenderer` (browser-chrome cards, type filter pills, Preview → media-lightbox, Visit →
+    external), new `_perego_site_type`/`_perego_site_url` project meta (registered + PostMetaBoxes
+    fields + whitelist sanitizer), `ProjectRepository::toWebCard()` with EN-translation meta fallback,
+    seeded the handoff's 6 demo sites (EN+AR) + `scripts/migrate-project-site-meta.php` backfill.
+  - **Scroll reveals restored site-wide** — theme `main.js` now adds the `.js` root class + the handoff's
+    IntersectionObserver reveal (reduced-motion safe; no-IO fallback shows everything).
+  - **Home full-viewport** — `.home-about`/`.services-teaser`/`.clients` get `min-height: 100vh/100svh`
+    + centered content at ≥901px (owner-requested deviation from the reference's 78vh about band; see
+    DECISIONS.md); hero already 100vh (added `100svh`).
+- **Verified:** Pest 320/320 (970 assertions), Jest 97/97 (incl. new `service-selected-work/view.test.js`);
+  builds clean (theme + plugin); `verify-visual.mjs` 72/72, `verify-interactions.mjs` 12/12,
+  `verify-a11y.mjs` 0 serious/critical; guards (wp-guard, clean-code-guard, test-guard) run clean.
+  Live-checked EN + AR (RTL mirror, AR showcase cards via EN meta fallback) with full-page screenshots
+  vs the handoff. Recreated the missing `/sample-page/` fixture the route matrix expects.
+- **Data note:** the design/motion/video masonries currently show 2–3 real tiles of the 15 designed
+  placements — the mosaic fills as real projects are added (owner to supply; we deliberately did not
+  bulk-seed more placeholders).
+- **Next:** footer legal links/copyright text → block attributes (carried from round 4); then open/update
+  the PR for spec 020, and continue the page-by-page finish pass (about/services/work/journal/clients/contact).
+
+## (previous) RESUME HERE — Spec 020 round 4: FSE editability + video/forms/word-count/upload fixes
+
+- **Branch:** `feature/020-home-visual-audit` (same branch as rounds 1–3 below).
+- **Trigger:** owner reviewed round 3 live (with screenshots) — YouTube "Error 153" in the lightbox,
+  the forms/flows filter still empty (two screens), join-form's identical error messages, textarea
+  char-count instead of word-count, no CV filename confirmation, and the big one: the whole home page
+  needs to be genuinely editable from inside the WordPress block editor. Findings D18–D23 in
+  `audit.md`'s "Round 4" section — full detail there.
+- **Fixed:**
+  - **D18** `media-lightbox/view.js` now normalizes pasted YouTube/Vimeo watch-page URLs to their
+    embeddable form before building the iframe — fixes every video trigger on the site at once.
+  - **D19** 🔧 (framework) Submission Inbox + Data Models filters now offer a real dropdown merging
+    CoreX's two independent form-identity systems (slug Forms + numeric-id Flows).
+  - **D20** join-form now shows a distinct message per invalid field and clears each live as you fix it.
+  - **D21** 🔧 (framework) new `max_words` validation rule; quick-message/project-brief textareas and
+    their live counters now validate/count words, not characters.
+  - **D22** CV upload shows the selected filename + a "selected" visual state.
+  - **D23** clients-section headings, services-teaser heading/"See All", hero slides + CTA, header
+    nav/logo/sticky, and footer contact-channels/social-links/blurb are now real block attributes
+    edited via `RichText`/`MediaUpload`/`ToggleControl`/repeater Inspector controls — the first
+    genuine block-editor-canvas editability on this site (previously 100% hardcoded PHP or a
+    `PostMetaBoxes` plain-text sidebar field). Not done this round: footer legal links/copyright text
+    (same shape, smaller follow-up).
+- **Verified:** Pest 303/303 (898 assertions), Jest 93/93 (perego-site); framework's own `corex-runtime`
+  (15 new word-count tests), `inbox.test.js` (10 new merged-filter tests), full `corex-config` suite
+  (68/68), and the full root Unit suite (1262/1262, confirming no regression) all green. Builds clean
+  across `perego-theme`, `perego-site`, and `corex-config`. Live-verified against `perego.local`: real
+  YouTube watch URLs now embed correctly; word counter reads live; every converted section renders
+  byte-identical to before (seed fallback intact) with header sticky-scroll still working.
+- **🔧 Framework-code changes** (`plugins/corex-config`, `plugins/corex-forms`, `plugins/corex-core`)
+  are uncommitted alongside this client-site work per Role Gate — see root `PROGRESS.md`/`DECISIONS.md`
+  and cut them onto their own framework branch/PR before shipping either.
+- **Next:** footer legal links/copyright text → block attributes (same pattern, smaller scope); then
+  open/update the PR for spec 020 round 4, and continue the page-by-page finish pass (about/services/
+  work/journal/clients/contact).
+
+## (previous) RESUME HERE — Spec 020 round 3: clients gallery/video rebuild, join-form parity, margins
+
+- **Branch:** `feature/020-home-visual-audit` (same branch as rounds 1–2 below).
+- **Trigger:** owner reviewed round 2 live and clarified the actual required behavior for the clients
+  section, plus three more issues (CoreX Forms admin, join-form styling, clients margins). Findings
+  D14–D17 recorded in `audit.md`'s "Round 3" section.
+- **Fixed:**
+  - **D14/D15** new `Admin\ClientMediaMetaBox` (mirrors `ProjectGalleryMetaBox`): corporate clients get
+    a real mixed image/video gallery (`ClientPostType::META_GALLERY`) opening in the shared lightbox as
+    a `data-gallery` list; individual clients get a video source-type field
+    (`ClientPostType::META_VIDEO_TYPE`: embed/upload/external) so an external link opens in a new tab
+    instead of the lightbox. Both edited directly on the Client's block-editor screen. See DECISIONS.md
+    2026-07-16 round 3 entry for why this is a meta box, not block attributes.
+  - **D16** join-form's per-field errors and submit banner now reuse the contact form's own
+    `corex-form__error`/`corex-form__status` classes (one CSS source, not a second hand-matched copy) —
+    `view.js` validates name/email/CV independently and focuses the first invalid field.
+  - **D17** deleted `clients-carousel/style.scss` — a fully dead Swiper-era stylesheet whose
+    `.clients__inner` flex-gap rule was silently overriding the theme's correct (handoff-matching)
+    header-to-slider spacing. Also removed the now-unused `swiper` npm dependency.
+  - Diagnosed (no code change, client-site side): "CoreX Forms & Flows" not appearing is a findability
+    issue, not a bug — the screen is correctly registered and the site's sole account has the required
+    capability. The Submission Inbox's flow filter *was* a real bug, fixed separately in
+    `plugins/corex-config` (framework code — see root `DECISIONS.md` #141 / `PROGRESS.md`, not this
+    file, since that fix is out of Client Site Mode's scope and awaits its own framework branch/PR).
+- **Verified:** Pest 285/285 (853 assertions), Jest 76/76; theme Sass + perego-site blocks build clean;
+  live-verified against `perego.local` with `wp-cli`-seeded test data (mixed corporate gallery opens
+  correctly with working prev/next; external individual video opens a new tab with no `data-video`;
+  join-form field/banner styling now matches the contact form; clients header-to-slider gap matches the
+  handoff's `clamp(28px,3.5vw,44px)`).
+- **Next:** open/update the PR for spec 020 round 3, then continue the page-by-page finish pass
+  (about/services/work/journal/clients/contact).
+
+## (previous) RESUME HERE — Spec 020 round 2: handoff V2 reconciliation
+
+- **Branch:** `feature/020-home-visual-audit` (same branch as round 1 below).
+- **Trigger:** owner supplied a new, more detailed handoff (`Perego-Creative-Studio-Developer-Handoff-V2`,
+  extracted to `output/handoff-v2-extract/`) and flagged 5 live issues. Investigated each against the V2
+  handoff's `docs/`, `CONFLICTS_REGISTER.md`, and `site/` prototype — findings D8–D13 recorded in
+  `audit.md`'s "Round 2" section.
+- **Fixed (see audit.md D8–D13 for full root-cause detail):**
+  - **D8** hero prev/next/pause controls removed (dots-only) — owner-directed divergence from the
+    handoff's own `[BUILD]` instruction (see DECISIONS.md 2026-07-16 round 2 entry).
+  - **D9** header sticky bug: `body { overflow-x: hidden }` was silently breaking `position: sticky`
+    on every descendant — changed to `overflow-x: clip` (matching `html`'s existing workaround).
+  - **D10** hero/header 4px seam (handoff's own C-09) — hero overlap aligned from `-94px`/`94px` to
+    `-90px`/`90px`, matching the header's actual rendered height.
+  - **D11** corporate client tiles now open the lightbox (`data-image` from the featured-image logo) —
+    owner-approved resolution of the handoff's open conflict C-05.
+  - **D12** individual-client lightbox wasn't opening at all: a dead, duplicate `.lightbox` ruleset in
+    `perego-reference.scss` (opacity/visibility + `.is-open`, never set) was fighting the real dialog's
+    `[hidden]`-based toggle — deleted.
+  - **D13** footer form validation/success message colors+sizes: added `error-text`(`#ff9ad1`)/
+    `success-text`(`#b7f5d4`) tokens to `theme.json`; fixed an invalid `--wp--preset--font-size--sm` var
+    reference (theme only defines `small`) and missing text colors on `.corex-form__status`; fixed the
+    join-form's status colors, which were reusing the purple `accent`/`accent-soft` tokens instead of
+    validation colors.
+- **Verified:** Pest 270/270 (819 assertions), Jest 75/75 (12 suites); theme Sass + perego-site blocks
+  build clean; wp-guard + clean-code-guard clean; live-verified against `perego.local` with Playwright
+  (header sticky + `.is-scrolled`, hero controls gone, lightbox visibility, hero/header seam closed, new
+  color tokens resolving).
+- **Next:** open/update the PR for spec 020 round 2, then continue the page-by-page finish pass
+  (about/services/work/journal/clients/contact).
+
+## (previous) RESUME HERE — Spec 020 round 1: fresh visual audit + drift fixes
 
 - **Branch:** `feature/020-home-visual-audit` (off the merged default `feature/001-global-foundation`
   head `b0dd7c2`). Page-by-page finish pass, starting with home.
@@ -19,8 +537,10 @@
   placeholder + label copy aligned; **D7 AR home links** — hero CTA + services teaser still built hrefs
   with `home_url()` (same class as spec 019's nav gap) → `LanguageDriver::localizedUrl()`; AR targets
   verified 200 (`/ar/contact-2/`, `/ar/services/`, `/ar/services/<slug>-2/`).
-- **Not drift:** hero prev/pause/next (mandated by the handoff's INTERACTIONS.md build notes); clients
-  sparsity (placeholder data — FR-006 owner-blocked launch item, spec 004 T020 stays open).
+- **Not drift (round 1 — reversed in round 2, see above):** hero prev/pause/next was ruled "not drift"
+  because the handoff's own INTERACTIONS.md build notes mandate it; the owner later asked for it removed
+  anyway (round 2, D8) — a deliberate divergence, not a correction of this finding. Clients sparsity is
+  still placeholder data — FR-006 owner-blocked launch item, spec 004 T020 stays open.
 - **Bookkeeping:** spec 012's acceptance boxes ticked + status Done (work merged in PR #20; checklist lag).
 - **Verified:** Pest 268/268 (816 assertions), Jest 80/80 (12 suites incl. 4 new counter tests); theme
   Sass + blocks builds clean; guards run (wp-guard i18n composition fix applied; clean-code/test/docs
@@ -29,8 +549,6 @@
   non-home renderers — breadcrumbs (`PostBreadcrumbRenderer`, `ProjectHeroRenderer`,
   `JournalHeaderRenderer`), `NotFoundRenderer`, `PortfolioGridRenderer`, `ServicesOverviewRenderer`,
   `ServiceHeroRenderer`, `ProjectNavigationRenderer`, `SearchResultsRenderer` — same fix shape as D7.
-- **Next:** open the PR for spec 020, then the next page pass (about/services/work/journal/clients/
-  contact) picking up the residual `localizedUrl` migrations per page.
 
 ## (previous) RESUME HERE
 

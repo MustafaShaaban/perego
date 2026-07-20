@@ -9,7 +9,6 @@ declare(strict_types=1);
 use Brain\Monkey\Functions;
 use PeregoSite\Admin\PostMetaBoxes;
 use PeregoSite\Blocks\LegalUpdatedRenderer;
-use PeregoSite\Content\HeroContent;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
@@ -20,6 +19,7 @@ beforeEach(function () {
     Functions\when('sanitize_text_field')->returnArg();
     Functions\when('sanitize_key')->alias(fn ($v) => strtolower(preg_replace('/[^a-z0-9_\-]/', '', (string) $v)));
     Functions\when('esc_url_raw')->returnArg();
+    Functions\when('wp_kses')->returnArg(); // ClientPostType::sanitizeStat delegates to it (strong-only)
     Functions\when('wp_is_post_revision')->justReturn(false);
     $_POST = [];
 });
@@ -60,20 +60,29 @@ function pmbSave(string $type, array $post_data): array
     return ['updated' => $updated, 'deleted' => $deleted];
 }
 
-it('covers the three collection CPTs, the front-page hero, and the legal page, with scalar fields', function () {
+it('covers the three collection CPTs and the legal page, with scalar fields', function () {
     $schema = (new PostMetaBoxes())->schema();
 
+    // The homepage hero moved to real RichText block attributes (spec 020 round 4) — no longer a
+    // scalar sidebar box here (see HeroContent::resolve() and hero-slider/index.js).
     expect(array_keys($schema))->toBe([
         ProjectPostType::POST_TYPE,
         ServicePostType::POST_TYPE,
         ClientPostType::POST_TYPE,
-        'page',
         'page:legal',
     ]);
     expect(array_keys($schema[ProjectPostType::POST_TYPE]['fields']))->toContain(ProjectPostType::META_CLIENT)
-        ->and(array_keys($schema[ClientPostType::POST_TYPE]['fields']))->toContain(ClientPostType::META_VIDEO_URL)
-        ->and(array_keys($schema['page']['fields']))->toContain(HeroContent::META_CTA)
+        ->and(array_keys($schema[ClientPostType::POST_TYPE]['fields']))->toContain(ClientPostType::META_STAT)
+        ->and(array_keys($schema[ClientPostType::POST_TYPE]['fields']))->toContain(ClientPostType::META_SUB)
+        ->and($schema[ClientPostType::POST_TYPE]['fields'][ClientPostType::META_STAT]['sanitize'])->toBe(ClientPostType::class . '::sanitizeStat')
         ->and(array_keys($schema['page:legal']['fields']))->toContain(LegalUpdatedRenderer::META_UPDATED);
+
+    // The website-showcase card fields (spec 020) are editor-editable with their own sanitizers.
+    $projectFields = $schema[ProjectPostType::POST_TYPE]['fields'];
+    expect(array_keys($projectFields))->toContain(ProjectPostType::META_SITE_TYPE)
+        ->and(array_keys($projectFields))->toContain(ProjectPostType::META_SITE_URL)
+        ->and($projectFields[ProjectPostType::META_SITE_TYPE]['sanitize'])->toBe(ProjectPostType::class . '::sanitizeSiteType')
+        ->and($projectFields[ProjectPostType::META_SITE_URL]['sanitize'])->toBe('esc_url_raw');
 });
 
 it('saves the legal "Last updated" meta on a page (page:legal shares the page type)', function () {
@@ -135,7 +144,7 @@ it('deletes a field when its submitted value is emptied', function () {
     Functions\when('wp_verify_nonce')->justReturn(true);
     Functions\when('current_user_can')->justReturn(true);
 
-    $result = pmbSave(ClientPostType::POST_TYPE, ['perego_meta_nonce' => 'n', ClientPostType::META_VIDEO_URL => '']);
+    $result = pmbSave(ClientPostType::POST_TYPE, ['perego_meta_nonce' => 'n', ClientPostType::META_STAT => '']);
 
-    expect($result['deleted'])->toBe([ClientPostType::META_VIDEO_URL]);
+    expect($result['deleted'])->toBe([ClientPostType::META_STAT]);
 });

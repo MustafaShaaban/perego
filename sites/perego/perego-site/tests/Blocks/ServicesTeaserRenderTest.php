@@ -12,6 +12,7 @@ use PeregoSite\Services\LanguageService;
 
 beforeEach(function () {
     Functions\when('esc_html')->returnArg();
+    Functions\when('wp_kses_post')->returnArg();
     Functions\when('esc_html__')->returnArg();
     Functions\when('esc_attr')->returnArg();
     Functions\when('esc_attr__')->returnArg();
@@ -19,14 +20,16 @@ beforeEach(function () {
     Functions\when('__')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
     Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
+    Functions\when('wp_reset_postdata')->justReturn(null);
 });
 
-function renderServicesTeaser(string $locale = 'en'): string
+/** @param array<string,string> $attributes */
+function renderServicesTeaser(string $locale = 'en', array $attributes = []): string
 {
     $cookie  = $locale === 'en' ? [] : ['perego_lang' => $locale];
     $service = new LanguageService(cookie: $cookie, requestUri: '/', polylangActive: false);
 
-    return (new ServicesTeaserRenderer($service))->render();
+    return (new ServicesTeaserRenderer($service))->render($attributes);
 }
 
 it('renders the section heading and a See All Services link to the services archive', function () {
@@ -93,4 +96,19 @@ it('renders localized Arabic copy when the locale resolves to ar', function () {
 
 it('uses no hardcoded hex colors in the rendered markup', function () {
     expect(renderServicesTeaser())->not->toMatch('/#[0-9a-fA-F]{6}/');
+});
+
+it('prefers the editor-set En/Ar heading/seeAll block attribute over the seed, per locale', function () {
+    $attributes = [
+        'headingEn' => 'Ways We Can Help',
+        'headingAr' => 'كيف يمكننا المساعدة',
+    ];
+
+    $htmlEn = renderServicesTeaser('en', $attributes);
+    $htmlAr = renderServicesTeaser('ar', $attributes);
+
+    expect($htmlEn)->toContain('Ways We Can Help')->not->toContain('Services we can help you with')
+        // "See All" copy is untouched — still falls back to the seed.
+        ->and($htmlEn)->toContain('See All Services')
+        ->and($htmlAr)->toContain('كيف يمكننا المساعدة')->not->toContain('خدمات يمكننا مساعدتك بها');
 });

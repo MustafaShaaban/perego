@@ -56,7 +56,8 @@ it('keeps the handoff validation limits on every field', function () {
         ->and($fields['email']['rules'])->toBe(['required', 'email', 'max:120'])
         ->and($fields['phone']['rules'])->toBe(['max:24'])
         ->and($fields['subject']['rules'])->toBe(['required', 'min:3', 'max:120'])
-        ->and($fields['message']['rules'])->toBe(['required', 'min:10', 'max:1200'])
+        ->and($fields['message']['rules'])->toBe(['required', 'min:10', 'max_words:200'])
+        ->and($fields['message']['attrs'])->toBe(['data-max-words' => '200'])
         ->and($fields['services']['rules'])->toBe(['required']);
 });
 

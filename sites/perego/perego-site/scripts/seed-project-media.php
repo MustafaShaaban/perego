@@ -33,12 +33,20 @@ const PROJECT_IMAGE = [
     'campaign-key-visual-suite' => 'portfolio-7',
     'multi-page-marketing-site' => 'portfolio-8',
     'landing-page-microsite' => 'portfolio-9',
+    // The handoff's demo website-showcase cards (service-website-making.html), same stills the
+    // prototype itself uses for them (spec 020).
+    'aurora-retail' => 'portfolio-1',
+    'meridian-group' => 'portfolio-2',
+    'lumen-studio' => 'portfolio-3',
+    'nomad-travel' => 'portfolio-4',
+    'pulse-fitness' => 'portfolio-5',
+    'verde-organics' => 'portfolio-6',
 ];
 
 $themeImagesDir = get_stylesheet_directory() . '/assets/images';
 $imported = 0;
 
-foreach (get_posts(['post_type' => ProjectPostType::POST_TYPE, 'numberposts' => 50]) as $post) {
+foreach (get_posts(['post_type' => ProjectPostType::POST_TYPE, 'numberposts' => 200]) as $post) {
     if (has_post_thumbnail($post->ID)) {
         continue;
     }
@@ -55,11 +63,17 @@ foreach (get_posts(['post_type' => ProjectPostType::POST_TYPE, 'numberposts' => 
         }
     }
 
-    if (! isset(PROJECT_IMAGE[$enSlug])) {
+    // Generated demo-fill projects ("… Example NN", spec 020 round 6) cycle the nine stills by
+    // their stable category position, so re-runs always pick the same image.
+    $image = PROJECT_IMAGE[$enSlug] ?? null;
+    if ($image === null && preg_match('/-example-(\d+)$/', $enSlug, $m)) {
+        $image = 'portfolio-' . (((int) $m[1] - 1) % 9 + 1);
+    }
+    if ($image === null) {
         continue;
     }
 
-    $file = $themeImagesDir . '/' . PROJECT_IMAGE[$enSlug] . '.png';
+    $file = $themeImagesDir . '/' . $image . '.png';
     if (! file_exists($file)) {
         WP_CLI::warning("Missing source image for {$enSlug}: {$file}");
         continue;

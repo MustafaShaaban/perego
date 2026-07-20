@@ -33,14 +33,26 @@ final class PostReadingTimeRenderer
             return '';
         }
 
-        $words = $this->wordCount($post->post_content);
-        if ($words === 0) {
+        $minutes = $this->minutesFor($post);
+        if ($minutes === 0) {
             return '';
         }
 
-        $minutes = (int) max(1, (int) ceil($words / self::WORDS_PER_MINUTE));
-
         return '<span class="post-single__readtime">' . esc_html($this->content->readTime($minutes)) . '</span>';
+    }
+
+    /**
+     * The estimated reading minutes for a post — 0 when it has no body. Public so other journal
+     * surfaces (the related-articles cards) share the exact same estimate.
+     */
+    public function minutesFor(WP_Post $post): int
+    {
+        $words = $this->wordCount($post->post_content);
+        if ($words === 0) {
+            return 0;
+        }
+
+        return (int) max(1, (int) ceil($words / self::WORDS_PER_MINUTE));
     }
 
     /**

@@ -71,10 +71,13 @@ const { actions } = store( 'perego/site-header', {
 				const firstFocusable = header.querySelector?.(
 					'.main-nav a[href], .main-nav button:not([disabled])'
 				);
-				firstFocusable?.focus?.();
+				// `preventScroll` — the panel slides in from `translateX(100%)`, so focusing a
+					// still-off-screen link made the browser smooth-scroll the page to the top when the
+					// hamburger was tapped. Keep the focus (for the trap) without moving the viewport.
+					firstFocusable?.focus?.( { preventScroll: true } );
 			} else {
 				document.body.style.overflow = '';
-				( lastFocusedBeforeMenuOpen || ref ).focus?.();
+				( lastFocusedBeforeMenuOpen || ref ).focus?.( { preventScroll: true } );
 			}
 		},
 
@@ -202,6 +205,98 @@ const { actions } = store( 'perego/site-header', {
 					}
 				} );
 			} );
+
+			// Clear a stale mobile "Services" accordion state when the viewport grows to desktop —
+			// otherwise a dropdown opened by tap on mobile stays visually open (its `.is-open` was
+			// never removed) once desktop hover/focus rules take over.
+			let resizeRaf;
+			window.addEventListener(
+				'resize',
+				() => {
+					window.cancelAnimationFrame( resizeRaf );
+					resizeRaf = window.requestAnimationFrame( () => {
+						if ( window.matchMedia?.( '(min-width: 1025px)' ).matches ) {
+							ref.querySelectorAll?.( '.has-dropdown.is-open' ).forEach( ( item ) => {
+								item.classList.remove( 'is-open' );
+								item
+									.querySelector( '.main-nav__link[aria-expanded]' )
+									?.setAttribute( 'aria-expanded', 'false' );
+							} );
+						}
+					} );
+				},
+				{ passive: true }
+			);
+
+			// Scroll-spy — on the home page, highlight the nav link for the in-page section currently in
+			// view (About / Services / Clients / Contact). Fragment links (`/#about`, `#contact`, …) map
+			// to section ids; before the first section (hero) the Home link is active. Only runs where the
+			// target sections exist, so inner pages are unaffected.
+			const spyEntries = [];
+			const navLinks = Array.from( ref.querySelectorAll?.( '.main-nav__link' ) || [] );
+			navLinks.forEach( ( link ) => {
+				const href = link.getAttribute( 'href' ) || '';
+				const hashIndex = href.indexOf( '#' );
+				if ( hashIndex === -1 ) {
+					return;
+				}
+				const id = href.slice( hashIndex + 1 );
+				const section = id && document.getElementById( id );
+				if ( section ) {
+					spyEntries.push( { id, section, link } );
+				}
+			} );
+
+			// The scroll-spy must only run on the front page. Its hash targets (About/Services/Clients)
+			// live there, but the footer's `#contact` exists on every page, so without this gate the spy
+			// would fire on inner pages and clobber the server-rendered `.is-active` (defaulting to Home).
+			// WordPress adds the `home` body class on the front page (EN and AR).
+			const isFrontPage =
+				document.body.classList.contains( 'home' ) ||
+				document.body.classList.contains( 'front-page' );
+
+			if ( isFrontPage && spyEntries.length ) {
+				const homeLink = navLinks.find( ( link ) => {
+					const path = ( link.getAttribute( 'href' ) || '' ).replace( window.location.origin, '' );
+					return path === '/' || path === '/ar/' || /^\/(ar\/)?(#[^/]*)?$/.test( path );
+				} );
+
+				const setActive = ( id ) => {
+					navLinks.forEach( ( link ) => link.classList.remove( 'is-active' ) );
+					if ( id ) {
+						spyEntries.find( ( entry ) => entry.id === id )?.link.classList.add( 'is-active' );
+					} else {
+						homeLink?.classList.add( 'is-active' );
+					}
+				};
+
+				let spyRaf;
+				const updateSpy = () => {
+					window.cancelAnimationFrame( spyRaf );
+					spyRaf = window.requestAnimationFrame( () => {
+						// The active section is the last one whose top has crossed a line ~30% down the
+						// viewport (getBoundingClientRect, since the home sections don't share an offset
+						// parent). At the very bottom, force the last section active (short trailing
+						// sections can never reach the line).
+						const line = window.innerHeight * 0.3;
+						let current = null;
+						spyEntries.forEach( ( entry ) => {
+							if ( entry.section.getBoundingClientRect().top <= line ) {
+								current = entry.id;
+							}
+						} );
+						const atBottom =
+							window.innerHeight + window.scrollY >=
+							document.documentElement.scrollHeight - 4;
+						if ( atBottom ) {
+							current = spyEntries[ spyEntries.length - 1 ].id;
+						}
+						setActive( current );
+					} );
+				};
+				updateSpy();
+				window.addEventListener( 'scroll', updateSpy, { passive: true } );
+			}
 
 			if ( isReducedMotion() ) {
 				ref.classList?.add( 'is-reduced-motion' );

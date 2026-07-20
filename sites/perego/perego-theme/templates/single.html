@@ -10,6 +10,7 @@
 					<!-- wp:post-title {"level":1,"className":"post-title"} /-->
 					<!-- wp:group {"className":"post-meta","layout":{"type":"flex","justifyContent":"center"}} -->
 					<div class="wp-block-group post-meta">
+						<!-- wp:avatar {"size":34,"className":"post-meta__avatar"} /-->
 						<!-- wp:post-author-name {"className":"post-meta__author"} /-->
 						<!-- wp:html --><span class="post-meta__dot"></span><!-- /wp:html -->
 						<!-- wp:post-date /-->
@@ -21,36 +22,23 @@
 				<!-- wp:post-featured-image {"aspectRatio":"16/8","className":"post-featured"} /-->
 			</div>
 			<!-- wp:post-content {"className":"prose","layout":{"type":"default"}} /-->
-			<!-- wp:post-terms {"term":"post_tag","prefix":"Tags: ","className":"post-single__tags"} /-->
-		<!-- wp:comments -->
-		<div class="wp-block-comments">
-		<!-- wp:comments-title /-->
-		<!-- wp:comment-template -->
-			<!-- wp:columns -->
-			<div class="wp-block-columns">
-				<!-- wp:column {"width":"40px"} -->
-				<div class="wp-block-column" style="flex-basis:40px"><!-- wp:avatar {"size":40} /--></div>
-				<!-- /wp:column -->
-				<!-- wp:column -->
-				<div class="wp-block-column">
-					<!-- wp:comment-author-name /-->
-					<!-- wp:comment-date /-->
-					<!-- wp:comment-content /-->
-					<!-- wp:comment-reply-link /-->
+			<!-- wp:post-terms {"term":"post_tag","separator":" ","className":"post-single__tags"} /-->
+			<!-- wp:group {"className":"author-box","layout":{"type":"flex","flexWrap":"nowrap","verticalAlignment":"top"}} -->
+			<div class="wp-block-group author-box">
+				<!-- wp:avatar {"size":74} /-->
+				<!-- wp:group {"layout":{"type":"default"}} -->
+				<div class="wp-block-group">
+					<!-- wp:post-author-name /-->
+					<!-- wp:post-author-biography /-->
 				</div>
-				<!-- /wp:column -->
+				<!-- /wp:group -->
 			</div>
-			<!-- /wp:columns -->
-		<!-- /wp:comment-template -->
-		<!-- wp:comments-pagination -->
-			<!-- wp:comments-pagination-previous /-->
-			<!-- wp:comments-pagination-next /-->
-		<!-- /wp:comments-pagination -->
-		<!-- wp:post-comments-form /-->
-		</div>
-		<!-- /wp:comments -->
+			<!-- /wp:group -->
+			<!-- wp:perego-theme/journal-comments /-->
 		</div>
 	</article>
+
+	<!-- wp:perego-theme/related-posts /-->
 </main>
 
 <!-- wp:template-part {"slug":"footer"} /-->

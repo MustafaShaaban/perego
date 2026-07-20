@@ -1,6 +1,11 @@
 /**
  * perego-theme/join-form — the footer "Join us" / CV form. Tokens + logical properties (RTL-safe);
  * no hardcoded colors. Sits inside the footer careers column and inherits its typography.
+ *
+ * spec 020 round 2: the submit-result banner and per-field errors reuse the shared
+ * `corex-form__status`/`corex-form__error` classes (styled once, sitewide, in
+ * perego-wordpress-adapter.scss) instead of a second, bespoke color/pill treatment here — this file
+ * only owns this form's layout, not its validation-state colors.
  */
 
 .join-form {
@@ -72,15 +77,19 @@
 
 .join-form__status {
 	margin: 0;
-	font-size: var(--wp--preset--font-size--small);
 	min-block-size: 1.2em;
 }
 
-.join-form__status[data-tone="error"] {
-	color: var(--wp--preset--color--accent-soft);
-}
-
-.join-form__status[data-tone="success"] {
-	color: var(--wp--preset--color--accent);
-	font-weight: 700;
+/* The chosen CV's filename, shown as visible confirmation a file was actually picked (spec 020 round
+   4) — a separate row from `.file-drop__text`'s static hint, per the handoff's own
+   `file-upload-selected-row-gap` token, not a replacement of the hint. `.file-drop.has-file` (already
+   defined in perego-reference.scss) supplies the solid-border/accent-color "selected" state. */
+.file-drop__filename {
+	margin-inline-start: auto;
+	font-weight: 600;
+	color: var(--wp--preset--color--text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-inline-size: 45%;
 }

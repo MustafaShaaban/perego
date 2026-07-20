@@ -13,6 +13,30 @@ function mediaType( src ) {
 	return 'image';
 }
 
+/**
+ * A pasted YouTube/Vimeo URL is almost always the normal watch/page URL (`youtube.com/watch?v=ID`,
+ * `youtu.be/ID`, `youtube.com/shorts/ID`, `vimeo.com/ID`), which is not embeddable — loading it in an
+ * iframe returns YouTube's own "Error 153 / Video player configuration error" page instead of the
+ * video. Only `/embed/ID` (YouTube) and `player.vimeo.com/video/ID` (Vimeo) URLs actually embed.
+ * Converts the common pasted forms to their embeddable equivalent; anything already embeddable, or
+ * not recognized, passes through unchanged.
+ */
+function toEmbedUrl( src ) {
+	const youtubeWatch = src.match( /youtube\.com\/watch\?(?:.*&)?v=([\w-]+)/i );
+	if ( youtubeWatch ) return 'https://www.youtube.com/embed/' + youtubeWatch[ 1 ];
+
+	const youtubeShort = src.match( /youtu\.be\/([\w-]+)/i );
+	if ( youtubeShort ) return 'https://www.youtube.com/embed/' + youtubeShort[ 1 ];
+
+	const youtubeShorts = src.match( /youtube\.com\/shorts\/([\w-]+)/i );
+	if ( youtubeShorts ) return 'https://www.youtube.com/embed/' + youtubeShorts[ 1 ];
+
+	const vimeoPage = src.match( /vimeo\.com\/(\d+)/i );
+	if ( vimeoPage && ! /player\.vimeo\.com/i.test( src ) ) return 'https://player.vimeo.com/video/' + vimeoPage[ 1 ];
+
+	return src;
+}
+
 function focusableIn( container ) {
 	return Array.from(
 		container.querySelectorAll(
@@ -49,11 +73,13 @@ function init() {
 		const type = mediaType( src );
 
 		if ( type === 'embed' ) {
-			const sep = src.indexOf( '?' ) > -1 ? '&' : '?';
+			// Muted autoplay only — "no autoplay with sound" (handoff GlobalMediaLightbox C-03).
+			const embedSrc = toEmbedUrl( src );
+			const sep = embedSrc.indexOf( '?' ) > -1 ? '&' : '?';
 			frame.innerHTML =
-				'<iframe src="' + src + sep + 'autoplay=1" title="Video" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';
+				'<iframe src="' + embedSrc + sep + 'autoplay=1&mute=1" title="Video" allow="autoplay; encrypted-media; fullscreen" allowfullscreen></iframe>';
 		} else if ( type === 'video' ) {
-			frame.innerHTML = '<video class="lightbox__media" src="' + src + '" controls autoplay playsinline></video>';
+			frame.innerHTML = '<video class="lightbox__media" src="' + src + '" controls autoplay muted playsinline></video>';
 		} else {
 			frame.innerHTML = '<img class="lightbox__img" src="' + src + '" alt="" />';
 		}
@@ -142,8 +168,11 @@ function init() {
 			const gallerySrc = trigger.getAttribute( 'data-gallery' );
 			const videoSrc = trigger.getAttribute( 'data-video' );
 			const imageSrc = trigger.getAttribute( 'data-image' );
+			// A gallery trigger may name which item it represents (project-gallery thumbs) so the
+			// dialog opens on that image rather than always the first.
+			const startIndex = parseInt( trigger.getAttribute( 'data-gallery-index' ), 10 ) || 0;
 
-			if ( gallerySrc ) renderItem( gallerySrc.split( ',' ).map( ( s ) => s.trim() ), 0 );
+			if ( gallerySrc ) renderItem( gallerySrc.split( ',' ).map( ( s ) => s.trim() ), startIndex );
 			else if ( videoSrc ) renderItem( [ videoSrc ], 0 );
 			else if ( imageSrc ) renderItem( [ imageSrc ], 0 );
 			else return;

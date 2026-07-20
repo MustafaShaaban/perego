@@ -26,6 +26,8 @@
 				{ "slug": "text", "color": "#ffffff", "name": "Text" },
 				{ "slug": "error", "color": "#ff6ba6", "name": "Error" },
 				{ "slug": "success", "color": "#7ff0b6", "name": "Success" },
+				{ "slug": "error-text", "color": "#ff9ad1", "name": "Error text" },
+				{ "slug": "success-text", "color": "#b7f5d4", "name": "Success text" },
 				{ "slug": "cta-text-on-accent", "color": "#2a0148", "name": "CTA text on accent" }
 			],
 			"defaultPalette": false,

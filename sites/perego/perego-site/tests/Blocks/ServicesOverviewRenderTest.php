@@ -7,6 +7,7 @@
 declare(strict_types=1);
 
 use Brain\Monkey\Functions;
+use PeregoSite\Blocks\ServiceSelectedWorkRenderer;
 use PeregoSite\Blocks\ServicesOverviewRenderer;
 use PeregoSite\Content\ServiceContent;
 
@@ -33,7 +34,8 @@ function sampleSelectedWork(): array
 
 function renderServicesOverview(string $locale = 'en', ?array $selectedWork = null): string
 {
-    return (new ServicesOverviewRenderer())->render(new ServiceContent($locale), $selectedWork ?? sampleSelectedWork());
+    return (new ServicesOverviewRenderer(new ServiceSelectedWorkRenderer()))
+        ->render(new ServiceContent($locale), $selectedWork ?? sampleSelectedWork());
 }
 
 it('renders exactly one H1 (the services archive title)', function () {
@@ -58,7 +60,7 @@ it('renders the hero background image and four service tabs linking to the singl
 });
 
 it('uses the editable tab labels when provided, per field over the ServiceContent seed', function () {
-    $html = (new ServicesOverviewRenderer())->render(
+    $html = (new ServicesOverviewRenderer(new ServiceSelectedWorkRenderer()))->render(
         new ServiceContent('en'),
         sampleSelectedWork(),
         ['video-editing' => 'VE', 'website-making' => 'WM'],
@@ -112,7 +114,10 @@ it('renders selected work as real project cards opening the site-wide media ligh
 
     expect($html)->toContain('class="portfolio page-section"')
         ->and($html)->toContain('class="work-masonry"')
-        ->and(substr_count($html, 'class="work-card reveal"'))->toBe(2) // the no-media project is skipped
+        // The no-media project is skipped; the two usable ones get designed mosaic placements.
+        ->and($html)->toContain('class="work-card m1 reveal"')
+        ->and($html)->toContain('class="work-card m2 reveal"')
+        ->and($html)->toContain('class="work-card work-brand"')
         ->and($html)->toContain('data-image="https://perego.local/a.jpg"')
         ->and($html)->toContain('data-gallery="https://perego.local/b.jpg,https://perego.local/b2.jpg"')
         ->and($html)->toContain('Selected work');

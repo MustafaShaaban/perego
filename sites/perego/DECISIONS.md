@@ -1,5 +1,412 @@
 # Perego — Decision Log
 
+## 2026-07-20 — Spec 020 round 15: owner re-report — filters/pager still dead, lightbox nav position
+
+Round 14 fixed the reply-chip's `[hidden]`-override bug but missed the **identical bug on the work grid**, and
+re-centered the lightbox arrows on the viewport; the owner re-tested and both were still wrong. Two CSS-only
+fixes, proven with a live Playwright probe on `/work/` and a project gallery.
+
+**Work filters + pagination: the same `[hidden]`-override bug as the round-14 reply-chip, on `.post-card` and
+`.pagination`.** `portfolio-grid/view.js` filters cards and trims the numbered pager by toggling the native
+`[hidden]` attribute, but the immutable reference stylesheet sets author-origin `display` on those selectors
+(`.post-card{display:flex}`:1040, `.pagination{display:flex}`:1054, `.pagination button{display:inline-flex}`:1055),
+which beats the UA `[hidden]{display:none}` regardless of specificity — so hidden cards/pages stayed visible
+(dead filters + "phantom" page numbers for pages that don't exist). The block's JS and PHP were already correct;
+the page-count math was correct. Fixed with four author-origin `[hidden]` overrides in
+`perego-wordpress-adapter.scss` (loaded after the reference; matching-or-higher specificity, no `!important`):
+`.post-card[hidden]`, `.pagination[hidden]`, `.pagination button[hidden]`, `#portfolioEmpty[hidden]`. No JS
+change; Jest 94/94 stayed green.
+
+**Lightbox nav re-anchored to the handoff placement (supersedes round 14's viewport-edge decision below).**
+Owner wants the arrows exactly as the handoff (`styles.css .lightbox__nav`): `position:absolute` anchored to
+`.lightbox__inner`, `inset-inline-{start,end}:-70px` (just outside the media) on desktop, `8px` inside at
+≤1120px, `inset-block-start:50%; translateY(-50%)`. Re-added the ≤1120px override round 14 had dropped. Also
+applied the owner's requested `padding:20px 17px 20px 15px` on `.lightbox__nav:not([hidden])`, made proper with
+`box-sizing:border-box` so the 52px circle keeps its size and the CSS chevron stays centered. Accepted tradeoff
+(owner's explicit choice): anchoring to `.lightbox__inner` places the arrows slightly below the image center
+because the dots rail + counter sit inside that box — this is the exact handoff behavior. In `_lightbox-chrome.scss`.
+
+Verified live (Playwright, host-mapped `perego.local`): filters show only the chosen category; the pager shows
+exactly the real page numbers (video = 23 items → 3 pages, no phantoms) and hides at a single page; lightbox
+arrows are `absolute`, padded `20px 17px 20px 15px`, anchored to `.lightbox__inner`, outside the frame on
+desktop and tucked inside at ≤1120px.
+
+## 2026-07-20 — Spec 020 round 14: owner re-report — these WERE real code bugs
+
+Round 13 closed several items as "cache, not code." The owner re-tested in a fresh browser and they still
+failed. Investigation confirmed **every one was a genuine code defect** (proven; one via a live browser
+probe on `/work/`). Correcting the record:
+
+**Cancel-reply chip: `[hidden]` was overridden by an author rule.** `.comment-form__reply-chip{display:flex}`
+(perego-wordpress-adapter.scss) beat the UA `[hidden]{display:none}` regardless of specificity, so the chip
+could never hide and `view.js` `clearReply()` looked dead. Fixed by guarding the selector
+`:not([hidden])`. (Not cache — the compiled CSS had no `[hidden]` guard.)
+
+**Work filter: the Interactivity API region crashed on hydration (WP 7.0.2), wiping the filter chips.** A
+live probe showed `.portfolio-filters` emptied and the region unhydrated (cards never bound), while the
+header's Interactivity still worked. Rather than chase the directive/hydration fragility, **converted the
+whole block to plain-DOM `view.js`** — the same `addEventListener` pattern as `service-selected-work`
+(itself the handoff `main.js` filter port). The renderer now emits plain markup (no `data-wp-*`); the block
+no longer depends on `@wordpress/interactivity`. This is the robust fix and removes the nested-context
+write bug entirely. (Supersedes round-13's "work filter is not a code bug.")
+
+**Work pagination added (owner: "as the design").** Client-side numbered pager (9/page) that recomputes for
+the active filter, in the same `view.js`; server renders the pager `hidden` (progressive enhancement) up to
+the unfiltered max page count; JS hides page numbers beyond the filtered count and the whole pager at one
+page. Query unchanged (bounded ≤120, single fetch). Chose client-side over server paging so it cooperates
+with the client-side filter (server paging would filter one page at a time).
+
+**Nav active state clobbered on inner pages.** The home scroll-spy in `site-header/view.js` ran on *every*
+page because the footer emits `id="contact"` sitewide and "Contact Us" is `href="#contact"`, so `spyEntries`
+was non-empty everywhere; at the top of an inner page it fell back to highlighting Home, stripping the
+server-rendered `.is-active` off Journal/Work. Gated the spy to the front page (`body.home`/`front-page`).
+Also added ancestor matching to `SiteHeaderRenderer::isActive()` so a single post (`/journal/<slug>`) lights
+its parent nav item.
+
+**Mobile drawer opened at page-top after scroll.** `.site-header.is-scrolled{backdrop-filter:blur(14px)}`
+made the header a containing block for its `position:fixed` `.main-nav`, so post-scroll the drawer anchored
+to the header box (document top). Moved the frosted background to a `.site-header::before` layer (a sibling
+of the drawer, not an ancestor); the header itself no longer carries `backdrop-filter`. Hamburger inline-end
+spacing bumped 6px→16px.
+
+**Legal TOC not sticky.** Ancestor `.page-section{overflow:hidden}` became the scroll/clip container for the
+sticky `.legal-toc`. Swapped to `overflow-x: clip` (clips horizontal bleed without establishing a block-axis
+scroll container), restoring sticky sitewide. (Round-13's "TOC sticky verified" did not hold in the owner's
+browser.)
+
+**Lightbox arrows re-centered on the viewport.** Round 13 fixed the chevron *glyph* but not the *position*:
+the arrows were `position:absolute` inside the content-sized `.lightbox__inner` (which also wraps the dots +
+counter, dragging its midpoint low). Switched `.lightbox__nav` to `position:fixed` with
+`inset-block-start:50%; translateY(-50%)` and `inset-inline-{start,end}: clamp(8px,2vw,24px)` so they centre
+on the viewport and hug its far edges; dropped the now-redundant ≤1120px override.
+
+## 2026-07-20 — Spec 020 round 13: pre-FSE QA punch-list
+
+**Services archive disabled (404), not redirected.** `has_archive=false`; the 4 service singles are the
+canonical service pages and the header "Services" dropdown links to them directly, so the bare `/services/`
+URL is unreachable via nav and returning 404 is the cleanest "disable" (owner-approved).
+
+**Home in-page nav uses client-side scroll-spy, not server-set active state.** The About/Services/Clients/
+Contact links are fragments to home sections; a JS `IntersectionObserver`-style scroll handler in
+`site-header/view.js` toggles `.is-active` on the link for the section at ~30% viewport (page-bottom forces
+the last). Kept purely client-side so the PHP `isActive()` route logic (used on inner pages) is untouched.
+`getBoundingClientRect` (not `offsetTop`) because the home sections don't share an offset parent.
+
+**One global `.container` cap fixes several width bugs.** Rather than per-section overrides, re-assert
+`.wp-site-blocks .container { max-inline-size:var(--maxw); margin-inline:auto; padding-inline:var(--gutter) }`
+over the adapter's constrained-layout reset. This caps the legal pages, home-About cards, and any generic
+page in one rule (`.container` is only ever capped content; alignfull bands aren't `.container`).
+
+**Legal pages get real EN + AR boilerplate, seed-owned, resolved via Polylang link.** Wrote professional
+plain-language Privacy/Terms clauses (each page's lead states it is a template to be reviewed by counsel —
+not legal advice). The seeder now UPDATES existing legal pages (content is seed-owned pre-launch) and finds
+the AR page through `pll_get_post($enId,'ar')`, never the slug (Polylang de-duplicates it to `terms-2`,
+which caused duplicate pages when matched by slug). Also fixed the `_perego_legal_updated` meta-key mismatch.
+
+**Lightbox arrows are CSS chevrons, not text glyphs.** The `‹`/`›` characters are optically off-centre in
+Open Sans; replaced with a rotated-border chevron in `shared/_lightbox-chrome.scss` (RTL-aware), centered by
+the existing grid. The `×` close glyph was already centered and is unchanged.
+
+**Work filter and journal Cancel-reply were not code bugs.** Both were verified working in a clean browser
+(Interactivity filter hides the right cards; the custom Cancel button clears the reply chip). The reported
+failures were stale build/opcache/browser cache — no code change, just rebuild + hard-refresh.
+
+**AR home About is owned by `seed-home-about.php`, not `seed-ar-content.php`.** The latter used to copy the
+EN front-page body into the AR home, overwriting the Arabic About with English. It now creates the AR home
+empty so `seed-home-about.php` fills the Arabic copy.
+
+## 2026-07-20 — Spec 020 round 12: service-page "What we do" fidelity + masonry fill
+
+**(addendum) The "What we do" grid width cap is re-asserted over the adapter's own constrained-layout
+reset.** That reset (`.wp-site-blocks .is-layout-constrained > :where(…) { max-inline-size:none }`, needed
+so alignfull bands bleed full-width) out-specified `.svc-whatwedo__grid`, dropping its cap to `none` — the
+section grew past 1440px on screens wider than the handoff. Fixed with a width/margin-only override at
+higher specificity (`.wp-site-blocks .svc-whatwedo .svc-whatwedo__grid`) rather than exempting the grid
+from the reset (which risks breaking the alignfull band). Verified @1920: 1440px, centered, matching the
+handoff file.
+
+**(addendum) The masonry brand-card logo zooms in place on hover instead of jumping.** The reference's
+generic `.work-card:hover img { transform: scale(1.07) }` overrode the brand logo's positioning transform
+(`translate(-50%,-50%) rotate(-90deg)`), so on hover it lost its centering/rotation and lurched to the
+corner. Since `perego-reference.scss` is immutable, the adapter adds `.work-brand:hover .work-brand__logo`
+that re-includes the positioning transform plus `scale(1.06)` — an anchored zoom (owner review).
+
+**The round-7 `.svc-whatwedo__media { aspect-ratio: 7/5; object-fit: cover }` crop was reverted to the
+handoff's natural image sizing.** Round 7 forced a fixed ratio so the media box was identical across the
+four service singles; owner review found the result diverged from the design (the wider graphic-design /
+website-making mockups were enlarged and side-cropped). Fidelity to the locked handoff (`.whatwedo__media
+img { width:100%; height:auto }`) wins over cross-page box consistency: each service's mockup now renders
+at its own natural aspect ratio, rounded + shadowed + tilted, exactly as the reference. Grid width is
+unchanged (1440px = handoff).
+
+**The hover "+" zoom glyph (`.work-zoom`) was removed from masonry gallery/image cards — a deliberate
+divergence from the handoff.** The handoff shows a "+" expand affordance on non-video tiles; the owner
+asked for it gone entirely. `ServiceSelectedWorkRenderer::card()` no longer emits `.work-zoom` (video
+tiles keep the ▶ `.play-btn`; gallery tiles keep the "Gallery" badge). Image/gallery tiles still open the
+lightbox on click, without a visible icon. The unused `.work-zoom` CSS stays in the immutable
+`perego-reference.scss`.
+
+**Arabic project tiles reuse the linked EN post's media via a repository fallback, not per-locale media
+seeding.** AR project posts carry no thumbnail/gallery of their own (Polylang doesn't sync media, and the
+AR seed sets none), and the masonry filters out tiles with neither — so AR grids rendered empty.
+`ProjectRepository::videoUrlFor()` already EN-falls-back; `toGridCard()` (thumbnail) and `galleryFor()`
+now do the same via a shared `enTranslationId()` helper. This avoids duplicating attachments across
+locales and keeps EN as the single media source of truth, consistent with the existing video-URL fallback.
+
+## 2026-07-20 — Spec 020 round 12: AJAX comments own the whole flow; layered anti-spam
+
+**The journal comment form/list is now fully Perego-owned; core `wp:post-comments-form` +
+`comment-reply.js` were dropped.** Reasons: (1) core's reply UX moves the form under the comment and
+only a small "Cancel reply" link returns — owners read it as a trap; (2) core forces a full reload
+with no feedback. Our block renders the handoff form itself and `journal-comments/view.js` handles
+reply as a non-destructive "Replying to X — Cancel" chip (just sets `comment_parent`) and submits via
+AJAX. The form still posts to `wp-comments-post.php` without JS (progressive enhancement).
+
+**Comment submission goes through a dedicated REST controller, not the CoreX Forms engine.** CoreX
+Forms stores generic submissions; comments must become real WP comments (threading, moderation,
+display), so `PeregoCommentController` calls WordPress's `wp_handle_comment_submission()` (the correct
+platform API — it runs flood/duplicate/blocklist/Akismet/moderation) and **borrows** the CoreX/careers
+security pattern around it: `wp_rest` nonce + honeypot (`perego_hp`) + per-IP/post transient rate
+limit. Layered defence satisfies "no spam / no dummy floods"; first-time authors stay held
+(`comment_previously_approved=1`), so nothing unmoderated appears. Held comments are **not** injected
+client-side (owner's choice) — only auto-approved ones appear live.
+
+**Live injection reuses the server renderer.** The controller returns
+`JournalCommentsRenderer::renderCard()` HTML for an approved comment; view.js inserts that
+server-escaped markup (never user-raw) so the on-the-fly card is byte-identical to a reload.
+
+**Preloader top gap was WordPress block-spacing, not the admin bar alone.** `.wp-site-blocks > *`
+gets a global `margin-block-start:24px`; the adapter zeroed it only for header/main, leaving the
+preloader pushed down 24px. Fix = `margin:0` on `.preloader` (plus full-viewport `inset:0`/`100dvh`
+and a z-index above the admin bar so a logged-in editor sees no gap either).
+
+**Scrollbar: brand-purple, CSS-only smooth (no JS momentum lib).** Owner chose the lightweight path —
+`scrollbar-color`/`::-webkit-scrollbar*` in the adapter + the pre-existing reduced-motion-guarded
+`scroll-behavior:smooth`. A JS inertia library (Lenis) was declined for bundle/a11y reasons.
+
+## 2026-07-19 — Spec 020 round 11: journal comments via a custom renderer, not core comment blocks
+
+**Custom `perego-theme/journal-comments` server-rendered block instead of `wp:comment-template`.**
+The handoff comment card is an initials avatar in a gradient circle + a bordered body card, with an
+indented reply. WordPress's core comment blocks emit gravatar-**image** avatars, `depth-N` nesting,
+and `.wp-block-comment*` classes — the reference `.comment/.comment__*` styles (already in
+`perego-reference.scss`) can never match them, and there's no clean way to get initials avatars from
+core. So we render the list ourselves (mirroring `RelatedPostsRenderer`), reusing the reference CSS
+verbatim, and keep only `wp:post-comments-form` for the functional (nonce/submit) form. The provider
+callback threads comments (top-level then its replies, insertion order) so a reply renders under its
+parent rather than being scattered by a flat date sort.
+
+**Comment form reshaped to the handoff card with CSS, not a second custom block.** The working core
+form stays; the `.comment-respond` wrapper becomes the 760px-centered card (aligned under the 760px
+comment list), the heading moves inside via `comment_form_defaults` `title_reply` = "Leave a
+comment", and the fields are re-laid with CSS grid + `order` (Name + E-mail side by side, Comment
+full width) — because core stacks them Comment→Name→Email. Keeps submission intact while matching the
+design.
+
+**Demo comments are seeded (reversing round 9's "no demo comments").** "Identical, same cards" means
+the handoff's three comments (Sara Adel; Mostafa Emam reply; Karim Hassan) must exist, so
+`seed-journal-comments.php` seeds them idempotently on EN posts; the 3 old mismatched demo comments
+on post 45 were deleted so it gets the correct set.
+
+## 2026-07-19 — Spec 020 round 10: journal archive/single parity
+
+**The journal archive stagger is a WP flow-layout artifact, fixed in CSS, not by changing the
+post-template's layout type.** The `wp:post-template` renders as `.blog-grid` (display:grid) but WP
+also stamps it `is-layout-flow`, which injects `margin-block-start` on every sibling after the first
+— fine as a row gap in flow, but on grid items it offsets them within their row. Rather than switch
+the block to `layout:{type:grid}` (which loses the reference's exact 3/2/1 responsive breakpoints
+baked into `.blog-grid`), we neutralize the injected margin with `.blog-grid > * + * {
+margin-block-start: 0 }` and let the grid `gap` own spacing. Real-specificity selector beats core's
+`:where()` rule.
+
+**Comment form trimming needs BOTH `comment_form_default_fields` and `comment_form_fields`.** Only
+the latter reliably affects the block-based `core/post-comments-form` (it calls `comment_form()`
+which always applies `comment_form_fields` at the end, but the default-fields filter can be bypassed
+when fields are pre-supplied). We register both to strip WP's Website (`url`) field and the "save my
+info" cookies checkbox, matching the handoff's Name + E-mail + Comment form. No block markup change.
+
+**New `seed-journal-tags.php` — the single's tag pill row needs `post_tag` terms that no prior seed
+created.** Idempotent, only tags posts with none, sets Polylang term language per locale so EN/AR
+stay separate. The `.post-single__tags a` pill CSS was ported from the dead
+`perego-legacy-pre-recovery.scss` (whose `--perego-*` vars are undefined at runtime) into the
+adapter using the reference's real `.post-tag` token values, and the block's "Tags:" prefix +
+default comma separator were dropped so it matches the handoff's bare pills.
+
+**Debugging note: on this WAMP box, `curl` can serve a stale comment-form render (opcache
+worker/keep-alive) while the real browser is correct.** During this round `curl` kept showing the
+removed Website field even after opcache_reset, but Playwright (real Chromium) and isolated
+`comment_form()`/`WP_Block::render()` all rendered the trimmed form. Verify PHP-render changes with a
+real browser here, not `curl`.
+
+## 2026-07-19 — Spec 020 round 9: two build steps must both run; don't diagnose visual bugs from source alone
+
+**`perego-theme` and `perego-site` each have their own `npm run build`, and both must run before any
+visual claim about the live site.** Round 7 rebuilt only `perego-theme` (SCSS/theme JS) after
+touching `perego-site` PHP; `perego-site`'s own block build (`build/Blocks/`, covering
+`media-lightbox`, `service-selected-work`, and every other block's JS/CSS) was hours stale,
+including a whole shared lightbox-chrome partial that had never been compiled at all. The owner's
+"lightbox isn't visually right" report was 100% this — the live page was serving pre-refactor CSS.
+No error surfaced anywhere because a stale build isn't a build failure, it's just silently wrong
+output.
+
+**Root-caused via Playwright screenshots + computed-style inspection, not by re-reading the SCSS.**
+Source code review had already (wrongly) concluded the CSS was correct twice. Only opening the live
+page, screenshotting the rendered lightbox, and walking `.lightbox`'s ancestor chain in the browser
+for stacking-context traps (`transform`/`filter`/`contain`/`backdrop-filter`) actually proved the
+z-index and DOM were fine — the discrepancy was purely a build artifact. Going forward: when an
+owner reports a visual bug after a code change, verify against a live render before assuming the
+source is wrong.
+
+**`project-gallery-lightbox/index.js`'s dangling `import './style.scss'` was silently breaking the
+entire plugin's CSS bundle.** Round 6 deleted that block's `style.scss` (folded into the shared
+`.lightbox` contract) but left the import in the editor script; webpack failed the whole build on
+it, so no other block's CSS got the chance to rebuild either — one dead import blocked the fix for
+everything else in this round. Removed; no other code changes needed.
+
+## 2026-07-19 — Spec 020 round 8: home clients section matched to the owner reference image
+
+**The individual card's middle line became a real field (`_perego_client_sub`), not a reuse of the
+stat.** The handoff card has three text lines (title / subtitle / stat) and the `.indiv-card__sub` CSS
+already existed, but the renderer only ever emitted title + stat and there was no meta for the middle
+line — so the "intertainment show" line was structurally impossible. A dedicated subtitle meta (mirroring
+how stat/video are separate fields) is cleaner than overloading the stat or splitting it heuristically,
+and gives editors an explicit field.
+
+**The stat now permits inline `<strong>` via `ClientPostType::sanitizeStat()` (`wp_kses` strong-only),
+not `sanitize_text_field`.** The handoff bolds the number (`<strong>+1M</strong> views`). Rather than a
+second "stat number" field or magic first-token bolding, the stat allows exactly one tag — `<strong>` —
+sanitized identically on REST write, admin save, and render (`wp_kses($stat, ['strong' => []])`), so the
+demo seed and any editor can bold the figure and nothing else can be injected.
+
+**Corporate cap raised 12 → 20 (`CORP_MAX`/`INDIV_MAX` split), and demo view counts were seeded despite
+the "don't fabricate view counts" note.** The reference shows a full 2×10 corporate grid and populated
+`+1M views` cards; the owner explicitly approved seeding this demo content for visual parity. This is a
+scoped, documented override of `seed-clients.php`'s original caution (real, approved client data still
+replaces all of it before launch — FR-006). `seed-clients.php` also retires the legacy 4+4 "Sample"
+placeholders (demo data only) so they don't inflate the carousels next to the new tiles.
+
+**The `--perego-*` design-token alias bridge was restored in `perego-wordpress-adapter.scss`, not by
+re-importing the legacy stylesheet.** The perego-site block CSS (shared media/gallery lightbox + card
+chrome) consumes `--perego-*` tokens, but the only file defining them (`--perego-*: var(--wp--custom--
+perego--*)`) was `perego-legacy-pre-recovery.scss`, which the round-6 rebuild stopped importing — so
+every `--perego-*` var was undefined at runtime. Most visibly, `.lightbox { z-index: var(--perego-z-
+lightbox) }` became `auto` and the dialog rendered *below* the sticky header/nav/preloader. Re-importing
+the whole legacy file would reintroduce its conflicting component rules, so only the `:root` alias block
+was ported into the client adapter (where "neutralize WP/CoreX interference" changes belong, since
+`perego-reference.scss` is the immutable handoff stylesheet). Values remain single-sourced in theme.json.
+
+**The individual card's native-`<button>` chrome reset moved from the block's `style.scss` to the theme
+adapter.** The lightbox-trigger card renders as a `<button>` (handoff C-04), but its reset lived in
+`clients-carousel/style.scss`, which the JS build never imports — so no block stylesheet is emitted and
+the UA `2px outset` border shipped to production. The reset now lives beside the token bridge in
+`perego-wordpress-adapter.scss`; the block `style.scss` is reduced to a pointer comment. The card's
+`1fr / 42%` grid (text left, thumbnail right) was already correct in `perego-reference.scss`.
+
+## 2026-07-19 — Spec 020 round 7: "What we do" media gets a fixed aspect-ratio, not natural sizing
+
+**`.svc-whatwedo__media` crops to `aspect-ratio: 7/5` instead of the handoff's natural per-image
+sizing.** The handoff itself has no fixed box for this image — each service's mockup renders at its
+own natural ratio (video-editing 1.40, motion-graphics 1.38, graphic-design/website-making 1.63),
+so the section is a genuinely different height per page even in the reference design. Owner wants
+the 4 service singles visually consistent, which the handoff's own markup doesn't guarantee — chose
+`7/5` (≈1.4) since it's closest to 3 of the 4 images' natural ratio, minimizing crop on those and
+accepting a small side-crop on graphic-design/website-making's wider image, over stretching or
+letterboxing. `website-making` intentionally still uses its own distinct "web showcase" grid
+(browser-chrome cards + filters) for its Selected-work section, confirmed with owner — not migrated
+to the shared `.work-masonry`.
+
+## 2026-07-16 — Spec 020 round 6: full design-parity decisions
+
+**One lightbox instance: the project gallery's embedded dialog was removed, not skip-listed.** The
+handoff's GlobalMediaLightbox contract mandates exactly ONE dialog per page, opened by (among others)
+the project-gallery thumbnails. The project-gallery-lightbox block's own Interactivity dialog
+double-opened alongside the site-wide media-lightbox (both bound the same `data-gallery` thumbs).
+Rather than teaching the global binder to skip that region (two dialog implementations forever), the
+block now renders thumbs only — plain global-lightbox triggers with a new `data-gallery-index` attr the
+global dialog honours as its opening position. The block's view.js/style.scss are gone; the shared
+chrome lives once in `src/Blocks/shared/_lightbox-chrome.scss`.
+
+**Lightbox chrome rebuilt on real tokens.** The two lightbox stylesheets referenced `--perego-*`
+custom properties defined only in the dead `perego-legacy-pre-recovery.scss` — undefined at runtime
+(z-index/radius/colors silently invalid). The shared chrome now uses the live theme.json tokens
+(`--wp--custom--perego--*`, presets) and matches the reference design exactly (52px accent nav circles
+±70px outside in gallery mode, 44px accent close at −14/−14 with glow, 8px dots with a 22px accent
+active pill, visible "n / total" counter). Embed/video autoplay is muted (handoff C-03 — "no autoplay
+with sound").
+
+**Owner-approved client interactivity overrides handoff C-05's default-off.** The docs default
+corporate tiles to non-interactive pending Perego approval; the owner explicitly requested the
+prototype behaviour (corp tile → 4-item mixed gallery, individual card → ▶ lightbox). Demo media is
+backfilled by `scripts/seed-client-media.php` (set-only-when-absent, EN+AR, shared attachments).
+Individual cards follow C-04: embed/upload = a `<button>` lightbox trigger only; external = a plain
+new-tab link with NO play affordance (▶ is reserved for in-lightbox media).
+
+**Projects gained `_perego_video_url`; the card variant rule is video > gallery > image.** Matches the
+handoff's masonry mix (`data-video` cards carry the always-visible `.play-btn`; galleries the zoom +
+badge; images the zoom). AR reads the EN post's value via the established `metaWithEnFallback`.
+
+**Demo fill = 23 projects per masonry category, distribution from one shared lib.**
+`lib-project-variants.php` fixes position→variant (3=gallery; 8/18/21=image; rest video with the
+prototype's own placeholder embed) so seed-projects/seed-project-galleries/migrations never disagree.
+Image-variant demo projects deliberately get no gallery meta (a >1 gallery would re-type their card);
+their demo singles show no gallery grid — acceptable placeholder trade-off. Work-archive + adjacent
+caps bumped 60→120 (bounded); the archive keeps filters with no pagination (the handoff's pagination
+is a static placeholder).
+
+**Header "Contact Us" is the bare `#contact` fragment, bypassing `localizedUrl()`.** Every page's
+footer carries `id="contact"`; localizing the fragment would absolutize it to the homepage and break
+the same-page anchor. Fragments are language-neutral, so the renderer skips the driver for `#…` hrefs.
+
+**Journal single completed with core-block composition + one new block.** Hero avatar chip and the
+author-box are core blocks (avatar/post-author-name/post-author-biography) bridged onto the reference
+classes in the adapter stylesheet; "Related articles" is a new server-rendered `perego-theme/related-posts`
+block (JournalRepository clones ProjectRepository::relatedFor's same-category + locale + fill
+discipline). Journal cards still never open the lightbox (handoff §8.2).
+
+## 2026-07-16 — Spec 020 round 5: service-page parity decisions
+
+**`svc-whatwedo` styling lives in the WP adapter, not by renaming markup to `.whatwedo`.** The reference
+stylesheet is an immutable handoff copy; the seeded post_content + `ServicesOverviewRenderer` already ship
+`.svc-whatwedo` classes in editors' saved content across 8 posts. Re-styling the existing WP class names in
+`perego-wordpress-adapter.scss` (values copied from the reference `.whatwedo*` rules) fixes both surfaces with
+zero content migration; renaming classes inside saved `post_content` would have needed another migration for a
+purely cosmetic equivalence.
+
+**Process fix = adapter CSS overrides, not a seed-markup migration.** WP's emitted
+`.wp-container-core-group-is-layout-*` rules (one class) lose to the adapter's two-class selectors
+(`.process .process-list`) regardless of order, so the seeded groups keep their editor-canvas flex layouts
+and no editor content is touched. Only the per-service icons needed a content migration
+(`migrate-service-process-icons.php`) — src-swap anchored inside `process-step__icon` figures, theme-owned
+`icon-*.png` srcs only, so an editor-picked media-library icon is never overwritten. A NEW migration script
+(not an extension of `migrate-service-process.php`) because that script's idempotence signature
+(`contains 'process-list'`) is now true for every post — it stays a completed one-shot.
+
+**One shared masonry component for the service singles and the archive.** The `.m1`–`.m15` mosaic, brand
+card, and Load-more are one designed contract; `ServiceSelectedWorkRenderer::masonry()` is that single
+source and `ServicesOverviewRenderer` receives the renderer via constructor injection. m-classes are
+assigned sequentially, so with today's 2–3 seeded projects per category the mosaic renders a partial first
+band and grows into the full design as real projects are added — we deliberately did NOT bulk-seed 15+
+placeholders per category (owner supplies real work; the web category is the exception below).
+
+**Web-showcase site type/URL are project meta on the EN post; AR reads through an explicit fallback.**
+Polylang Free doesn't sync custom meta. A live site's type and URL are language-neutral data, so
+`ProjectRepository::toWebCard()` falls back to the linked EN post's meta instead of mirroring values onto AR
+posts — one source of truth, and an editor updating the EN URL fixes both languages. The 6 handoff demo
+sites (Aurora Retail …) were seeded EN+AR because the showcase's filter pills need type coverage and the
+handoff itself ships them as its demo showcase; their Latin brand titles stay Latin in AR, as brands do.
+The showcase renders filter pills only for types present in the data (never a pill that empties the grid)
+and hides the group below two types.
+
+**Reveal animations restored globally; seeded prose intentionally not given `.reveal`.** The theme now adds
+the `.js` root class + the handoff's IntersectionObserver (reduced-motion + no-IO safe). Renderer-emitted
+elements carry `.reveal` as designed; retro-adding `.reveal` wrappers to seeded whatwedo/process post_content
+would mean another content migration for a purely decorative delta — skipped on purpose.
+
+**Home sections at 100vh/100svh ≥901px is an owner-requested deviation from the reference.** The handoff
+gives `.home-about` 78vh and services-teaser/clients natural padding heights; the owner asked for
+full-viewport sections "when possible". Scoped to `.home` + desktop only (a forced 100vh band around short
+content reads as empty space on phones), with the `100svh` progressive pair everywhere `100vh` is used.
+
 ## 2026-07-14 — Homepage editable seam: teaser ← Service CPT meta; hero ← block attributes (spec 012 T002)
 
 **Context**: Spec 012 T001 audit found the homepage renders to the handoff visually, but hero slides/CTA and
@@ -710,3 +1117,118 @@ editing seam, so the two-line rendering is reproduced with `max-inline-size: cal
 tracks the clamped font; 48px is the fixed inline padding under border-box). Sized between the widest
 first line ("2D Motion" ≈ 5.9em) and the narrowest one-liner ("Video Editing" ≈ 7.4em), so any
 similar-length label — EN or AR — breaks like the design without special-casing the seed strings.
+
+## 2026-07-16 — Spec 020 round 2: hero controls removed against the handoff; corporate lightbox (C-05) approved
+
+**Hero prev/next/pause controls removed — owner overrides the handoff.** A new, more detailed handoff
+(`Perego-Creative-Studio-Developer-Handoff-V2`) still explicitly instructs adding prev/next + pause/play
+buttons to the hero slider (`docs/INTERACTIONS.md`, `docs/ACCESSIBILITY_HANDOFF.md`, both tagged
+`[BUILD]`) — the live site had them built exactly per that instruction. The owner was asked directly
+("these buttons match what the handoff requires — remove them, or is something else wrong with them?")
+and confirmed: remove them, dots-only. This is a deliberate divergence from the handoff's own written
+instructions, not a bug fix — recorded here so a future audit doesn't "fix" the hero back toward the
+handoff's `[BUILD]` note. `HeroSliderRenderer::renderControls()` and the corresponding `view.js`
+actions/state were deleted; autoplay, hover-pause, reduced-motion gating, dot navigation, and the
+aria-live announcer were kept (still required by the same accessibility doc, and not part of the owner's
+objection).
+
+**Corporate client tiles now open the lightbox — owner resolves CONFLICTS_REGISTER C-05.** The handoff's
+own conflict register flags "should corporate logo tiles open a lightbox" as `⚠️ Open / needs Perego`,
+with `HANDOFF_AUTHORITY.md` instructing agents not to resolve open items unilaterally. The owner resolved
+it directly ("Corporate Clients should open lightbox"), so `ClientsCarouselRenderer::corporateCard()` now
+emits a `data-image` attribute (the client's featured-image logo, when set) so the tile opens in the
+existing site-wide media lightbox — mirroring the conditional-media pattern individual clients already
+use (no media set → tile stays non-interactive, same as before).
+
+## 2026-07-16 — Spec 020 round 3: client media (gallery/video type) edited via wp-admin meta boxes, not block attributes
+
+**Client galleries/video sources are `register_post_meta()` + a dedicated `wp.media` meta box, not
+block-editor attributes.** The owner asked for corporate logos to open a gallery of mixed images/videos and
+individual cards to support three video source types (embed/upload/external-new-tab), all editable by the
+client without a developer, and left the *how* to me ("decide for me the best practice... make sure
+everything is visual in FSE in the end"). The `clients-carousel` block renders **many** Client CPT posts at
+once, so there is no single block instance a per-client gallery could attach to as an attribute — the only
+architecturally sound seam is per-post. This also matches the codebase's own established, deliberately-chosen
+pattern: the 2026-07-14 hero decision (above) explicitly abandoned block attributes in favor of page meta +
+`PostMetaBoxes` specifically to avoid a `wp-scripts`-build-dependent editing surface, and the Project gallery
+(`ProjectGalleryMetaBox`) already proves the same `wp.media`-picker-in-a-meta-box pattern for exactly this
+kind of "pick some media, see it inline" editing. Client posts already open in the WordPress block editor
+(Gutenberg), and meta boxes render directly inside that screen (below the content, same as every other
+Client field), so this satisfies "visual in FSE" without inventing a new, unproven pattern (a custom React
+sidebar panel) nowhere else in this codebase uses.
+
+**New meta:** `_perego_client_gallery` (JSON array of `{type:'image'|'video', id, url}`, corporate) and
+`_perego_client_video_type` (`embed`|`upload`|`external`, individual) on `perego_client`, both registered
+with REST schema + sanitization + `auth_callback` like every other structured field in this codebase. New
+`Admin\ClientMediaMetaBox` (modeled line-for-line on `ProjectGalleryMetaBox`'s nonce/capability/autosave
+guard shape and inline-no-build-step `wp.media` JS) owns both fields; `PostMetaBoxes`'s old plain-text
+"Video URL" field was removed from the Client schema (moved into the new box) to avoid the same field
+appearing editable in two places.
+
+**Join-form validation now reuses the contact form's own classes instead of a second hand-matched copy.**
+Round 2 gave the join-form's banner the *right colors* but not the *right structure* (no pill/icon/padding,
+no per-field errors at all) — a second bug of the same shape the round-1/round-2 fixes kept finding
+elsewhere (a bespoke, parallel implementation drifting from the "real" one). Rather than re-author the pill
+CSS a second time, `JoinFormRenderer.php` now emits the same `corex-form__error`/`corex-form__status`
+classes the shared CoreX form runtime uses, so both forms draw from one CSS source and cannot visually
+diverge again without a shared-class change catching both.
+
+**Clients-carousel's dead Swiper stylesheet deleted.** `clients-carousel/style.scss` was leftover from an
+abandoned Swiper-based build (the block has used plain scroll-snap + arrow buttons for a while — `view.js`
+has no Swiper import). Its `.clients`/`.clients__inner` selectors still matched the live DOM and silently
+overrode the theme's correct header-to-slider spacing with a flex `gap`, the same "dead block-scoped
+stylesheet outlives a refactor and quietly wins a specificity fight" bug already found and fixed twice in
+round 1 (the site-header block's `.perego-header` CSS, the media-lightbox's legacy `.lightbox` CSS in
+`perego-reference.scss`). Worth a standing suspicion whenever a *reported* visual bug doesn't match what the
+*theme's* CSS says it should look like: check for a second, block-scoped stylesheet targeting the same
+class names before assuming the reported value is wrong.
+
+## 2026-07-16 — Spec 020 round 4: home page converted to real block attributes, reversing the 2026-07-14
+meta-box decision — plus an En/Ar attribute-pair pattern for text embedded in shared FSE templates
+
+**Block attributes, not meta boxes — the owner explicitly reversed the earlier architecture call.** The
+2026-07-14 hero decision (above) and every round since deliberately chose page-meta/CPT-meta +
+`PostMetaBoxes` sidebar fields over block attributes, specifically to avoid a `wp-scripts`-build-dependent
+editing surface. The owner has now explicitly asked for the opposite — "for the slider must be able to
+edit them from RichText... all of these things must be editable through the FSE not from the options
+pane" — for the entire home page: header, footer, hero, services, clients. This is the client's call to
+make and it overrides the prior convention; this entry exists so a future audit doesn't "fix" any of this
+back toward meta boxes citing the old decision. Converted: clients-section headings, services-teaser
+heading/"See All", hero slides + CTA, header nav/logo/sticky toggle, footer contact-channels/social-
+links/blurb. Card/CPT-driven content (client galleries, service card images, project data) stays
+CPT-driven — that's a different, still-correct decision (one block instance can't hold many-posts' worth
+of data as attributes), not reversed here.
+
+**En/Ar attribute pairs for template-embedded blocks — not a locale-fallback trick.** The first attempt at
+this (clients-section headings) initially used a single attribute per string with a locale-aware
+`ClientsContent` seed fallback — the same shape as the hero's page-meta mechanism. That's wrong for a
+block instance living in a **shared FSE template** (`front-page.html`, `header.html`, `footer.html`):
+there is only one instance of the block across every language, so one attribute value would show
+identically on the English and Arabic pages — there is no "current post" to key off inside the Site
+Editor the way page meta can key off "the currently queried front page." The fix, already proven by the
+pre-existing `footer-careers` block (`headingEn`/`headingAr`/`blurbEn`/`blurbAr`, spec 009): store **both**
+languages as separate attributes on the one block instance, shown together in the editor (not toggled),
+and let the PHP `render_callback` pick the current-locale variant. Every converted block in this round
+(clients, services, hero, header, footer) follows this same convention. **Rule of thumb going forward:**
+any block whose instance lives in a template/template-part (not a per-post `post_content`) needs the
+En/Ar-pair pattern for any locale-sensitive text attribute — a single-attribute-with-seed-fallback design
+is a real bug there, not just a style choice.
+
+**Hero keeps a three-tier fallback (attribute → the old page-meta mechanism → seed), not a clean cutover.**
+Unlike the other four blocks (which had zero prior admin UI to preserve), the hero already had a working,
+owner-editable mechanism (spec 012's page meta) that may already hold real, owner-entered copy. Silently
+dropping that tier would lose data. `HeroContent::resolve()` checks the new attribute first, then the old
+meta, then the seed — so existing hero copy keeps rendering exactly as before until an editor re-enters it
+via the new RichText fields, at which point the meta tier becomes permanently moot (attribute always wins
+once set) and the old `PostMetaBoxes` "Homepage hero" box was removed (kept editing in two places would
+just be confusing, not backward-compatible).
+
+**Nav items, contact channels, and social links are JSON-string attributes, not arrays-of-objects or
+per-item RichText.** WordPress block attributes support nested array/object types via a REST schema, but
+a flat JSON string in a single `string`-typed attribute is simpler to reason about in the PHP
+`render_callback` (one `json_decode`, no schema validation edge cases) and is exactly what the block's own
+`edit()` already needs to do anyway (`JSON.stringify`/`JSON.parse` around a local repeater list). Nav
+items/contact channels/social links aren't language-specific data (a phone number or a URL doesn't
+translate), so — unlike the En/Ar text pairs above — these are single (non-bilingual) attributes shared
+across both locales, consistent with how they were previously hardcoded PHP consts shared by both
+languages.

@@ -21,16 +21,24 @@ defined('ABSPATH') || exit;
  * column (the page already carries its own contact form). The quick-message column embeds the live CoreX form
  * (spec Phase 7, form 1) — the framework runtime drives its default/invalid/submitting/success/
  * server-error states — degrading to the heading-only entry point when CoreX Forms is inactive.
+ *
+ * spec 020 round 4 — contact channels, social links, and the footer blurb are real block attributes,
+ * editable via Inspector controls (previously hardcoded PHP consts/`GlobalContent` strings with zero
+ * admin UI, and a closed 4/5-entry list with no way to add more). Contact channels and social links
+ * are JSON-string attributes (locale-neutral facts/URLs, same for every language); the blurb is an
+ * En/Ar attribute pair, matching `footer-careers`'/`clients-carousel`'s pattern for text in this
+ * shared `footer.html` FSE template part. Empty/invalid attributes fall back to the original
+ * hardcoded seed, so existing pages render unchanged.
  */
 final class SiteFooterRenderer
 {
     /**
      * Contact channels from the approved design handoff (locale-neutral facts, not translatable
-     * prose). Social links are the handoff's own placeholder destinations pending real owner handles.
+     * prose) — the seed used when no `contactChannels` block attribute has been set.
      *
      * @var list<array{label: string, href: string}>
      */
-    private const CONTACT_CHANNELS = [
+    private const SEED_CONTACT_CHANNELS = [
         ['label' => 'mostafa.emam3313@gmail.com', 'href' => 'mailto:mostafa.emam3313@gmail.com'],
         ['label' => 'yehemam2@gmail.com', 'href' => 'mailto:yehemam2@gmail.com'],
         ['label' => '+996 56 293 2759', 'href' => 'tel:+996562932759'],
@@ -38,9 +46,13 @@ final class SiteFooterRenderer
     ];
 
     /**
+     * The seed used when no `socialLinks` block attribute has been set. Every `network` here must have
+     * a matching {@see SOCIAL_ICON_PATHS} entry — the icon set is a closed, known list, not free text,
+     * so an editor-added network must be one of these (the Inspector control offers exactly this list).
+     *
      * @var list<array{network: string, href: string}>
      */
-    private const SOCIAL_LINKS = [
+    private const SEED_SOCIAL_LINKS = [
         ['network' => 'Instagram', 'href' => 'https://www.instagram.com/'],
         ['network' => 'Facebook', 'href' => 'https://www.facebook.com/'],
         ['network' => 'LinkedIn', 'href' => 'https://www.linkedin.com/'],
@@ -61,13 +73,14 @@ final class SiteFooterRenderer
     {
     }
 
-    public function render(bool $flat = false): string
+    /** @param array<string,string> $attributes */
+    public function render(bool $flat = false, array $attributes = []): string
     {
         $classes = 'site-footer' . ($flat ? ' site-footer--flat' : '');
 
         $html = '<footer class="' . esc_attr($classes) . '" id="contact">';
         $html .= '<div class="container site-footer__grid">';
-        $html .= $this->renderContactColumn();
+        $html .= $this->renderContactColumn($attributes);
 
         // Standard footer: contact + quick-message + careers. The contact-page flat variant drops the
         // quick-message column (a message form would be redundant beside the page's own contact form)
@@ -85,9 +98,31 @@ final class SiteFooterRenderer
         return $html;
     }
 
-    private function renderContactColumn(): string
+    /**
+     * Decodes a JSON-array block attribute, falling back to the seed when empty/invalid/empty-array.
+     *
+     * @param array<string,string> $attributes
+     * @param list<array<string,string>> $seed
+     * @return list<array<string,string>>
+     */
+    private function jsonAttribute(array $attributes, string $key, array $seed): array
     {
-        $blurb = ( new GlobalContent($this->languageService->driver()->currentLocale()) )->footer()['blurb'];
+        $raw = (string) ($attributes[$key] ?? '');
+        if ($raw === '') {
+            return $seed;
+        }
+
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) && $decoded !== [] ? $decoded : $seed;
+    }
+
+    /** @param array<string,string> $attributes */
+    private function renderContactColumn(array $attributes): string
+    {
+        $suffix = $this->languageService->driver()->currentLocale() === 'ar' ? 'Ar' : 'En';
+        $blurb = trim((string) ($attributes['blurb' . $suffix] ?? ''))
+            ?: ( new GlobalContent($this->languageService->driver()->currentLocale()) )->footer()['blurb'];
 
         $html = '<div class="footer-col footer-contact">';
 
@@ -97,23 +132,24 @@ final class SiteFooterRenderer
             . '</a>';
 
         $html .= '<h2 class="footer-heading">' . esc_html__('Contact us', 'perego-site') . '</h2>';
-        $html .= $this->renderContactChannels();
-        $html .= '<p class="footer-blurb">' . esc_html($blurb) . '</p>';
-        $html .= $this->renderSocialLinks();
+        $html .= $this->renderContactChannels($this->jsonAttribute($attributes, 'contactChannels', self::SEED_CONTACT_CHANNELS));
+        $html .= '<p class="footer-blurb">' . wp_kses_post($blurb) . '</p>';
+        $html .= $this->renderSocialLinks($this->jsonAttribute($attributes, 'socialLinks', self::SEED_SOCIAL_LINKS));
 
         $html .= '</div>';
 
         return $html;
     }
 
-    private function renderContactChannels(): string
+    /** @param list<array{label: string, href: string}> $channels */
+    private function renderContactChannels(array $channels): string
     {
         $html = '<ul class="footer-contacts">';
 
-        foreach (self::CONTACT_CHANNELS as $channel) {
+        foreach ($channels as $channel) {
             // bdi isolates the LTR email/phone text from the surrounding RTL paragraph direction so
             // digit groups and punctuation don't reorder under the Arabic bidi algorithm.
-            $html .= '<li><a href="' . esc_url($channel['href']) . '"><bdi>' . esc_html($channel['label']) . '</bdi></a></li>';
+            $html .= '<li><a href="' . esc_url($channel['href'] ?? '') . '"><bdi>' . esc_html($channel['label'] ?? '') . '</bdi></a></li>';
         }
 
         $html .= '</ul>';
@@ -121,11 +157,17 @@ final class SiteFooterRenderer
         return $html;
     }
 
-    private function renderSocialLinks(): string
+    /** @param list<array{network: string, href: string}> $socialLinks */
+    private function renderSocialLinks(array $socialLinks): string
     {
         $html = '<ul class="footer-social" aria-label="' . esc_attr__('Social media', 'perego-site') . '">';
 
-        foreach (self::SOCIAL_LINKS as $social) {
+        foreach ($socialLinks as $social) {
+            // An editor-added network must be one of the known icons (see SOCIAL_ICON_PATHS) — a
+            // network with no matching SVG is skipped rather than rendering a broken/empty icon.
+            if (! isset(self::SOCIAL_ICON_PATHS[$social['network'] ?? ''])) {
+                continue;
+            }
             $label = sprintf(
                 /* translators: %s: social network name */
                 __('Perego on %s', 'perego-site'),

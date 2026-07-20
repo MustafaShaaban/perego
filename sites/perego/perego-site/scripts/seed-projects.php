@@ -64,7 +64,14 @@ $buildNarrative = static function (array $labels): string {
     return $blocks;
 };
 
-/** @var list<array{title: string, cat: string, year: string, role: string, deliverables: string}> $projects */
+/**
+ * Web projects carry the website-showcase card data (spec 020): a `siteType` from the handoff's
+ * filter enum and a `siteUrl` shown/linked on the card. The six named "sites" below are the
+ * handoff's own demo showcase cards (service-website-making.html web-grid) — placeholder domains,
+ * exactly as the prototype ships them; replace with Perego's real launched sites.
+ *
+ * @var list<array{title: string, cat: string, year: string, role: string, deliverables: string, siteType?: string, siteUrl?: string}> $projects
+ */
 $projects = [
     ['title' => 'Brand Film — Launch Campaign', 'cat' => 'video', 'year' => '2026', 'role' => 'Editing & Post-Production', 'deliverables' => 'Hero film, 3 social cutdowns'],
     ['title' => 'Product Teaser Cut', 'cat' => 'video', 'year' => '2025', 'role' => 'Editing & Post-Production', 'deliverables' => 'Teaser, vertical cut'],
@@ -73,9 +80,45 @@ $projects = [
     ['title' => 'Logo Sting & Lower Thirds', 'cat' => 'motion', 'year' => '2025', 'role' => 'Motion Design', 'deliverables' => 'Logo sting, lower-thirds pack'],
     ['title' => 'Visual Identity System', 'cat' => 'design', 'year' => '2025', 'role' => 'Brand Identity', 'deliverables' => 'Logo, visual system'],
     ['title' => 'Campaign Key Visual Suite', 'cat' => 'design', 'year' => '2026', 'role' => 'Art Direction, Design', 'deliverables' => 'Key visuals, social templates'],
-    ['title' => 'Multi-page Marketing Site', 'cat' => 'web', 'year' => '2026', 'role' => 'Design & Build', 'deliverables' => 'Multi-page website'],
-    ['title' => 'Landing Page & Microsite', 'cat' => 'web', 'year' => '2025', 'role' => 'Design & Build', 'deliverables' => 'Landing page, microsite'],
+    ['title' => 'Multi-page Marketing Site', 'cat' => 'web', 'year' => '2026', 'role' => 'Design & Build', 'deliverables' => 'Multi-page website', 'siteType' => 'corporate', 'siteUrl' => 'https://example.com'],
+    ['title' => 'Landing Page & Microsite', 'cat' => 'web', 'year' => '2025', 'role' => 'Design & Build', 'deliverables' => 'Landing page, microsite', 'siteType' => 'landing', 'siteUrl' => 'https://example.com'],
+    ['title' => 'Aurora Retail', 'cat' => 'web', 'year' => '2026', 'role' => 'Design & Build', 'deliverables' => 'E-commerce storefront', 'siteType' => 'ecommerce', 'siteUrl' => 'https://aurora-retail.com'],
+    ['title' => 'Meridian Group', 'cat' => 'web', 'year' => '2026', 'role' => 'Design & Build', 'deliverables' => 'Corporate website', 'siteType' => 'corporate', 'siteUrl' => 'https://meridiangroup.co'],
+    ['title' => 'Lumen Studio', 'cat' => 'web', 'year' => '2025', 'role' => 'Design & Build', 'deliverables' => 'Portfolio website', 'siteType' => 'portfolio', 'siteUrl' => 'https://lumenstudio.design'],
+    ['title' => 'Nomad Travel', 'cat' => 'web', 'year' => '2025', 'role' => 'Design & Build', 'deliverables' => 'Landing page', 'siteType' => 'landing', 'siteUrl' => 'https://nomadtravel.io'],
+    ['title' => 'Pulse Fitness', 'cat' => 'web', 'year' => '2026', 'role' => 'Design & Build', 'deliverables' => 'Web application', 'siteType' => 'webapp', 'siteUrl' => 'https://app.pulsefit.io'],
+    ['title' => 'Verde Organics', 'cat' => 'web', 'year' => '2025', 'role' => 'Design & Build', 'deliverables' => 'E-commerce storefront', 'siteType' => 'ecommerce', 'siteUrl' => 'https://verdeorganics.com'],
 ];
+
+// Fill each masonry-backed category to the handoff's full design count — 15 mosaic tiles + 8
+// "Load more" tiles = 23 (spec 020 round 6, owner-requested demo fill). Clearly "Example"-titled;
+// replace with real work. The card-variant mix (video ▶ / gallery / single image) per position
+// comes from the shared lib so seeds and migrations never disagree.
+require __DIR__ . '/lib-project-variants.php';
+
+$masonryCategories = ['video' => 'Video Editing', 'motion' => '2D Motion Graphics', 'design' => 'Graphic Design'];
+const PEREGO_DEMO_FULL_COUNT = 23;
+
+foreach ($masonryCategories as $cat => $label) {
+    $curated = count(array_filter($projects, static fn (array $p): bool => $p['cat'] === $cat));
+    for ($i = $curated + 1; $i <= PEREGO_DEMO_FULL_COUNT; $i++) {
+        $projects[] = [
+            'title' => sprintf('%s Example %02d', $label, $i),
+            'cat' => $cat,
+            'year' => ($i % 2 === 0) ? '2025' : '2026',
+            'role' => 'Example role',
+            'deliverables' => 'Example deliverables',
+        ];
+    }
+}
+
+// 1-based position of each project within its category (array order is the design order).
+$positionsByCat = [];
+foreach ($projects as &$project) {
+    $positionsByCat[$project['cat']] = ($positionsByCat[$project['cat']] ?? 0) + 1;
+    $project['position'] = $positionsByCat[$project['cat']];
+}
+unset($project);
 
 $created = 0;
 
@@ -113,6 +156,17 @@ foreach ($projects as $project) {
     update_post_meta($postId, '_perego_year', $project['year']);
     update_post_meta($postId, '_perego_role', $project['role']);
     update_post_meta($postId, '_perego_deliverables', $project['deliverables']);
+    if (($project['siteType'] ?? '') !== '') {
+        update_post_meta($postId, ProjectPostType::META_SITE_TYPE, $project['siteType']);
+    }
+    if (($project['siteUrl'] ?? '') !== '') {
+        update_post_meta($postId, ProjectPostType::META_SITE_URL, $project['siteUrl']);
+    }
+    // Masonry categories carry the handoff's per-position card variant; video-variant projects get
+    // the prototype's own placeholder embed so the ▶ card + video lightbox render (spec 020 round 6).
+    if ($project['cat'] !== 'web' && peregoProjectVariant($project['position']) === 'video') {
+        update_post_meta($postId, ProjectPostType::META_VIDEO_URL, peregoDemoVideoUrl());
+    }
 
     if ($pllReady && ! pll_get_post_language($postId)) {
         pll_set_post_language($postId, 'en');

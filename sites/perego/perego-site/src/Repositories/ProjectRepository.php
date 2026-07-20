@@ -32,8 +32,7 @@ final class ProjectRepository
      */
     public function galleryFor(WP_Post $project): array
     {
-        $ids = get_post_meta($project->ID, '_perego_gallery_attachment_ids', true);
-        $ids = is_array($ids) ? array_values(array_filter(array_map('absint', $ids))) : [];
+        $ids = $this->galleryIds($project);
 
         return array_values(array_filter(array_map(static function (int $id): ?array {
             $src = wp_get_attachment_image_url($id, 'full');
@@ -57,7 +56,7 @@ final class ProjectRepository
      */
     public function adjacentFor(WP_Post $project): array
     {
-        $projects = $this->projectsForLocale($project, 60);
+        $projects = $this->projectsForLocale($project, 120);
         $index = array_search($project->ID, array_map(static fn (WP_Post $item): int => $item->ID, $projects), true);
         $count = count($projects);
 
@@ -120,7 +119,7 @@ final class ProjectRepository
         $query = new WP_Query([
             'post_type' => ProjectPostType::POST_TYPE,
             'post_status' => 'publish',
-            'posts_per_page' => 60,
+            'posts_per_page' => 120,
             'no_found_rows' => true,
             'orderby' => 'date',
             'order' => 'DESC',
@@ -144,7 +143,12 @@ final class ProjectRepository
         $year     = (string) get_post_meta($post->ID, '_perego_year', true);
         $excerpt  = $this->buildExcerpt($post, $content, $client, $year);
 
-        $thumbId  = get_post_thumbnail_id($post->ID);
+        // AR projects carry no featured image of their own; reuse the linked EN post's (see galleryIds()).
+        $thumbId  = (int) get_post_thumbnail_id($post->ID);
+        if ($thumbId === 0) {
+            $enId = $this->enTranslationId($post);
+            $thumbId = $enId === 0 ? 0 : (int) get_post_thumbnail_id($enId);
+        }
         $thumbUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'large') : '';
         $thumbAlt = $thumbId ? (string) get_post_meta($thumbId, '_wp_attachment_image_alt', true) : '';
 
@@ -157,6 +161,95 @@ final class ProjectRepository
             'thumbUrl' => $thumbUrl,
             'thumbAlt' => $thumbAlt !== '' ? $thumbAlt : get_the_title($post),
         ];
+    }
+
+    /**
+     * Shape a web-category project for the Website-Making showcase (WebShowcaseRenderer): the
+     * browser-chrome card's shot (featured image), lightbox source, filter type, and live URL.
+     * Polylang Free does not sync custom meta onto translations, so when this post's own site
+     * type/URL are empty the linked EN post's values are used — the live site is language-neutral
+     * data, not prose.
+     *
+     * @return array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string}
+     */
+    public function toWebCard(WP_Post $post): array
+    {
+        $thumbId = get_post_thumbnail_id($post->ID);
+        $shotUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'large') : '';
+        $fullUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'full') : '';
+
+        return [
+            'title' => get_the_title($post),
+            'shotUrl' => $shotUrl,
+            'fullUrl' => $fullUrl !== '' ? $fullUrl : $shotUrl,
+            'siteType' => ProjectPostType::sanitizeSiteType($this->metaWithEnFallback($post, ProjectPostType::META_SITE_TYPE)),
+            'siteUrl' => $this->metaWithEnFallback($post, ProjectPostType::META_SITE_URL),
+        ];
+    }
+
+    /**
+     * A project's video URL (the handoff's ▶ work-card variant). Language-neutral data, so AR
+     * translations read the linked EN post's value — same rationale as the web-showcase meta.
+     */
+    public function videoUrlFor(WP_Post $post): string
+    {
+        return $this->metaWithEnFallback($post, ProjectPostType::META_VIDEO_URL);
+    }
+
+    /** A post's own meta value, falling back to its linked EN translation's value when empty. */
+    private function metaWithEnFallback(WP_Post $post, string $key): string
+    {
+        $value = (string) get_post_meta($post->ID, $key, true);
+        if ($value !== '') {
+            return $value;
+        }
+
+        $enId = $this->enTranslationId($post);
+
+        return $enId === 0 ? '' : (string) get_post_meta($enId, $key, true);
+    }
+
+    /**
+     * The linked English translation's post id, or 0 when there is none (or this already IS the EN
+     * post / Polylang is inactive). Translated (e.g. Arabic) projects mirror the English post's
+     * media rather than duplicating attachments, so the grid needs the EN id to fall back to.
+     */
+    private function enTranslationId(WP_Post $post): int
+    {
+        if (! function_exists('pll_get_post')) {
+            return 0;
+        }
+
+        $enId = (int) pll_get_post($post->ID, 'en');
+
+        return ($enId === 0 || $enId === $post->ID) ? 0 : $enId;
+    }
+
+    /**
+     * A project's gallery attachment ids, falling back to its linked EN translation's gallery when it
+     * has none of its own (the AR seed leaves media on the English post — see enTranslationId()).
+     *
+     * @return list<int>
+     */
+    private function galleryIds(WP_Post $project): array
+    {
+        $ids = $this->normalizeGalleryIds(get_post_meta($project->ID, '_perego_gallery_attachment_ids', true));
+        if ($ids !== []) {
+            return $ids;
+        }
+
+        $enId = $this->enTranslationId($project);
+
+        return $enId === 0 ? [] : $this->normalizeGalleryIds(get_post_meta($enId, '_perego_gallery_attachment_ids', true));
+    }
+
+    /**
+     * @param mixed $raw
+     * @return list<int>
+     */
+    private function normalizeGalleryIds($raw): array
+    {
+        return is_array($raw) ? array_values(array_filter(array_map('absint', $raw))) : [];
     }
 
     /**

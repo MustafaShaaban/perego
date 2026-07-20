@@ -28,16 +28,18 @@ it('defines name, email, and message with server-enforceable rules', function ()
         ->and($fields['email']['type'])->toBe('email')
         ->and($fields['email']['rules'])->toContain('email')
         ->and($fields['message']['type'])->toBe('textarea')
-        // The handoff caps the message at 1200 (spec 020 D2) — server rule + browser maxlength agree.
-        ->and($fields['message']['rules'])->toContain('max:1200')
-        ->and($fields['message']['attrs'])->toBe(['maxlength' => '1200']);
+        // A 200-word budget, not a character cap (spec 020 round 4) — `data-max-words` (not
+        // `maxlength`, which is character-based and would silently cap input below the word limit)
+        // is the live counter's source of truth for the limit.
+        ->and($fields['message']['rules'])->toContain('max_words:200')
+        ->and($fields['message']['attrs'])->toBe(['data-max-words' => '200']);
 });
 
 it('bounds every field so no rule is unlimited (spec Phase 7 limits)', function () {
     foreach ((new QuickMessageForm())->fields() as $name => $field) {
         $hasMax = false;
         foreach ($field['rules'] as $rule) {
-            if (str_starts_with($rule, 'max:')) {
+            if (str_starts_with($rule, 'max:') || str_starts_with($rule, 'max_words:')) {
                 $hasMax = true;
             }
         }

@@ -34,4 +34,17 @@ foreach (get_posts(['post_type' => 'post', 'numberposts' => 50, 'post_status' =>
     $fixed++;
 }
 
-WP_CLI::success("Journal post authors fixed — {$fixed} post(s) updated (idempotent).");
+// The single-post author-box (spec 020 round 6, handoff single-post.html:102-107) renders
+// wp:post-author-biography, which is empty until the author profile has a description. Seed a
+// clearly-placeholder bio only when none exists (never overwrites a real one).
+$bioSeeded = 0;
+if ((string) get_user_meta($authorId, 'description', true) === '') {
+    update_user_meta(
+        $authorId,
+        'description',
+        'Example author bio — replace with the writer\'s real bio in their WordPress profile.'
+    );
+    $bioSeeded = 1;
+}
+
+WP_CLI::success("Journal post authors fixed — {$fixed} post(s) updated, {$bioSeeded} author bio(s) seeded (idempotent).");

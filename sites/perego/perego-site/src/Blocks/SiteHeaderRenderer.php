@@ -18,6 +18,14 @@ use PeregoSite\Services\LanguageService;
  * behaviour (sticky scroll, mobile slide-in panel, dropdown, language switch) is wired by the
  * block's own view.js via WordPress Interactivity API directives emitted here
  * (`data-wp-interactive`, `data-wp-on--*`, `data-wp-class--*`, …) — this class only emits markup.
+ *
+ * spec 020 round 4 — the nav links, logo, and sticky-vs-static behavior are real block attributes,
+ * editable in the block editor's Inspector sidebar (a link repeater + `MediaUpload` + a toggle —
+ * previously all three were hardcoded PHP with zero admin UI). This block lives in the shared
+ * `header.html` FSE template part, so — matching `footer-careers`'/`clients-carousel`'s pattern for
+ * the same problem — nav items are stored as an En/Ar JSON-string attribute pair (`navItemsEn`/
+ * `navItemsAr`); logo and the sticky toggle apply to both languages equally. An empty/invalid nav
+ * attribute falls back to the original hardcoded seed, so existing pages render unchanged.
  */
 final class SiteHeaderRenderer
 {
@@ -26,13 +34,14 @@ final class SiteHeaderRenderer
     }
 
     /**
-     * The primary nav items. Labels are `__()`-wrapped with literal strings (not stored in a const) so
-     * they are both extractable by `wp i18n make-pot` and translated at render time — the AR `.mo`
-     * (spec 005) then localizes the header nav that otherwise rendered in English on `/ar/`.
+     * The seed nav items when no block attribute has been set. Labels are `__()`-wrapped with literal
+     * strings (not stored in a const) so they are both extractable by `wp i18n make-pot` and
+     * translated at render time — the AR `.mo` (spec 005) then localizes the header nav that otherwise
+     * rendered in English on `/ar/`.
      *
      * @return list<array{label: string, href: string, children?: list<array{label: string, href: string}>}>
      */
-    private function navItems(): array
+    private function seedNavItems(): array
     {
         return [
             ['label' => __('Home', 'perego-site'), 'href' => '/'],
@@ -50,34 +59,62 @@ final class SiteHeaderRenderer
             ['label' => __('Work', 'perego-site'), 'href' => '/work'],
             ['label' => __('Journal', 'perego-site'), 'href' => '/journal'],
             ['label' => __('Clients', 'perego-site'), 'href' => '/#clients'],
-            ['label' => __('Contact Us', 'perego-site'), 'href' => '/contact'],
+            // The handoff header's Contact Us is a same-page anchor to the footer (every page's
+            // footer carries id="contact"), not a link to the contact page — that page is reached
+            // via the "Start a Project" CTAs.
+            ['label' => __('Contact Us', 'perego-site'), 'href' => '#contact'],
         ];
     }
 
-    public function render(string $currentPath = '/'): string
+    /**
+     * The block-attribute nav items for the current locale if a valid, non-empty JSON array was set,
+     * else the hardcoded seed.
+     *
+     * @param array<string,string> $attributes
+     * @return list<array{label: string, href: string, children?: list<array{label: string, href: string}>}>
+     */
+    private function navItems(array $attributes, string $locale): array
+    {
+        $suffix = $locale === 'ar' ? 'Ar' : 'En';
+        $raw = (string) ($attributes['navItems' . $suffix] ?? '');
+        if ($raw === '') {
+            return $this->seedNavItems();
+        }
+
+        $decoded = json_decode($raw, true);
+
+        return is_array($decoded) && $decoded !== [] ? $decoded : $this->seedNavItems();
+    }
+
+    /** @param array<string,string> $attributes */
+    public function render(string $currentPath = '/', array $attributes = []): string
     {
         $driver = $this->languageService->driver();
+        $locale = $driver->currentLocale();
+        $isSticky = ! array_key_exists('isSticky', $attributes) || (bool) $attributes['isSticky'];
 
         $context = esc_attr((string) wp_json_encode(['isScrolled' => false, 'isMenuOpen' => false]));
 
         $html = '<a class="skip-link" href="#main">' . esc_html__('Skip to content', 'perego-site') . '</a>';
         $html .= '<header id="siteHeader" class="site-header" data-wp-interactive="perego/site-header" '
+            . ($isSticky ? '' : 'style="position:static" ')
             . "data-wp-context='" . $context . "' "
             . 'data-wp-class--is-scrolled="context.isScrolled" '
             . 'data-wp-class--is-menu-open="context.isMenuOpen" '
             . 'data-wp-init="callbacks.init">';
 
         $html .= '<div class="container site-header__inner">';
+        $logoUrl = $this->logoUrl($attributes);
         $html .= '<a class="logo" href="' . esc_url($driver->localizedUrl('/')) . '" '
             . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" '
+            . '<img src="' . esc_url($logoUrl) . '" '
             . 'alt="" class="logo__img" />'
             . '</a>';
 
         $html .= '<nav id="mainNav" class="main-nav" '
             . 'aria-label="' . esc_attr__('Primary', 'perego-site') . '" '
             . 'data-wp-on--keydown="actions.handleMenuKeydown">';
-        $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath) . '</ul>';
+        $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath, $this->navItems($attributes, $locale)) . '</ul>';
         $html .= '</nav>';
 
         $html .= '<a class="btn btn--accent header-cta" href="' . esc_url($driver->localizedUrl('/contact')) . '">'
@@ -98,19 +135,23 @@ final class SiteHeaderRenderer
         return $html;
     }
 
-    private function renderNavItems(string $currentPath): string
+    /** @param list<array{label: string, href: string, children?: list<array{label: string, href: string}>}> $items */
+    private function renderNavItems(string $currentPath, array $items): string
     {
         $driver = $this->languageService->driver();
         $html = '';
 
-        foreach ($this->navItems() as $item) {
+        foreach ($items as $item) {
             $isActive  = $this->isActive($item['href'], $currentPath);
             $hasChildren = ! empty($item['children']);
             $classes   = ($hasChildren ? 'has-dropdown' : '') . ($isActive ? ' is-active' : '');
             $ariaCurrent = $isActive ? ' aria-current="page"' : '';
+            // A pure fragment ("#contact") is a same-page anchor and language-neutral — localizing
+            // it would turn it into an absolute homepage URL and break the anchor on every subpage.
+            $url = str_starts_with($item['href'], '#') ? $item['href'] : $driver->localizedUrl($item['href']);
 
             $html .= '<li' . ($classes !== '' ? ' class="' . esc_attr($classes) . '"' : '') . ($hasChildren ? ' data-wp-interactive="perego/site-header"' : '') . '>';
-            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url($driver->localizedUrl($item['href'])) . '"' . $ariaCurrent
+            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url($url) . '"' . $ariaCurrent
                 . ($hasChildren ? ' aria-haspopup="true" aria-expanded="false" data-wp-on--click="actions.toggleMobileDropdown"' : '') . '>'
                 . esc_html($item['label'])
                 . ($hasChildren ? ' <svg class="nav-caret" width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '')
@@ -168,6 +209,20 @@ final class SiteHeaderRenderer
         return $html;
     }
 
+    /** The `logoId` attachment's URL when set (MediaUpload in the editor), else the handoff's default logo. */
+    private function logoUrl(array $attributes): string
+    {
+        $logoId = (int) ($attributes['logoId'] ?? 0);
+        if ($logoId > 0) {
+            $url = wp_get_attachment_image_url($logoId, 'full');
+            if (is_string($url) && $url !== '') {
+                return $url;
+            }
+        }
+
+        return get_stylesheet_directory_uri() . '/assets/images/logo-full.png';
+    }
+
     /**
      * The switch URL for a locale, degrading to the home page if the driver cannot resolve one
      * (e.g. Polylang has no translation for the current entity) — never a broken or mixed link.
@@ -192,6 +247,13 @@ final class SiteHeaderRenderer
         $normalizedHref = rtrim($href, '/');
         $normalizedPath = rtrim(strtok($currentPath, '?') ?: '/', '/');
 
-        return $normalizedHref === $normalizedPath;
+        if ($normalizedHref === $normalizedPath) {
+            return true;
+        }
+
+        // Ancestor match: light the parent nav item on descendant routes (e.g. a single project at
+        // `/work/<slug>` keeps `/work` active). Guard against the home item (`''` after trim) so it
+        // does not match every path.
+        return $normalizedHref !== '' && str_starts_with($normalizedPath, $normalizedHref . '/');
     }
 }

@@ -1,10 +1,14 @@
 /**
  * Perego "Join us" / CV form — progressive upload lifecycle for the secure
  * perego/v1/careers/apply endpoint. The markup is server-rendered and usable without JS (a plain
- * multipart POST); this enhances it: client-side validation (required fields, CV type + 5 MB size),
- * an accessible aria-live status through every handoff state (uploading → submitting → success /
- * invalid / wrong_type / too_large / rate_limit / server_error), and submit locking so a slow upload
- * can't be double-sent.
+ * multipart POST); this enhances it: client-side validation (required fields, CV type + 5 MB size)
+ * reported per field with a **distinct message per failure reason** — not one generic sentence
+ * reused everywhere — mirroring the shared CoreX form runtime's `corex-form__error` + `aria-invalid`
+ * contract. Each field also re-validates live (on blur once touched, on every keystroke/change after
+ * that) so a fixed field's error clears immediately instead of waiting for the next submit attempt
+ * (spec 020 round 4). Plus an accessible aria-live status through every handoff state
+ * (uploading → submitting → success / errors / rate_limit / server_error), and submit locking so a
+ * slow upload can't be double-sent.
  */
 
 const ALLOWED_EXT = [ 'pdf', 'doc', 'docx' ];
@@ -21,13 +25,87 @@ const init = () => {
 		const messages = parseMessages( form.dataset.messages );
 		const maxBytes = parseInt( form.dataset.maxBytes || '5242880', 10 );
 
+		const fields = {
+			name: { input: form.querySelector( '#jf-name' ), error: form.querySelector( '#jf-name-error' ) },
+			email: { input: form.querySelector( '#jf-email' ), error: form.querySelector( '#jf-email-error' ) },
+			cv: { input: form.querySelector( '#jf-cv' ), error: form.querySelector( '#jf-cv-error' ) },
+		};
+		const cvFilename = form.querySelector( '.file-drop__filename' );
+
 		const setStatus = ( key, tone ) => {
 			if ( ! status ) {
 				return;
 			}
 			status.textContent = messages[ key ] || '';
-			status.dataset.tone = tone || '';
+			status.classList.remove( 'is-success', 'is-error' );
+			if ( tone === 'success' || tone === 'error' ) {
+				status.classList.add( 'is-' + tone );
+			}
 		};
+
+		const setFieldError = ( field, message ) => {
+			if ( field.error ) {
+				field.error.textContent = message || '';
+			}
+			if ( field.input ) {
+				field.input.setAttribute( 'aria-invalid', message ? 'true' : 'false' );
+			}
+		};
+
+		const clearFieldErrors = () => {
+			Object.values( fields ).forEach( ( field ) => setFieldError( field, '' ) );
+		};
+
+		// One validator per field, each returning its own specific message *key* (never a shared
+		// generic one) so "Name is required" and "Please attach your CV" never collapse into the same
+		// sentence. Each is reusable both on submit and for live re-validation as the user types/picks
+		// a file — same rule, same message, one place.
+		const validateName = () => ( fields.name.input.value.trim() ? '' : 'name_required' );
+		const validateEmail = () => ( isEmail( fields.email.input.value ) ? '' : 'email_invalid' );
+		const validateCv = ( file ) => {
+			if ( ! file ) return 'cv_required';
+			const ext = file.name.split( '.' ).pop().toLowerCase();
+			if ( ! ALLOWED_EXT.includes( ext ) ) return 'wrong_type';
+			if ( file.size > maxBytes ) return 'too_large';
+			return '';
+		};
+
+		const validate = ( file ) => {
+			const errorKeys = {};
+			const nameError = validateName();
+			const emailError = validateEmail();
+			const cvError = validateCv( file );
+			if ( nameError ) errorKeys.name = nameError;
+			if ( emailError ) errorKeys.email = emailError;
+			if ( cvError ) errorKeys.cv = cvError;
+			return errorKeys;
+		};
+
+		// Live re-validation: once a field is touched, clear (or update) its own error as the user
+		// fixes it — never wait for the next submit to notice the field is valid now.
+		fields.name.input.addEventListener( 'blur', () => setFieldError( fields.name, messages[ validateName() ] ) );
+		fields.name.input.addEventListener( 'input', () => {
+			if ( fields.name.input.getAttribute( 'aria-invalid' ) === 'true' ) {
+				setFieldError( fields.name, messages[ validateName() ] );
+			}
+		} );
+		fields.email.input.addEventListener( 'blur', () => setFieldError( fields.email, messages[ validateEmail() ] ) );
+		fields.email.input.addEventListener( 'input', () => {
+			if ( fields.email.input.getAttribute( 'aria-invalid' ) === 'true' ) {
+				setFieldError( fields.email, messages[ validateEmail() ] );
+			}
+		} );
+		const cvDrop = fields.cv.input.closest( '.file-drop' );
+		fields.cv.input.addEventListener( 'change', () => {
+			const file = fields.cv.input.files && fields.cv.input.files[ 0 ];
+			setFieldError( fields.cv, messages[ validateCv( file ) ] );
+			if ( cvFilename ) {
+				cvFilename.textContent = file ? file.name : '';
+			}
+			if ( cvDrop ) {
+				cvDrop.classList.toggle( 'has-file', !! file );
+			}
+		} );
 
 		form.addEventListener( 'submit', async ( event ) => {
 			event.preventDefault();
@@ -35,23 +113,17 @@ const init = () => {
 				return;
 			}
 
-			const name = form.querySelector( '#jf-name' );
-			const email = form.querySelector( '#jf-email' );
-			const cv = form.querySelector( '#jf-cv' );
+			const cv = fields.cv.input;
 			const file = cv && cv.files && cv.files[ 0 ];
+			const errorKeys = validate( file );
+			const firstErroredKey = Object.keys( errorKeys )[ 0 ];
 
-			// Client-side validation mirrors the server's contract for instant feedback.
-			if ( ! name.value.trim() || ! isEmail( email.value ) || ! file ) {
-				setStatus( 'invalid', 'error' );
-				return;
-			}
-			const ext = file.name.split( '.' ).pop().toLowerCase();
-			if ( ! ALLOWED_EXT.includes( ext ) ) {
-				setStatus( 'wrong_type', 'error' );
-				return;
-			}
-			if ( file.size > maxBytes ) {
-				setStatus( 'too_large', 'error' );
+			clearFieldErrors();
+			Object.keys( errorKeys ).forEach( ( key ) => setFieldError( fields[ key ], messages[ errorKeys[ key ] ] ) );
+
+			if ( firstErroredKey ) {
+				setStatus( 'form_has_errors', 'error' );
+				fields[ firstErroredKey ].input.focus();
 				return;
 			}
 
@@ -74,6 +146,12 @@ const init = () => {
 				if ( response.ok && payload.ok ) {
 					setStatus( 'success', 'success' );
 					form.reset();
+					if ( cvFilename ) {
+						cvFilename.textContent = '';
+					}
+					if ( cvDrop ) {
+						cvDrop.classList.remove( 'has-file' );
+					}
 				} else {
 					const key = messages[ payload.error ] ? payload.error : 'server_error';
 					setStatus( key, 'error' );

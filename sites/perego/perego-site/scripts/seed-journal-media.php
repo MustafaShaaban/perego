@@ -22,6 +22,12 @@ const JOURNAL_IMAGE = [
     'how-we-storyboard-a-motion-piece-example' => 'portfolio-1',
     'colour-grading-notes-from-the-edit-bay-example' => 'portfolio-3',
     'behind-the-scenes-of-a-brand-film-example' => 'portfolio-6',
+    'how-motion-turns-a-good-brand-into-one-people-remember-example' => 'portfolio-2',
+    'the-one-page-site-is-back-and-better-than-ever-example' => 'portfolio-4',
+    'building-a-color-system-that-survives-dark-mode-example' => 'portfolio-5',
+    'a-3-act-structure-for-the-30-second-brand-film-example' => 'portfolio-7',
+    'type-pairing-without-the-guesswork-example' => 'portfolio-8',
+    'what-a-week-inside-our-edit-bay-actually-looks-like-example' => 'portfolio-9',
 ];
 
 $themeImagesDir = get_stylesheet_directory() . '/assets/images';

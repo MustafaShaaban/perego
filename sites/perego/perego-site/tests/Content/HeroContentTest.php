@@ -42,6 +42,38 @@ it('keeps the Arabic seed for unset fields on the Arabic front page', function (
         ->and($hero['cta'])->toBe('قل مرحبًا!');
 });
 
+it('prefers a block attribute over front-page meta and the seed, per field and per locale', function () {
+    $meta = ['_perego_hero_s1_title' => 'Meta headline'];
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key, bool $single = false): string => $meta[$key] ?? '');
+
+    $hero = (new HeroContent())->resolve(42, 'en', ['slide1TitleEn' => 'Attribute headline']);
+
+    expect($hero['slides'][0]['title'])->toBe('Attribute headline'); // attribute beats meta
+});
+
+it('falls back to front-page meta when the attribute is empty, then the seed when both are empty', function () {
+    $meta = ['_perego_hero_s1_title' => 'Meta headline'];
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key, bool $single = false): string => $meta[$key] ?? '');
+
+    $hero = (new HeroContent())->resolve(42, 'en', ['slide1TitleEn' => '']);
+
+    expect($hero['slides'][0]['title'])->toBe('Meta headline')             // meta beats seed
+        ->and($hero['slides'][1]['title'])->toBe('Ideas, In Motion');      // both empty -> seed
+});
+
+it('picks the Ar-suffixed attribute on the Arabic locale, not the En one', function () {
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key, bool $single = false): string => '');
+
+    $hero = (new HeroContent())->resolve(97, 'ar', [
+        'slide1TitleEn' => 'Should not be used',
+        'slide1TitleAr' => 'يجب استخدام هذا',
+        'ctaAr' => 'تواصل معنا',
+    ]);
+
+    expect($hero['slides'][0]['title'])->toBe('يجب استخدام هذا')
+        ->and($hero['cta'])->toBe('تواصل معنا');
+});
+
 it('registers the hero meta on the page type with sanitisation and auth', function () {
     $captured = [];
     Functions\when('register_post_meta')->alias(function (string $type, string $key, array $args) use (&$captured): void {

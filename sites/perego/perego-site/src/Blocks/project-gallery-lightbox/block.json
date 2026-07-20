@@ -5,11 +5,9 @@
 	"title": "Perego Project Gallery Lightbox",
 	"category": "theme",
 	"icon": "format-gallery",
-	"description": "A project's gallery: a thumbnail grid that opens an accessible lightbox dialog (focus trap, counter, prev/next). Server-rendered; interaction via view.js.",
+	"description": "A project's gallery: a thumbnail grid whose thumbs open the site-wide media lightbox (perego-theme/media-lightbox) — the page's single dialog instance per the handoff contract.",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
-	"viewScriptModule": "file:./view.js",
-	"style": "file:./style-index.css",
 	"supports": {
 		"html": false
 	}

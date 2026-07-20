@@ -83,9 +83,11 @@ final class PeregoSiteServiceProvider
 
         // spec 010 T009: editor controls for the structured Project/Service/Client metadata (admin only).
         // spec 014 T002: the Project gallery wp.media picker (deferred from 010).
+        // spec 020 round 2: the Client gallery/video wp.media picker (mirrors the Project gallery).
         if (is_admin()) {
             (new \PeregoSite\Admin\PostMetaBoxes())->register();
             (new \PeregoSite\Admin\ProjectGalleryMetaBox())->register();
+            (new \PeregoSite\Admin\ClientMediaMetaBox())->register();
         }
     }
 
@@ -151,6 +153,8 @@ final class PeregoSiteServiceProvider
         // The "Join us" / CV submission endpoint (secure upload → store → branded emails).
         add_action('rest_api_init', static function () use ($mailer): void {
             (new \PeregoSite\Careers\PeregoCareersController($mailer))->register();
+            // Secure AJAX comment submission (nonce + honeypot + rate limit + WP moderation).
+            (new \PeregoSite\Comments\PeregoCommentController())->register();
         });
     }
 
@@ -181,7 +185,8 @@ final class PeregoSiteServiceProvider
 
     /**
      * spec M6: the client CPT (+ type taxonomy) and the perego-theme/clients-carousel block that
-     * renders the homepage Corporate + Individual carousels (server-rendered cards + modular Swiper).
+     * renders the homepage Corporate + Individual carousels (server-rendered cards + a scroll-snap
+     * track/arrow-button enhancement).
      */
     private function registerClients(): void
     {
@@ -191,10 +196,10 @@ final class PeregoSiteServiceProvider
             $languageService = $this->languageService;
 
             register_block_type($this->blockDir('clients-carousel'), [
-                'render_callback' => static function () use ($languageService): string {
+                'render_callback' => static function (array $attributes) use ($languageService): string {
                     $locale = $languageService->driver()->currentLocale();
 
-                    return (new ClientsCarouselRenderer(new ClientsContent($locale), $locale))->render();
+                    return (new ClientsCarouselRenderer(new ClientsContent($locale), $locale, $attributes))->render();
                 },
             ]);
         });
@@ -278,6 +283,101 @@ final class PeregoSiteServiceProvider
                 },
             ]);
 
+            register_block_type($this->blockDir('related-posts'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    if (! $queried instanceof \WP_Post) {
+                        return '';
+                    }
+
+                    $content = new GlobalContent($languageService->driver()->currentLocale());
+
+                    return (new \PeregoSite\Blocks\RelatedPostsRenderer(
+                        $content,
+                        new PostReadingTimeRenderer($content),
+                    ))->render((new \PeregoSite\Repositories\JournalRepository())->relatedFor($queried));
+                },
+            ]);
+
+            register_block_type($this->blockDir('journal-comments'), [
+                'render_callback' => static function () use ($languageService): string {
+                    $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    if (! $queried instanceof \WP_Post) {
+                        return '';
+                    }
+
+                    $journal = (new GlobalContent($languageService->driver()->currentLocale()))->journal();
+
+                    // Approved comments in insertion order, then threaded: each top-level comment is
+                    // followed immediately by its replies (the handoff's indented `.comment--reply`),
+                    // rather than a flat date sort that would scatter a reply away from its parent.
+                    $rawComments = get_comments([
+                        'post_id' => $queried->ID,
+                        'status' => 'approve',
+                        'type' => 'comment',
+                        'orderby' => 'comment_ID',
+                        'order' => 'ASC',
+                    ]);
+
+                    $children = [];
+                    foreach ($rawComments as $comment) {
+                        $parent = (int) $comment->comment_parent;
+                        if ($parent !== 0) {
+                            $children[$parent][] = $comment;
+                        }
+                    }
+
+                    $ordered = [];
+                    foreach ($rawComments as $comment) {
+                        if ((int) $comment->comment_parent !== 0) {
+                            continue; // Placed under its parent below.
+                        }
+                        $ordered[] = $comment;
+                        foreach ($children[(int) $comment->comment_ID] ?? [] as $child) {
+                            $ordered[] = $child;
+                        }
+                    }
+
+                    $comments = array_map(static fn (\WP_Comment $comment): array => [
+                        'id' => (int) $comment->comment_ID,
+                        'author' => $comment->comment_author,
+                        'date' => (string) get_comment_date('', $comment),
+                        'text' => $comment->comment_content,
+                        'isReply' => (int) $comment->comment_parent !== 0,
+                    ], $ordered);
+
+                    return (new \PeregoSite\Blocks\JournalCommentsRenderer())->render($comments, [
+                        'title' => $journal['commentsTitle'],
+                        'titleOne' => $journal['commentsTitleOne'],
+                        'reply' => $journal['reply'],
+                        'replyTo' => $journal['replyTo'],
+                        'postId' => (int) $queried->ID,
+                        // Form + AJAX wiring (view.js reads endpoint/nonce/messages off the section).
+                        'leaveComment' => $journal['leaveComment'],
+                        'replyingTo' => $journal['replyingTo'],
+                        'cancel' => $journal['cancel'],
+                        'nameLabel' => $journal['nameLabel'],
+                        'namePlaceholder' => $journal['namePlaceholder'],
+                        'emailLabel' => $journal['emailLabel'],
+                        'emailNote' => $journal['emailNote'],
+                        'emailPlaceholder' => $journal['emailPlaceholder'],
+                        'commentLabel' => $journal['commentLabel'],
+                        'commentPlaceholder' => $journal['commentPlaceholder'],
+                        'submit' => $journal['submit'],
+                        'hpLabel' => $journal['hpLabel'],
+                        'commentsPostUrl' => site_url('/wp-comments-post.php'),
+                        'endpoint' => rest_url('perego/v1/comments'),
+                        'nonce' => wp_create_nonce('wp_rest'),
+                        // Status/error messages + the count-title formats view.js needs to re-render
+                        // the "N Comments" heading after injecting an approved comment on the fly.
+                        'messagesJson' => (string) wp_json_encode($journal['commentStatus'] + [
+                            '__title' => $journal['commentsTitle'],
+                            '__titleOne' => $journal['commentsTitleOne'],
+                        ]),
+                    ]);
+                },
+            ]);
+
             register_block_type($this->blockDir('post-reading-time'), [
                 'render_callback' => static function () use ($languageService): string {
                     // get_queried_object() is only correct on a singular page; inside a Query Loop
@@ -316,7 +416,9 @@ final class PeregoSiteServiceProvider
 
             $languageService = $this->languageService;
             $heroRenderer = new ServiceHeroRenderer();
-            $overviewRenderer = new ServicesOverviewRenderer();
+            $selectedWorkRenderer = new ServiceSelectedWorkRenderer();
+            $webShowcaseRenderer = new \PeregoSite\Blocks\WebShowcaseRenderer();
+            $overviewRenderer = new ServicesOverviewRenderer($selectedWorkRenderer);
 
             register_block_type($this->blockDir('services-overview'), [
                 'render_callback' => static function () use ($overviewRenderer, $languageService): string {
@@ -324,10 +426,12 @@ final class PeregoSiteServiceProvider
                     $projects = new ProjectRepository();
                     $portfolioContent = new PortfolioContent($locale);
 
+                    // 15 designed mosaic placements + up to 8 "Load more" overflow tiles (handoff
+                    // services.html masonry parity).
                     $posts = (new \WP_Query([
                         'post_type' => ProjectPostType::POST_TYPE,
                         'post_status' => 'publish',
-                        'posts_per_page' => 9,
+                        'posts_per_page' => 23,
                         'no_found_rows' => true,
                         'orderby' => 'date',
                         'order' => 'DESC',
@@ -342,6 +446,7 @@ final class PeregoSiteServiceProvider
                             'thumbUrl' => $card['thumbUrl'],
                             'thumbAlt' => $card['thumbAlt'],
                             'gallerySrcs' => array_column($gallery, 'src'),
+                            'videoUrl' => $projects->videoUrlFor($post),
                         ];
                     }, $posts);
 
@@ -381,10 +486,8 @@ final class PeregoSiteServiceProvider
                 },
             ]);
 
-            $selectedWorkRenderer = new ServiceSelectedWorkRenderer();
-
             register_block_type($this->blockDir('service-selected-work'), [
-                'render_callback' => static function () use ($selectedWorkRenderer, $languageService): string {
+                'render_callback' => static function () use ($selectedWorkRenderer, $webShowcaseRenderer, $languageService): string {
                     // The service and project CPTs use different (but 1:1) slugs for the same four
                     // disciplines — map the current service to its matching project category.
                     $serviceToCategory = [
@@ -422,12 +525,13 @@ final class PeregoSiteServiceProvider
                     }
 
                     $projects = new ProjectRepository();
-                    $portfolioContent = new PortfolioContent($locale);
 
+                    // 15 designed mosaic placements + up to 8 "Load more" overflow tiles (handoff
+                    // service-*.html masonry parity).
                     $posts = (new \WP_Query([
                         'post_type' => ProjectPostType::POST_TYPE,
                         'post_status' => 'publish',
-                        'posts_per_page' => 9,
+                        'posts_per_page' => 23,
                         'no_found_rows' => true,
                         'orderby' => 'date',
                         'order' => 'DESC',
@@ -438,6 +542,21 @@ final class PeregoSiteServiceProvider
                         ]],
                     ]))->posts;
 
+                    $content = new ServiceContent($locale);
+
+                    // The Website-Making single's last section is the handoff's unique web-showcase
+                    // (browser-chrome cards + type filters), not the Selected-work masonry.
+                    if ($currentSlug === 'website-making') {
+                        return $webShowcaseRenderer->render(
+                            $content,
+                            array_map(
+                                static fn (\WP_Post $post): array => $projects->toWebCard($post),
+                                $posts,
+                            ),
+                        );
+                    }
+
+                    $portfolioContent = new PortfolioContent($locale);
                     $selectedWork = array_map(static function (\WP_Post $post) use ($projects, $portfolioContent): array {
                         $card = $projects->toGridCard($post, $portfolioContent);
                         $gallery = $projects->galleryFor($post);
@@ -447,10 +566,14 @@ final class PeregoSiteServiceProvider
                             'thumbUrl' => $card['thumbUrl'],
                             'thumbAlt' => $card['thumbAlt'],
                             'gallerySrcs' => array_column($gallery, 'src'),
+                            'videoUrl' => $projects->videoUrlFor($post),
                         ];
                     }, $posts);
 
-                    return $selectedWorkRenderer->render($selectedWork);
+                    return $selectedWorkRenderer->render($selectedWork, [
+                        'loadMore' => $content->label('loadMore'),
+                        'galleryBadge' => $content->label('galleryBadge'),
+                    ]);
                 },
             ]);
         });
@@ -499,17 +622,10 @@ final class PeregoSiteServiceProvider
                     }
 
                     $content = new PortfolioContent($languageService->driver()->currentLocale());
-                    $labels = $content->projectLabels();
 
                     return (new ProjectGalleryLightboxRenderer())->render(
                         (new ProjectRepository())->galleryFor($queried),
-                        [
-                            'sectionLabel' => $content->projectLabel('galleryTitle') ?: 'Project gallery',
-                            'close' => $content->projectLabel('close') ?: 'Close',
-                            'prev' => (string) $labels['prev'],
-                            'next' => (string) $labels['next'],
-                            'counter' => '%1$s / %2$s',
-                        ],
+                        $content->projectLabel('galleryTitle') ?: 'Project gallery',
                     );
                 },
             ]);
@@ -535,17 +651,17 @@ final class PeregoSiteServiceProvider
         add_action('init', function (): void {
             $headerRenderer = new SiteHeaderRenderer($this->languageService);
             register_block_type($this->blockDir('site-header'), [
-                'render_callback' => static function () use ($headerRenderer): string {
+                'render_callback' => static function (array $attributes) use ($headerRenderer): string {
                     $path = (string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
-                    return $headerRenderer->render($path !== '' ? $path : '/');
+                    return $headerRenderer->render($path !== '' ? $path : '/', $attributes);
                 },
             ]);
 
             $footerRenderer = new SiteFooterRenderer($this->languageService);
             register_block_type($this->blockDir('site-footer'), [
                 'render_callback' => static function (array $attributes) use ($footerRenderer): string {
-                    return $footerRenderer->render((bool) ($attributes['flat'] ?? false));
+                    return $footerRenderer->render((bool) ($attributes['flat'] ?? false), $attributes);
                 },
             ]);
 
@@ -588,12 +704,12 @@ final class PeregoSiteServiceProvider
 
             $heroRenderer = new HeroSliderRenderer($this->languageService);
             register_block_type($this->blockDir('hero-slider'), [
-                'render_callback' => static fn (): string => $heroRenderer->render(),
+                'render_callback' => static fn (array $attributes): string => $heroRenderer->render($attributes),
             ]);
 
             $teaserRenderer = new ServicesTeaserRenderer($this->languageService);
             register_block_type($this->blockDir('services-teaser'), [
-                'render_callback' => static fn (): string => $teaserRenderer->render(),
+                'render_callback' => static fn (array $attributes): string => $teaserRenderer->render($attributes),
             ]);
 
             $aboutBgRenderer = new HomeAboutBgRenderer();

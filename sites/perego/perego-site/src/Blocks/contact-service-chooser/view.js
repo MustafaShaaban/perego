@@ -36,13 +36,20 @@ function bindChooser( chooser ) {
 	} );
 }
 
+// Counts words, not characters (spec 020 round 4) — matches the server-side
+// Corex\Forms\Validation\Rules\MaxWords rule for this field.
+function countWords( value ) {
+	return value.trim().split( /\s+/ ).filter( ( word ) => word.length > 0 ).length;
+}
+
 function bindMessageCounter( form ) {
 	const textarea = form.querySelector( 'textarea[name="message"]' );
 	const field = textarea?.closest( '[data-corex-field="message"]' );
+	const limit = Number( textarea?.getAttribute( 'data-max-words' ) );
 
-	if ( ! textarea || ! field ) return;
+	if ( ! textarea || ! field || ! limit ) return;
 
-	const update = () => field.setAttribute( 'data-perego-counter', `${ textarea.value.length } / 1200` );
+	const update = () => field.setAttribute( 'data-perego-counter', `${ countWords( textarea.value ) } / ${ limit } words` );
 	textarea.addEventListener( 'input', update );
 	update();
 }

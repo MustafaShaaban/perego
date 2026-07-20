@@ -72,6 +72,9 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
         ProjectPostType::META_YEAR,
         ProjectPostType::META_ROLE,
         ProjectPostType::META_DELIVERABLES,
+        ProjectPostType::META_SITE_TYPE,
+        ProjectPostType::META_SITE_URL,
+        ProjectPostType::META_VIDEO_URL,
         ProjectPostType::META_GALLERY,
     ]);
 
@@ -85,6 +88,19 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
     // The gallery is a typed integer list, not a scalar.
     expect($meta[ProjectPostType::META_GALLERY]['type'])->toBe('array')
         ->and($meta[ProjectPostType::META_CLIENT]['type'])->toBe('string');
+
+    // The showcase fields carry their own dedicated sanitizers.
+    expect($meta[ProjectPostType::META_SITE_TYPE]['sanitize_callback'])->toBe([ProjectPostType::class, 'sanitizeSiteType'])
+        ->and($meta[ProjectPostType::META_SITE_URL]['sanitize_callback'])->toBe('esc_url_raw');
+});
+
+it('whitelists the site type to the fixed showcase-filter enum', function () {
+    expect(ProjectPostType::sanitizeSiteType('ecommerce'))->toBe('ecommerce')
+        ->and(ProjectPostType::sanitizeSiteType(' Corporate '))->toBe('corporate')
+        ->and(ProjectPostType::sanitizeSiteType('WEBAPP'))->toBe('webapp')
+        ->and(ProjectPostType::sanitizeSiteType('shady<script>'))->toBe('')
+        ->and(ProjectPostType::sanitizeSiteType(''))->toBe('')
+        ->and(ProjectPostType::sanitizeSiteType(['array']))->toBe('');
 });
 
 it('sanitizes a gallery value to a clean list of positive attachment IDs', function () {

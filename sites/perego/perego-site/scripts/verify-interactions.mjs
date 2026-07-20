@@ -90,7 +90,9 @@ const browser = await chromium.launch({
 	await context.close();
 }
 
-// The project gallery is server-rendered from editor-owned attachment metadata and opens an accessible lightbox.
+// The project gallery is server-rendered from editor-owned attachment metadata; its thumbs open the
+// ONE site-wide media lightbox (spec 020 round 6 — the block's own embedded dialog was removed per
+// the handoff's single-GlobalMediaLightbox contract).
 {
 	const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 	const page = await context.newPage();
@@ -99,32 +101,34 @@ const browser = await chromium.launch({
 	const count = await thumbs.count();
 	record('project gallery: representative project renders seeded thumbnails', count >= 3, `count=${count}`);
 
+	const dialogCount = await page.locator('.lightbox').count();
+	record('project page: exactly one lightbox dialog instance exists', dialogCount === 1, `dialogs=${dialogCount}`);
+
 	if (count > 0) {
 		await thumbs.first().click();
 		await page.waitForTimeout(100);
-		const opened = await page.locator('.project-gallery .lightbox').evaluate((dialog) => {
+		const opened = await page.locator('#perego-media-lightbox').evaluate((dialog) => {
 			const style = getComputedStyle(dialog);
 			return {
 				hidden: dialog.hidden,
 				modal: dialog.getAttribute('aria-modal'),
 				bodyLocked: document.body.style.overflow === 'hidden',
-				// DOM-level "open" (hidden removed) is not the same as visually open — the reference
-				// stylesheet's own .lightbox rule stays opacity:0/visibility:hidden unless an .is-open
-				// class is present, which nothing ever adds. Assert the computed style directly so a
-				// dialog that is "open" in the DOM but invisible on screen fails this check.
-				opacity: style.opacity,
+				gallery: dialog.classList.contains('is-gallery'),
+				// DOM-level "open" (hidden removed) is not the same as visually open — assert the
+				// computed style so a dialog "open" in the DOM but invisible on screen fails.
+				display: style.display,
 				visibility: style.visibility,
 			};
 		});
 		record(
-			'project lightbox: opens as a visible modal and locks scroll',
-			opened.hidden === false && opened.modal === 'true' && opened.bodyLocked && opened.opacity === '1' && opened.visibility === 'visible',
+			'project lightbox: opens the site-wide dialog as a visible gallery modal and locks scroll',
+			opened.hidden === false && opened.modal === 'true' && opened.bodyLocked && opened.gallery && opened.display !== 'none' && opened.visibility === 'visible',
 			JSON.stringify(opened)
 		);
 
 		await page.keyboard.press('Escape');
 		await page.waitForTimeout(100);
-		const closed = await page.locator('.project-gallery .lightbox').evaluate((dialog) => ({
+		const closed = await page.locator('#perego-media-lightbox').evaluate((dialog) => ({
 			hidden: dialog.hidden,
 			bodyLocked: document.body.style.overflow === 'hidden',
 			focusOnThumb: document.activeElement === document.querySelector('.project-gallery .work-card'),

@@ -86,11 +86,22 @@ foreach ($categories as $slug => $name) {
     }
 }
 
-/** @var list<array{title: string, cat: string, excerpt: string}> $posts */
+/**
+ * The first three are the original seeds; the next six use the handoff archive's own card titles
+ * (archive.html) so the journal grid fills to the design's 9 cards (spec 020 round 6). All demo.
+ *
+ * @var list<array{title: string, cat: string, excerpt: string}> $posts
+ */
 $posts = [
     ['title' => 'How we storyboard a motion piece (example)', 'cat' => 'craft', 'excerpt' => 'Example article — replace with a real studio post.'],
     ['title' => 'Colour grading notes from the edit bay (example)', 'cat' => 'studio-notes', 'excerpt' => 'Example article — replace with a real studio post.'],
     ['title' => 'Behind the scenes of a brand film (example)', 'cat' => 'behind-the-scenes', 'excerpt' => 'Example article — replace with a real studio post.'],
+    ['title' => 'How motion turns a good brand into one people remember (example)', 'cat' => 'craft', 'excerpt' => 'Example article — replace with a real studio post.'],
+    ['title' => 'The one-page site is back — and better than ever (example)', 'cat' => 'studio-notes', 'excerpt' => 'Example article — replace with a real studio post.'],
+    ['title' => 'Building a color system that survives dark mode (example)', 'cat' => 'craft', 'excerpt' => 'Example article — replace with a real studio post.'],
+    ['title' => 'A 3-act structure for the 30-second brand film (example)', 'cat' => 'behind-the-scenes', 'excerpt' => 'Example article — replace with a real studio post.'],
+    ['title' => 'Type pairing without the guesswork (example)', 'cat' => 'craft', 'excerpt' => 'Example article — replace with a real studio post.'],
+    ['title' => 'What a week inside our edit bay actually looks like (example)', 'cat' => 'studio-notes', 'excerpt' => 'Example article — replace with a real studio post.'],
 ];
 
 $body = '<!-- wp:paragraph --><p><em>Example journal article — replace with a real Perego post. No business claims or metrics are asserted here.</em></p><!-- /wp:paragraph -->' . "\n\n"

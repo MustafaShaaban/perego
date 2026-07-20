@@ -94,7 +94,30 @@ $projectAr = [
     'campaign-key-visual-suite' => 'مجموعة مرئيات حملة',
     'multi-page-marketing-site' => 'موقع تسويقي متعدد الصفحات',
     'landing-page-microsite' => 'صفحة هبوط وموقع مصغّر',
+    // The handoff's demo website-showcase cards (spec 020) — brand names stay Latin, as brands do.
+    // Their site type/URL meta intentionally lives on the EN post only; the showcase reads it
+    // through ProjectRepository::toWebCard()'s EN fallback.
+    'aurora-retail' => 'Aurora Retail',
+    'meridian-group' => 'Meridian Group',
+    'lumen-studio' => 'Lumen Studio',
+    'nomad-travel' => 'Nomad Travel',
+    'pulse-fitness' => 'Pulse Fitness',
+    'verde-organics' => 'Verde Organics',
 ];
+
+// Demo-fill masonry projects (spec 020 round 6) — generated so the mapping always mirrors
+// seed-projects.php's own "… Example NN" generator (same titles → same slugs). Their video URL
+// meta intentionally lives on the EN post only (ProjectRepository::videoUrlFor EN fallback).
+$exampleCategories = [
+    ['Video Editing', 'مونتاج الفيديو', 3],
+    ['2D Motion Graphics', 'موشن جرافيك ثنائي الأبعاد', 2],
+    ['Graphic Design', 'التصميم الجرافيكي', 2],
+];
+foreach ($exampleCategories as [$enLabel, $arLabel, $curatedCount]) {
+    for ($i = $curatedCount + 1; $i <= 23; $i++) {
+        $projectAr[sanitize_title(sprintf('%s Example %02d', $enLabel, $i))] = sprintf('%s — مثال %02d', $arLabel, $i);
+    }
+}
 
 $projectsDone = 0;
 foreach ($projectAr as $enSlug => $arTitle) {
@@ -140,6 +163,12 @@ $postAr = [
     'how-we-storyboard-a-motion-piece-example' => 'كيف نضع ستوري بورد لعمل موشن (مثال)',
     'colour-grading-notes-from-the-edit-bay-example' => 'ملاحظات تصحيح الألوان من غرفة المونتاج (مثال)',
     'behind-the-scenes-of-a-brand-film-example' => 'من كواليس فيلم علامة تجارية (مثال)',
+    'how-motion-turns-a-good-brand-into-one-people-remember-example' => 'كيف تجعل الحركة علامة جيدة علامةً لا تُنسى (مثال)',
+    'the-one-page-site-is-back-and-better-than-ever-example' => 'موقع الصفحة الواحدة يعود — أفضل من أي وقت (مثال)',
+    'building-a-color-system-that-survives-dark-mode-example' => 'بناء نظام ألوان يصمد في الوضع الداكن (مثال)',
+    'a-3-act-structure-for-the-30-second-brand-film-example' => 'بنية ثلاثية الفصول لفيلم علامة مدته ٣٠ ثانية (مثال)',
+    'type-pairing-without-the-guesswork-example' => 'مزاوجة الخطوط بلا تخمين (مثال)',
+    'what-a-week-inside-our-edit-bay-actually-looks-like-example' => 'كيف يبدو أسبوع داخل غرفة المونتاج فعلًا (مثال)',
 ];
 $arPostBody = '<!-- wp:paragraph --><p><em>مقال تجريبي — استبدله بمقال حقيقي من بيريجو. لا تُذكر أي ادعاءات أو أرقام.</em></p><!-- /wp:paragraph -->' . "\n\n"
     . '<!-- wp:heading --><h2 class="wp-block-heading">عنوان قسم</h2><!-- /wp:heading -->' . "\n"
@@ -236,6 +265,9 @@ foreach (get_posts(['post_type' => \PeregoSite\PostTypes\ClientPostType::POST_TY
 }
 
 // ── Journal + Home pages (so /ar/journal/ resolves as the AR posts page) ─────
+// The Home page's About/mission prose is owned by seed-home-about.php (which seeds the Arabic copy
+// into this AR page once it exists); copying the EN post_content here would overwrite it with English,
+// so the AR home is created EMPTY and seed-home-about fills it. Journal keeps the EN body (query-driven).
 $pagesAr = ['journal' => 'المدونة', 'home' => 'الرئيسية'];
 $pagesDone = 0;
 foreach ($pagesAr as $enSlug => $arTitle) {
@@ -251,7 +283,7 @@ foreach ($pagesAr as $enSlug => $arTitle) {
         'post_type' => 'page',
         'post_status' => 'publish',
         'post_title' => $arTitle,
-        'post_content' => get_post_field('post_content', $enId),
+        'post_content' => $enSlug === 'home' ? '' : get_post_field('post_content', $enId),
     ], true);
     if (is_wp_error($arId)) {
         WP_CLI::warning("AR page {$enSlug}: " . $arId->get_error_message());

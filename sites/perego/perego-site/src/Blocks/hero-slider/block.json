@@ -5,11 +5,27 @@
 	"title": "Perego Hero Slider",
 	"category": "theme",
 	"icon": "slides",
-	"description": "The homepage hero: a rotating set of headline slides with dot tabs, prev/next and pause/play controls, an aria-live announcer, and a CTA. Auto-advances (6.5s), pauses on hover and when the tab is hidden, and never auto-advances under reduced motion. Server-rendered; interactivity via view.js.",
+	"description": "The homepage hero: a rotating set of headline slides with dot tabs, an aria-live announcer, and a CTA. Auto-advances (6.5s), pauses on hover and when the tab is hidden, and never auto-advances under reduced motion. Server-rendered; interactivity via view.js. Slide text + CTA are RichText-editable in the canvas (spec 020 round 4).",
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
 	"viewScriptModule": "file:./view.js",
 	"style": "file:./style-index.css",
+	"attributes": {
+		"slide1TitleEn": { "type": "string", "default": "" },
+		"slide1TextEn": { "type": "string", "default": "" },
+		"slide2TitleEn": { "type": "string", "default": "" },
+		"slide2TextEn": { "type": "string", "default": "" },
+		"slide3TitleEn": { "type": "string", "default": "" },
+		"slide3TextEn": { "type": "string", "default": "" },
+		"ctaEn": { "type": "string", "default": "" },
+		"slide1TitleAr": { "type": "string", "default": "" },
+		"slide1TextAr": { "type": "string", "default": "" },
+		"slide2TitleAr": { "type": "string", "default": "" },
+		"slide2TextAr": { "type": "string", "default": "" },
+		"slide3TitleAr": { "type": "string", "default": "" },
+		"slide3TextAr": { "type": "string", "default": "" },
+		"ctaAr": { "type": "string", "default": "" }
+	},
 	"supports": {
 		"html": false
 	}

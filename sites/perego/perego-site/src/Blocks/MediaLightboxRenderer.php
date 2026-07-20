@@ -36,7 +36,9 @@ final class MediaLightboxRenderer
         $html .= '<div class="lightbox__frame"></div>';
         $html .= '<button type="button" class="lightbox__nav lightbox__nav--next" aria-label="' . esc_attr($strings['next']) . '" data-lightbox-next hidden>&#8250;</button>';
         $html .= '<div class="lightbox__dots" data-lightbox-dots></div>';
-        $html .= '<p class="screen-reader-text" data-lightbox-counter role="status" aria-live="polite"></p>';
+        // Visible "n / total" position indicator (handoff GlobalMediaLightbox contract §3), doubling
+        // as the live region announcing gallery movement.
+        $html .= '<p class="lightbox__counter" data-lightbox-counter role="status" aria-live="polite"></p>';
         $html .= '</div>'; // .lightbox__inner
 
         $html .= '</div>'; // .lightbox

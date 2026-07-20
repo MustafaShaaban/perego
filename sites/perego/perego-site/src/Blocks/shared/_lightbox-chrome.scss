@@ -1,0 +1,211 @@
+/**
+ * The handoff's lightbox chrome (styles.css .lightbox* — accent circle nav/close, dot rail, visible
+ * counter), shared so every dialog carrying the .lightbox contract renders identically. Tokens only
+ * (theme.json --wp--preset / --wp--custom--perego), logical properties. The dialog shows/hides via
+ * the WP-idiomatic [hidden] attribute (not the prototype's .is-open class); `.is-gallery` is the
+ * shared multi-item state the view script toggles.
+ */
+
+.lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: var(--wp--custom--perego--z--lightbox);
+	display: grid;
+	place-items: center;
+	padding: 24px;
+
+	&[hidden] {
+		display: none;
+	}
+}
+
+.lightbox__backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(6, 0, 16, 0.86);
+	backdrop-filter: blur(6px);
+}
+
+.lightbox__inner {
+	position: relative;
+	z-index: 1;
+	inline-size: min(960px, 100%);
+}
+
+.lightbox__frame {
+	inline-size: 100%;
+	display: grid;
+	place-items: center;
+
+	/* Reserve the embed's box before the iframe paints (reference styles.css:690). */
+	&:has(iframe) {
+		aspect-ratio: 16 / 9;
+	}
+
+	img,
+	.lightbox__media {
+		max-inline-size: 100%;
+		max-block-size: 82vh;
+		border-radius: 14px;
+		box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+		display: block;
+		object-fit: contain;
+	}
+
+	iframe {
+		inline-size: 100%;
+		aspect-ratio: 16 / 9;
+		border: 0;
+		border-radius: 14px;
+		box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+	}
+
+	.lightbox__media {
+		inline-size: 100%;
+		aspect-ratio: 16 / 9;
+		background: #000;
+	}
+}
+
+.lightbox__nav {
+	/* Absolute, anchored to the position:relative .lightbox__inner exactly as the handoff
+	 * (styles.css .lightbox__nav): the arrows hug the media at ∓70px on desktop (8px inside on
+	 * ≤1120px), vertically centred on .lightbox__inner. box-sizing keeps the circle a true 52px
+	 * once the visible-state padding is applied. */
+	position: absolute;
+	box-sizing: border-box;
+	inset-block-start: 50%;
+	transform: translateY(-50%);
+	z-index: 3;
+	inline-size: 52px;
+	block-size: 52px;
+	border-radius: 50%;
+	border: 0;
+	display: none;
+	background: color-mix(in srgb, var(--wp--preset--color--accent) 85%, transparent);
+	/* The text glyphs (‹ ›) are optically off-centre in Open Sans; hide them and draw a crisp,
+	 * perfectly centred chevron via a rotated border box instead. The button keeps its aria-label. */
+	font-size: 0;
+	line-height: 1;
+	cursor: pointer;
+	transition: background var(--wp--custom--perego--motion--dur-fast) var(--wp--custom--perego--motion--ease);
+
+	&:hover,
+	&:focus-visible {
+		background: var(--wp--preset--color--accent-soft);
+	}
+
+	/* The view script unhides the arrows only for multi-item galleries. */
+	&:not([hidden]) {
+		display: grid;
+		place-items: center;
+		padding: 20px 17px 20px 15px;
+	}
+
+	&::before {
+		content: "";
+		inline-size: 12px;
+		block-size: 12px;
+		border: solid #fff;
+		border-width: 2.5px 2.5px 0 0;
+	}
+}
+
+/* Chevrons point toward their own edge; positions + directions flip in RTL. */
+.lightbox__nav--prev {
+	inset-inline-start: -70px;
+
+	&::before {
+		transform: rotate(-135deg);
+	}
+}
+
+.lightbox__nav--next {
+	inset-inline-end: -70px;
+
+	&::before {
+		transform: rotate(45deg);
+	}
+}
+
+/* Handoff breakpoint: once the media frame nears the viewport width, tuck the arrows inside its
+ * inline edges so they never overflow off-screen (reference styles.css @max-width:1120px). */
+@media (max-width: 1120px) {
+	.lightbox__nav--prev {
+		inset-inline-start: 8px;
+	}
+
+	.lightbox__nav--next {
+		inset-inline-end: 8px;
+	}
+}
+
+[dir="rtl"] .lightbox__nav--prev::before {
+	transform: rotate(45deg);
+}
+
+[dir="rtl"] .lightbox__nav--next::before {
+	transform: rotate(-135deg);
+}
+
+.lightbox__dots {
+	display: flex;
+	justify-content: center;
+	gap: 8px;
+	margin-block-start: 16px;
+
+	&:empty {
+		display: none;
+	}
+}
+
+.lightbox__dot {
+	inline-size: 8px;
+	block-size: 8px;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.35);
+	cursor: pointer;
+	transition: background var(--wp--custom--perego--motion--dur-fast) var(--wp--custom--perego--motion--ease);
+
+	&.is-active {
+		background: var(--wp--preset--color--accent);
+		inline-size: 22px;
+		border-radius: var(--wp--custom--perego--radius--pill);
+	}
+}
+
+.lightbox__close {
+	position: absolute;
+	inset-block-start: -14px;
+	inset-inline-end: -14px;
+	z-index: 4;
+	inline-size: 44px;
+	block-size: 44px;
+	border-radius: 50%;
+	border: 0;
+	background: var(--wp--preset--color--accent);
+	color: #fff;
+	font-size: 22px;
+	line-height: 1;
+	display: grid;
+	place-items: center;
+	cursor: pointer;
+	box-shadow: var(--wp--custom--perego--shadow--glow-accent);
+	transition: background var(--wp--custom--perego--motion--dur-fast) var(--wp--custom--perego--motion--ease);
+
+	&:hover,
+	&:focus-visible {
+		background: var(--wp--preset--color--accent-soft);
+	}
+}
+
+.lightbox__counter {
+	text-align: center;
+	color: var(--wp--custom--perego--color--muted);
+	font-size: var(--wp--preset--font-size--small);
+	margin-block-start: 10px;
+
+	&:empty {
+		display: none;
+	}
+}

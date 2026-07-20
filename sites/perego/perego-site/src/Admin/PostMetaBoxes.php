@@ -9,7 +9,6 @@ declare(strict_types=1);
 namespace PeregoSite\Admin;
 
 use PeregoSite\Blocks\LegalUpdatedRenderer;
-use PeregoSite\Content\HeroContent;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
@@ -20,9 +19,11 @@ defined('ABSPATH') || exit;
  * Editor controls for the structured Project/Service/Client metadata (spec 010 T009). The fields are
  * registered as real post meta (see each PostType::metaArgs); this adds a labelled meta box so an editor
  * can fill them in wp-admin — no CLI, no seed script, and not the generic Custom Fields panel (protected
- * `_`-prefixed keys never appear there). Scalar text fields only; the Project gallery keeps its own media
- * UI follow-up. Saving is guarded by a nonce, the post-type capability, and autosave/revision checks, and
- * each value is sanitised with the same callback its meta registration declares.
+ * `_`-prefixed keys never appear there). Scalar text fields only; the Project gallery and the Client
+ * gallery/video source (a repeater + a `wp.media` picker) keep their own dedicated media-UI boxes
+ * (`ProjectGalleryMetaBox`, `ClientMediaMetaBox`). Saving is guarded by a nonce, the post-type
+ * capability, and autosave/revision checks, and each value is sanitised with the same callback its meta
+ * registration declares.
  */
 final class PostMetaBoxes
 {
@@ -44,6 +45,10 @@ final class PostMetaBoxes
                     ProjectPostType::META_YEAR => ['label' => __('Year', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
                     ProjectPostType::META_ROLE => ['label' => __('Role', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
                     ProjectPostType::META_DELIVERABLES => ['label' => __('Deliverables', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    // Website-showcase card data (web-category projects only; spec 020 service parity).
+                    ProjectPostType::META_SITE_TYPE => ['label' => __('Site type — ecommerce / corporate / landing / webapp / portfolio (web projects)', 'perego-site'), 'sanitize' => ProjectPostType::class . '::sanitizeSiteType'],
+                    ProjectPostType::META_SITE_URL => ['label' => __('Live site URL (web projects)', 'perego-site'), 'sanitize' => 'esc_url_raw'],
+                    ProjectPostType::META_VIDEO_URL => ['label' => __('Video URL (YouTube/Vimeo or video file) — the project opens as a ▶ video card', 'perego-site'), 'sanitize' => 'esc_url_raw'],
                 ],
             ],
             ServicePostType::POST_TYPE => [
@@ -58,23 +63,8 @@ final class PostMetaBoxes
             ClientPostType::POST_TYPE => [
                 'title' => __('Client details', 'perego-site'),
                 'fields' => [
-                    ClientPostType::META_STAT => ['label' => __('Statistic', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
-                    ClientPostType::META_VIDEO_URL => ['label' => __('Video URL', 'perego-site'), 'sanitize' => 'esc_url_raw'],
-                ],
-            ],
-            // spec 012 T004 — the homepage hero, editable per language on the front page (the box is
-            // scoped to the front page in addBoxes(); other pages never show it). Empty fields fall back
-            // to the HomeContent seed in HeroContent::resolve().
-            'page' => [
-                'title' => __('Homepage hero', 'perego-site'),
-                'fields' => [
-                    HeroContent::META_SLIDE_TITLE[0] => ['label' => __('Slide 1 title', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
-                    HeroContent::META_SLIDE_TEXT[0] => ['label' => __('Slide 1 text', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
-                    HeroContent::META_SLIDE_TITLE[1] => ['label' => __('Slide 2 title', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
-                    HeroContent::META_SLIDE_TEXT[1] => ['label' => __('Slide 2 text', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
-                    HeroContent::META_SLIDE_TITLE[2] => ['label' => __('Slide 3 title', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
-                    HeroContent::META_SLIDE_TEXT[2] => ['label' => __('Slide 3 text', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
-                    HeroContent::META_CTA => ['label' => __('CTA button label', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    ClientPostType::META_SUB => ['label' => __('Subtitle — individual card only (e.g. "intertainment show")', 'perego-site'), 'sanitize' => 'sanitize_text_field'],
+                    ClientPostType::META_STAT => ['label' => __('Statistic — individual card (wrap the number in <strong> to bold it, e.g. <strong>+1M</strong> views)', 'perego-site'), 'sanitize' => ClientPostType::class . '::sanitizeStat'],
                 ],
             ],
             // spec 017 — the legal pages' curated "Last updated" date. Lives on the `page` type but the
@@ -110,12 +100,7 @@ final class PostMetaBoxes
     public function addBoxes($postType = '', $post = null): void
     {
         foreach ($this->schema() as $type => $box) {
-            // The hero box lives on the `page` type but is only relevant to the front page (and its
-            // translations) — never every page.
-            if ($type === 'page' && ! $this->isFrontPage($post)) {
-                continue;
-            }
-            // The legal box also lives on `page` but only on legal-template pages.
+            // The legal box lives on the `page` type but only applies to legal-template pages.
             if ($type === 'page:legal' && ! $this->isLegalPage($post)) {
                 continue;
             }
@@ -131,29 +116,6 @@ final class PostMetaBoxes
                 'default'
             );
         }
-    }
-
-    /**
-     * Is the given post the site's front page (or one of its Polylang translations)? The hero meta
-     * only applies there.
-     */
-    private function isFrontPage($post): bool
-    {
-        if (! is_object($post) || ! isset($post->ID)) {
-            return false;
-        }
-
-        $frontId = (int) get_option('page_on_front');
-        if ($frontId <= 0) {
-            return false;
-        }
-
-        $ids = [$frontId];
-        if (function_exists('pll_get_post_translations')) {
-            $ids = array_map('intval', array_values(pll_get_post_translations($frontId))) ?: $ids;
-        }
-
-        return in_array((int) $post->ID, $ids, true);
     }
 
     /** Is the given post a legal page (the `legal` page template)? The "Last updated" meta only applies there. */

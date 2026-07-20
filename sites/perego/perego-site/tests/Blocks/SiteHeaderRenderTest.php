@@ -20,13 +20,16 @@ beforeEach(function () {
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
     Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
     Functions\when('wp_json_encode')->alias('json_encode');
+    Functions\when('wp_get_attachment_image_url')->justReturn('');
 });
 
-function renderHeader(string $currentPath = '/'): string
+/** @param array<string,mixed> $attributes */
+function renderHeader(string $currentPath = '/', array $attributes = [], string $locale = 'en'): string
 {
-    $service = new LanguageService(cookie: [], requestUri: $currentPath, polylangActive: false);
+    $cookie  = $locale === 'en' ? [] : ['perego_lang' => $locale];
+    $service = new LanguageService(cookie: $cookie, requestUri: $currentPath, polylangActive: false);
 
-    return (new SiteHeaderRenderer($service))->render($currentPath);
+    return (new SiteHeaderRenderer($service))->render($currentPath, $attributes);
 }
 
 it('renders the nav items in the documented order', function () {
@@ -71,10 +74,29 @@ it('links About Us and Services to homepage anchors, never a hard-coded /about r
         ->and($html)->not->toContain('href="https://perego.local/about"');
 });
 
-it('does not mark any item active on an unmatched path', function () {
+it('marks the ancestor nav item active on a descendant route (single post under an archive)', function () {
     $html = renderHeader('/journal/some-post');
 
+    // The Journal archive item lights up for its child single post, via prefix/ancestor matching.
+    expect($html)->toContain('aria-current="page"')
+        ->and($html)->toMatch('/<li class="[^"]*is-active[^"]*"[^>]*><a [^>]*aria-current="page"[^>]*>Journal/');
+});
+
+it('does not mark any item active on a path outside every nav route', function () {
+    $html = renderHeader('/legal/privacy-policy');
+
     expect($html)->not->toContain('aria-current="page"');
+});
+
+it('links Contact Us to the footer anchor as a bare same-page fragment on every page and locale', function () {
+    foreach ([['/', 'en'], ['/services/graphic-design', 'en'], ['/ar/services/graphic-design-2', 'ar']] as [$path, $locale]) {
+        $html = renderHeader($path, [], $locale);
+
+        // Never localized/absolutized (a homepage URL would break the same-page anchor), never active.
+        expect($html)->toMatch('/<a class="main-nav__link" href="#contact">Contact Us</')
+            ->and($html)->not->toContain('href="https://perego.local/#contact"')
+            ->and($html)->not->toContain('href="https://perego.local/contact">Contact Us');
+    }
 });
 
 it('renders the Start a Project CTA', function () {
@@ -131,4 +153,44 @@ it('wires the mobile Services item to the tap-accordion action', function () {
     $html = renderHeader();
 
     expect($html)->toContain('data-wp-on--click="actions.toggleMobileDropdown"');
+});
+
+it('renders sticky by default (no inline position override)', function () {
+    expect(renderHeader())->not->toContain('style="position:static"');
+});
+
+it('renders position:static inline when the isSticky attribute is turned off', function () {
+    expect(renderHeader('/', ['isSticky' => false]))->toContain('style="position:static"');
+});
+
+it('uses the default logo asset when no logoId attribute is set', function () {
+    expect(renderHeader())->toContain('logo-full.png');
+});
+
+it('uses the logoId attribute\'s attachment URL when set', function () {
+    Functions\when('wp_get_attachment_image_url')->alias(
+        fn (int $id) => $id === 42 ? 'https://perego.local/uploads/new-logo.png' : ''
+    );
+
+    $html = renderHeader('/', ['logoId' => 42]);
+
+    expect($html)->toContain('https://perego.local/uploads/new-logo.png')
+        ->and($html)->not->toContain('logo-full.png');
+});
+
+it('prefers the editor-set En/Ar navItems block attribute over the hardcoded seed, per locale', function () {
+    $navEn = json_encode([['label' => 'Custom Link', 'href' => '/custom']]);
+    $navAr = json_encode([['label' => 'رابط مخصص', 'href' => '/custom']]);
+
+    $htmlEn = renderHeader('/', ['navItemsEn' => $navEn], 'en');
+    $htmlAr = renderHeader('/', ['navItemsAr' => $navAr], 'ar');
+
+    expect($htmlEn)->toContain('Custom Link')->not->toContain('>Home<')
+        ->and($htmlAr)->toContain('رابط مخصص');
+});
+
+it('falls back to the hardcoded seed nav when the attribute is empty or invalid JSON', function () {
+    expect(renderHeader('/', ['navItemsEn' => '']))->toContain('>Home<')
+        ->and(renderHeader('/', ['navItemsEn' => 'not-json']))->toContain('>Home<')
+        ->and(renderHeader('/', ['navItemsEn' => '[]']))->toContain('>Home<');
 });

@@ -18,6 +18,12 @@ use PeregoSite\Content\GlobalContent;
  * inputs, required markers, an aria-live status region, described-by constraints), language-aware,
  * and carrying the honeypot + endpoint the secured `perego/v1/careers/apply` route expects. The
  * upload lifecycle + every handoff state is driven by view.js; the markup is present without JS.
+ *
+ * spec 020 round 2: validated fields (name, email, CV) and the submit-result banner reuse the exact
+ * class names the shared CoreX form runtime uses (`corex-form__error`, `corex-form__status` +
+ * `is-success`/`is-error`) instead of a second, bespoke set of classes — this form's styling is a
+ * projection of the same rules the footer's quick-message form already gets from
+ * `perego-wordpress-adapter.scss`, not a hand-matched copy that can drift out of sync again.
  */
 final class JoinFormRenderer
 {
@@ -31,12 +37,17 @@ final class JoinFormRenderer
         $endpoint = esc_url(rest_url('perego/v1/careers/apply'));
         $nonce = esc_attr(wp_create_nonce('wp_rest'));
 
-        // The localized state messages view.js renders into the aria-live status region.
+        // The localized state messages view.js renders into the aria-live status region and, for the
+        // per-field keys, directly into that field's own error node — a distinct, specific message
+        // per failure reason (spec 020 round 4), never one sentence reused across every field.
         $messages = [
             'uploading' => $t['uploading'],
             'submitting' => $t['submitting'],
             'success' => $t['success'],
-            'invalid' => $t['invalid'],
+            'name_required' => $t['nameRequired'],
+            'email_invalid' => $t['emailInvalid'],
+            'cv_required' => $t['cvRequired'],
+            'form_has_errors' => $t['formHasErrors'],
             'wrong_type' => $t['wrong_type'],
             'too_large' => $t['too_large'],
             'rate_limit' => $t['rate_limit'],
@@ -52,19 +63,24 @@ final class JoinFormRenderer
         $html .= $this->field('jf-email', 'email', 'email', $t['email'], true, ['autocomplete' => 'email', 'maxlength' => '120', 'placeholder' => $t['emailPlaceholder']]);
         $html .= $this->field('jf-portfolio', 'portfolio', 'url', $t['portfolio'], false, ['inputmode' => 'url', 'placeholder' => $t['portfolioPlaceholder']]);
 
-        // CV file input + accessible constraint hint.
+        // CV file input + accessible constraint hint + the same field-error node the validated text
+        // fields get (view.js reports missing/wrong-type/too-large CV errors into it). The empty
+        // `file-drop__filename` slot is filled by view.js with the chosen file's name once a real
+        // selection is made — visible confirmation the picker isn't just a hint, spec 020 round 4.
         $html .= '<div class="field join-form__field">';
         $html .= '<label for="jf-cv">' . esc_html($t['cv']) . ' <span class="join-form__req" aria-hidden="true">*</span></label>';
         $html .= '<label class="file-drop" for="jf-cv"><span class="file-drop__text">' . esc_html($t['cvHint']) . '</span>';
-        $html .= '<input type="file" id="jf-cv" name="cv" accept=".pdf,.doc,.docx" required aria-describedby="jf-cv-hint" /></label>';
+        $html .= '<span class="file-drop__filename" aria-live="polite"></span>';
+        $html .= '<input type="file" id="jf-cv" name="cv" accept=".pdf,.doc,.docx" required aria-describedby="jf-cv-hint jf-cv-error" /></label>';
         $html .= '<p class="join-form__hint" id="jf-cv-hint">' . esc_html($t['cvHint']) . '</p>';
+        $html .= '<span class="corex-form__error" id="jf-cv-error" role="alert"></span>';
         $html .= '</div>';
 
         // Honeypot (visually hidden, ignored by real users).
         $html .= '<input type="text" name="perego_hp" class="join-form__hp" tabindex="-1" autocomplete="off" aria-hidden="true" value="" />';
 
         $html .= '<button type="submit" class="btn btn--accent footer-form__submit join-form__submit">' . esc_html($t['submit']) . '</button>';
-        $html .= '<p class="join-form__status" id="join-form-status" role="status" aria-live="polite"></p>';
+        $html .= '<p class="join-form__status corex-form__status" id="join-form-status" role="status" aria-live="polite"></p>';
         $html .= '</form>';
 
         return $html;
@@ -79,10 +95,15 @@ final class JoinFormRenderer
         }
         $req = $required ? ' required' : '';
         $mark = $required ? ' <span class="join-form__req" aria-hidden="true">*</span>' : '';
+        $errorId = $id . '-error';
 
+        // Every field gets the same `role="alert"` error node the CoreX form runtime's own
+        // FieldRenderer emits, empty until view.js fills it — one shared class, one shared look.
         return '<div class="field join-form__field">'
             . '<label for="' . esc_attr($id) . '">' . esc_html($label) . $mark . '</label>'
-            . '<input type="' . esc_attr($type) . '" id="' . esc_attr($id) . '" name="' . esc_attr($name) . '"' . $req . $extra . ' />'
+            . '<input type="' . esc_attr($type) . '" id="' . esc_attr($id) . '" name="' . esc_attr($name) . '"' . $req . $extra
+            . ' aria-describedby="' . esc_attr($errorId) . '" />'
+            . '<span class="corex-form__error" id="' . esc_attr($errorId) . '" role="alert"></span>'
             . '</div>';
     }
 

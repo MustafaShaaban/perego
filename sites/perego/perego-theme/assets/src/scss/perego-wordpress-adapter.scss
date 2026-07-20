@@ -10,6 +10,49 @@
 /* FSE structural wrappers must not introduce a second layout system around the reference DOM. */
 html {
 	overflow-x: clip;
+
+	/* Brand-purple scrollbar (Firefox); WebKit equivalents below. `scroll-behavior: smooth` already
+	   lives on html in perego-reference.scss (and is reduced-motion-guarded there). */
+	scrollbar-width: thin;
+	scrollbar-color: var(--accent, #d86af3) var(--bg-deep, #10002b);
+}
+
+/* Brand-purple scrollbar — WebKit/Blink (Chrome, Safari, Edge). */
+::-webkit-scrollbar {
+	inline-size: 12px;
+	block-size: 12px;
+}
+
+::-webkit-scrollbar-track {
+	background: var(--bg-deep, #10002b);
+}
+
+::-webkit-scrollbar-thumb {
+	background: linear-gradient(var(--violet, #6c1eae), var(--accent, #d86af3));
+	border-radius: 999px;
+	border: 3px solid var(--bg-deep, #10002b);
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: var(--accent, #d86af3);
+}
+
+/* Preloader must cover the WHOLE viewport during load. The reference `.preloader` is already
+   `position:fixed; inset:0`, but its z-index (2000) sits UNDER the WordPress admin bar (99999), so a
+   logged-in editor sees the admin-bar strip as empty space at the top. Lift it above the bar and pin
+   it to the true viewport (100dvh) so there is no top gap for anyone. */
+.preloader {
+	inset: 0;
+	/* WordPress's global `.wp-site-blocks > * { margin-block-start: 24px }` block-spacing rule adds a
+	   24px top margin to the preloader (a direct child of .wp-site-blocks), which the adapter zeroes
+	   only for the header/main — that margin is what left the strip of page showing above it. */
+	margin: 0;
+	block-size: 100dvh;
+	z-index: 100000;
+}
+
+.admin-bar .preloader {
+	inset-block-start: 0;
 }
 
 .wp-site-blocks,
@@ -65,6 +108,16 @@ html {
 	border-color: #ff6ba6;
 }
 
+/* The framework's own field-error node (plugins/corex-forms) sizes itself with
+ * `var(--wp--preset--font-size--sm)`, a slug this theme never defines (theme.json only has
+ * `small`), so that rule is invalid and falls back to an unstyled default size; it also colors the
+ * text with the same shade used for input borders instead of the handoff's distinct message tone.
+ * Override both here since the framework file itself is out of scope for this client site. */
+.corex-form__error {
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--wp--preset--color--error-text);
+}
+
 .corex-form__status {
 	border-radius: 10px;
 	transition: background-color var(--perego-dur-medium, 0.3s) var(--perego-ease, ease);
@@ -90,6 +143,7 @@ html {
 .corex-form__status.is-success {
 	background: rgba(31, 138, 91, 0.18);
 	border: 1px solid rgba(80, 220, 150, 0.4);
+	color: var(--wp--preset--color--success-text);
 }
 
 .corex-form__status.is-success::before {
@@ -99,6 +153,7 @@ html {
 .corex-form__status.is-error {
 	background: rgba(216, 39, 91, 0.14);
 	border: 1px solid rgba(255, 107, 166, 0.4);
+	color: var(--wp--preset--color--error-text);
 }
 
 .corex-form__status.is-error::before {
@@ -340,71 +395,134 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	.contact-form-wrap .corex-form__field--half { grid-column: 1 / -1; }
 }
 
-/* Journal single: WordPress's core comment blocks (wp:comments/wp:post-comments-form) already pick
- * up the handoff's own .comment-form/.comment-list card styling verbatim (perego-reference.scss is
- * an untouched copy, and WP emits those exact class names) — but core ships its own input/textarea
- * with a hardcoded white background and grey border, which is the "native white comment fields"
- * defect. Restyle only the bare form controls to the same look every other Perego form field uses. */
-.wp-block-comments .comment-form,
-.wp-block-post-comments-form .comment-form {
-	color: var(--text, #fff);
+/* Journal single "Leave a comment" form — perego-theme/journal-comments renders the handoff's own
+   `.comment-form.page-form` (Name+E-mail row, Comment, Post comment), so the reference
+   `.comment-form`/`.field`/`.field-row` styles (perego-reference.scss) already apply. These rules
+   only add the Perego-specific bits the reference file doesn't carry: the 760px centering (aligned
+   under the comment list), the reply-context chip, the honeypot, and the AJAX status message. */
+.comments .comment-respond {
+	max-inline-size: 760px;
+	margin-inline: auto;
 }
 
-.wp-block-comments .comment-form label,
-.wp-block-post-comments-form .comment-form label {
-	font-weight: 600;
-	font-size: 15px;
+.comments .comment-form {
+	margin-block-start: clamp(30px, 4vw, 44px);
 }
 
-.wp-block-comments .comment-form input:not([type="submit"]):not([type="checkbox"]),
-.wp-block-comments .comment-form textarea,
-.wp-block-post-comments-form .comment-form input:not([type="submit"]):not([type="checkbox"]),
-.wp-block-post-comments-form .comment-form textarea {
-	background: transparent;
-	border: 1px solid rgba(255, 255, 255, 0.35);
-	border-radius: 10px;
-	color: #fff;
-	font: inherit;
-	padding: 11px 14px;
-}
-
-.wp-block-comments .comment-form input:focus-visible,
-.wp-block-comments .comment-form textarea:focus-visible,
-.wp-block-post-comments-form .comment-form input:focus-visible,
-.wp-block-post-comments-form .comment-form textarea:focus-visible {
-	outline: 2px solid var(--accent);
-	outline-offset: 2px;
-}
-
-.wp-block-comments .comment-notes,
-.wp-block-post-comments-form .comment-notes {
-	color: var(--muted, rgba(255, 255, 255, 0.72));
-	font-size: 13px;
-}
-
-.wp-block-comments .comment-form .form-submit .wp-block-button__link,
-.wp-block-post-comments-form .comment-form .form-submit .wp-block-button__link {
-	background: var(--accent);
-	color: #2a0148;
-	border-radius: 9px;
+.comment-form__title {
+	font-size: 19px;
 	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.04em;
-	border: 0;
-	padding: 12px 42px;
 }
 
-/* The reference stylesheet's .lightbox is invisible (opacity:0; visibility:hidden) until an
- * .is-open class is added — the static prototype's own main.js does that, but both Perego lightbox
- * blocks (project-gallery-lightbox, media-lightbox) instead toggle the WordPress-idiomatic `hidden`
- * attribute, which the reference rule never accounts for. The result: the dialog opens correctly in
- * the DOM (hidden removed, focus trap, aria-modal, scroll lock all fire) but stays fully transparent
- * and non-visible on screen — a real, confirmed defect, not a display:none vs hidden nuance. Restore
- * visibility whenever `hidden` is absent, regardless of `.is-open`. */
-.lightbox:not([hidden]) {
-	opacity: 1;
-	visibility: visible;
+.comment-form .field__note {
+	color: var(--muted-2);
+	font-weight: 400;
 }
+
+/* Reply-context chip: "Replying to X — Cancel" (view.js reveals it; hidden by [hidden] otherwise). */
+.comment-form__reply-chip:not([hidden]) {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin: 0;
+	padding: 10px 14px;
+	border-radius: 10px;
+	background: rgba(216, 106, 243, 0.12);
+	border: 1px solid rgba(216, 106, 243, 0.3);
+	font-size: 14px;
+}
+
+.comment-form__cancel {
+	border: 0;
+	background: none;
+	color: var(--accent-soft);
+	font: inherit;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.comment-form__cancel:hover,
+.comment-form__cancel:focus-visible {
+	color: #fff;
+}
+
+/* Honeypot — off-screen for people, present for bots (never display:none, which bots skip). */
+.comment-form__hp {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+}
+
+/* AJAX status line: reuses the same success/error tone contract as the CoreX forms above. */
+.comment-form__status:empty {
+	display: none;
+}
+
+.comment-form__status {
+	margin: 0;
+	border-radius: 10px;
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.comment-form__status.is-success,
+.comment-form__status.is-error {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 12px 16px;
+}
+
+.comment-form__status.is-success {
+	background: rgba(31, 138, 91, 0.18);
+	border: 1px solid rgba(80, 220, 150, 0.4);
+	color: var(--wp--preset--color--success-text, #b7f5d4);
+}
+
+.comment-form__status.is-success::before {
+	content: "\2713";
+}
+
+.comment-form__status.is-error {
+	background: rgba(216, 39, 91, 0.14);
+	border: 1px solid rgba(255, 107, 166, 0.4);
+	color: var(--wp--preset--color--error-text, #ff9ad1);
+}
+
+.comment-form__status.is-error::before {
+	content: "\26A0";
+}
+
+/* ============================================================
+   Journal archive — post-template grid alignment
+   The /journal index renders a native wp:query / wp:post-template carrying .blog-grid
+   (display:grid, from perego-reference.scss). WordPress ALSO tags that post-template with
+   `is-layout-flow`, whose core rule
+   `:where(.wp-block-post-template.is-layout-flow) > * + * { margin-block-start: … }`
+   injects a top margin on every card after the first. On flow layout that's the row gap; on our
+   grid it pushes cards 2, 3, … down within their own row, staggering the line the owner reported.
+   `.blog-grid > * + *` has real specificity and beats core's `:where()` (0-specificity) rule, so
+   the grid `gap` alone controls spacing and every card in a row top-aligns, matching the handoff.
+   ============================================================ */
+.blog-grid > * + * {
+	margin-block-start: 0;
+}
+
+/* Work archive — [hidden] visibility contract (spec 020 filters/pagination fix).
+ * portfolio-grid/view.js filters cards and trims the numbered pager by toggling the native
+ * [hidden] attribute, relying on the UA `[hidden]{display:none}` rule. The reference stylesheet
+ * sets author-origin display on the same selectors (.post-card display:flex, .pagination
+ * display:flex, .pagination button display:inline-flex), and an author-origin display rule beats
+ * the UA [hidden] rule regardless of specificity — so hidden cards/pages stayed visible (dead
+ * filters + phantom page numbers). Restore the contract with author-origin rules of
+ * matching-or-higher specificity, loaded here after the reference. */
+.post-card[hidden] { display: none; }
+.pagination[hidden] { display: none; }
+.pagination button[hidden] { display: none; }
+#portfolioEmpty[hidden] { display: none; }
 
 /* Perego addition, not in the reference stylesheet: the seeded demo projects always carry a real
  * (placeholder-labelled) featured image, but content types with no photo at all yet — e.g. a service
@@ -423,4 +541,455 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 		rgba(216, 106, 243, 0.08) 10px,
 		rgba(216, 106, 243, 0.08) 20px
 	);
+}
+
+/* ============================================================
+   Service pages — "What we do" (spec 020 service-page parity)
+   The seeded canvas content (seed-services.php) and the Services archive
+   (ServicesOverviewRenderer) both emit `.svc-whatwedo` markup, but the
+   reference stylesheet only styles the prototype's own `.whatwedo` classes —
+   these rules project the reference design (perego-reference.scss
+   .whatwedo*, handoff service-*.html §whatwedo) onto the WP markup.
+   ============================================================ */
+.svc-whatwedo {
+	position: relative;
+	overflow: hidden;
+	background: linear-gradient(180deg, #160435 0%, #1c0743 50%, #10002b 100%);
+	padding-block: var(--section-y);
+}
+
+/* Reference .whatwedo::before — decorative wavy-corner overlay. */
+.svc-whatwedo::before {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: 0;
+	pointer-events: none;
+	background: url("../images/wavy-corners.png") center / cover no-repeat;
+	opacity: 0.5;
+}
+
+/* The seeded h2 carries no .section-title class; give it the reference title scale. */
+.svc-whatwedo .wp-block-heading,
+.svc-whatwedo__text h2 {
+	font-size: var(--fs-h1);
+	font-weight: 700;
+	line-height: 1.05;
+	margin-block-end: 8px;
+}
+
+.svc-whatwedo p {
+	color: var(--muted);
+	font-size: var(--fs-lead);
+	margin-block-end: 16px;
+}
+
+/* The bold sub-line right under "What we do" (reference .whatwedo__subline). */
+.svc-whatwedo p strong {
+	color: var(--accent-soft);
+	font-weight: 700;
+	font-size: var(--fs-h3);
+}
+
+/* Reference .container + .whatwedo__grid in one box: the WP adapter strips
+ * constrained-layout widths, so the grid provides its own container metrics. */
+.svc-whatwedo__grid {
+	position: relative;
+	z-index: 1;
+	max-inline-size: var(--maxw);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: clamp(30px, 5vw, 72px);
+	align-items: center;
+}
+
+/* The constrained-layout reset at the top of this file (`.is-layout-constrained > :where(…)`) strips
+ * max-inline-size from every constrained child so alignfull bands can bleed full-width — but it also
+ * out-specifies the grid rule above, dropping its cap to `none`, so the section grew past 1440px on
+ * screens wider than the handoff's container. Re-assert the cap with specificity that beats the reset
+ * (width/margin only, so the base grid rule and the ≤900px column rule are untouched). */
+.wp-site-blocks .svc-whatwedo .svc-whatwedo__grid {
+	max-inline-size: var(--maxw);
+	margin-inline: auto;
+}
+
+/* Global container cap (spec 020) — the constrained-layout reset above also strips `.container`'s own
+ * max-width/margin, so on screens wider than 1440px any `.container` (legal pages, the home-About inner,
+ * generic pages) drifted to the viewport edge. Re-assert the handoff container metrics with specificity
+ * that beats the reset; `.container` is only ever used for capped content, so this is always correct.
+ * (alignfull bands are not `.container`, so their full-bleed is unaffected.) */
+.wp-site-blocks .container {
+	max-inline-size: var(--maxw);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+/* Legal pages nest two further caps inside `.container` that the reset also flattened: the
+ * TOC+body grid (1080) and the reading measure (760). Re-assert both. */
+.wp-site-blocks .legal-layout {
+	max-inline-size: 1080px;
+	margin-inline: auto;
+}
+
+.wp-site-blocks .legal-body .prose {
+	max-inline-size: 760px;
+}
+
+/* Legal "On this page" TOC: sticky beside the scrolling body on desktop, with the current section
+ * highlighted (scroll-spy in main.js sets `.is-active`). Mobile is unchanged (it stacks above the
+ * body and scrolls with the page). `align-self: start` lets the grid item shrink to content so it can
+ * stick. */
+@media (min-width: 981px) {
+	.legal-layout .legal-toc {
+		position: sticky;
+		inset-block-start: 110px;
+		align-self: start;
+	}
+}
+
+.legal-toc a.is-active {
+	color: var(--accent-soft);
+	font-weight: 600;
+}
+
+/* Journal single: the breadcrumb's bottom-margin rule in the block CSS targets a `.post-single`
+ * ancestor that the FSE template never emits (it uses `.post-hero`), so the gap above the title was
+ * missing. Re-add it against the real wrapper. */
+.post-hero .page-crumb {
+	margin-block-end: 14px;
+}
+
+/* ============================================================
+   Header — mobile fixes (spec 020 owner review)
+   ============================================================ */
+
+/* Breathing room from the viewport's inline-end edge for the hamburger. */
+.nav-toggle {
+	margin-inline-end: 16px;
+}
+
+/* Centre the hamburger's top/bottom bars. The reference gives all three bars `left:12px`, but the
+ * middle bar is the `span` (positioned against the 46px button) while the top/bottom bars are its
+ * `::before`/`::after` — and since the span is itself `position:absolute`, their `left:12px` is
+ * measured against the 22px-wide span, not the button. That stacks to 24px and shoves them onto the
+ * button's inline-end border (the owner-reported "touching the right edge"). Re-anchor them to the
+ * span's own start so all three bars align, centred with equal clearance. */
+.nav-toggle span::before,
+.nav-toggle span::after {
+	left: 0;
+}
+
+/* The reference's dropdown open rules (`:hover`/`:focus-within`/`.is-open`) aren't media-scoped, so on
+ * mobile a "closed" Services accordion could still paint. Force it fully hidden whenever the parent is
+ * not `.is-open` at mobile widths — higher specificity than the reference open rules. */
+@media (max-width: 1024px) {
+	.main-nav .has-dropdown:not(.is-open) .dropdown {
+		max-height: 0;
+		overflow: hidden;
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+	}
+}
+
+/* Selected-work masonry brand tile: the reference's generic `.work-card:hover img { scale(1.07) }`
+ * overrides the brand logo's own `translate(-50%,-50%) rotate(-90deg)` on hover, so the vertical logo
+ * jumps to the corner (un-centered, un-rotated) before scaling. Keep it anchored and only zoom, so the
+ * hover reads as a scale-in, not a move (owner review). */
+.work-brand:hover .work-brand__logo {
+	transform: translate(-50%, -50%) rotate(-90deg) scale(1.06);
+}
+
+/* Mirror the reference `.whatwedo__media` exactly: the mockup renders at its own natural aspect
+ * ratio (no fixed box, no crop), rounded + shadowed + slightly tilted. The earlier round-7 fixed
+ * `aspect-ratio: 7/5` + `object-fit: cover` enlarged and side-cropped the wider graphic-design /
+ * website-making mockups, diverging from the handoff — restored to natural sizing per owner review. */
+.svc-whatwedo__media {
+	border-radius: var(--r-card);
+	overflow: hidden;
+	box-shadow: 0 26px 60px rgba(0, 0, 0, 0.45);
+	transform: rotate(-1.2deg);
+}
+
+.svc-whatwedo__media .wp-block-image {
+	margin: 0;
+}
+
+.svc-whatwedo__media img {
+	inline-size: 100%;
+	block-size: auto;
+	display: block;
+}
+
+@media (max-width: 900px) {
+	.svc-whatwedo__grid {
+		grid-template-columns: 1fr;
+	}
+
+	/* Media above the text, rotation removed (reference @900 .whatwedo__media). */
+	.svc-whatwedo__media {
+		order: -1;
+		transform: none;
+	}
+}
+
+/* ============================================================
+   Service pages — "Our Process" (spec 020 service-page parity)
+   The seeded process uses core group flex layouts, and WP's emitted
+   `.wp-container-core-group-is-layout-*` rules (align-items:center, blockGap)
+   override the reference `.process-list` contract. Two-class selectors win
+   back the reference layout regardless of stylesheet order.
+   ============================================================ */
+
+/* Reference wraps the band's content in a .container; the seeded section's
+ * children are direct, so give them the container metrics themselves. */
+.process > .section-title,
+.process > .process-list {
+	max-inline-size: var(--maxw);
+	margin-inline: auto;
+	padding-inline: var(--gutter);
+}
+
+.process .process-list {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 8px;
+	flex-wrap: nowrap;
+	inline-size: 100%;
+}
+
+.process .process-step {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+	flex: 1 1 0;
+	min-inline-size: 0;
+	max-inline-size: 240px;
+	text-align: center;
+}
+
+/* wp:image figure reset — the icon box is the reference's 56px square. */
+.process .process-step__icon {
+	inline-size: 56px;
+	block-size: 56px;
+	margin: 0;
+	display: grid;
+	place-items: center;
+}
+
+.process .process-step__icon img {
+	inline-size: 100%;
+	block-size: 100%;
+	object-fit: contain;
+}
+
+.process .process-step__label,
+.process .process-step__desc {
+	margin-block: 0;
+}
+
+@media (max-width: 900px) {
+	.process .process-list {
+		gap: 6px;
+	}
+
+	.process .process-step {
+		inline-size: 128px;
+	}
+
+	.process .process-step__icon {
+		inline-size: 84px;
+		block-size: 84px;
+	}
+
+	.process .process-step__icon img {
+		inline-size: 44px;
+		block-size: 44px;
+	}
+}
+
+@media (max-width: 620px) {
+	.process .process-list {
+		flex-direction: column;
+		align-items: center;
+	}
+
+	.process .process-arrow {
+		transform: rotate(90deg);
+		padding-block-start: 0;
+	}
+
+	[dir="rtl"] .process .process-arrow svg {
+		transform: none;
+	}
+}
+
+/* ============================================================
+   Journal single — core-block bridges (spec 020 round 6)
+   The reference styles the handoff's own elements (.post-meta__avatar on an
+   <img>, .author-box h3/p); core blocks wrap them differently (wp:avatar is a
+   <figure> around the img, author name/bio are their own block wrappers).
+   Bridge the core markup onto the reference design.
+   ============================================================ */
+.post-meta .wp-block-avatar {
+	margin: 0;
+	display: inline-flex;
+}
+
+.post-meta .wp-block-avatar img {
+	inline-size: 34px;
+	block-size: 34px;
+	border-radius: 50%;
+	object-fit: cover;
+	border: 1px solid var(--glass-border);
+}
+
+/* The reference .author-box gap/alignment, restated at container-beating specificity. */
+.author-box.wp-block-group {
+	gap: 18px;
+	align-items: center;
+}
+
+.author-box .wp-block-avatar {
+	margin: 0;
+	flex: none;
+}
+
+.author-box .wp-block-post-author-name {
+	font-size: 18px;
+	font-weight: 700;
+	color: var(--text, #fff);
+}
+
+.author-box .wp-block-post-author-name a {
+	color: inherit;
+}
+
+.author-box .wp-block-post-author-biography {
+	margin-block-start: 6px;
+	font-size: 14px;
+	color: var(--muted);
+	line-height: 1.6;
+}
+
+/* Post tags — the handoff renders each tag as a pill (.post-tag; single-post.html:96-100). The
+   native wp:post-terms{term:post_tag} block emits anchors inside .post-single__tags instead, so the
+   reference's .post-tag rule never matches. Bridge the pill look onto the block markup, using the
+   same token values the reference .post-tag uses (the legacy copy relied on undefined --perego-*
+   vars). The template drops the "Tags:" prefix so it matches the handoff's bare pill row. */
+.post-single__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-block-start: clamp(28px, 4vw, 44px);
+}
+
+.post-single__tags a {
+	padding: 7px 15px;
+	border-radius: 999px;
+	background: rgba(72, 3, 131, 0.35);
+	border: 1px solid rgba(216, 106, 243, 0.28);
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.82);
+	text-decoration: none;
+	transition: border-color var(--dur-fast, 0.2s) var(--ease), color var(--dur-fast, 0.2s) var(--ease);
+}
+
+.post-single__tags a:hover,
+.post-single__tags a:focus-visible {
+	border-color: var(--accent);
+	color: #fff;
+}
+
+/* ============================================================
+   Home — full-viewport sections (spec 020, owner request)
+   Perego deviation from the reference (which gives .home-about 78vh and the
+   rest natural padding-based heights): every main home section fills the
+   viewport on desktop, its content vertically centered. Mobile keeps the
+   reference's natural flow (a forced 100vh band around short content reads
+   as empty space on phones). The hero-slider block already carries its own
+   100vh/100svh. Logged in sites/perego/DECISIONS.md.
+   ============================================================ */
+@media (min-width: 901px) {
+	.home .home-about,
+	.home .services-teaser,
+	.home .clients {
+		min-height: 100vh;
+		min-height: 100svh; /* small-viewport unit — stable under mobile browser chrome */
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+	}
+}
+
+/* ============================================================
+   perego-site block design tokens + card-as-button reset (spec 020 round 8)
+   ============================================================ */
+
+/* The perego-site block stylesheets (shared media-lightbox, project-gallery-lightbox, and the card
+ * chrome they inherit) consume the client's `--perego-*` design tokens, but the file that aliased
+ * them onto the theme.json source of truth (`--wp--custom--perego--*`) is no longer imported by
+ * main.scss — so at runtime every `--perego-*` var resolved to nothing. Most visibly that collapsed
+ * the lightbox's `z-index: var(--perego-z-lightbox)` to `auto`, dropping the dialog *below* the
+ * sticky header (z 100), nav (200), and preloader (2000) instead of on top; it also left the lightbox
+ * close/nav chrome (glass fill, pill radius) unstyled. Re-declare the alias bridge here (values still
+ * live only in theme.json; this only maps names) so those blocks resolve their tokens. */
+:root {
+	--perego-gradient-bg: var(--wp--custom--perego--gradient--bg);
+	--perego-gradient-violet-band: var(--wp--custom--perego--gradient--violet-band);
+	--perego-gradient-banner: var(--wp--custom--perego--gradient--banner);
+	--perego-gradient-card-media: var(--wp--custom--perego--gradient--card-media);
+	--perego-gradient-card-overlay: var(--wp--custom--perego--gradient--card-overlay);
+	--perego-glass-fill: var(--wp--custom--perego--color--glass-fill);
+	--perego-glass-panel-fill: var(--wp--custom--perego--color--glass-panel-fill);
+	--perego-glass-border: var(--wp--custom--perego--color--glass-border);
+	--perego-glass-blur: var(--wp--custom--perego--glass-blur);
+	--perego-muted: var(--wp--custom--perego--color--muted);
+	--perego-muted-2: var(--wp--custom--perego--color--muted-2);
+
+	--perego-radius-card: var(--wp--custom--perego--radius--card);
+	--perego-radius-btn: var(--wp--custom--perego--radius--btn);
+	--perego-radius-pill: var(--wp--custom--perego--radius--pill);
+	--perego-shadow-card: var(--wp--custom--perego--shadow--card);
+	--perego-shadow-service-card: var(--wp--custom--perego--shadow--service-card);
+	--perego-shadow-featured: var(--wp--custom--perego--shadow--featured);
+	--perego-shadow-glow-accent: var(--wp--custom--perego--shadow--glow-accent);
+	--perego-shadow-glass-panel-inset: var(--wp--custom--perego--shadow--glass-panel-inset);
+
+	--perego-ease: var(--wp--custom--perego--motion--ease);
+	--perego-dur-fast: var(--wp--custom--perego--motion--dur-fast);
+	--perego-dur-medium: var(--wp--custom--perego--motion--dur-medium);
+	--perego-hero-slide-delay: var(--wp--custom--perego--motion--hero-slide-delay);
+
+	--perego-bp-nav: var(--wp--custom--perego--breakpoint--nav);
+	--perego-bp-mobile-nav: var(--wp--custom--perego--breakpoint--mobile-nav);
+
+	--perego-z-header: var(--wp--custom--perego--z--header);
+	--perego-z-nav-panel: var(--wp--custom--perego--z--nav-panel);
+	--perego-z-nav-backdrop: var(--wp--custom--perego--z--nav-backdrop);
+	--perego-z-skip-link: var(--wp--custom--perego--z--skip-link);
+	--perego-z-lightbox: var(--wp--custom--perego--z--lightbox);
+	--perego-z-preloader: var(--wp--custom--perego--z--preloader);
+}
+
+/* An individual client card with lightbox media renders as a native <button> (handoff C-04: one
+ * action per card — never lightbox + navigation together). Strip the UA button chrome, most visibly
+ * the 2px `outset` border, so it renders identically to the <a>/<div> variants; the reference
+ * `.indiv-card` grid (text 1fr / thumbnail 42%), gradient, and radius then apply unchanged. This
+ * lived in the block's own style.scss, which the build never emits into a stylesheet. */
+button.indiv-card {
+	appearance: none;
+	-webkit-appearance: none;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	inline-size: 100%;
+	font: inherit;
+	color: inherit;
+	text-align: start;
+	cursor: pointer;
 }

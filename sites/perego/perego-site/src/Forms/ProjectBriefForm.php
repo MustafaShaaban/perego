@@ -87,9 +87,14 @@ final class ProjectBriefForm extends Form
             ],
             'message' => [
                 'type' => 'textarea',
-                'rules' => ['required', 'min:10', 'max:1200'],
+                // 200 words ≈ the original 1200-character cap at typical prose density — a word
+                // budget reads more meaningfully than a character count (spec 020 round 4).
+                // `data-max-words` is the live counter's (contact-service-chooser/view.js) source of
+                // truth for the limit.
+                'rules' => ['required', 'min:10', 'max_words:200'],
                 'label' => __('Your message', 'perego-site'),
                 'placeholder' => __('Tell us about your project.', 'perego-site'),
+                'attrs' => ['data-max-words' => '200'],
             ],
             'services' => [
                 'type' => 'multi-select',

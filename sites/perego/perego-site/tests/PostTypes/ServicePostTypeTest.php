@@ -13,11 +13,12 @@ beforeEach(function () {
     Functions\when('__')->returnArg();
 });
 
-it('registers a public service post type with a services archive at /services/', function () {
+it('registers a public service post type with the /services/ archive disabled (singles only)', function () {
     $args = (new ServicePostType())->postTypeArgs();
 
+    // spec 020: the archive is retired (404); the 4 service singles at /services/<slug> are canonical.
     expect($args['public'])->toBeTrue()
-        ->and($args['has_archive'])->toBe('services')
+        ->and($args['has_archive'])->toBeFalse()
         ->and($args['rewrite']['slug'])->toBe('services')
         ->and($args['show_in_rest'])->toBeTrue()
         ->and($args['supports'])->toContain('thumbnail');
@@ -47,7 +48,7 @@ it('calls register_post_type with the service slug and its args on register()', 
 
     expect($captured['slug'])->toBe(ServicePostType::POST_TYPE)
         ->and($captured['args'])->toBeArray()
-        ->and($captured['args']['has_archive'])->toBe('services');
+        ->and($captured['args']['has_archive'])->toBeFalse();
 });
 
 it('registers the canonical service-slug meta with REST, sanitization, and auth', function () {

@@ -28,6 +28,18 @@ final class ProjectPostType
     public const META_ROLE = '_perego_role';
     public const META_DELIVERABLES = '_perego_deliverables';
     public const META_GALLERY = '_perego_gallery_attachment_ids';
+    public const META_SITE_TYPE = '_perego_site_type';
+    public const META_SITE_URL = '_perego_site_url';
+    public const META_VIDEO_URL = '_perego_video_url';
+
+    /**
+     * The website-showcase filter types (handoff service-website-making.html web-filters), for
+     * web-category projects. Values are the handoff's data-filter/data-category enum; anything
+     * else sanitizes to '' (untyped — shown under "All" only).
+     *
+     * @var list<string>
+     */
+    public const SITE_TYPES = ['ecommerce', 'corporate', 'landing', 'webapp', 'portfolio'];
 
     /**
      * The fixed category terms, in display order. Slugs are the enum from CONTENT_MODEL.md; the
@@ -75,6 +87,15 @@ final class ProjectPostType
             self::META_YEAR => $text(),
             self::META_ROLE => $text(),
             self::META_DELIVERABLES => $text(),
+            self::META_SITE_TYPE => array_merge($text(), [
+                'sanitize_callback' => [self::class, 'sanitizeSiteType'],
+            ]),
+            self::META_SITE_URL => array_merge($text(), [
+                'sanitize_callback' => 'esc_url_raw',
+            ]),
+            self::META_VIDEO_URL => array_merge($text(), [
+                'sanitize_callback' => 'esc_url_raw',
+            ]),
             self::META_GALLERY => [
                 'type' => 'array',
                 'single' => true,
@@ -93,6 +114,18 @@ final class ProjectPostType
     public static function authEdit(): bool
     {
         return function_exists('current_user_can') && current_user_can('edit_posts');
+    }
+
+    /**
+     * Whitelist a site-type value to the fixed showcase-filter enum; anything else becomes ''.
+     *
+     * @param mixed $value
+     */
+    public static function sanitizeSiteType($value): string
+    {
+        $value = is_string($value) ? strtolower(trim($value)) : '';
+
+        return in_array($value, self::SITE_TYPES, true) ? $value : '';
     }
 
     /**
