@@ -49,6 +49,9 @@ final class ServicePortfolioMetaBox
         }
         wp_register_script('perego-service-portfolio-editor', false, [], null, true);
         wp_enqueue_script('perego-service-portfolio-editor');
+        wp_add_inline_script('perego-service-portfolio-editor', 'window.PeregoServicePortfolio = ' . wp_json_encode([
+            'slotLabel' => __('Masonry position %d', 'perego-site'),
+        ]) . ';', 'before');
         wp_add_inline_script('perego-service-portfolio-editor', $this->script());
     }
 
@@ -76,7 +79,7 @@ final class ServicePortfolioMetaBox
         echo '<ol id="perego-service-portfolio-projects">';
         foreach ($projects as $project) {
             $isSelected = in_array($project->ID, $selected, true);
-            printf('<li><label><input type="checkbox" name="%1$s[]" value="%2$d"%3$s /> %4$s</label> <button type="button" class="button-link perego-service-portfolio__move" data-direction="up">%5$s</button> <button type="button" class="button-link perego-service-portfolio__move" data-direction="down">%6$s</button></li>', esc_attr(self::PROJECTS_FIELD), $project->ID, checked($isSelected, true, false), esc_html(get_the_title($project)), esc_html__('Up', 'perego-site'), esc_html__('Down', 'perego-site'));
+            printf('<li><label><input type="checkbox" name="%1$s[]" value="%2$d"%3$s /> %4$s</label> <span class="perego-service-portfolio__slot" aria-live="polite">%5$s</span> <button type="button" class="button-link perego-service-portfolio__move" data-direction="up">%6$s</button> <button type="button" class="button-link perego-service-portfolio__move" data-direction="down">%7$s</button></li>', esc_attr(self::PROJECTS_FIELD), $project->ID, checked($isSelected, true, false), esc_html(get_the_title($project)), $isSelected ? esc_html(sprintf(__('Masonry position %d', 'perego-site'), array_search($project->ID, $selected, true) + 1)) : '', esc_html__('Up', 'perego-site'), esc_html__('Down', 'perego-site'));
         }
         echo '</ol>';
         echo '<details><summary>' . esc_html__('Exclude from automatic results', 'perego-site') . '</summary><p class="description">' . esc_html__('Exclusions apply in Automatic and Hybrid modes.', 'perego-site') . '</p><ul>';
@@ -136,6 +139,16 @@ final class ServicePortfolioMetaBox
     {
         return <<<'JS'
 ( function () {
+	var labels = window.PeregoServicePortfolio || {};
+	function updateSlots() {
+		var position = 0;
+		document.querySelectorAll( '#perego-service-portfolio-projects li' ).forEach( function ( item ) {
+			var checkbox = item.querySelector( 'input[type="checkbox"]' );
+			var slot = item.querySelector( '.perego-service-portfolio__slot' );
+			if ( ! checkbox || ! slot ) { return; }
+			if ( checkbox.checked ) { position += 1; slot.textContent = ( labels.slotLabel || 'Masonry position %d' ).replace( '%d', position ); } else { slot.textContent = ''; }
+		} );
+	}
 	document.addEventListener( 'click', function ( event ) {
 		var button = event.target.closest( '.perego-service-portfolio__move' );
 		if ( ! button ) { return; }
@@ -144,7 +157,12 @@ final class ServicePortfolioMetaBox
 		if ( ! item || ! list ) { return; }
 		if ( button.dataset.direction === 'up' && item.previousElementSibling ) { list.insertBefore( item, item.previousElementSibling ); }
 		if ( button.dataset.direction === 'down' && item.nextElementSibling ) { list.insertBefore( item.nextElementSibling, item ); }
+		updateSlots();
 	} );
+	document.addEventListener( 'change', function ( event ) {
+		if ( event.target.closest( '#perego-service-portfolio-projects' ) ) { updateSlots(); }
+	} );
+	updateSlots();
 }() );
 JS;
     }

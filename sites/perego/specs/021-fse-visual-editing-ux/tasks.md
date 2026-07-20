@@ -30,8 +30,8 @@
 - [ ] T017 Write migration tests for Client Type and Project Service hierarchy and assigned-term retention.
 - [ ] T018 Change taxonomy registrations to hierarchical and verify EN/AR relationship/filter/URL compatibility.
 - [ ] T019 Replace Client raw meta box behavior with polished labelled media, metadata, hierarchical-term, and card-preview UI.
-- [ ] T020 Define Service↔Project portfolio query/manual/hybrid placement model, sanitizers, and migration.
-- [ ] T021 Implement Service portfolio picker/order/exclusions/grid placement UI and tests.
+- [x] T020 Define Service↔Project portfolio query/manual/hybrid placement model, sanitizers, and migration.
+- [x] T021 Implement Service portfolio picker/order/exclusions/grid placement UI and tests.
 - [ ] T022 Validate Client/Project admin workflows, authorization, sanitization, RTL, and public regression.
 
 ## Phase 5 — Service templates and visual sections [US4]
