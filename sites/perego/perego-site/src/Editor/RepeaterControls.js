@@ -7,7 +7,7 @@ import { duplicateItem, moveItem, removeItem } from './collection';
  * Accessible repeater actions shared by visual Perego blocks. Native keyboard controls are offered
  * alongside future pointer sorting so ordering is never mouse-only.
  */
-export function RepeaterControls( { items, index, onChange, createCopy, itemLabel } ) {
+export function RepeaterControls( { items, index, onChange, createCopy, itemLabel, canDuplicate = true, canRemove = true } ) {
 	const label = itemLabel || __( 'item', 'perego-site' );
 	const move = ( offset ) => onChange( moveItem( items, index, index + offset ) );
 
@@ -24,12 +24,12 @@ export function RepeaterControls( { items, index, onChange, createCopy, itemLabe
 				</Button>
 			</FlexItem>
 			<FlexItem>
-				<Button size="small" variant="tertiary" onClick={ () => onChange( duplicateItem( items, index, createCopy ) ) }>
+				<Button size="small" variant="tertiary" onClick={ () => onChange( duplicateItem( items, index, createCopy ) ) } disabled={ ! canDuplicate }>
 					{ __( 'Duplicate', 'perego-site' ) }
 				</Button>
 			</FlexItem>
 			<FlexItem>
-				<Button size="small" isDestructive variant="tertiary" onClick={ () => onChange( removeItem( items, index ) ) }>
+				<Button size="small" isDestructive variant="tertiary" onClick={ () => onChange( removeItem( items, index ) ) } disabled={ ! canRemove }>
 					{ sprintf( __( 'Remove %s', 'perego-site' ), label ) }
 				</Button>
 			</FlexItem>

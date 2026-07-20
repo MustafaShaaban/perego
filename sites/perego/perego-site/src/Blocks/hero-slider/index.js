@@ -110,7 +110,7 @@ function Edit( { attributes, setAttributes } ) {
 				) ) }
 			</div>
 			{ slides ? <ComposedSlideFields slide={ slides[ activeSlide ] } onChange={ ( slide ) => updateSlides( slides.map( ( current, index ) => index === activeSlide ? slide : current ) ) } /> : <SlideFields slideNumber={ activeSlide + 1 } attributes={ attributes } setAttributes={ setAttributes } /> }
-			{ slides ? <RepeaterControls items={ slides } index={ activeSlide } itemLabel={ __( 'slide', 'perego-site' ) } createCopy={ ( slide ) => ( { ...slide } ) } onChange={ ( next ) => { updateSlides( next ); setActiveSlide( Math.min( activeSlide, next.length - 1 ) ); } } /> : null }
+			{ slides ? <RepeaterControls items={ slides } index={ activeSlide } itemLabel={ __( 'slide', 'perego-site' ) } createCopy={ ( slide ) => ( { ...slide } ) } canDuplicate={ slides.length < MAX_SLIDES } canRemove={ slides.length > 1 } onChange={ ( next ) => { updateSlides( next.slice( 0, MAX_SLIDES ) ); setActiveSlide( Math.min( activeSlide, next.length - 1 ) ); } } /> : null }
 			<Button variant="secondary" disabled={ ( slides || initialSlides( attributes ) ).length >= MAX_SLIDES } onClick={ () => { const next = [ ...( slides || initialSlides( attributes ) ), { titleEn: '', textEn: '', titleAr: '', textAr: '' } ]; updateSlides( next ); setActiveSlide( next.length - 1 ); } }>{ __( 'Add slide', 'perego-site' ) }</Button>
 			<fieldset className="perego-hero-slider__cta-group">
 				<legend>{ __( 'CTA button', 'perego-site' ) }</legend>
