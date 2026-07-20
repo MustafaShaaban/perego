@@ -670,15 +670,15 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	margin-inline-end: 16px;
 }
 
-/* Centre the hamburger's top/bottom bars. The reference gives all three bars `left:12px`, but the
- * middle bar is the `span` (positioned against the 46px button) while the top/bottom bars are its
- * `::before`/`::after` — and since the span is itself `position:absolute`, their `left:12px` is
- * measured against the 22px-wide span, not the button. That stacks to 24px and shoves them onto the
- * button's inline-end border (the owner-reported "touching the right edge"). Re-anchor them to the
- * span's own start so all three bars align, centred with equal clearance. */
+/* Keep the reference hamburger's staggered look (middle bar longest/left, top+bottom bars shorter and
+ * offset right) but pull the top/bottom bars off the button's inline-end border. Those bars are the
+ * span's `::before`/`::after`; the span is `position:absolute`, so their `left` is measured against the
+ * 22px span, not the 46px button. The reference `left:12px` stacks to button-x 24–46 → flush on the
+ * right edge (the owner-reported touch). `left:6px` keeps the rightward stagger (button-x 18–40) with a
+ * ~6px gap from the border; the middle `span` stays put at button-x 12–34. */
 .nav-toggle span::before,
 .nav-toggle span::after {
-	left: 0;
+	left: 6px;
 }
 
 /* The reference's dropdown open rules (`:hover`/`:focus-within`/`.is-open`) aren't media-scoped, so on
