@@ -45,7 +45,9 @@
   captured all 12 EN/AR desktop states at 1440 and all 12 EN/AR mobile states at 375, each with zero horizontal
   overflow. The Services archive plus four Service singles were then captured at both widths: 18 records captured
   with zero overflow; the two Arabic Services-archive records are explicitly unavailable because no `hreflang=ar`
-  alternate is published. Diffs are unreviewed evidence only; this is not yet the full matrix or visual acceptance.
+  alternate is published. Work, Project (including gallery), Journal, Journal single, and Contact then completed
+  all 24 EN/AR desktop/mobile records with zero overflow and no unavailable routes. Diffs are unreviewed evidence
+  only; this is not yet the full matrix or visual acceptance.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
