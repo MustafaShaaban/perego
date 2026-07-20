@@ -32,6 +32,8 @@
 - **Service template increment:** What We Do and Process remain native editable block content in each Service record;
   the Selected Work block now previews its real renderer in the template editor, and its per-Service portfolio
   selection is read from the Service record (including the existing English fallback for translations).
+- **About increment:** the locked decorative About background now uses its real renderer in the block editor while
+  the adjacent native blocks continue to provide the direct visual editing surface for the section content.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
