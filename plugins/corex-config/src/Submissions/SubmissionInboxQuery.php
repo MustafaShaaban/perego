@@ -24,6 +24,7 @@ final readonly class SubmissionInboxQuery
     private function __construct(
         public string $search,
         public int $flowId,
+        public string $formSlug,
         public string $status,
         public string $owner,
         public string $dateFrom,
@@ -53,9 +54,16 @@ final readonly class SubmissionInboxQuery
             throw new InvalidArgumentException('The submission date range is invalid.');
         }
 
+        // The `flow` filter carries either a numeric DB flow id or `slug:<form-slug>` for a
+        // code-registered form (which has no flow id and is matched on `corex_form_slug` instead).
+        $flowInput = trim((string) ($input['flow'] ?? ''));
+        $formSlug  = str_starts_with($flowInput, 'slug:') ? sanitize_key(substr($flowInput, 5)) : '';
+        $flowId    = $formSlug === '' ? max(0, (int) $flowInput) : 0;
+
         return new self(
             search: trim((string) ($input['search'] ?? '')),
-            flowId: max(0, (int) ($input['flow'] ?? 0)),
+            flowId: $flowId,
+            formSlug: $formSlug,
             status: $status,
             owner: $owner,
             dateFrom: $dateFrom,

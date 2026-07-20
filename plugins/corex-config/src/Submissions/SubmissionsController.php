@@ -253,12 +253,26 @@ final readonly class SubmissionsController
 
         return [
             'search' => sanitize_text_field((string) ($value['search'] ?? '')),
-            'flow' => absint($value['flow'] ?? 0),
+            'flow' => $this->flowParam($value['flow'] ?? 0),
             'status' => sanitize_key((string) ($value['status'] ?? '')),
             'owner' => sanitize_text_field((string) ($value['owner'] ?? '')),
             'date_from' => sanitize_text_field((string) ($value['date_from'] ?? '')),
             'date_to' => sanitize_text_field((string) ($value['date_to'] ?? '')),
         ];
+    }
+
+    /**
+     * The `flow` filter is either a numeric DB flow id or `slug:<form-slug>` for a code-registered
+     * form. Preserve the slug form (a plain absint would drop it to 0) so filtered export honours a
+     * code-form selection, exactly as the inbox listing does.
+     */
+    private function flowParam(mixed $value): string
+    {
+        $value = trim((string) $value);
+
+        return str_starts_with($value, 'slug:')
+            ? 'slug:' . sanitize_key(substr($value, 5))
+            : (string) absint($value);
     }
 
     /** @return array<string,mixed> */

@@ -401,6 +401,10 @@ final class WpSubmissionsReader implements SubmissionsReader, SubmissionWorkflow
         }
         if ($query->flowId > 0) {
             $clauses[] = ['key' => 'corex_flow_id', 'value' => $query->flowId, 'compare' => '=', 'type' => 'NUMERIC'];
+        } elseif ($query->formSlug !== '') {
+            // Code-registered forms store `corex_form_slug` and carry no flow id (mirrors the slug
+            // clause the data-explorer path already uses in args()).
+            $clauses[] = ['key' => 'corex_form_slug', 'value' => $query->formSlug, 'compare' => '='];
         }
         if ($query->status !== '') {
             $clauses[] = $this->statusClause($query->status);
