@@ -281,6 +281,14 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	grid-column: 1 / -1;
 }
 
+/* v0.34.0's base form CSS is a 12-column grid (`--half` = `grid-column: span 6`); this contact form is
+ * an explicit 2-column grid, so remap `--half` to a single track. Restores the handoff's two-up rows
+ * (name|email, phone|company, budget|subject); message + services stay full-width via the :not(--half)
+ * rule above, and the ≤760px rule below already collapses everything to one column. */
+.contact-form-wrap .corex-form__field--half {
+	grid-column: span 1;
+}
+
 .contact-form-wrap [data-corex-field="services"] {
 	position: absolute;
 	inline-size: 1px;
