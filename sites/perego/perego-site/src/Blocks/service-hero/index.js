@@ -1,18 +1,28 @@
 /**
- * Perego service-hero block — editor registration. Server-rendered (save returns null); the
- * front-end markup (eyebrow + current-service H1 + shared service tabs) comes from
- * ServiceHeroRenderer, driven by the queried service and ServiceContent.
+ * Service Hero editor: native Service fields remain the source of copy; this canvas renders the
+ * approved front-end component so editors can verify the H1, tabs, and background in context.
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { __ } from '@wordpress/i18n';
+import { useBlockProps } from '@wordpress/block-editor';
+import ServerSideRender from '@wordpress/server-side-render';
 import metadata from './block.json';
 import './style.scss';
 
+function Edit( { attributes } ) {
+	const blockProps = useBlockProps( { className: 'perego-service-hero__editor' } );
+
+	return (
+		<div { ...blockProps } onClick={ ( event ) => {
+			if ( event.target.closest( 'a, button' ) ) {
+				event.preventDefault();
+			}
+		} }>
+			<ServerSideRender block={ metadata.name } attributes={ attributes } />
+		</div>
+	);
+}
+
 registerBlockType( metadata.name, {
-	edit: () =>
-		__(
-			'Service hero — eyebrow, service name (H1), and the four-service tabs. Rendered by ServiceHeroRenderer.',
-			'perego-site'
-		),
+	edit: Edit,
 	save: () => null,
 } );

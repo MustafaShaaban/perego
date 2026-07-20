@@ -27,6 +27,8 @@
   (with EN fallback for translated records), and the native Service editor exposes a labelled picker. Grid-slot
   placement is represented by the labelled selected order (positions map to fixed `m1` through `m15` tiles);
   baseline validation remains open.
+- **Service Hero increment:** the prior placeholder in the Service Hero block editor is now the real server-rendered
+  component. Native Service titles and teaser labels remain its single source of truth.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
