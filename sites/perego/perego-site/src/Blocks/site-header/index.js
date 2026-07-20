@@ -9,10 +9,13 @@
  * null); the front-end sticky-scroll/hamburger/dropdown interactivity is unchanged, driven by view.js.
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { InspectorControls, MediaUpload, MediaUploadCheck, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
 import { Button, PanelBody, TextControl, ToggleControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import { MediaField } from '../../Editor/MediaField';
+import { RepeaterControls } from '../../Editor/RepeaterControls';
 import metadata from './block.json';
 import './style.scss';
 
@@ -69,14 +72,6 @@ function NavItemEditor( { label, items, onChange } ) {
 		const next = items.map( ( item, i ) => ( i === index ? { ...item, ...patch } : item ) );
 		onChange( next );
 	};
-	const remove = ( index ) => onChange( items.filter( ( _, i ) => i !== index ) );
-	const move = ( index, delta ) => {
-		const target = index + delta;
-		if ( target < 0 || target >= items.length ) return;
-		const next = [ ...items ];
-		[ next[ index ], next[ target ] ] = [ next[ target ], next[ index ] ];
-		onChange( next );
-	};
 	const add = () => onChange( [ ...items, { label: __( 'New link', 'perego-site' ), href: '/' } ] );
 	const updateChild = ( itemIndex, childIndex, patch ) => {
 		const children = items[ itemIndex ].children.map( ( child, i ) => ( i === childIndex ? { ...child, ...patch } : child ) );
@@ -99,11 +94,9 @@ function NavItemEditor( { label, items, onChange } ) {
 						onChange={ ( value ) => update( index, { label: value } ) } />
 					<TextControl label={ __( 'Link', 'perego-site' ) } value={ item.href }
 						onChange={ ( value ) => update( index, { href: value } ) } />
-					<div className="perego-site-header__nav-item-actions">
-						<Button size="small" onClick={ () => move( index, -1 ) } disabled={ index === 0 }>{ __( 'Move up', 'perego-site' ) }</Button>
-						<Button size="small" onClick={ () => move( index, 1 ) } disabled={ index === items.length - 1 }>{ __( 'Move down', 'perego-site' ) }</Button>
-						<Button size="small" isDestructive onClick={ () => remove( index ) }>{ __( 'Remove', 'perego-site' ) }</Button>
-					</div>
+					<RepeaterControls items={ items } index={ index } onChange={ onChange }
+						itemLabel={ __( 'navigation link', 'perego-site' ) }
+						createCopy={ ( item ) => ( { ...item, children: item.children?.map( ( child ) => ( { ...child } ) ) } ) } />
 					{ item.children && (
 						<div className="perego-site-header__nav-children">
 							{ item.children.map( ( child, childIndex ) => (
@@ -129,6 +122,10 @@ function Edit( { attributes, setAttributes } ) {
 	const blockProps = useBlockProps( { className: 'perego-site-header__editor' } );
 	const [ navEn, setNavEnState ] = useState( () => parseNavItems( attributes.navItemsEn, SEED_EN ) );
 	const [ navAr, setNavArState ] = useState( () => parseNavItems( attributes.navItemsAr, SEED_AR ) );
+	const logoMedia = useSelect(
+		( select ) => attributes.logoId ? select( 'core' ).getMedia( attributes.logoId ) : null,
+		[ attributes.logoId ]
+	);
 
 	const setNavEn = ( items ) => {
 		setNavEnState( items );
@@ -143,18 +140,10 @@ function Edit( { attributes, setAttributes } ) {
 		<div { ...blockProps }>
 			<InspectorControls>
 				<PanelBody title={ __( 'Logo', 'perego-site' ) }>
-					<MediaUploadCheck>
-						<MediaUpload
-							onSelect={ ( media ) => setAttributes( { logoId: media.id } ) }
-							allowedTypes={ [ 'image' ] }
-							value={ attributes.logoId }
-							render={ ( { open } ) => (
-								<Button variant="secondary" onClick={ open }>
-									{ attributes.logoId ? __( 'Change logo', 'perego-site' ) : __( 'Select logo', 'perego-site' ) }
-								</Button>
-							) }
-						/>
-					</MediaUploadCheck>
+					<MediaField value={ attributes.logoId } media={ logoMedia }
+						label={ __( 'Header logo', 'perego-site' ) }
+						onSelect={ ( media ) => setAttributes( { logoId: media.id } ) }
+						onRemove={ () => setAttributes( { logoId: 0 } ) } />
 				</PanelBody>
 				<PanelBody title={ __( 'Header behavior', 'perego-site' ) }>
 					<ToggleControl
