@@ -2,6 +2,21 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-20) — Spec 021: FSE visual editing and backend UX
+
+- **Branch:** `feature/021-fse-visual-editing-ux` (stacked on the active visual-audit work).
+- **Completed slices:** shared editor media/repeater helpers; server-rendered Header and Footer Site Editor
+  previews; hierarchical Client Type and Project Service taxonomies; polished Client media editor with
+  native media selection, visible ordering, hosted/uploaded video actions, and preserved existing records.
+- **Current Header slice:** the Services dropdown now remains legacy/manual by default (no public output
+  migration), with an Inspector control for automatic published-Service sourcing, manual selection and order,
+  automatic exclusions, and localized Service URL resolution through Polylang. Renderer tests cover legacy,
+  automatic, manual/excluded, and Arabic translation paths.
+- **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
+  build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
+- **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
+  composers without changing public structure or styling.
+
 ## RESUME HERE (2026-07-20) — Spec 020 round 15: work filters/pager + lightbox nav (live-verified)
 
 - **Branch:** `feature/020-home-visual-audit`. Owner re-tested round 14: work filters still didn't filter,

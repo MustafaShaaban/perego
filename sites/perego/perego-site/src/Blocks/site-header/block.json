@@ -14,7 +14,10 @@
 		"navItemsEn": { "type": "string", "default": "" },
 		"navItemsAr": { "type": "string", "default": "" },
 		"logoId": { "type": "number", "default": 0 },
-		"isSticky": { "type": "boolean", "default": true }
+		"isSticky": { "type": "boolean", "default": true },
+		"servicesMenuMode": { "type": "string", "default": "manual" },
+		"servicesMenuOrder": { "type": "array", "default": [] },
+		"servicesMenuExcludeIds": { "type": "array", "default": [] }
 	},
 	"supports": {
 		"html": false

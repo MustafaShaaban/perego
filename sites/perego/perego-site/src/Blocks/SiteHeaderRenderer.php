@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Services\LanguageService;
+use PeregoSite\PostTypes\ServicePostType;
 
 /**
  * Server-renders the perego/site-header block: logo, primary nav (with the Services dropdown),
@@ -77,13 +78,137 @@ final class SiteHeaderRenderer
     {
         $suffix = $locale === 'ar' ? 'Ar' : 'En';
         $raw = (string) ($attributes['navItems' . $suffix] ?? '');
-        if ($raw === '') {
-            return $this->seedNavItems();
+        $decoded = $raw !== '' ? json_decode($raw, true) : null;
+        $items = is_array($decoded) && $decoded !== [] ? $decoded : $this->seedNavItems();
+
+        return $this->applyServicesMenu($items, $attributes, $locale);
+    }
+
+    /**
+     * Replaces only the Services dropdown when the editor opts into a Service-post-backed menu.
+     * Manual mode with no selected records deliberately retains the proven legacy dropdown.
+     *
+     * @param list<array{label:string,href:string,children?:list<array{label:string,href:string}>}> $items
+     * @param array<string,mixed> $attributes
+     * @return list<array{label:string,href:string,children?:list<array{label:string,href:string}>}>
+     */
+    private function applyServicesMenu(array $items, array $attributes, string $locale): array
+    {
+        $mode = (string) ($attributes['servicesMenuMode'] ?? 'manual');
+        if (! in_array($mode, ['automatic', 'manual'], true)) {
+            return $items;
         }
 
-        $decoded = json_decode($raw, true);
+        $configuredIds = $this->positiveIds($attributes['servicesMenuOrder'] ?? []);
+        $excludedIds = $this->positiveIds($attributes['servicesMenuExcludeIds'] ?? []);
+        if ($mode === 'manual' && $configuredIds === []) {
+            return $items;
+        }
 
-        return is_array($decoded) && $decoded !== [] ? $decoded : $this->seedNavItems();
+        $services = $mode === 'automatic'
+            ? $this->publishedServices($locale)
+            : $this->selectedServices($configuredIds, $locale);
+        $services = array_values(array_filter(
+            $services,
+            static fn (array $service): bool => array_intersect($service['ids'], $excludedIds) === []
+        ));
+        if ($services === []) {
+            return $items;
+        }
+
+        foreach ($items as $index => $item) {
+            if (($item['href'] ?? '') !== '/#services') {
+                continue;
+            }
+            $items[$index]['children'] = array_map(
+                static fn (array $service): array => ['label' => $service['label'], 'href' => $service['href'], 'absoluteUrl' => $service['absoluteUrl']],
+                $services
+            );
+            break;
+        }
+
+        return $items;
+    }
+
+    /** @param mixed $ids @return list<int> */
+    private function positiveIds($ids): array
+    {
+        if (! is_array($ids)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(static fn ($id): int => abs((int) $id), $ids))));
+    }
+
+    /** @return list<array{sourceId:int,ids:list<int>,label:string,href:string,absoluteUrl:string}> */
+    private function publishedServices(string $locale): array
+    {
+        if (! function_exists('get_posts')) {
+            return [];
+        }
+
+        $posts = get_posts([
+            'post_type' => ServicePostType::POST_TYPE,
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
+            'suppress_filters' => false,
+            'lang' => $locale,
+        ]);
+
+        return $this->servicesFromPosts(is_array($posts) ? $posts : []);
+    }
+
+    /** @param list<int> $ids @return list<array{sourceId:int,ids:list<int>,label:string,href:string,absoluteUrl:string}> */
+    private function selectedServices(array $ids, string $locale): array
+    {
+        if (! function_exists('get_post')) {
+            return [];
+        }
+
+        $posts = [];
+        $sourceIdsByPostId = [];
+        foreach ($ids as $sourceId) {
+            $localizedId = function_exists('pll_get_post') ? (int) pll_get_post($sourceId, $locale) : $sourceId;
+            $post = get_post($localizedId ?: $sourceId);
+            if ($post instanceof \WP_Post && $post->post_type === ServicePostType::POST_TYPE && $post->post_status === 'publish') {
+                $posts[] = $post;
+                $sourceIdsByPostId[$post->ID] = $sourceId;
+            }
+        }
+
+        return $this->servicesFromPosts($posts, $sourceIdsByPostId);
+    }
+
+    /**
+     * @param list<\WP_Post> $posts
+     * @param array<int,int> $sourceIdsByPostId
+     * @return list<array{sourceId:int,ids:list<int>,label:string,href:string,absoluteUrl:string}>
+     */
+    private function servicesFromPosts(array $posts, array $sourceIdsByPostId = []): array
+    {
+        $services = [];
+        foreach ($posts as $post) {
+            if (! $post instanceof \WP_Post) {
+                continue;
+            }
+            $absoluteUrl = function_exists('get_permalink') ? (string) get_permalink($post) : '';
+            if ($absoluteUrl === '') {
+                continue;
+            }
+            $path = (string) parse_url($absoluteUrl, PHP_URL_PATH);
+            $englishId = function_exists('pll_get_post') ? (int) pll_get_post($post->ID, 'en') : 0;
+            $sourceId = $sourceIdsByPostId[$post->ID] ?? $post->ID;
+            $services[] = [
+                'sourceId' => $sourceId,
+                'ids' => array_values(array_unique(array_filter([$post->ID, $englishId, $sourceId]))),
+                'label' => (string) get_the_title($post),
+                'href' => $path !== '' ? $path : '/',
+                'absoluteUrl' => $absoluteUrl,
+            ];
+        }
+
+        return $services;
     }
 
     /** @param array<string,string> $attributes */
@@ -160,7 +285,9 @@ final class SiteHeaderRenderer
             if ($hasChildren) {
                 $html .= '<ul class="dropdown">';
                 foreach ($item['children'] as $child) {
-                    $html .= '<li><a href="' . esc_url($driver->localizedUrl($child['href'])) . '">'
+                    $childUrl = (string) ($child['absoluteUrl'] ?? '');
+                    $childUrl = $childUrl !== '' ? $childUrl : $driver->localizedUrl($child['href']);
+                    $html .= '<li><a href="' . esc_url($childUrl) . '">'
                         . esc_html($child['label']) . '</a></li>';
                 }
                 $html .= '</ul>';

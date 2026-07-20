@@ -9,6 +9,7 @@ declare(strict_types=1);
 use Brain\Monkey\Functions;
 use PeregoSite\Blocks\SiteHeaderRenderer;
 use PeregoSite\Services\LanguageService;
+use PeregoSite\PostTypes\ServicePostType;
 
 beforeEach(function () {
     Functions\when('__')->returnArg();
@@ -193,4 +194,71 @@ it('falls back to the hardcoded seed nav when the attribute is empty or invalid 
     expect(renderHeader('/', ['navItemsEn' => '']))->toContain('>Home<')
         ->and(renderHeader('/', ['navItemsEn' => 'not-json']))->toContain('>Home<')
         ->and(renderHeader('/', ['navItemsEn' => '[]']))->toContain('>Home<');
+});
+
+it('uses published Service posts for the dropdown only when automatic mode is selected', function () {
+    $first = new WP_Post();
+    $first->ID = 31;
+    $first->post_type = ServicePostType::POST_TYPE;
+    $first->post_status = 'publish';
+    $second = new WP_Post();
+    $second->ID = 32;
+    $second->post_type = ServicePostType::POST_TYPE;
+    $second->post_status = 'publish';
+
+    Functions\when('get_posts')->alias(fn (array $query) => $query['lang'] === 'en' ? [$first, $second] : []);
+    Functions\when('get_permalink')->alias(fn (WP_Post $post) => 'https://perego.local/services/' . $post->ID);
+    Functions\when('get_the_title')->alias(fn (WP_Post $post) => 'Service ' . $post->ID);
+
+    $html = renderHeader('/', ['servicesMenuMode' => 'automatic']);
+
+    expect($html)->toContain('>Service 31<')
+        ->and($html)->toContain('href="https://perego.local/services/31"')
+        ->and($html)->not->toContain('>Video Editing<');
+});
+
+it('keeps the legacy Services links in manual mode until an editor chooses Services', function () {
+    expect(renderHeader('/', ['servicesMenuMode' => 'manual', 'servicesMenuOrder' => []]))
+        ->toContain('/services/video-editing');
+});
+
+it('renders manually ordered Services and excludes configured source records', function () {
+    $first = new WP_Post();
+    $first->ID = 41;
+    $first->post_type = ServicePostType::POST_TYPE;
+    $first->post_status = 'publish';
+    $second = new WP_Post();
+    $second->ID = 42;
+    $second->post_type = ServicePostType::POST_TYPE;
+    $second->post_status = 'publish';
+
+    Functions\when('get_post')->alias(fn (int $id) => $id === 41 ? $first : ($id === 42 ? $second : null));
+    Functions\when('get_permalink')->alias(fn (WP_Post $post) => 'https://perego.local/services/' . $post->ID);
+    Functions\when('get_the_title')->alias(fn (WP_Post $post) => 'Service ' . $post->ID);
+
+    $html = renderHeader('/', [
+        'servicesMenuMode' => 'manual',
+        'servicesMenuOrder' => [42, 41],
+        'servicesMenuExcludeIds' => [41],
+    ]);
+
+    expect($html)->toContain('>Service 42<')
+        ->and($html)->not->toContain('>Service 41<');
+});
+
+it('resolves a manually selected Service to the current Polylang translation', function () {
+    $arabic = new WP_Post();
+    $arabic->ID = 72;
+    $arabic->post_type = ServicePostType::POST_TYPE;
+    $arabic->post_status = 'publish';
+
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 71 && $locale === 'ar' ? 72 : 0);
+    Functions\when('get_post')->alias(fn (int $id) => $id === 72 ? $arabic : null);
+    Functions\when('get_permalink')->alias(fn (WP_Post $post) => 'https://perego.local/ar/services/video-editing-2');
+    Functions\when('get_the_title')->alias(fn (WP_Post $post) => 'Arabic service');
+
+    $html = renderHeader('/ar/', ['servicesMenuMode' => 'manual', 'servicesMenuOrder' => [71]], 'ar');
+
+    expect($html)->toContain('>Arabic service<')
+        ->and($html)->toContain('href="https://perego.local/ar/services/video-editing-2"');
 });

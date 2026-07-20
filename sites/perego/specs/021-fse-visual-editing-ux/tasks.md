@@ -12,7 +12,7 @@
 
 - [ ] T006 Write Header and Footer editor-preview/render contract tests.
 - [ ] T007 Refactor `src/Blocks/site-header/` to a real visual, editor-safe preview and structured controls.
-- [ ] T008 Implement automatic/manual/excluded/reordered localized Services-menu configuration and migration.
+- [x] T008 Implement automatic/manual/excluded/reordered localized Services-menu configuration and migration.
 - [ ] T009 Refactor `src/Blocks/site-footer/` and flat footer to visual locked previews with labelled supported controls.
 - [ ] T010 Compare all header/footer public states and editor workflows to baseline.
 

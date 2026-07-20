@@ -1,5 +1,17 @@
 # Perego — Decision Log
 
+## 2026-07-20 — Spec 021: Services dropdown is opt-in dynamic, not an implicit visual migration
+
+The Header keeps its established Services links while `servicesMenuMode` is `manual` with no selected
+records. This protects the frozen public baseline and lets existing template-part instances render exactly as
+before. Editors can explicitly select `automatic` to show published Service posts, or choose manual Service
+records and arrange their order; automatic mode permits exclusions.
+
+Saved Service IDs are resolved through `pll_get_post()` for the current locale, and the renderer uses the
+localized post permalink directly. That avoids guessing translated custom-post slugs and keeps a shared FSE
+template part language-safe. The renderer also considers both the selected and translated IDs for exclusion,
+so an editor can configure the menu from either language.
+
 ## 2026-07-20 — Spec 020 round 15: owner re-report — filters/pager still dead, lightbox nav position
 
 Round 14 fixed the reply-chip's `[hidden]`-override bug but missed the **identical bug on the work grid**, and
