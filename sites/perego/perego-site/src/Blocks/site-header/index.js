@@ -14,6 +14,7 @@ import { Button, PanelBody, TextControl, ToggleControl } from '@wordpress/compon
 import { useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
 import { MediaField } from '../../Editor/MediaField';
 import { RepeaterControls } from '../../Editor/RepeaterControls';
 import metadata from './block.json';
@@ -152,12 +153,25 @@ function Edit( { attributes, setAttributes } ) {
 						onChange={ ( isSticky ) => setAttributes( { isSticky } ) }
 					/>
 				</PanelBody>
+				<PanelBody title={ __( 'Navigation — English', 'perego-site' ) } initialOpen={ false }>
+					<NavItemEditor label={ __( 'English navigation', 'perego-site' ) } items={ navEn } onChange={ setNavEn } />
+				</PanelBody>
+				<PanelBody title={ __( 'Navigation — Arabic', 'perego-site' ) } initialOpen={ false }>
+					<NavItemEditor label={ __( 'Arabic navigation', 'perego-site' ) } items={ navAr } onChange={ setNavAr } />
+				</PanelBody>
 			</InspectorControls>
 			<p className="perego-site-header__editor-note">
 				{ __( 'Site header — logo, sticky behavior, and nav links (below) are editable. Preview on the live site after saving.', 'perego-site' ) }
 			</p>
 			<NavItemEditor label={ __( 'Navigation — English', 'perego-site' ) } items={ navEn } onChange={ setNavEn } />
 			<NavItemEditor label={ __( 'Navigation — Arabic', 'perego-site' ) } items={ navAr } onChange={ setNavAr } />
+			<div className="perego-site-header__preview" onClick={ ( event ) => {
+				if ( event.target.closest( 'a' ) ) {
+					event.preventDefault();
+				}
+			} }>
+				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+			</div>
 		</div>
 	);
 }
