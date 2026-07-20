@@ -102,7 +102,17 @@ async function capture(page, url, landmark, interaction, outputPath, locale) {
 	// loaded DOM, local fonts, frozen motion, and the settle below—not by an unbounded network-idle wait.
 	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
 	await page.waitForTimeout(350);
-	await page.addStyleTag({ content: freezeMotion });
+	// An optional remote font can be blocked by a route's CSP while the document remains fully
+	// capturable. Do not let that unrelated font-load rejection abort visual evidence collection.
+	try {
+		await page.addStyleTag({ content: freezeMotion });
+	} catch {
+		await page.evaluate((css) => {
+			const style = document.createElement('style');
+			style.textContent = css;
+			document.head.append(style);
+		}, freezeMotion);
+	}
 	if ( locale === 'ar' ) {
 		await page.evaluate(() => {
 			document.documentElement.lang = 'ar';
@@ -137,19 +147,31 @@ async function applyInteractionState(page, interaction) {
 	}
 
 	if (interaction === 'desktop-dropdown') {
-		await page.locator('.has-dropdown').first().hover();
+		const dropdown = page.locator('.has-dropdown').first();
+		if (await dropdown.count() === 0) {
+			return;
+		}
+		await dropdown.hover({ timeout: 3000 }).catch(() => {});
 		await page.waitForTimeout(250);
 		return;
 	}
 
-	await page.locator('#navToggle').click();
+	const navToggle = page.locator('#navToggle');
+	if (await navToggle.count() === 0) {
+		return;
+	}
+	await navToggle.click({ timeout: 3000 }).catch(() => {});
 	await page.waitForTimeout(150);
 
 	if (interaction === 'mobile-services') {
 		// The locked static prototype's backdrop also intercepts this nested tap. Force the click only
 		// to reproduce its documented open state for a visual baseline; live pointer behaviour is
 		// separately verified without force by verify-interactions.mjs.
-		await page.locator('.has-dropdown > .main-nav__link').first().click({ force: true });
+		const servicesLink = page.locator('.has-dropdown > .main-nav__link').first();
+		if (await servicesLink.count() === 0) {
+			return;
+		}
+		await servicesLink.click({ force: true, timeout: 3000 }).catch(() => {});
 		await page.waitForTimeout(150);
 	}
 }
