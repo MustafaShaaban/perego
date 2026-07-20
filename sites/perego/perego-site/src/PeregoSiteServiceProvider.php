@@ -126,6 +126,21 @@ final class PeregoSiteServiceProvider
             $registry->register(new \PeregoSite\Forms\QuickMessageForm());
             $registry->register(new \PeregoSite\Forms\ProjectBriefForm());
 
+            // Surface Perego's code-registered forms in the CoreX admin Submissions/Data form filter.
+            // These are FormRegistry forms (not DB flows), so they carry no flow id; `id: 0` tells the
+            // filter to match on `corex_form_slug`. Depends on the `corex_submission_filter_options`
+            // hook (CoreX >= the submission-filter enhancement); a no-op on frameworks without it.
+            add_filter('corex_submission_filter_options', static function (array $options) use ($container): array {
+                if (! $container->has(\Corex\Forms\FormRegistry::class)) {
+                    return $options;
+                }
+                foreach ($container->make(\Corex\Forms\FormRegistry::class)->all() as $form) {
+                    $options[] = ['id' => 0, 'name' => $form->label(), 'slug' => $form->slug];
+                }
+
+                return $options;
+            });
+
             self::registerFormEmail($container);
         }, 20);
     }
