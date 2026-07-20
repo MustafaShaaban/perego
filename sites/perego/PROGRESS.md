@@ -43,7 +43,9 @@
   diff completed with no horizontal overflow. The runner now also tolerates CSP-blocked optional remote fonts and
   absent optional interaction selectors; the EN 1440 dropdown state completes. The first bounded homepage pass
   captured all 12 EN/AR desktop states at 1440 and all 12 EN/AR mobile states at 375, each with zero horizontal
-  overflow. Diffs are unreviewed evidence only; this is not yet the full matrix or visual acceptance.
+  overflow. The Services archive plus four Service singles were then captured at both widths: 18 records captured
+  with zero overflow; the two Arabic Services-archive records are explicitly unavailable because no `hreflang=ar`
+  alternate is published. Diffs are unreviewed evidence only; this is not yet the full matrix or visual acceptance.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
