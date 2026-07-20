@@ -53,6 +53,22 @@ final class FlowFilterOptions
                 'slug' => $flow->slug,
             ], $flows->all());
 
+            /**
+             * Let sites and add-ons contribute filter options for forms that aren't DB flows — e.g.
+             * code-registered FormRegistry forms. Appended entries use the same shape; `id: 0` signals
+             * "no DB flow — match by `corex_form_slug`", which the inbox slug fallback and the data
+             * explorer (already slug-keyed) both honour. Injected options are untrusted, so they are
+             * re-normalized to the documented shape before use.
+             *
+             * @param list<array{id:int,name:string,slug:string}> $options
+             */
+            $filtered = array_filter((array) apply_filters('corex_submission_filter_options', $options), 'is_array');
+            $options = array_map(static fn (array $option): array => [
+                'id' => (int) ($option['id'] ?? 0),
+                'name' => (string) ($option['name'] ?? ''),
+                'slug' => (string) ($option['slug'] ?? ''),
+            ], array_values($filtered));
+
             usort($options, static fn (array $a, array $b): int => strcasecmp($a['name'], $b['name']));
 
             return array_values($options);
