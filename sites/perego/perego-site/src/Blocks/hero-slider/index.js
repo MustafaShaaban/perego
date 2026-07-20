@@ -15,6 +15,7 @@ import { Button } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
+import { RepeaterControls } from '../../Editor/RepeaterControls';
 import metadata from './block.json';
 import './style.scss';
 
@@ -33,6 +34,14 @@ const SEED = {
 	},
 };
 const SEED_CTA = { en: 'Say Hello!', ar: 'قل مرحبًا!' };
+const MAX_SLIDES = 6;
+
+const initialSlides = ( attributes ) => [ 1, 2, 3 ].map( ( number ) => ( {
+	titleEn: attributes[ `slide${ number }TitleEn` ] || SEED[ number ].titleEn,
+	textEn: attributes[ `slide${ number }TextEn` ] || SEED[ number ].textEn,
+	titleAr: attributes[ `slide${ number }TitleAr` ] || SEED[ number ].titleAr,
+	textAr: attributes[ `slide${ number }TextAr` ] || SEED[ number ].textAr,
+} ) );
 
 function SlideFields( { slideNumber, attributes, setAttributes } ) {
 	const seed = SEED[ slideNumber ];
@@ -69,22 +78,40 @@ function SlideFields( { slideNumber, attributes, setAttributes } ) {
 	);
 }
 
+function ComposedSlideFields( { slide, onChange } ) {
+	return <>
+		<fieldset className="perego-hero-slider__lang" dir="ltr"><legend>{ __( 'English', 'perego-site' ) }</legend>
+			<RichText tagName="h3" className="hero__title" value={ slide.titleEn } onChange={ ( titleEn ) => onChange( { ...slide, titleEn } ) } placeholder={ __( 'Headline', 'perego-site' ) } />
+			<RichText tagName="p" className="hero__text" value={ slide.textEn } onChange={ ( textEn ) => onChange( { ...slide, textEn } ) } placeholder={ __( 'Supporting text', 'perego-site' ) } />
+		</fieldset>
+		<fieldset className="perego-hero-slider__lang" dir="rtl"><legend>{ __( 'Arabic', 'perego-site' ) }</legend>
+			<RichText tagName="h3" className="hero__title" value={ slide.titleAr } onChange={ ( titleAr ) => onChange( { ...slide, titleAr } ) } placeholder={ __( 'عنوان', 'perego-site' ) } />
+			<RichText tagName="p" className="hero__text" value={ slide.textAr } onChange={ ( textAr ) => onChange( { ...slide, textAr } ) } placeholder={ __( 'نص داعم', 'perego-site' ) } />
+		</fieldset>
+	</>;
+}
+
 function Edit( { attributes, setAttributes } ) {
 	const blockProps = useBlockProps( { className: 'perego-hero-slider__editor' } );
-	const [ activeSlide, setActiveSlide ] = useState( 1 );
+	const [ activeSlide, setActiveSlide ] = useState( 0 );
+	const slides = attributes.slides?.length ? attributes.slides : null;
+	const updateSlides = ( slides ) => setAttributes( { slides } );
+	const selectSlide = ( index ) => setActiveSlide( index );
 
 	return (
 		<div { ...blockProps }>
 			<div className="perego-hero-slider__slide-switcher" role="tablist" aria-label={ __( 'Hero slides', 'perego-site' ) }>
-				{ [ 1, 2, 3 ].map( ( number ) => (
-					<Button key={ number } variant={ activeSlide === number ? 'primary' : 'secondary' }
-						aria-selected={ activeSlide === number } role="tab"
-						onClick={ () => setActiveSlide( number ) }>
-						{ /* translators: %d: slide number (1-3) */ __( 'Slide', 'perego-site' ) } { number }
+				{ ( slides || [ 1, 2, 3 ] ).map( ( _, index ) => (
+					<Button key={ index } variant={ activeSlide === index ? 'primary' : 'secondary' }
+						aria-selected={ activeSlide === index } role="tab"
+						onClick={ () => selectSlide( index ) }>
+						{ /* translators: %d: slide number */ __( 'Slide', 'perego-site' ) } { index + 1 }
 					</Button>
 				) ) }
 			</div>
-			<SlideFields slideNumber={ activeSlide } attributes={ attributes } setAttributes={ setAttributes } />
+			{ slides ? <ComposedSlideFields slide={ slides[ activeSlide ] } onChange={ ( slide ) => updateSlides( slides.map( ( current, index ) => index === activeSlide ? slide : current ) ) } /> : <SlideFields slideNumber={ activeSlide + 1 } attributes={ attributes } setAttributes={ setAttributes } /> }
+			{ slides ? <RepeaterControls items={ slides } index={ activeSlide } itemLabel={ __( 'slide', 'perego-site' ) } createCopy={ ( slide ) => ( { ...slide } ) } onChange={ ( next ) => { updateSlides( next ); setActiveSlide( Math.min( activeSlide, next.length - 1 ) ); } } /> : null }
+			<Button variant="secondary" disabled={ ( slides || initialSlides( attributes ) ).length >= MAX_SLIDES } onClick={ () => { const next = [ ...( slides || initialSlides( attributes ) ), { titleEn: '', textEn: '', titleAr: '', textAr: '' } ]; updateSlides( next ); setActiveSlide( next.length - 1 ); } }>{ __( 'Add slide', 'perego-site' ) }</Button>
 			<fieldset className="perego-hero-slider__cta-group">
 				<legend>{ __( 'CTA button', 'perego-site' ) }</legend>
 				<RichText tagName="span" className="btn btn--accent" dir="ltr"

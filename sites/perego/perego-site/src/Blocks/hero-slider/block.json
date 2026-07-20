@@ -24,7 +24,8 @@
 		"slide2TextAr": { "type": "string", "default": "" },
 		"slide3TitleAr": { "type": "string", "default": "" },
 		"slide3TextAr": { "type": "string", "default": "" },
-		"ctaAr": { "type": "string", "default": "" }
+		"ctaAr": { "type": "string", "default": "" },
+		"slides": { "type": "array", "default": [] }
 	},
 	"supports": {
 		"html": false

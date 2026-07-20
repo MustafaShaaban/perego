@@ -74,6 +74,19 @@ it('picks the Ar-suffixed attribute on the Arabic locale, not the En one', funct
         ->and($hero['cta'])->toBe('تواصل معنا');
 });
 
+it('uses a bounded composed slide collection while retaining locale-specific content', function () {
+    $hero = (new HeroContent())->resolve(0, 'ar', ['slides' => [
+        ['titleEn' => 'English only', 'textEn' => 'English supporting copy', 'titleAr' => 'عنوان عربي', 'textAr' => 'نص عربي'],
+        ['titleEn' => 'Second', 'textEn' => 'Second text', 'titleAr' => 'ثانٍ', 'textAr' => 'النص الثاني'],
+        ['titleEn' => 'Third', 'textEn' => 'Third text', 'titleAr' => 'ثالث', 'textAr' => 'النص الثالث'],
+        ['titleEn' => 'Fourth', 'textEn' => 'Fourth text', 'titleAr' => 'رابع', 'textAr' => 'النص الرابع'],
+    ]]);
+
+    expect($hero['slides'])->toHaveCount(4)
+        ->and($hero['slides'][0]['title'])->toBe('عنوان عربي')
+        ->and($hero['slides'][3]['text'])->toBe('النص الرابع');
+});
+
 it('registers the hero meta on the page type with sanitisation and auth', function () {
     $captured = [];
     Functions\when('register_post_meta')->alias(function (string $type, string $key, array $args) use (&$captured): void {

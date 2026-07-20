@@ -58,7 +58,7 @@ final class HeroContent
     /**
      * The hero slides + CTA for the given locale: block attribute → front-page post meta → seed.
      *
-     * @param array<string,string> $attributes
+     * @param array<string,mixed> $attributes
      * @return array{slides: list<array{title: string, text: string}>, cta: string}
      */
     public function resolve(int $frontPageId, string $locale, array $attributes = []): array
@@ -84,6 +84,11 @@ final class HeroContent
             ];
         }
 
+        $composedSlides = $this->composedSlides($attributes, $locale, $slides);
+        if ($composedSlides !== []) {
+            $slides = $composedSlides;
+        }
+
         $metaCta = $hasMeta ? $this->meta($frontPageId, self::META_CTA) : '';
         $attrCta = trim((string) ($attributes["cta{$suffix}"] ?? ''));
 
@@ -100,5 +105,30 @@ final class HeroContent
         }
 
         return (string) get_post_meta($postId, $key, true);
+    }
+
+    /** @param array<string,mixed> $attributes @param list<array{title:string,text:string}> $fallback @return list<array{title:string,text:string}> */
+    private function composedSlides(array $attributes, string $locale, array $fallback): array
+    {
+        $source = $attributes['slides'] ?? null;
+        if (! is_array($source) || $source === []) {
+            return [];
+        }
+
+        $suffix = $locale === 'ar' ? 'Ar' : 'En';
+        $slides = [];
+        foreach (array_slice($source, 0, 6) as $index => $slide) {
+            if (! is_array($slide)) {
+                continue;
+            }
+            $title = trim((string) ($slide["title{$suffix}"] ?? ''));
+            $text = trim((string) ($slide["text{$suffix}"] ?? ''));
+            $fallbackSlide = $fallback[$index] ?? ['title' => '', 'text' => ''];
+            if ($title !== '' || $text !== '' || $fallbackSlide['title'] !== '' || $fallbackSlide['text'] !== '') {
+                $slides[] = ['title' => $title !== '' ? $title : $fallbackSlide['title'], 'text' => $text !== '' ? $text : $fallbackSlide['text']];
+            }
+        }
+
+        return $slides;
     }
 }
