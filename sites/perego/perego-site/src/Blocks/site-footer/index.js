@@ -12,6 +12,7 @@ import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-edi
 import { Button, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
 import metadata from './block.json';
 
 const SEED_CONTACT_CHANNELS = [
@@ -133,6 +134,13 @@ function Edit( { attributes, setAttributes } ) {
 			<p className="perego-site-footer__editor-note">
 				{ __( 'Site footer — contact channels, social links (Inspector sidebar), and the blurb (above) are editable. Preview on the live site after saving.', 'perego-site' ) }
 			</p>
+			<div className="perego-site-footer__preview" onSubmit={ ( event ) => event.preventDefault() } onClick={ ( event ) => {
+				if ( event.target.closest( 'a, button, input, textarea, select' ) ) {
+					event.preventDefault();
+				}
+			} }>
+				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+			</div>
 		</div>
 	);
 }
