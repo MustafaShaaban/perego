@@ -70,8 +70,7 @@ final class ServicesTeaserRenderer
         $html .= '</div>';
 
         $html .= '<div class="service-cards">';
-        foreach ($content->services() as $index => $service) {
-            $card = $this->resolveCard($service, $posts[$service['slug']] ?? null);
+        foreach ($this->cards($content->services(), $posts, $locale, $attributes) as $index => $card) {
             $html .= $this->renderCard($card, $index);
         }
         $html .= '</div>';
@@ -80,6 +79,100 @@ final class ServicesTeaserRenderer
         $html .= '</section>';
 
         return $html;
+    }
+
+    /**
+     * The established automatic projection remains the default. Manual mode restricts the card set to
+     * explicitly selected Services; hybrid mode places those selections first, then appends the
+     * remaining automatic cards. IDs are translated at render time for a shared EN/AR template.
+     *
+     * @param list<array{slug:string,name:string,image:string,alt:string}> $seeds
+     * @param array<string,\WP_Post> $postsBySlug
+     * @param array<string,mixed> $attributes
+     * @return list<array{slug:string,name:string,imageUrl:string,alt:string}>
+     */
+    private function cards(array $seeds, array $postsBySlug, string $locale, array $attributes): array
+    {
+        $mode = (string) ($attributes['servicesMode'] ?? 'automatic');
+        $selectedIds = $this->positiveIds($attributes['serviceOrder'] ?? []);
+        $excludedIds = $this->positiveIds($attributes['serviceExcludeIds'] ?? []);
+        $seedBySlug = [];
+        foreach ($seeds as $seed) {
+            $seedBySlug[$seed['slug']] = $seed;
+        }
+
+        $selected = $this->selectedCards($selectedIds, $seedBySlug, $locale);
+        if ($mode === 'manual') {
+            return $selected;
+        }
+
+        $automatic = [];
+        foreach ($seeds as $seed) {
+            $post = $postsBySlug[$seed['slug']] ?? null;
+            if ($this->isExcluded($post, $excludedIds)) {
+                continue;
+            }
+            $automatic[] = $this->resolveCard($seed, $post);
+        }
+        if ($mode !== 'hybrid') {
+            return $automatic;
+        }
+
+        $selectedSlugs = array_column($selected, 'slug');
+
+        return [...$selected, ...array_values(array_filter(
+            $automatic,
+            static fn (array $card): bool => ! in_array($card['slug'], $selectedSlugs, true)
+        ))];
+    }
+
+    /**
+     * @param list<int> $ids
+     * @param array<string,array{slug:string,name:string,image:string,alt:string}> $seedBySlug
+     * @return list<array{slug:string,name:string,imageUrl:string,alt:string}>
+     */
+    private function selectedCards(array $ids, array $seedBySlug, string $locale): array
+    {
+        if (! function_exists('get_post')) {
+            return [];
+        }
+
+        $cards = [];
+        foreach ($ids as $id) {
+            $localizedId = function_exists('pll_get_post') ? (int) pll_get_post($id, $locale) : $id;
+            $post = get_post($localizedId ?: $id);
+            if (! $post instanceof \WP_Post || $post->post_type !== ServicePostType::POST_TYPE || $post->post_status !== 'publish') {
+                continue;
+            }
+            $slug = (string) get_post_meta($post->ID, ServicePostType::META_SERVICE_SLUG, true);
+            if (! isset($seedBySlug[$slug])) {
+                continue;
+            }
+            $cards[] = $this->resolveCard($seedBySlug[$slug], $post);
+        }
+
+        return $cards;
+    }
+
+    /** @param mixed $ids @return list<int> */
+    private function positiveIds($ids): array
+    {
+        if (! is_array($ids)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(static fn ($id): int => abs((int) $id), $ids))));
+    }
+
+    /** @param list<int> $excludedIds */
+    private function isExcluded(?\WP_Post $post, array $excludedIds): bool
+    {
+        if ($post === null || $excludedIds === []) {
+            return false;
+        }
+        $englishId = function_exists('pll_get_post') ? (int) pll_get_post($post->ID, 'en') : 0;
+
+        return array_intersect([$post->ID, $englishId], $excludedIds) !== [];
     }
 
     /**

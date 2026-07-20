@@ -14,6 +14,9 @@
   automatic, manual/excluded, and Arabic translation paths.
 - **Hero increment:** the existing inline EN/AR slide controls now include the real server-rendered public
   Hero beneath them, so editors can check the actual background, slide dots, CTA, and markup while editing.
+- **Services composer increment:** homepage cards retain the automatic four-card projection by default;
+  editors can now select manual or hybrid modes, choose Services, reorder selected cards, exclude automatic
+  cards, and preview the actual section. Per-card overrides and visual-baseline evidence remain open.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query

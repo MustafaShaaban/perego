@@ -13,7 +13,10 @@
 		"headingEn": { "type": "string", "default": "" },
 		"seeAllEn": { "type": "string", "default": "" },
 		"headingAr": { "type": "string", "default": "" },
-		"seeAllAr": { "type": "string", "default": "" }
+		"seeAllAr": { "type": "string", "default": "" },
+		"servicesMode": { "type": "string", "default": "automatic" },
+		"serviceOrder": { "type": "array", "default": [] },
+		"serviceExcludeIds": { "type": "array", "default": [] }
 	},
 	"supports": {
 		"html": false
