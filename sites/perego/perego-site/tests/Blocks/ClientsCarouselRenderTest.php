@@ -355,3 +355,23 @@ it('queries the Arabic-language taxonomy term, not the English one, on the Arabi
     expect(substr_count($html, 'class="corp-card"'))->toBe(1)
         ->and(substr_count($html, 'class="indiv-card"'))->toBe(1);
 });
+
+it('uses the manually ordered corporate client selection when requested', function () {
+    $client = perego_client_post(91);
+    $client->post_type = ClientPostType::POST_TYPE;
+    $client->post_status = 'publish';
+
+    Functions\when('get_post')->alias(fn (int $id) => $id === 91 ? $client : null);
+    Functions\when('get_the_title')->alias(fn (WP_Post $post) => $post->ID === 91 ? 'Chosen client' : '');
+
+    $html = renderClients('en', [
+        'corporateMode' => 'manual',
+        'corporateOrder' => [91],
+        'individualMode' => 'manual',
+        'individualOrder' => [],
+    ]);
+
+    expect(substr_count($html, 'class="corp-card"'))->toBe(1)
+        ->and($html)->toContain('aria-label="Chosen client"')
+        ->and(substr_count($html, 'class="indiv-card"'))->toBe(0);
+});

@@ -209,9 +209,35 @@ final class ClientsCarouselRenderer
     /** @return list<\WP_Post> */
     private function query(string $type): array
     {
+        $mode = (string) ($this->attributes[$type . 'Mode'] ?? 'automatic');
+        $selectedIds = $this->positiveIds($this->attributes[$type . 'Order'] ?? []);
+        $excludedIds = $this->positiveIds($this->attributes[$type . 'ExcludeIds'] ?? []);
+        $automatic = $this->automaticClients($type);
+
+        if ($mode === 'automatic') {
+            return $this->excludeClients($automatic, $excludedIds);
+        }
+
+        $selected = $this->selectedClients($selectedIds);
+        if ($mode === 'manual') {
+            return array_slice($selected, 0, $this->maxFor($type));
+        }
+
+        $selectedIds = array_map(static fn (\WP_Post $post): int => $post->ID, $selected);
+        $remaining = array_filter(
+            $this->excludeClients($automatic, $excludedIds),
+            static fn (\WP_Post $post): bool => ! in_array($post->ID, $selectedIds, true)
+        );
+
+        return array_slice([...$selected, ...$remaining], 0, $this->maxFor($type));
+    }
+
+    /** @return list<\WP_Post> */
+    private function automaticClients(string $type): array
+    {
         $q = new WP_Query([
             'post_type' => ClientPostType::POST_TYPE,
-            'posts_per_page' => $type === 'corporate' ? self::CORP_MAX : self::INDIV_MAX,
+            'posts_per_page' => $this->maxFor($type),
             'no_found_rows' => true,
             'post_status' => 'publish',
             'ignore_sticky_posts' => true,
@@ -227,6 +253,54 @@ final class ClientsCarouselRenderer
         wp_reset_postdata();
 
         return $posts;
+    }
+
+    /** @return list<\WP_Post> */
+    private function selectedClients(array $ids): array
+    {
+        if (! function_exists('get_post')) {
+            return [];
+        }
+
+        $posts = [];
+        foreach ($ids as $id) {
+            $localizedId = function_exists('pll_get_post') ? (int) pll_get_post($id, $this->locale) : $id;
+            $post = get_post($localizedId ?: $id);
+            if ($post instanceof \WP_Post && $post->post_type === ClientPostType::POST_TYPE && $post->post_status === 'publish') {
+                $posts[] = $post;
+            }
+        }
+
+        return $posts;
+    }
+
+    /** @param list<\WP_Post> $clients @param list<int> $excludedIds @return list<\WP_Post> */
+    private function excludeClients(array $clients, array $excludedIds): array
+    {
+        if ($excludedIds === []) {
+            return $clients;
+        }
+
+        return array_values(array_filter($clients, function (\WP_Post $post) use ($excludedIds): bool {
+            $englishId = function_exists('pll_get_post') ? (int) pll_get_post($post->ID, 'en') : 0;
+
+            return array_intersect([$post->ID, $englishId], $excludedIds) === [];
+        }));
+    }
+
+    private function maxFor(string $type): int
+    {
+        return $type === 'corporate' ? self::CORP_MAX : self::INDIV_MAX;
+    }
+
+    /** @param mixed $ids @return list<int> */
+    private function positiveIds($ids): array
+    {
+        if (! is_array($ids)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(static fn ($id): int => abs((int) $id), $ids))));
     }
 
     /**

@@ -8,8 +8,12 @@
  * from many Client posts, not this one block instance (see DECISIONS.md).
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { useBlockProps, RichText } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps, RichText } from '@wordpress/block-editor';
+import { Button, CheckboxControl, PanelBody, SelectControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
+import { moveItem } from '../../Editor/collection';
 import metadata from './block.json';
 import './style.scss';
 
@@ -43,12 +47,73 @@ function LangGroup( { dir, seed, attributes, setAttributes, headingKey, subtitle
 	);
 }
 
+function ClientComposer( { type, clients, attributes, setAttributes } ) {
+	const title = type === 'corporate' ? __( 'Corporate clients', 'perego-site' ) : __( 'Individual clients', 'perego-site' );
+	const modeKey = `${ type }Mode`;
+	const orderKey = `${ type }Order`;
+	const excludeKey = `${ type }ExcludeIds`;
+	const mode = attributes[ modeKey ] || 'automatic';
+	const order = attributes[ orderKey ] || [];
+	const excluded = attributes[ excludeKey ] || [];
+	const clientById = new Map( clients.map( ( client ) => [ client.id, client ] ) );
+	const selected = order.map( ( id ) => clientById.get( id ) ).filter( Boolean );
+	const label = ( client ) => client.title?.rendered || __( 'Untitled Client', 'perego-site' );
+
+	return (
+		<PanelBody title={ title } initialOpen={ false }>
+			<SelectControl label={ __( 'Source', 'perego-site' ) } value={ mode }
+				options={ [
+					{ label: __( 'Automatic (all published clients)', 'perego-site' ), value: 'automatic' },
+					{ label: __( 'Manual (selected clients only)', 'perego-site' ), value: 'manual' },
+					{ label: __( 'Hybrid (selected first, then automatic)', 'perego-site' ), value: 'hybrid' },
+				] }
+				onChange={ ( value ) => setAttributes( { [ modeKey ]: value } ) } />
+			{ clients.length === 0 && <p>{ __( 'No published clients are available for this client type.', 'perego-site' ) }</p> }
+			{ mode !== 'automatic' && clients.map( ( client ) => (
+				<CheckboxControl key={ client.id } label={ label( client ) }
+					checked={ order.includes( client.id ) }
+					onChange={ ( enabled ) => setAttributes( { [ orderKey ]: enabled ? [ ...order, client.id ] : order.filter( ( id ) => id !== client.id ) } ) } />
+			) ) }
+			{ mode !== 'manual' && clients.map( ( client ) => (
+				<CheckboxControl key={ `show-${ client.id }` } label={ __( 'Show', 'perego-site' ) + `: ${ label( client ) }` }
+					checked={ ! excluded.includes( client.id ) }
+					onChange={ ( enabled ) => setAttributes( { [ excludeKey ]: enabled ? excluded.filter( ( id ) => id !== client.id ) : [ ...excluded, client.id ] } ) } />
+			) ) }
+			{ mode !== 'automatic' && selected.map( ( client, index ) => (
+				<div className="perego-clients-carousel__client-order" key={ client.id }>
+					<span>{ label( client ) }</span>
+					<Button size="small" disabled={ index === 0 }
+						onClick={ () => setAttributes( { [ orderKey ]: moveItem( order, index, index - 1 ) } ) }>{ __( 'Move up', 'perego-site' ) }</Button>
+					<Button size="small" disabled={ index === selected.length - 1 }
+						onClick={ () => setAttributes( { [ orderKey ]: moveItem( order, index, index + 1 ) } ) }>{ __( 'Move down', 'perego-site' ) }</Button>
+				</div>
+			) ) }
+		</PanelBody>
+	);
+}
+
 function Edit( { attributes, setAttributes } ) {
 	const blockProps = useBlockProps( { className: 'perego-clients-carousel__editor' } );
+	const clients = useSelect(
+		( select ) => select( 'core' ).getEntityRecords( 'postType', 'perego_client', { per_page: 100, status: 'publish' } ) || [],
+		[]
+	);
+	const clientTypes = useSelect(
+		( select ) => select( 'core' ).getEntityRecords( 'taxonomy', 'perego_client_type', { per_page: 100 } ) || [],
+		[]
+	);
+	const clientsForType = ( type ) => {
+		const term = clientTypes.find( ( candidate ) => candidate.slug === type || candidate.slug?.startsWith( `${ type }-` ) );
+		return term ? clients.filter( ( client ) => client.perego_client_type?.includes( term.id ) ) : [];
+	};
 	const cardsNote = __( 'Client tiles/cards are managed on each Client’s own edit screen (Clients in the admin menu).', 'perego-site' );
 
 	return (
 		<div { ...blockProps }>
+			<InspectorControls>
+				<ClientComposer type="corporate" clients={ clientsForType( 'corporate' ) } attributes={ attributes } setAttributes={ setAttributes } />
+				<ClientComposer type="individual" clients={ clientsForType( 'individual' ) } attributes={ attributes } setAttributes={ setAttributes } />
+			</InspectorControls>
 			<fieldset className="perego-clients-carousel__lang-group">
 				<legend>{ __( 'English', 'perego-site' ) }</legend>
 				<LangGroup dir="ltr" seed={ SEED_EN } attributes={ attributes } setAttributes={ setAttributes }
@@ -63,6 +128,13 @@ function Edit( { attributes, setAttributes } ) {
 				<LangGroup dir="rtl" seed={ SEED_AR } attributes={ attributes } setAttributes={ setAttributes }
 					headingKey="individualHeadingAr" subtitleKey="individualSubtitleAr" note={ cardsNote } />
 			</fieldset>
+			<div className="perego-clients-carousel__preview" onClick={ ( event ) => {
+				if ( event.target.closest( 'a, button' ) ) {
+					event.preventDefault();
+				}
+			} }>
+				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+			</div>
 		</div>
 	);
 }
