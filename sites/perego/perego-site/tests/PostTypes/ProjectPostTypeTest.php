@@ -24,10 +24,10 @@ it('registers a public project post type with a work archive and REST enabled', 
         ->and($args['supports'])->toContain('excerpt');
 });
 
-it('registers the project_category taxonomy as flat and REST enabled', function () {
+it('registers the project_category taxonomy as hierarchical and REST enabled', function () {
     $args = (new ProjectPostType())->taxonomyArgs();
 
-    expect($args['hierarchical'])->toBeFalse()
+    expect($args['hierarchical'])->toBeTrue()
         ->and($args['public'])->toBeTrue()
         ->and($args['show_in_rest'])->toBeTrue();
 });

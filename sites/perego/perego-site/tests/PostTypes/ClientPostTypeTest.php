@@ -24,10 +24,10 @@ it('registers a public client post type with REST + thumbnail support and no arc
         ->and($args['rewrite']['slug'])->toBe('clients');
 });
 
-it('defines a flat, REST-exposed client-type taxonomy', function () {
+it('defines a hierarchical, REST-exposed client-type taxonomy', function () {
     $args = (new ClientPostType())->taxonomyArgs();
 
-    expect($args['hierarchical'])->toBeFalse()
+    expect($args['hierarchical'])->toBeTrue()
         ->and($args['show_in_rest'])->toBeTrue()
         ->and($args['public'])->toBeTrue();
 });

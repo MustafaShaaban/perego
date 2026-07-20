@@ -213,7 +213,9 @@ final class ClientPostType
                 'singular_name' => __('Client Type', 'perego-site'),
             ],
             'public' => true,
-            'hierarchical' => false,
+            // Category-style terms preserve existing IDs/object assignments while making parent/child
+            // structures and the native hierarchical editor selector available.
+            'hierarchical' => true,
             'show_in_rest' => true,
             'rewrite' => ['slug' => 'client-type'],
         ];

@@ -180,7 +180,9 @@ final class ProjectPostType
                 'singular_name' => __('Service', 'perego-site'),
             ],
             'public' => true,
-            'hierarchical' => false,
+            // Existing service terms and assignments are retained; this only changes the editor and
+            // taxonomy relationship model to support parent Service → child project-type structures.
+            'hierarchical' => true,
             'show_admin_column' => true,
             'show_in_rest' => true,
             'rewrite' => ['slug' => 'work/service'],
