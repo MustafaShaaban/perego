@@ -81,9 +81,86 @@ function initLegalToc() {
 	window.addEventListener( 'scroll', update, { passive: true } );
 }
 
+/**
+ * Background parallax — the photographic section images (`<img>` inside the `.__bg` wrappers, plus the
+ * split-media photo) drift vertically against the scroll while their gradient scrim (`::after`) stays
+ * put, so the imagery feels like it moves behind the page. Perego addition, not in the handoff.
+ *
+ * The image is scaled up a touch and only translated WITHIN that scale buffer, so the crop never
+ * reveals an empty edge (no oversized markup or overflow gymnastics needed). Reuses the theme's own
+ * idioms: `IntersectionObserver` (like initReveals) so only on-screen images are touched, and an
+ * rAF-throttled passive scroll listener (like initLegalToc). Gated to desktop + motion-allowed:
+ * disabled under `prefers-reduced-motion` (matching the reveal guard in perego-reference.scss) and
+ * below the tablet breakpoint, where fixed/parallax backgrounds are janky and pointless. The hero
+ * (`.hero__prism`) is intentionally excluded — it already runs its own `heroDrift` loop.
+ */
+function initParallax() {
+	if ( ! ( 'IntersectionObserver' in window ) || ! ( 'requestAnimationFrame' in window ) ) return;
+
+	const imgs = Array.from(
+		document.querySelectorAll(
+			'.home-about__bg img, .svc-hero__bg img, .contact-hero__bg img, .split-media > img:first-child'
+		)
+	);
+	if ( ! imgs.length ) return;
+
+	const SCALE = 1.16; // zoom that provides the translate buffer; 8% of height is drift-able each way
+	const reduce = window.matchMedia( '(prefers-reduced-motion: reduce)' );
+	const wide = window.matchMedia( '(min-width: 900px)' );
+	const enabled = () => wide.matches && ! reduce.matches;
+
+	const items = imgs.map( ( img ) => ( {
+		img,
+		box: img.closest( '.home-about__bg, .svc-hero__bg, .contact-hero__bg, .split-media' ) || img.parentElement,
+		visible: false,
+	} ) );
+
+	const io = new IntersectionObserver(
+		( entries ) => {
+			entries.forEach( ( entry ) => {
+				const item = items.find( ( it ) => it.box === entry.target );
+				if ( item ) item.visible = entry.isIntersecting;
+			} );
+		},
+		{ rootMargin: '12% 0px 12% 0px' }
+	);
+	items.forEach( ( item ) => io.observe( item.box ) );
+
+	const render = () => {
+		const on = enabled();
+		const vh = window.innerHeight;
+		items.forEach( ( item ) => {
+			if ( ! on ) {
+				item.img.style.transform = '';
+				return;
+			}
+			if ( ! item.visible ) return;
+			const rect = item.box.getBoundingClientRect();
+			// 0 when the section's centre sits at the viewport centre; ±1 as it exits either edge.
+			const progress = Math.max( -1, Math.min( 1, ( rect.top + rect.height / 2 - vh / 2 ) / ( vh + rect.height ) * 2 ) );
+			// Never translate past the scale buffer, so the cover crop always fills the frame.
+			const drift = ( SCALE - 1 ) / 2 * rect.height * 0.85;
+			item.img.style.transform = `translate3d(0, ${ ( progress * drift ).toFixed( 1 ) }px, 0) scale(${ SCALE })`;
+		} );
+	};
+
+	let raf;
+	const onScroll = () => {
+		window.cancelAnimationFrame( raf );
+		raf = window.requestAnimationFrame( render );
+	};
+
+	render();
+	window.addEventListener( 'scroll', onScroll, { passive: true } );
+	window.addEventListener( 'resize', onScroll, { passive: true } );
+	reduce.addEventListener( 'change', render );
+	wide.addEventListener( 'change', render );
+}
+
 document.addEventListener( 'DOMContentLoaded', () => {
 	initReveals();
 	initLegalToc();
+	initParallax();
 
 	// CoreX's server-rendered <form class="corex-form"> has no novalidate attribute, so a
 	// required/typed field fails the browser's own constraint validation before Corex.forms'

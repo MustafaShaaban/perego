@@ -993,3 +993,28 @@ button.indiv-card {
 	text-align: start;
 	cursor: pointer;
 }
+
+/* ============================================================
+   Background parallax (Perego addition, spec 020 owner request)
+   The section photos drift vertically on scroll — initParallax() in main.js scales the <img> a touch
+   and translates it within that scale buffer. The wrapper must clip the scaled image so no edge shows;
+   .split-media already sets overflow:hidden, the three absolute .__bg wrappers do not. `will-change`
+   is applied only where the effect actually runs (desktop, motion-allowed) to avoid needless
+   compositing on phones. The hero keeps its own heroDrift loop and is excluded.
+   ============================================================ */
+.home-about__bg,
+.svc-hero__bg,
+.contact-hero__bg {
+	overflow: hidden;
+}
+
+@media (min-width: 900px) {
+	@media (prefers-reduced-motion: no-preference) {
+		.js .home-about__bg img,
+		.js .svc-hero__bg img,
+		.js .contact-hero__bg img,
+		.js .split-media > img:first-child {
+			will-change: transform;
+		}
+	}
+}
