@@ -119,6 +119,9 @@ async function capture(page, url, landmark, interaction, outputPath, locale) {
 			document.documentElement.dir = 'rtl';
 		});
 	}
+	// The public page is not visually ready while its optional preloader covers the viewport. The
+	// preloader's own fail-safe hides it after a bounded delay; accept routes without one as ready.
+	await page.locator('.preloader').waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {});
 	await page.evaluate(async (selector) => {
 		// A missing remote font must not prevent a local visual baseline. Give local font loading a
 		// bounded opportunity, then capture the actual browser fallback state deterministically.

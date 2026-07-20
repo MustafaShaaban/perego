@@ -50,6 +50,10 @@
   only; this is not yet the full matrix or visual acceptance. Terms, Privacy, Search, 404, and generic Page added
   16 captures with zero overflow; Arabic 404 and generic Page remain explicitly unavailable because their English
   routes publish no Arabic alternate.
+- **Baseline validity correction:** direct review found that the earlier capture batches could be taken while the
+  live preloader still covered the viewport. The runner now waits for its bounded hidden state; the recaptured EN
+  1440 Hero shows the actual public page. Earlier batch counts are coverage attempts only and must be recaptured
+  before they are used as visual-comparison evidence.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
