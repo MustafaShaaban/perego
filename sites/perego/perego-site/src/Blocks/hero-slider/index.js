@@ -14,6 +14,7 @@ import { useBlockProps, RichText } from '@wordpress/block-editor';
 import { Button } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
 import metadata from './block.json';
 import './style.scss';
 
@@ -95,6 +96,13 @@ function Edit( { attributes, setAttributes } ) {
 					onChange={ ( ctaAr ) => setAttributes( { ctaAr } ) }
 					placeholder={ SEED_CTA.ar } />
 			</fieldset>
+			<div className="perego-hero-slider__preview" onClick={ ( event ) => {
+				if ( event.target.closest( 'a, button' ) ) {
+					event.preventDefault();
+				}
+			} }>
+				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+			</div>
 		</div>
 	);
 }

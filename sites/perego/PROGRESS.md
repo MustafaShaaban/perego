@@ -12,6 +12,8 @@
   migration), with an Inspector control for automatic published-Service sourcing, manual selection and order,
   automatic exclusions, and localized Service URL resolution through Polylang. Renderer tests cover legacy,
   automatic, manual/excluded, and Arabic translation paths.
+- **Hero increment:** the existing inline EN/AR slide controls now include the real server-rendered public
+  Hero beneath them, so editors can check the actual background, slide dots, CTA, and markup while editing.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
