@@ -62,9 +62,14 @@ const requestedRoutes = ( process.env.PEREGO_CAPTURE_ROUTES ?? '' )
 	.split( ',' )
 	.map( ( route ) => route.trim() )
 	.filter( Boolean );
-const requestedCaptures = requestedRoutes.length === 0
-	? CAPTURES
-	: CAPTURES.filter( ( captureState ) => requestedRoutes.includes( captureState.route ) );
+const requestedStates = ( process.env.PEREGO_CAPTURE_STATES ?? '' )
+	.split( ',' )
+	.map( ( state ) => state.trim() )
+	.filter( Boolean );
+const requestedCaptures = CAPTURES.filter( ( captureState ) =>
+	( requestedRoutes.length === 0 || requestedRoutes.includes( captureState.route ) )
+	&& ( requestedStates.length === 0 || requestedStates.includes( captureState.state ) )
+);
 
 function captureKey( record ) {
 	return [ record.route, record.language, record.viewport?.id, record.state ].join( ':' );
@@ -93,7 +98,10 @@ const freezeMotion = `
 `;
 
 async function capture(page, url, landmark, interaction, outputPath, locale) {
-	await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+	// Handoff and local pages may include optional third-party requests. Visual readiness is defined by
+	// loaded DOM, local fonts, frozen motion, and the settle below—not by an unbounded network-idle wait.
+	await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+	await page.waitForTimeout(350);
 	await page.addStyleTag({ content: freezeMotion });
 	if ( locale === 'ar' ) {
 		await page.evaluate(() => {
@@ -102,7 +110,12 @@ async function capture(page, url, landmark, interaction, outputPath, locale) {
 		});
 	}
 	await page.evaluate(async (selector) => {
-		await document.fonts.ready;
+		// A missing remote font must not prevent a local visual baseline. Give local font loading a
+		// bounded opportunity, then capture the actual browser fallback state deterministically.
+		await Promise.race([
+			document.fonts.ready,
+			new Promise((resolve) => window.setTimeout(resolve, 3000)),
+		]);
 		if (selector) {
 			document.querySelector(selector)?.scrollIntoView({ block: 'start' });
 		}
@@ -142,14 +155,25 @@ async function applyInteractionState(page, interaction) {
 }
 
 async function alternateLanguageUrl(page, englishUrl, locale) {
-	await page.goto(englishUrl, { waitUntil: 'networkidle', timeout: 30000});
+	await page.goto(englishUrl, { waitUntil: 'domcontentloaded', timeout: 30000});
 	const alternate = page.locator(`link[rel="alternate"][hreflang="${ locale }"]`);
 
 	if (await alternate.count() === 0) {
 		return null;
 	}
 
-	return alternate.first().getAttribute('href');
+	const href = await alternate.first().getAttribute('href');
+	if (!href) {
+		return null;
+	}
+
+	// The local database can publish alternate links with the optional ngrok origin. Preserve the
+	// authoritative locale path/query, but keep baseline captures on the configured local runtime.
+	const localized = new URL(href, englishUrl);
+	const localOrigin = new URL(LIVE_BASE).origin;
+	return localized.origin === localOrigin
+		? localized.toString()
+		: `${localOrigin}${localized.pathname}${localized.search}${localized.hash}`;
 }
 
 function pixelDifference(baselinePath, actualPath, diffPath) {
