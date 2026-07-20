@@ -47,7 +47,9 @@
   with zero overflow; the two Arabic Services-archive records are explicitly unavailable because no `hreflang=ar`
   alternate is published. Work, Project (including gallery), Journal, Journal single, and Contact then completed
   all 24 EN/AR desktop/mobile records with zero overflow and no unavailable routes. Diffs are unreviewed evidence
-  only; this is not yet the full matrix or visual acceptance.
+  only; this is not yet the full matrix or visual acceptance. Terms, Privacy, Search, 404, and generic Page added
+  16 captures with zero overflow; Arabic 404 and generic Page remain explicitly unavailable because their English
+  routes publish no Arabic alternate.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
