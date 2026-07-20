@@ -37,6 +37,10 @@
   selection is read from the Service record (including the existing English fallback for translations).
 - **About increment:** the locked decorative About background now uses its real renderer in the block editor while
   the adjacent native blocks continue to provide the direct visual editing surface for the section content.
+- **Baseline runner recovery:** `capture-visual-recovery.mjs` was timing out because its required static handoff
+  server (`127.0.0.1:8777`) was not running, not because of a runner defect. Serving
+  `_design_handoff/Perego-Creative-Studio-Final-Handoff/site` restores capture; a new EN 1440 Hero baseline/current/
+  diff completed with no horizontal overflow. The diff is unreviewed and is evidence only.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
