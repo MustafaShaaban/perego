@@ -29,6 +29,9 @@
   baseline validation remains open.
 - **Service Hero increment:** the prior placeholder in the Service Hero block editor is now the real server-rendered
   component. Native Service titles and teaser labels remain its single source of truth.
+- **Service template increment:** What We Do and Process remain native editable block content in each Service record;
+  the Selected Work block now previews its real renderer in the template editor, and its per-Service portfolio
+  selection is read from the Service record (including the existing English fallback for translations).
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query

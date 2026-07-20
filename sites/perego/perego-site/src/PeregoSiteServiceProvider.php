@@ -452,21 +452,6 @@ final class PeregoSiteServiceProvider
                 'render_callback' => static function () use ($overviewRenderer, $languageService): string {
                     $locale = $languageService->driver()->currentLocale();
                     $projects = new ProjectRepository();
-                    $portfolioMeta = static function (string $key) use ($queried) {
-                        $value = get_post_meta($queried->ID, $key, true);
-                        if ($value !== '' && $value !== []) {
-                            return $value;
-                        }
-                        if (! function_exists('pll_get_post')) {
-                            return $value;
-                        }
-                        $englishId = (int) pll_get_post($queried->ID, 'en');
-
-                        return $englishId > 0 && $englishId !== $queried->ID ? get_post_meta($englishId, $key, true) : $value;
-                    };
-                    $portfolioMode = ServicePostType::sanitizePortfolioMode($portfolioMeta(ServicePostType::META_PORTFOLIO_MODE));
-                    $portfolioIds = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_PROJECT_IDS));
-                    $portfolioExclusions = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_EXCLUDE_IDS));
                     $portfolioContent = new PortfolioContent($locale);
 
                     // 15 designed mosaic placements + up to 8 "Load more" overflow tiles (handoff
@@ -506,6 +491,7 @@ final class PeregoSiteServiceProvider
                     $locale  = $languageService->driver()->currentLocale();
                     $content = new ServiceContent($locale);
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    $servicePost = $queried instanceof \WP_Post ? $queried : get_post();
 
                     // Resolve the canonical service slug from meta, not post_name: a translated
                     // (e.g. Arabic) service post carries a Polylang-de-duplicated slug like
@@ -513,14 +499,14 @@ final class PeregoSiteServiceProvider
                     // "video-editing" the ServiceContent map + tab routes are keyed on.
                     $currentSlug  = '';
                     $currentTitle = '';
-                    if ($queried instanceof \WP_Post) {
-                        $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
-                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                    if ($servicePost instanceof \WP_Post) {
+                        $meta = get_post_meta($servicePost->ID, '_perego_service_slug', true);
+                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $servicePost->post_name;
                         // spec 013: the H1 is the Service post's own title (edit it natively); the tab
                         // labels come from each Service's editable teaser label — both seed-fallback.
                         // Use the raw post_title (not get_the_title) so the renderer's single esc_html
                         // matches the old ServiceContent path byte-for-byte (no double entity-encoding).
-                        $currentTitle = (string) $queried->post_title;
+                        $currentTitle = (string) $servicePost->post_title;
                     }
 
                     $tabLabels = (new \PeregoSite\Content\ServiceCatalog())->labelsBySlug($locale);
@@ -541,11 +527,34 @@ final class PeregoSiteServiceProvider
                     ];
 
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    $servicePost = $queried instanceof \WP_Post ? $queried : get_post();
                     $currentSlug = '';
-                    if ($queried instanceof \WP_Post) {
-                        $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
-                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                    if ($servicePost instanceof \WP_Post) {
+                        $meta = get_post_meta($servicePost->ID, '_perego_service_slug', true);
+                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $servicePost->post_name;
                     }
+
+                    // The Service editor owns the optional portfolio projection. Translation
+                    // records may inherit the English source until they receive their own selection.
+                    $portfolioMeta = static function (string $key) use ($servicePost) {
+                        if (! $servicePost instanceof \WP_Post) {
+                            return '';
+                        }
+
+                        $value = get_post_meta($servicePost->ID, $key, true);
+                        if ($value !== '' && $value !== []) {
+                            return $value;
+                        }
+                        if (! function_exists('pll_get_post')) {
+                            return $value;
+                        }
+                        $englishId = (int) pll_get_post($servicePost->ID, 'en');
+
+                        return $englishId > 0 && $englishId !== $servicePost->ID ? get_post_meta($englishId, $key, true) : $value;
+                    };
+                    $portfolioMode = ServicePostType::sanitizePortfolioMode($portfolioMeta(ServicePostType::META_PORTFOLIO_MODE));
+                    $portfolioIds = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_PROJECT_IDS));
+                    $portfolioExclusions = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_EXCLUDE_IDS));
                     $category = $serviceToCategory[$currentSlug] ?? '';
                     if ($category === '') {
                         return '';
