@@ -14,6 +14,9 @@
   automatic, manual/excluded, and Arabic translation paths.
 - **Hero increment:** the existing inline EN/AR slide controls now include the real server-rendered public
   Hero beneath them, so editors can check the actual background, slide dots, CTA, and markup while editing.
+- **Hero composition increment:** editors can now add, duplicate, reorder, and remove bounded (one to six)
+  EN/AR slide pairs. The legacy three-slide block attributes and front-page meta remain the fallback until a
+  collection is explicitly created, preserving existing public copy.
 - **Services composer increment:** homepage cards retain the automatic four-card projection by default;
   editors can now select manual or hybrid modes, choose Services, reorder selected cards, exclude automatic
   cards, and preview the actual section. Per-card overrides and visual-baseline evidence remain open.
