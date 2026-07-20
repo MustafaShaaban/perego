@@ -160,11 +160,6 @@ function Edit( { attributes, setAttributes } ) {
 					<NavItemEditor label={ __( 'Arabic navigation', 'perego-site' ) } items={ navAr } onChange={ setNavAr } />
 				</PanelBody>
 			</InspectorControls>
-			<p className="perego-site-header__editor-note">
-				{ __( 'Site header — logo, sticky behavior, and nav links (below) are editable. Preview on the live site after saving.', 'perego-site' ) }
-			</p>
-			<NavItemEditor label={ __( 'Navigation — English', 'perego-site' ) } items={ navEn } onChange={ setNavEn } />
-			<NavItemEditor label={ __( 'Navigation — Arabic', 'perego-site' ) } items={ navAr } onChange={ setNavAr } />
 			<div className="perego-site-header__preview" onClick={ ( event ) => {
 				if ( event.target.closest( 'a' ) ) {
 					event.preventDefault();
