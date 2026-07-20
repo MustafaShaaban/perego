@@ -111,6 +111,17 @@ final class PeregoSiteServiceProvider
                 return;
             }
 
+            // Perego's forms request the `max_words` rule, which is not a CoreX built-in. Register it on
+            // the shared RuleRegistry singleton (the same instance SchemaResolver + Validator resolve) here
+            // — client-side, so a framework update never removes it — before the forms are rendered or
+            // validated. Without it, SchemaResolver throws "Unknown validation rule" and the form renders empty.
+            if ($container->has(\Corex\Forms\Validation\RuleRegistry::class)) {
+                $rules = $container->make(\Corex\Forms\Validation\RuleRegistry::class);
+                if (! $rules->has('max_words')) {
+                    $rules->register('max_words', new \PeregoSite\Forms\Rules\MaxWords());
+                }
+            }
+
             $registry = $container->make(\Corex\Forms\FormRegistry::class);
             $registry->register(new \PeregoSite\Forms\QuickMessageForm());
             $registry->register(new \PeregoSite\Forms\ProjectBriefForm());
