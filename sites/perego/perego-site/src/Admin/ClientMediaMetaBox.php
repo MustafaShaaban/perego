@@ -78,9 +78,29 @@ final class ClientMediaMetaBox
         wp_nonce_field(self::NONCE_ACTION, self::NONCE_FIELD);
         echo '<div class="perego-client-media">';
         echo '<p class="description">' . esc_html__('Use the featured image for card artwork, then add optional supporting media below.', 'perego-site') . '</p>';
+        $this->renderCardPreview($postId);
         $this->renderGallerySection($gallery);
         $this->renderVideoSection($videoUrl, $videoType);
         echo '</div>';
+    }
+
+    /** A lightweight, data-truthful preview before the editor changes the client card's media. */
+    private function renderCardPreview(int $postId): void
+    {
+        $title = (string) get_the_title($postId);
+        $thumbnail = has_post_thumbnail($postId) ? (string) get_the_post_thumbnail_url($postId, 'medium') : '';
+
+        echo '<section class="perego-client-media__preview" aria-label="' . esc_attr__('Client card preview', 'perego-site') . '">';
+        echo '<h4>' . esc_html__('Card preview', 'perego-site') . '</h4>';
+        echo '<div class="perego-client-media__preview-card">';
+        if ($thumbnail !== '') {
+            printf('<img src="%s" alt="" />', esc_url($thumbnail));
+        } else {
+            echo '<span class="perego-client-media__preview-placeholder" aria-hidden="true"></span>';
+        }
+        echo '<div><strong>' . esc_html($title !== '' ? $title : __('Client name', 'perego-site')) . '</strong>';
+        echo '<p>' . esc_html__('The featured image supplies the card artwork. Corporate cards open the gallery; Individual cards use the video action below.', 'perego-site') . '</p></div>';
+        echo '</div></section>';
     }
 
     /** @param list<array{type:string,id:int,url:string}> $gallery */
@@ -225,6 +245,6 @@ JS;
 
     private function style(): string
     {
-        return '.perego-client-media__section{border-top:1px solid #dcdcde;margin-top:16px;padding-top:16px}.perego-client-media__section h4{margin:0 0 4px}.perego-client-media__actions{display:flex;flex-wrap:wrap;gap:8px}.perego-client-media__url{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.perego-client-gallery__rows{display:grid;gap:8px;margin:12px 0}.perego-client-gallery__row{align-items:center;border:1px solid #dcdcde;border-radius:4px;display:flex;gap:10px;padding:8px}.perego-client-gallery__row img{border-radius:3px;object-fit:cover}.perego-client-gallery__video-url{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.perego-client-gallery__type{font-weight:600}.perego-client-gallery__order{color:#50575e;font-size:12px}.perego-client-gallery__controls{display:flex;gap:8px;margin-left:auto}@media (max-width:600px){.perego-client-gallery__row{align-items:flex-start;flex-wrap:wrap}.perego-client-gallery__controls{margin-left:0;width:100%}}';
+        return '.perego-client-media__preview{border:1px solid #dcdcde;border-radius:4px;margin:16px 0;padding:12px}.perego-client-media__preview h4{margin:0 0 8px}.perego-client-media__preview-card{align-items:center;display:flex;gap:12px}.perego-client-media__preview-card img,.perego-client-media__preview-placeholder{background:#f0f0f1;border-radius:3px;display:block;height:72px;object-fit:cover;width:72px}.perego-client-media__preview-card p{color:#50575e;margin:4px 0 0}.perego-client-media__section{border-top:1px solid #dcdcde;margin-top:16px;padding-top:16px}.perego-client-media__section h4{margin:0 0 4px}.perego-client-media__actions{display:flex;flex-wrap:wrap;gap:8px}.perego-client-media__url{display:flex;align-items:center;flex-wrap:wrap;gap:8px}.perego-client-gallery__rows{display:grid;gap:8px;margin:12px 0}.perego-client-gallery__row{align-items:center;border:1px solid #dcdcde;border-radius:4px;display:flex;gap:10px;padding:8px}.perego-client-gallery__row img{border-radius:3px;object-fit:cover}.perego-client-gallery__video-url{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.perego-client-gallery__type{font-weight:600}.perego-client-gallery__order{color:#50575e;font-size:12px}.perego-client-gallery__controls{display:flex;gap:8px;margin-left:auto}@media (max-width:600px){.perego-client-gallery__row{align-items:flex-start;flex-wrap:wrap}.perego-client-gallery__controls{margin-left:0;width:100%}}';
     }
 }

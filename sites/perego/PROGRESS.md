@@ -20,6 +20,8 @@
 - **Clients composer increment:** Corporate and Individual carousels now each support automatic, manual, or
   hybrid Client selection, ordering, and automatic exclusions from the block Inspector. The existing
   taxonomy-driven carousel output remains the default; the block now includes the real rendered preview.
+- **Client editor increment:** the Client media editor now renders a card preview from the native title and
+  featured image before media is changed, making the Corporate-gallery versus Individual-video outcome clear.
 - **Verified:** Header renderer Pest 25 tests / 68 assertions; full block Jest 103 tests; production block
   build. See `specs/021-fse-visual-editing-ux/` for the authoritative task plan.
 - **Next:** capture the complete EN/AR public baseline reliably, then continue the Hero and homepage query
