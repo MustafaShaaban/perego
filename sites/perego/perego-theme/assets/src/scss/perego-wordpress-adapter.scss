@@ -826,6 +826,24 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 		align-items: center;
 	}
 
+	/* The @900 rule fixes each step at 128px to fit four across a horizontal row; once the list
+	 * stacks into a column that width leaves a cramped ~128px ribbon with big side gaps. Let the
+	 * stacked cards use the column width, and relax the enlarged @900 icon back toward its base. */
+	.process .process-step {
+		inline-size: auto;
+		max-inline-size: 360px;
+	}
+
+	.process .process-step__icon {
+		inline-size: 64px;
+		block-size: 64px;
+	}
+
+	.process .process-step__icon img {
+		inline-size: 40px;
+		block-size: 40px;
+	}
+
 	.process .process-arrow {
 		transform: rotate(90deg);
 		padding-block-start: 0;
@@ -834,6 +852,12 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	[dir="rtl"] .process .process-arrow svg {
 		transform: none;
 	}
+}
+
+/* Single project hero: the reference `.post-featured` uses `margin: clamp(…) auto 0` (bottom 0), so the
+ * image sits flush against the meta list's top divider. Add breathing room below the hero image. */
+.post-hero .post-featured {
+	margin-block-end: clamp(24px, 4vw, 42px);
 }
 
 /* ============================================================

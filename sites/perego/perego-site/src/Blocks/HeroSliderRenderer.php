@@ -59,7 +59,10 @@ final class HeroSliderRenderer
             . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/hero-bg.png') . '" alt="" />'
             . '</div>';
 
-        $html .= '<div class="container hero__inner">';
+        // Swipe/drag navigation (view.js actions.pointerDown/Up): pointer events cover touch + mouse.
+        $html .= '<div class="container hero__inner" '
+            . 'data-wp-on--pointerdown="actions.pointerDown" '
+            . 'data-wp-on--pointerup="actions.pointerUp">';
         $html .= '<div class="hero__content hero-enter">';
         $html .= $this->renderSlides($slides);
         $html .= '<div class="hero__cta">'

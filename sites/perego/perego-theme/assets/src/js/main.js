@@ -104,7 +104,7 @@ function initParallax() {
 	);
 	if ( ! imgs.length ) return;
 
-	const SCALE = 1.16; // zoom that provides the translate buffer; 8% of height is drift-able each way
+	const SCALE = 1.28; // zoom that provides the translate buffer; ~14% of height is drift-able each way
 	const reduce = window.matchMedia( '(prefers-reduced-motion: reduce)' );
 	const wide = window.matchMedia( '(min-width: 900px)' );
 	const enabled = () => wide.matches && ! reduce.matches;

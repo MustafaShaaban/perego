@@ -9,8 +9,12 @@
 import { store, getContext } from '@wordpress/interactivity';
 
 const AUTO_ADVANCE_MS = 6500;
+// Below this horizontal travel a pointer gesture is a tap/click, not a swipe (px).
+const SWIPE_THRESHOLD = 45;
 
 let timer = null;
+// Pointer X at the start of a drag on the hero; null when no drag is in progress.
+let dragStartX = null;
 
 function isReducedMotion() {
 	return (
@@ -24,6 +28,12 @@ function stopTimer() {
 		clearInterval( timer );
 		timer = null;
 	}
+}
+
+// The single advance primitive shared by autoplay and swipe; wraps in both directions.
+function advance( context, direction ) {
+	context.activeIndex =
+		( context.activeIndex + direction + context.count ) % context.count;
 }
 
 const { state, actions } = store( 'perego/hero-slider', {
@@ -65,9 +75,45 @@ const { state, actions } = store( 'perego/hero-slider', {
 			}
 			stopTimer();
 			timer = setInterval( () => {
-				context.activeIndex =
-					( context.activeIndex + 1 ) % context.count;
+				advance( context, 1 );
 			}, AUTO_ADVANCE_MS );
+		},
+
+		// Next/previous slide, reused by the autoplay primitive and by swipe navigation.
+		next() {
+			advance( getContext(), 1 );
+		},
+
+		prev() {
+			advance( getContext(), -1 );
+		},
+
+		// Swipe/drag to change slides — one pointer path covers touch and mouse. A gesture shorter
+		// than the threshold is a tap (dot/CTA clicks still work); a committed swipe halts autoplay,
+		// matching the dots' stop-on-interaction (WCAG 2.2.2).
+		pointerDown( event ) {
+			dragStartX = event.clientX;
+			stopTimer(); // suspend auto-advance while the finger/mouse is down
+		},
+
+		pointerUp( event ) {
+			if ( dragStartX === null ) {
+				return;
+			}
+
+			const delta = event.clientX - dragStartX;
+			dragStartX = null;
+
+			if ( Math.abs( delta ) < SWIPE_THRESHOLD ) {
+				actions.resume(); // a tap, not a swipe — resume what pointerDown paused
+				return;
+			}
+
+			// Advance in the reading direction: swipe-left is "forward" in LTR, swipe-right in RTL.
+			const forward =
+				document.documentElement.dir === 'rtl' ? delta > 0 : delta < 0;
+			advance( getContext(), forward ? 1 : -1 );
+			actions.stopAutoplay();
 		},
 
 		// Manual navigation halts autoplay so it never fights the visitor; play resumes it.

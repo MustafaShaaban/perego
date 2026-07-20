@@ -58,6 +58,8 @@
 	max-inline-size: var(--wp--style--global--content-size, 1240px);
 	margin-inline: auto;
 	padding-inline: var(--wp--preset--spacing--gutter);
+	/* Horizontal drags are captured for swipe navigation (view.js); vertical stays page scroll. */
+	touch-action: pan-y;
 }
 
 .hero__content {

@@ -95,6 +95,63 @@ describe( 'manual navigation stops autoplay (WCAG 2.2.2)', () => {
 	} );
 } );
 
+describe( 'swipe navigation', () => {
+	test( 'next and prev advance and wrap the active slide', () => {
+		const context = baseContext( { activeIndex: 2, count: 3 } );
+		const { actions } = loadStore( context );
+
+		actions.next();
+		expect( context.activeIndex ).toBe( 0 ); // wrapped past the last slide
+
+		actions.prev();
+		expect( context.activeIndex ).toBe( 2 ); // wrapped back to the last slide
+	} );
+
+	test( 'a left swipe past the threshold advances and stops autoplay (LTR)', () => {
+		const context = baseContext( { activeIndex: 0, count: 3 } );
+		const { actions } = loadStore( context );
+
+		actions.pointerDown( { clientX: 200 } );
+		actions.pointerUp( { clientX: 120 } ); // dragged 80px left
+
+		expect( context.activeIndex ).toBe( 1 );
+		expect( context.isPlaying ).toBe( false );
+	} );
+
+	test( 'a right swipe goes to the previous slide', () => {
+		const context = baseContext( { activeIndex: 1, count: 3 } );
+		const { actions } = loadStore( context );
+
+		actions.pointerDown( { clientX: 100 } );
+		actions.pointerUp( { clientX: 190 } ); // dragged 90px right
+
+		expect( context.activeIndex ).toBe( 0 );
+	} );
+
+	test( 'a short drag under the threshold is a tap, not a swipe', () => {
+		jest.useFakeTimers(); // pointerUp resumes autoplay for a tap
+		const context = baseContext( { activeIndex: 1, count: 3 } );
+		const { actions } = loadStore( context );
+
+		actions.pointerDown( { clientX: 100 } );
+		actions.pointerUp( { clientX: 120 } ); // 20px — below the 45px threshold
+
+		expect( context.activeIndex ).toBe( 1 );
+	} );
+
+	test( 'swipe direction is reading-aware in RTL', () => {
+		document.documentElement.dir = 'rtl';
+		const context = baseContext( { activeIndex: 0, count: 3 } );
+		const { actions } = loadStore( context );
+
+		actions.pointerDown( { clientX: 100 } );
+		actions.pointerUp( { clientX: 190 } ); // right swipe is "forward" in RTL
+
+		expect( context.activeIndex ).toBe( 1 );
+		document.documentElement.dir = '';
+	} );
+} );
+
 describe( 'hover suspend/resume does not change play intent', () => {
 	test( 'pause halts the timer without clearing isPlaying; resume restarts it', () => {
 		jest.useFakeTimers();
