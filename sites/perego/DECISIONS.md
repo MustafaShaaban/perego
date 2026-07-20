@@ -1,5 +1,13 @@
 # Perego — Decision Log
 
+## 2026-07-21 — Spec 021: Service owns its Selected Work choices
+
+The `service-selected-work` block is shared by Service templates, so its project list cannot be saved on the
+block instance without applying the same selection to every Service. Portfolio mode, ordered Project IDs, and
+automatic exclusions therefore live on each `perego_service` record. Empty legacy metadata means automatic
+category results, preserving existing service pages. Language-neutral portfolio choices fall back to the linked
+English Service record when a translated record has no local values.
+
 ## 2026-07-20 — Spec 021: Services dropdown is opt-in dynamic, not an implicit visual migration
 
 The Header keeps its established Services links while `servicesMenuMode` is `manual` with no selected

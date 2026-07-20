@@ -42,6 +42,17 @@ final class ServicePostType
     public const META_TEASER_IMAGE_ID = '_perego_teaser_image_id';
     public const META_TEASER_ALT = '_perego_teaser_alt';
 
+    /** Service-single Selected Work source: existing records default to category-driven automatic mode. */
+    public const META_PORTFOLIO_MODE = '_perego_service_portfolio_mode';
+
+    /** Explicit Project IDs for manual mode, or the first cards in hybrid mode. */
+    public const META_PORTFOLIO_PROJECT_IDS = '_perego_service_portfolio_project_ids';
+
+    /** Project IDs omitted from automatic/hybrid category results. */
+    public const META_PORTFOLIO_EXCLUDE_IDS = '_perego_service_portfolio_exclude_ids';
+
+    public const PORTFOLIO_MODES = ['automatic', 'manual', 'hybrid'];
+
     public function register(): void
     {
         register_post_type(self::POST_TYPE, $this->postTypeArgs());
@@ -93,12 +104,53 @@ final class ServicePostType
                 'sanitize_callback' => 'sanitize_text_field',
                 'auth_callback' => [self::class, 'authEdit'],
             ],
+            self::META_PORTFOLIO_MODE => [
+                'type' => 'string',
+                'single' => true,
+                'default' => 'automatic',
+                'show_in_rest' => true,
+                'sanitize_callback' => [self::class, 'sanitizePortfolioMode'],
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+            self::META_PORTFOLIO_PROJECT_IDS => [
+                'type' => 'array',
+                'single' => true,
+                'default' => [],
+                'show_in_rest' => ['schema' => ['type' => 'array', 'items' => ['type' => 'integer']]],
+                'sanitize_callback' => [self::class, 'sanitizeIntList'],
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+            self::META_PORTFOLIO_EXCLUDE_IDS => [
+                'type' => 'array',
+                'single' => true,
+                'default' => [],
+                'show_in_rest' => ['schema' => ['type' => 'array', 'items' => ['type' => 'integer']]],
+                'sanitize_callback' => [self::class, 'sanitizeIntList'],
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
         ];
     }
 
     public static function authEdit(): bool
     {
         return function_exists('current_user_can') && current_user_can('edit_posts');
+    }
+
+    public static function sanitizePortfolioMode($value): string
+    {
+        $mode = is_string($value) ? $value : '';
+
+        return in_array($mode, self::PORTFOLIO_MODES, true) ? $mode : 'automatic';
+    }
+
+    /** @param mixed $value @return list<int> */
+    public static function sanitizeIntList($value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(static fn ($id): int => abs((int) $id), $value))));
     }
 
     /**

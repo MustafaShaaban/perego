@@ -37,6 +37,7 @@ use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\GlobalContent;
 use PeregoSite\Content\PortfolioContent;
 use PeregoSite\Content\ServiceContent;
+use PeregoSite\Content\ServicePortfolioSelection;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
@@ -88,6 +89,7 @@ final class PeregoSiteServiceProvider
             (new \PeregoSite\Admin\PostMetaBoxes())->register();
             (new \PeregoSite\Admin\ProjectGalleryMetaBox())->register();
             (new \PeregoSite\Admin\ClientMediaMetaBox())->register();
+            (new \PeregoSite\Admin\ServicePortfolioMetaBox())->register();
         }
     }
 
@@ -450,6 +452,21 @@ final class PeregoSiteServiceProvider
                 'render_callback' => static function () use ($overviewRenderer, $languageService): string {
                     $locale = $languageService->driver()->currentLocale();
                     $projects = new ProjectRepository();
+                    $portfolioMeta = static function (string $key) use ($queried) {
+                        $value = get_post_meta($queried->ID, $key, true);
+                        if ($value !== '' && $value !== []) {
+                            return $value;
+                        }
+                        if (! function_exists('pll_get_post')) {
+                            return $value;
+                        }
+                        $englishId = (int) pll_get_post($queried->ID, 'en');
+
+                        return $englishId > 0 && $englishId !== $queried->ID ? get_post_meta($englishId, $key, true) : $value;
+                    };
+                    $portfolioMode = ServicePostType::sanitizePortfolioMode($portfolioMeta(ServicePostType::META_PORTFOLIO_MODE));
+                    $portfolioIds = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_PROJECT_IDS));
+                    $portfolioExclusions = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_EXCLUDE_IDS));
                     $portfolioContent = new PortfolioContent($locale);
 
                     // 15 designed mosaic placements + up to 8 "Load more" overflow tiles (handoff
@@ -567,6 +584,22 @@ final class PeregoSiteServiceProvider
                             'terms' => $termId,
                         ]],
                     ]))->posts;
+
+                    $selectedPosts = [];
+                    if ($portfolioMode !== 'automatic' && function_exists('get_post')) {
+                        foreach ($portfolioIds as $projectId) {
+                            $localizedId = function_exists('pll_get_post') ? (int) pll_get_post($projectId, $locale) : $projectId;
+                            $project = get_post($localizedId ?: $projectId);
+                            if ($project instanceof \WP_Post && $project->post_type === ProjectPostType::POST_TYPE && $project->post_status === 'publish') {
+                                $selectedPosts[] = $project;
+                            }
+                        }
+                    }
+                    $posts = array_slice(
+                        (new ServicePortfolioSelection())->resolve($posts, $selectedPosts, $portfolioMode, $portfolioExclusions),
+                        0,
+                        23,
+                    );
 
                     $content = new ServiceContent($locale);
 
