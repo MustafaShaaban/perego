@@ -2,6 +2,31 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-21) — Spec 021 C2/T009: Footer live-canvas (hybrid: real static surfaces + placeholder form columns)
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Second live-canvas slice, same pattern as C1. The footer
+  is a HYBRID block — see DECISIONS 2026-07-21 (C2).
+- **What changed (editor-only; front end frozen):**
+  - New `site-footer/preview.js` — `FooterSkeleton`: real markup for the contact column + bottom bar;
+    labelled locked placeholders for the two dynamic form columns (quick-message, careers) that the front
+    end builds with `do_blocks()`. Now the single home of the seed channels/links/blurbs + `SOCIAL_NETWORKS`
+    + `parseList`, plus a `SOCIAL_ICON_PATHS` mirror of the PHP const for canvas glyphs.
+  - `site-footer/index.js` — `edit()` renders `FooterSkeleton` (English blurb in-canvas via `RichText` at
+    its real position); Arabic blurb moved to an Inspector `TextareaControl`; channels/social/flat Inspector
+    controls kept; `ServerSideRender` removed.
+  - New `site-footer/parity.test.js` + `__fixtures__/front-footer.html` (captured standard footer from `/`)
+    — asserts `.footer-contact` and `.site-footer__bottom` structurally equal the PHP output, and detects
+    drift (missing social list). Second block on the parity harness.
+- **Verified:** block Jest **121/121** (was 118; +3 footer parity); footer Pest **9/9** unchanged (PHP
+  untouched → public byte-identical); production build clean. Guard Gate reviewed (clean-code/wp/test) — no
+  blocking findings; diff −52/+25 semantic-only, house style (no stock-ESLint `--fix` churn).
+- **⚠️ Same open item as C1: live-editor VISUAL check** (perego.local is browser-approval-gated + admin login
+  needed). Structure is parity-proven; the look + in-canvas blurb editing need owner review in the Site
+  Editor → template part **footer**. Batched with C1's header review.
+- **Next:** owner eyeballs header (C1) + footer (C2) in the live editor; then C3 **Hero** (T011/T012) — the
+  first homepage composition slice, using the same skeleton + parity pattern. T001 interactions/a11y evidence
+  also still open.
+
 ## RESUME HERE (2026-07-21) — Spec 021 C1/T007: Header is a true live-canvas block (real markup + parity test)
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. The header `edit()` now renders the REAL front-end

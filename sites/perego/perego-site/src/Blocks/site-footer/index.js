@@ -9,41 +9,11 @@
  */
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
-import { Button, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { Button, PanelBody, SelectControl, TextControl, TextareaControl, ToggleControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
-import ServerSideRender from '@wordpress/server-side-render';
+import { FooterSkeleton, SEED_BLURB_AR, SEED_BLURB_EN, SEED_CONTACT_CHANNELS, SEED_SOCIAL_LINKS, SOCIAL_NETWORKS, parseList } from './preview';
 import metadata from './block.json';
-
-const SEED_CONTACT_CHANNELS = [
-	{ label: 'mostafa.emam3313@gmail.com', href: 'mailto:mostafa.emam3313@gmail.com' },
-	{ label: 'yehemam2@gmail.com', href: 'mailto:yehemam2@gmail.com' },
-	{ label: '+996 56 293 2759', href: 'tel:+996562932759' },
-	{ label: '+20 111 54 855 72', href: 'tel:+201115485572' },
-];
-
-const SOCIAL_NETWORKS = [ 'Instagram', 'Facebook', 'LinkedIn', 'YouTube', 'WhatsApp' ];
-
-const SEED_SOCIAL_LINKS = [
-	{ network: 'Instagram', href: 'https://www.instagram.com/' },
-	{ network: 'Facebook', href: 'https://www.facebook.com/' },
-	{ network: 'LinkedIn', href: 'https://www.linkedin.com/' },
-	{ network: 'YouTube', href: 'https://www.youtube.com/' },
-	{ network: 'WhatsApp', href: 'https://wa.me/' },
-];
-
-const SEED_BLURB_EN = "We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.";
-const SEED_BLURB_AR = 'يسعدنا التواصل معك لتقديم حلول تقنية إبداعية والمساعدة والتوصيات المخصصة التي تناسب احتياجاتك على أفضل وجه.';
-
-function parseList( raw, seed ) {
-	if ( ! raw ) return seed;
-	try {
-		const parsed = JSON.parse( raw );
-		return Array.isArray( parsed ) && parsed.length ? parsed : seed;
-	} catch ( e ) {
-		return seed;
-	}
-}
 
 function ContactChannelsEditor( { channels, onChange } ) {
 	const update = ( index, patch ) => onChange( channels.map( ( c, i ) => ( i === index ? { ...c, ...patch } : c ) ) );
@@ -106,40 +76,43 @@ function Edit( { attributes, setAttributes } ) {
 		setAttributes( { socialLinks: JSON.stringify( next ) } );
 	};
 
+	// The canvas renders the real footer for the English blurb (edited in place below). The Arabic blurb,
+	// contact channels, social links, and the flat variant are edited in the Inspector; the two form
+	// columns are dynamic (front-end `do_blocks()`), so they show as labelled locked placeholders.
+	const blurb = (
+		<RichText tagName="p" className="footer-blurb"
+			value={ attributes.blurbEn || SEED_BLURB_EN }
+			onChange={ ( blurbEn ) => setAttributes( { blurbEn } ) }
+			placeholder={ SEED_BLURB_EN } />
+	);
+
 	return (
 		<div { ...blockProps }>
 			<InspectorControls>
 				<ContactChannelsEditor channels={ channels } onChange={ setChannels } />
 				<SocialLinksEditor links={ socialLinks } onChange={ setSocialLinks } />
+				<PanelBody title={ __( 'Blurb — Arabic', 'perego-site' ) } initialOpen={ false }>
+					<TextareaControl label={ __( 'Arabic footer blurb', 'perego-site' ) }
+						value={ attributes.blurbAr }
+						onChange={ ( blurbAr ) => setAttributes( { blurbAr } ) }
+						placeholder={ SEED_BLURB_AR } />
+				</PanelBody>
 				<PanelBody title={ __( 'Contact-page variant', 'perego-site' ) } initialOpen={ false }>
 					<ToggleControl label={ __( 'Flat 2-column layout (drops the quick-message column)', 'perego-site' ) }
 						checked={ !! attributes.flat }
 						onChange={ ( flat ) => setAttributes( { flat } ) } />
 				</PanelBody>
 			</InspectorControls>
-			<fieldset className="perego-site-footer__lang" dir="ltr">
-				<legend>{ __( 'Blurb — English', 'perego-site' ) }</legend>
-				<RichText tagName="p" className="footer-blurb"
-					value={ attributes.blurbEn || SEED_BLURB_EN }
-					onChange={ ( blurbEn ) => setAttributes( { blurbEn } ) }
-					placeholder={ SEED_BLURB_EN } />
-			</fieldset>
-			<fieldset className="perego-site-footer__lang" dir="rtl">
-				<legend>{ __( 'Blurb — Arabic', 'perego-site' ) }</legend>
-				<RichText tagName="p" className="footer-blurb"
-					value={ attributes.blurbAr || SEED_BLURB_AR }
-					onChange={ ( blurbAr ) => setAttributes( { blurbAr } ) }
-					placeholder={ SEED_BLURB_AR } />
-			</fieldset>
-			<p className="perego-site-footer__editor-note">
-				{ __( 'Site footer — contact channels, social links (Inspector sidebar), and the blurb (above) are editable. Preview on the live site after saving.', 'perego-site' ) }
-			</p>
-			<div className="perego-site-footer__preview" onSubmit={ ( event ) => event.preventDefault() } onClick={ ( event ) => {
-				if ( event.target.closest( 'a, button, input, textarea, select' ) ) {
+			<div className="perego-site-footer__preview" onClick={ ( event ) => {
+				// Neutralize the preview's real links so a click never navigates the editor away; the
+				// in-canvas RichText blurb manages its own clicks.
+				const link = event.target.closest( 'a' );
+				if ( link && ! link.isContentEditable ) {
 					event.preventDefault();
 				}
 			} }>
-				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+				<FooterSkeleton channels={ channels } socialLinks={ socialLinks }
+					flat={ !! attributes.flat } blurb={ blurb } />
 			</div>
 		</div>
 	);

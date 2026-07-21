@@ -1,5 +1,28 @@
 # Perego — Decision Log
 
+## 2026-07-21 — Spec 021 C2: Footer live-canvas is a hybrid (real static surfaces + placeholder form columns)
+
+The footer `edit()` now renders real markup (`FooterSkeleton` in `site-footer/preview.js`) instead of
+`<ServerSideRender>`, following C1's pattern — but the footer is a HYBRID block, so the treatment differs
+from the header by design:
+
+- **Static surfaces render real markup:** the contact column (logo, "Contact us", contact-channel list,
+  blurb, social row) and the bottom bar (copyright + legal nav). These match the `SiteFooterRenderer`
+  output and are pinned by `parity.test.js`, which asserts `.footer-contact` and `.site-footer__bottom`
+  structurally equal a captured PHP fixture (`__fixtures__/front-footer.html`).
+- **Dynamic form columns become labelled locked placeholders.** The quick-message and careers columns are
+  rendered on the front end via `do_blocks()` (embedding `corex/form`, `footer-careers`, `join-form`) —
+  they can't be replicated in editor JS and are dynamic per the static-vs-dynamic rule, so the canvas shows
+  a labelled placeholder ("… shown on the live site") inside each `footer-col`. They are excluded from parity.
+- **Content editing:** the English blurb is edited in-canvas (`RichText` at its real `p.footer-blurb`
+  position); the Arabic blurb moves to an Inspector `TextareaControl`; contact channels, social links, and
+  the flat variant stay in the Inspector (unchanged). The canvas shows the English footer.
+- **Social-icon glyphs** are mirrored from `SiteFooterRenderer::SOCIAL_ICON_PATHS` into `preview.js` for
+  visual fidelity — the same way the block already mirrored the seed channels/links. Parity ignores the
+  glyph `d`, so this presentational copy can never break the test.
+- **Front end frozen:** no PHP/renderer change — `SiteFooterRenderer` and its 9 Pest tests are untouched,
+  so public output is byte-identical; this slice is editor-only.
+
 ## 2026-07-21 — Spec 021 C1: Header is the first true live-canvas block (real markup, not ServerSideRender)
 
 The header `edit()` no longer renders a `<ServerSideRender>` iframe; it renders the REAL front-end header
