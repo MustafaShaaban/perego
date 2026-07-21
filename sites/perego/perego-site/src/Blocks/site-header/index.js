@@ -1,109 +1,88 @@
 /**
- * Perego site-header block — editor registration. Nav links, the logo, and sticky-vs-static are real
- * block attributes, editable via Inspector controls (spec 020 round 4) — previously all three were
- * hardcoded PHP with zero admin UI. This block lives in the shared `header.html` FSE template part,
- * so — matching `footer-careers`'/`hero-slider`'s pattern for the same problem — nav items are an
- * En/Ar attribute pair (each a JSON string of `{label, href, children?}`); `SiteHeaderRenderer` picks
- * the current-locale variant, falling back to the original hardcoded nav when empty/invalid, so
- * existing pages render unchanged until an editor uses these controls. Server-rendered (save returns
- * null); the front-end sticky-scroll/hamburger/dropdown interactivity is unchanged, driven by view.js.
+ * Perego site-header block — editor registration. The logo, nav links, Services dropdown, CTA, and
+ * sticky-vs-static are real block attributes edited in the Inspector; the canvas renders the real header
+ * markup (see preview.js). This block lives in the shared `header.html` FSE template part, so nav items
+ * are an En/Ar attribute pair (each a JSON string of `{label, href, children?}`); `SiteHeaderRenderer`
+ * picks the current-locale variant, falling back to the original hardcoded nav when empty/invalid, so
+ * existing pages render unchanged. Server-rendered (save returns null); the front-end
+ * sticky-scroll/hamburger/dropdown interactivity is unchanged, driven by view.js. The settings controls
+ * use the shared `../../Editor` Inspector primitives (spec 021).
  */
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, MediaUpload, RichText, useBlockProps } from '@wordpress/block-editor';
-import { Button, CheckboxControl, Flex, FlexBlock, FlexItem, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
-import { chevronDown, chevronUp, closeSmall, plus } from '@wordpress/icons';
+import { LabeledRepeater } from '../../Editor/LabeledRepeater';
+import { LanguagePair } from '../../Editor/LanguagePair';
+import { LinkControl } from '../../Editor/LinkControl';
 import { MediaField } from '../../Editor/MediaField';
-import { RepeaterControls } from '../../Editor/RepeaterControls';
-import { moveItem } from '../../Editor/collection';
+import { PanelSection } from '../../Editor/PanelSection';
+import { RecordPicker } from '../../Editor/RecordPicker';
 import { HeaderSkeleton, SEED_AR, SEED_EN, defaultLogoUrl, parseNavItems } from './preview';
 import metadata from './block.json';
 import './style.scss';
 
-function NavItemEditor( { label, items, onChange } ) {
-	const update = ( index, patch ) => {
-		const next = items.map( ( item, i ) => ( i === index ? { ...item, ...patch } : item ) );
-		onChange( next );
-	};
-	const add = () => onChange( [ ...items, { label: __( 'New link', 'perego-site' ), href: '/' } ] );
-	const updateChild = ( itemIndex, childIndex, patch ) => {
-		const children = items[ itemIndex ].children.map( ( child, i ) => ( i === childIndex ? { ...child, ...patch } : child ) );
-		update( itemIndex, { children } );
-	};
-	const removeChild = ( itemIndex, childIndex ) => {
-		update( itemIndex, { children: items[ itemIndex ].children.filter( ( _, i ) => i !== childIndex ) } );
-	};
-	const addChild = ( itemIndex ) => {
-		const children = [ ...( items[ itemIndex ].children || [] ), { label: __( 'New dropdown link', 'perego-site' ), href: '/' } ];
-		update( itemIndex, { children } );
-	};
+const NAV_HREF_HELP = __( 'A path such as /work is localized automatically; a full URL (https://…) or #anchor is used as-is.', 'perego-site' );
+
+/** Editor for one locale's nav: a card list of links, each of which may carry its own dropdown links. */
+function NavItemEditor( { items, onChange } ) {
+	const update = ( index, patch ) => onChange( items.map( ( item, i ) => ( i === index ? { ...item, ...patch } : item ) ) );
 
 	return (
-		<fieldset className="perego-site-header__nav-editor">
-			<legend>{ label }</legend>
-			{ items.map( ( item, index ) => (
-				<div className="perego-site-header__nav-item" key={ index }>
-					<TextControl label={ __( 'Label', 'perego-site' ) } value={ item.label }
-						onChange={ ( value ) => update( index, { label: value } ) } />
-					<TextControl label={ __( 'Link', 'perego-site' ) } value={ item.href }
-						onChange={ ( value ) => update( index, { href: value } ) } />
-					<RepeaterControls items={ items } index={ index } onChange={ onChange }
-						itemLabel={ __( 'navigation link', 'perego-site' ) }
-						createCopy={ ( item ) => ( { ...item, children: item.children?.map( ( child ) => ( { ...child } ) ) } ) } />
-					{ item.children && (
-						<div className="perego-site-header__nav-children">
-							{ item.children.map( ( child, childIndex ) => (
-								<div className="perego-site-header__nav-item" key={ childIndex }>
-									<TextControl label={ __( 'Dropdown label', 'perego-site' ) } value={ child.label }
-										onChange={ ( value ) => updateChild( index, childIndex, { label: value } ) } />
-									<TextControl label={ __( 'Dropdown link', 'perego-site' ) } value={ child.href }
-										onChange={ ( value ) => updateChild( index, childIndex, { href: value } ) } />
-									<Button size="small" isDestructive onClick={ () => removeChild( index, childIndex ) }>{ __( 'Remove', 'perego-site' ) }</Button>
-								</div>
-							) ) }
-							<Button size="small" variant="secondary" onClick={ () => addChild( index ) }>{ __( '+ Dropdown link', 'perego-site' ) }</Button>
-						</div>
-					) }
-				</div>
-			) ) }
-			<Button variant="primary" onClick={ add }>{ __( '+ Add nav link', 'perego-site' ) }</Button>
-		</fieldset>
+		<LabeledRepeater
+			items={ items }
+			onChange={ onChange }
+			itemLabel={ __( 'navigation link', 'perego-site' ) }
+			addLabel={ __( 'Add nav link', 'perego-site' ) }
+			createItem={ () => ( { label: __( 'New link', 'perego-site' ), href: '/' } ) }
+			createCopy={ ( item ) => ( { ...item, children: item.children?.map( ( child ) => ( { ...child } ) ) } ) }
+			renderItem={ ( item, index ) => {
+				const updateChild = ( childIndex, patch ) => update( index, {
+					children: item.children.map( ( child, i ) => ( i === childIndex ? { ...child, ...patch } : child ) ),
+				} );
+				return (
+					<>
+						<LinkControl label={ item.label } href={ item.href } hrefHelp={ NAV_HREF_HELP }
+							onChangeLabel={ ( label ) => update( index, { label } ) }
+							onChangeHref={ ( href ) => update( index, { href } ) } />
+						{ item.children && (
+							<LabeledRepeater
+								items={ item.children }
+								onChange={ ( children ) => update( index, { children } ) }
+								itemLabel={ __( 'dropdown link', 'perego-site' ) }
+								addLabel={ __( 'Add dropdown link', 'perego-site' ) }
+								createItem={ () => ( { label: __( 'New dropdown link', 'perego-site' ), href: '/' } ) }
+								renderItem={ ( child, childIndex ) => (
+									<LinkControl label={ child.label } href={ child.href }
+										labelText={ __( 'Dropdown label', 'perego-site' ) }
+										hrefText={ __( 'Dropdown link', 'perego-site' ) }
+										onChangeLabel={ ( label ) => updateChild( childIndex, { label } ) }
+										onChangeHref={ ( href ) => updateChild( childIndex, { href } ) } />
+								) }
+							/>
+						) }
+					</>
+				);
+			} }
+		/>
 	);
 }
 
 const serviceTitle = ( service ) => decodeEntities( service?.title?.rendered || '' ) || __( 'Untitled Service', 'perego-site' );
 
-const pickerRowStyle = { padding: '6px 0', borderBlockEnd: '1px solid #f0f0f0' };
-const pickerTitleStyle = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
-const pickerHeadingStyle = { fontWeight: 600, margin: '12px 0 4px' };
-const pickerMutedStyle = { margin: '0 0 8px', color: '#757575' };
-
 /**
- * Professional one-by-one picker for the Services dropdown links. Manual mode shows a chosen list
- * (reorder / remove) plus an add list of the remaining Services; automatic mode lists every published
- * Service with a per-item show/hide. No raw IDs — each row is the Service's own title.
+ * The Services dropdown source: keep the legacy links (manual, none chosen), pick and order Services
+ * (manual), or show every published Service with per-item hide (automatic). No raw IDs — each row is the
+ * Service's own title, via the shared RecordPicker.
  */
 function ServicesMenuEditor( { attributes, services, setAttributes } ) {
 	const mode = attributes.servicesMenuMode || 'manual';
-	const order = attributes.servicesMenuOrder || [];
-	const excluded = attributes.servicesMenuExcludeIds || [];
-	const serviceById = new Map( services.map( ( service ) => [ service.id, service ] ) );
-
-	const selected = order.map( ( id ) => serviceById.get( id ) ).filter( Boolean );
-	const available = services.filter( ( service ) => ! order.includes( service.id ) );
-
-	const add = ( id ) => setAttributes( { servicesMenuOrder: [ ...order, id ] } );
-	const remove = ( id ) => setAttributes( { servicesMenuOrder: order.filter( ( selectedId ) => selectedId !== id ) } );
-	const move = ( index, delta ) => setAttributes( { servicesMenuOrder: moveItem( order, index, index + delta ) } );
-	const setShown = ( id, isShown ) => setAttributes( {
-		servicesMenuExcludeIds: isShown ? excluded.filter( ( excludedId ) => excludedId !== id ) : [ ...excluded, id ],
-	} );
 
 	return (
-		<PanelBody title={ __( 'Services dropdown', 'perego-site' ) } initialOpen={ false }>
+		<PanelSection title={ __( 'Services dropdown', 'perego-site' ) }>
 			<SelectControl
 				__nextHasNoMarginBottom
 				label={ __( 'Dropdown links', 'perego-site' ) }
@@ -117,55 +96,20 @@ function ServicesMenuEditor( { attributes, services, setAttributes } ) {
 				] }
 				onChange={ ( servicesMenuMode ) => setAttributes( { servicesMenuMode } ) }
 			/>
-
-			{ services.length === 0 && (
-				<p style={ pickerMutedStyle }>{ __( 'No published Services in this language yet.', 'perego-site' ) }</p>
-			) }
-
-			{ mode === 'manual' && services.length > 0 && (
-				<>
-					<p style={ pickerHeadingStyle }>{ __( 'Shown in the dropdown', 'perego-site' ) }</p>
-					{ selected.length === 0 && (
-						<p style={ pickerMutedStyle }>{ __( 'None yet — the current dropdown stays until you add one.', 'perego-site' ) }</p>
-					) }
-					{ selected.map( ( service, index ) => (
-						<Flex key={ service.id } align="center" style={ pickerRowStyle }>
-							<FlexBlock style={ pickerTitleStyle }>{ serviceTitle( service ) }</FlexBlock>
-							<FlexItem>
-								<Button size="small" icon={ chevronUp } label={ __( 'Move up', 'perego-site' ) }
-									disabled={ index === 0 } onClick={ () => move( index, -1 ) } />
-								<Button size="small" icon={ chevronDown } label={ __( 'Move down', 'perego-site' ) }
-									disabled={ index === selected.length - 1 } onClick={ () => move( index, 1 ) } />
-								<Button size="small" icon={ closeSmall } isDestructive label={ __( 'Remove', 'perego-site' ) }
-									onClick={ () => remove( service.id ) } />
-							</FlexItem>
-						</Flex>
-					) ) }
-
-					{ available.length > 0 && (
-						<>
-							<p style={ pickerHeadingStyle }>{ __( 'Add a Service', 'perego-site' ) }</p>
-							{ available.map( ( service ) => (
-								<Flex key={ service.id } align="center" style={ { padding: '4px 0' } }>
-									<FlexBlock style={ pickerTitleStyle }>{ serviceTitle( service ) }</FlexBlock>
-									<FlexItem>
-										<Button size="small" variant="secondary" icon={ plus }
-											onClick={ () => add( service.id ) }>{ __( 'Add', 'perego-site' ) }</Button>
-									</FlexItem>
-								</Flex>
-							) ) }
-						</>
-					) }
-				</>
-			) }
-
-			{ mode === 'automatic' && services.map( ( service ) => (
-				<CheckboxControl __nextHasNoMarginBottom key={ service.id }
-					label={ serviceTitle( service ) }
-					checked={ ! excluded.includes( service.id ) }
-					onChange={ ( isShown ) => setShown( service.id, isShown ) } />
-			) ) }
-		</PanelBody>
+			<RecordPicker
+				records={ services }
+				order={ attributes.servicesMenuOrder || [] }
+				excluded={ attributes.servicesMenuExcludeIds || [] }
+				mode={ mode }
+				getLabel={ serviceTitle }
+				onChangeOrder={ ( servicesMenuOrder ) => setAttributes( { servicesMenuOrder } ) }
+				onChangeExcluded={ ( servicesMenuExcludeIds ) => setAttributes( { servicesMenuExcludeIds } ) }
+				emptyLabel={ __( 'No published Services in this language yet.', 'perego-site' ) }
+				selectedHeading={ __( 'Shown in the dropdown', 'perego-site' ) }
+				addHeading={ __( 'Add a Service', 'perego-site' ) }
+				noneSelectedLabel={ __( 'None yet — the current dropdown stays until you add one.', 'perego-site' ) }
+			/>
+		</PanelSection>
 	);
 }
 
@@ -222,41 +166,40 @@ function Edit( { attributes, setAttributes } ) {
 	return (
 		<div { ...blockProps }>
 			<InspectorControls>
-				<PanelBody title={ __( 'Logo', 'perego-site' ) }>
+				<PanelSection title={ __( 'Logo', 'perego-site' ) } initialOpen>
 					<MediaField value={ attributes.logoId } media={ logoMedia }
 						label={ __( 'Header logo', 'perego-site' ) }
 						onSelect={ ( media ) => setAttributes( { logoId: media.id } ) }
 						onRemove={ () => setAttributes( { logoId: 0 } ) } />
-				</PanelBody>
-				<PanelBody title={ __( 'Header behavior', 'perego-site' ) }>
+				</PanelSection>
+				<PanelSection title={ __( 'Start a Project button', 'perego-site' ) }>
+					<LanguagePair
+						label={ __( 'Button text', 'perego-site' ) }
+						en={ attributes.ctaLabelEn } ar={ attributes.ctaLabelAr }
+						onChangeEn={ ( ctaLabelEn ) => setAttributes( { ctaLabelEn } ) }
+						onChangeAr={ ( ctaLabelAr ) => setAttributes( { ctaLabelAr } ) }
+						placeholderEn={ __( 'Start a Project', 'perego-site' ) }
+						placeholderAr="ابدأ الآن" />
+					<TextControl __nextHasNoMarginBottom label={ __( 'Button link', 'perego-site' ) }
+						value={ attributes.ctaUrl }
+						onChange={ ( ctaUrl ) => setAttributes( { ctaUrl } ) }
+						placeholder="/contact"
+						help={ __( 'A path such as /contact is localized automatically; a full URL (https://…) or #anchor is used as-is.', 'perego-site' ) } />
+				</PanelSection>
+				<ServicesMenuEditor attributes={ attributes } services={ services } setAttributes={ setAttributes } />
+				<PanelSection title={ __( 'Navigation — English', 'perego-site' ) }>
+					<NavItemEditor items={ navEn } onChange={ setNavEn } />
+				</PanelSection>
+				<PanelSection title={ __( 'Navigation — Arabic', 'perego-site' ) }>
+					<NavItemEditor items={ navAr } onChange={ setNavAr } />
+				</PanelSection>
+				<PanelSection title={ __( 'Header behavior', 'perego-site' ) }>
 					<ToggleControl
 						label={ __( 'Sticky header (stays fixed while scrolling)', 'perego-site' ) }
 						checked={ attributes.isSticky }
 						onChange={ ( isSticky ) => setAttributes( { isSticky } ) }
 					/>
-				</PanelBody>
-				<PanelBody title={ __( 'Start a Project button', 'perego-site' ) } initialOpen={ false }>
-						<TextControl label={ __( 'Button text — English', 'perego-site' ) }
-							value={ attributes.ctaLabelEn }
-							onChange={ ( ctaLabelEn ) => setAttributes( { ctaLabelEn } ) }
-							placeholder={ __( 'Start a Project', 'perego-site' ) } />
-						<TextControl label={ __( 'Button text — Arabic', 'perego-site' ) }
-							value={ attributes.ctaLabelAr }
-							onChange={ ( ctaLabelAr ) => setAttributes( { ctaLabelAr } ) }
-							placeholder="ابدأ الآن" />
-						<TextControl label={ __( 'Button link', 'perego-site' ) }
-							value={ attributes.ctaUrl }
-							onChange={ ( ctaUrl ) => setAttributes( { ctaUrl } ) }
-							placeholder="/contact"
-							help={ __( 'A path such as /contact is localized automatically; a full URL (https://…) or #anchor is used as-is.', 'perego-site' ) } />
-					</PanelBody>
-					<ServicesMenuEditor attributes={ attributes } services={ services } setAttributes={ setAttributes } />
-				<PanelBody title={ __( 'Navigation — English', 'perego-site' ) } initialOpen={ false }>
-					<NavItemEditor label={ __( 'English navigation', 'perego-site' ) } items={ navEn } onChange={ setNavEn } />
-				</PanelBody>
-				<PanelBody title={ __( 'Navigation — Arabic', 'perego-site' ) } initialOpen={ false }>
-					<NavItemEditor label={ __( 'Arabic navigation', 'perego-site' ) } items={ navAr } onChange={ setNavAr } />
-				</PanelBody>
+				</PanelSection>
 			</InspectorControls>
 			<div className="perego-site-header__preview" onClick={ ( event ) => {
 				// Neutralize the preview's real nav anchors so a click never navigates the editor
