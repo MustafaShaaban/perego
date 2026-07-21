@@ -35,6 +35,22 @@ export const SEED_SOCIAL_LINKS = [
 export const SEED_BLURB_EN = 'We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.';
 export const SEED_BLURB_AR = 'يسعدنا التواصل معك لتقديم حلول تقنية إبداعية والمساعدة والتوصيات المخصصة التي تناسب احتياجاتك على أفضل وجه.';
 
+/** The bottom-bar legal links shown until an editor sets `legalLinksEn`/`legalLinksAr`. Mirrors the PHP seed. */
+export const SEED_LEGAL_LINKS = [
+	{ label: 'Journal', href: '/journal' },
+	{ label: 'Terms & Conditions', href: '/terms' },
+	{ label: 'Privacy Policy', href: '/privacy' },
+];
+
+/** The default bottom-bar copyright (used until an editor sets `copyrightEn`/`copyrightAr`). */
+export function defaultCopyright() {
+	return sprintf(
+		/* translators: %s: current year. */
+		__( '© %s Perego Creative Studio — بيريجو. All rights reserved.', 'perego-site' ),
+		new Date().getFullYear()
+	);
+}
+
 /** Mirrors `SiteFooterRenderer::SOCIAL_ICON_PATHS` (source of truth); visual-only for the editor canvas. */
 const SOCIAL_ICON_PATHS = {
 	Instagram: 'M12 2.163c3.204 0 3.584.012 4.85.07 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227a3.8 3.8 0 0 1-.899 1.382 3.7 3.7 0 0 1-1.38.896c-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07s-3.585-.015-4.859-.074c-1.17-.061-1.815-.256-2.236-.421a3.7 3.7 0 0 1-1.379-.899 3.6 3.6 0 0 1-.9-1.38c-.163-.42-.359-1.065-.42-2.235-.045-1.26-.06-1.649-.06-4.844s.015-3.585.06-4.859c.061-1.17.257-1.814.42-2.236.21-.562.479-.96.9-1.381.419-.419.817-.679 1.379-.896.422-.164 1.057-.36 2.227-.421 1.266-.045 1.646-.06 4.859-.06M12 0C8.741 0 8.332.014 7.052.072 5.775.132 4.904.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.904.131 5.775.072 7.052.014 8.332 0 8.741 0 12s.014 3.668.072 4.948c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.986 8.741 24 12 24s3.668-.014 4.948-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.058-1.28.072-1.689.072-4.948s-.014-3.667-.072-4.947c-.06-1.277-.262-2.913-.558-2.913a5.9 5.9 0 0 0-1.384-2.126A5.9 5.9 0 0 0 19.861.63c-.765-.297-1.636-.499-2.913-.558C15.668.014 15.259 0 12 0m0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324M12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8m6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 1 0 0-2.881',
@@ -95,17 +111,13 @@ const FormColumnPlaceholder = ( { className, label } ) => (
 	</div>
 );
 
-const BottomBar = () => (
+const BottomBar = ( { copyright, legalLinks } ) => (
 	<div className="container site-footer__bottom">
-		<p>{ sprintf(
-			/* translators: %s: current year. */
-			__( '© %s Perego Creative Studio — بيريجو. All rights reserved.', 'perego-site' ),
-			new Date().getFullYear()
-		) }</p>
+		{ copyright || <p>{ defaultCopyright() }</p> }
 		<nav className="footer-legal" aria-label={ __( 'Legal', 'perego-site' ) }>
-			<a href="#">{ __( 'Journal', 'perego-site' ) }</a>
-			<a href="#">{ __( 'Terms & Conditions', 'perego-site' ) }</a>
-			<a href="#">{ __( 'Privacy Policy', 'perego-site' ) }</a>
+			{ legalLinks.map( ( link, index ) => (
+				<a key={ index } href={ link.href || '#' }>{ link.label }</a>
+			) ) }
 		</nav>
 	</div>
 );
@@ -115,7 +127,7 @@ const BottomBar = () => (
  * optionally overrides the blurb paragraph with an in-canvas `RichText` from `edit()` (it must keep the
  * `p.footer-blurb` skeleton). `flat` drops the quick-message column, matching the contact-page variant.
  */
-export function FooterSkeleton( { channels, socialLinks, blurb, flat } ) {
+export function FooterSkeleton( { channels, socialLinks, blurb, flat, copyright, legalLinks = SEED_LEGAL_LINKS } ) {
 	return (
 		<footer className={ `site-footer${ flat ? ' site-footer--flat' : '' }` } id="contact">
 			<div className="container site-footer__grid">
@@ -127,7 +139,7 @@ export function FooterSkeleton( { channels, socialLinks, blurb, flat } ) {
 				<FormColumnPlaceholder className="footer-careers"
 					label={ __( 'Join us / careers — shown on the live site.', 'perego-site' ) } />
 			</div>
-			<BottomBar />
+			<BottomBar copyright={ copyright } legalLinks={ legalLinks } />
 		</footer>
 	);
 }

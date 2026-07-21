@@ -2,6 +2,34 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-21) — Spec 021: unified Inspector design system + footer bottom bar fully dynamic
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Owner feedback after C1/C2: the block settings UI is
+  buggy/unpolished and should be consistent across all blocks, and end users must control every detail (the
+  footer bottom bar was hardcoded). Public design stays frozen; only block back-end + editing UX change. Plan:
+  `C:\Users\pc\.claude\plans\i-don-t-know-why-goofy-pie.md`. See DECISIONS 2026-07-21 (program entry).
+- **Delivered this PR (foundation + Header + Footer):**
+  - **Shared Inspector design system** — `perego-site/src/Editor/{PanelSection,LanguagePair,LinkControl,`
+    `LabeledRepeater,RecordPicker}.js` + `partitionRecords` in `collection.js`; styled by
+    `perego-theme/.../editor-inspector.scss` → `editor-inspector.css`, enqueued once via
+    `enqueue_block_editor_assets` (sidebar is outside the canvas iframe). `npm run styles` now compiles it.
+  - **Header + Footer Inspectors reorganized** onto the primitives (RecordPicker for the Services menu,
+    LabeledRepeater + LinkControl for nav/channels/social/legal links, LanguagePair for bilingual text,
+    PanelSection grouping); all inline-styled/ad-hoc controls removed.
+  - **Footer bottom bar fully dynamic** — new `copyrightEn`/`copyrightAr` ({year} token) +
+    `legalLinksEn`/`legalLinksAr` attributes; `SiteFooterRenderer::renderBottomBar` reads them with fallback to
+    the exact prior output; copyright edits in-canvas, legal links via Inspector. Tags/classes unchanged.
+- **Verified:** block Jest **125** (+4 `partitionRecords`); footer Pest **13/13** (+4 bottom-bar: {year},
+  per-locale AR, custom links, seed fallback); header Pest **28/28** unchanged; production build + `npm run
+  styles` clean. Guard Gate reviewed (clean-code/wp/test) — no blocking findings; unedited pages byte-identical
+  (new attrs default to "" → seed fallback), so the public front end is frozen.
+- **Commits:** foundation `12e6af3`, header reorg `71bf51d`, footer reorg + bottom bar (this commit).
+- **⚠️ Live-editor VISUAL check still open** for header + footer (perego.local browser-approval-gated + admin
+  login needed). Structure/behavior are test-proven; the polished-sidebar look + in-canvas copyright editing
+  need owner review (Site Editor → template parts).
+- **Next:** owner eyeballs header + footer settings/canvas live; then roll the same two concerns (settings-UX
+  reorg + full-dynamic audit) to the next block — **Hero (T011/T012)** — and onward per the plan's order.
+
 ## RESUME HERE (2026-07-21) — Spec 021 C2/T009: Footer live-canvas (hybrid: real static surfaces + placeholder form columns)
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Second live-canvas slice, same pattern as C1. The footer

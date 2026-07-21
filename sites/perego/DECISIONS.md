@@ -1,5 +1,33 @@
 # Perego — Decision Log
 
+## 2026-07-21 — Spec 021: unified block-Inspector design system + full end-user control (program)
+
+Owner review of C1/C2 raised two cross-cutting requirements for **every** block: the settings/options UI is
+unpolished and inconsistently built, and content the end user should control is hardcoded. Direction agreed:
+keep the public design frozen; change only the block back-end (attributes + renderer plumbing) and the editing
+experience, incrementally per component.
+
+- **One Inspector design system.** A small set of shared primitives in `perego-site/src/Editor/`
+  (`PanelSection`, `LanguagePair`, `LinkControl`, `LabeledRepeater`, `RecordPicker`, plus the existing
+  `MediaField`/`RepeaterControls`) replaces ad-hoc, inline-styled controls. They are styled by
+  `perego-theme/assets/src/scss/editor-inspector.scss` → `editor-inspector.css`, enqueued **once** via
+  `enqueue_block_editor_assets` — the Inspector sidebar renders outside the canvas iframe, so
+  `add_editor_style('main.css')` never reaches it. `partitionRecords` lives in the component-free
+  `collection.js` so its selection semantics are unit-tested (the `@wordpress/components` render path is not
+  testable under this Jest setup).
+- **Full dynamic control.** Every hardcoded user-facing detail becomes an editable attribute (EN/AR when
+  localized) with the current value as the fallback default, so no migration is needed and unedited pages are
+  byte-identical. First applied to the **footer bottom bar**: `copyrightEn`/`copyrightAr` (a `{year}` token is
+  replaced at render) and `legalLinksEn`/`legalLinksAr` (a label+URL repeater). `SiteFooterRenderer::renderBottomBar`
+  reads them, falling back to the exact prior copyright + Journal/Terms/Privacy links; `legalHref()` localizes
+  internal paths and keeps external/anchor URLs verbatim (mirrors the header CTA rule). The bar's tags/classes
+  (`p`, `nav.footer-legal > a`) are unchanged, so the footer parity test stays green.
+- **Editing surface.** In-canvas for text/media in the real markup (CTA, blurb, copyright); Inspector for
+  structured lists (nav, channels, social, legal links, record pickers). The canvas shows the English variant;
+  the Arabic variant is edited in the Inspector.
+- **Rollout** is one block at a time (header + footer done in this PR); dynamic/query blocks keep
+  `ServerSideRender` + a styled placeholder and gain `RecordPicker` rather than a real-markup canvas.
+
 ## 2026-07-21 — Spec 021 C2: Footer live-canvas is a hybrid (real static surfaces + placeholder form columns)
 
 The footer `edit()` now renders real markup (`FooterSkeleton` in `site-footer/preview.js`) instead of

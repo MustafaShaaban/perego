@@ -57,6 +57,41 @@ it('renders the handoff bottom bar: full studio copyright, Journal, and the lega
         ->and($html)->toContain('/privacy');
 });
 
+it('uses an editor-set bottom-bar copyright, replacing the {year} token with the current year', function () {
+    $html = renderFooter(false, ['copyrightEn' => '© {year} My Studio']);
+
+    expect($html)->toContain('© ' . gmdate('Y') . ' My Studio')
+        ->and($html)->not->toContain('Perego Creative Studio — بيريجو');
+});
+
+it('uses the Arabic bottom-bar copyright on the ar locale', function () {
+    $html = renderFooter(false, ['copyrightEn' => 'EN line', 'copyrightAr' => 'حقوق {year}'], 'ar');
+
+    expect($html)->toContain('حقوق ' . gmdate('Y'))
+        ->and($html)->not->toContain('EN line');
+});
+
+it('renders editor-set legal links, replacing the default Journal/Terms/Privacy set', function () {
+    $links = (string) json_encode([
+        ['label' => 'Sitemap', 'href' => '/sitemap'],
+        ['label' => 'Partner', 'href' => 'https://example.com'],
+    ]);
+    $html = renderFooter(false, ['legalLinksEn' => $links]);
+
+    expect($html)->toContain('>Sitemap</a>')
+        ->and($html)->toContain('/sitemap')
+        ->and($html)->toContain('https://example.com')
+        ->and($html)->not->toContain('Privacy Policy');
+});
+
+it('keeps the default legal links when no legalLinks attribute is set', function () {
+    $html = renderFooter(false, ['copyrightEn' => 'anything']);
+
+    expect($html)->toContain('/journal')
+        ->and($html)->toContain('/terms')
+        ->and($html)->toContain('/privacy');
+});
+
 it('renders the flat 2-column variant on the contact page: contact + careers, no quick-message', function () {
     // The handoff's contact.html keeps the contact and "Join us"/careers columns and drops the
     // quick-message form (the contact page already carries its own message form).

@@ -92,7 +92,7 @@ final class SiteFooterRenderer
         $html .= $this->renderCareersColumn();
 
         $html .= '</div>';
-        $html .= $this->renderBottomBar();
+        $html .= $this->renderBottomBar($attributes);
         $html .= '</footer>';
 
         return $html;
@@ -271,24 +271,80 @@ final class SiteFooterRenderer
         return do_blocks('<!-- wp:perego-theme/join-form /-->');
     }
 
-    private function renderBottomBar(): string
+    /**
+     * The bottom bar (spec 020 D1; editor-dynamic spec 021 C2). Both the copyright line and the legal
+     * links are editor-set per locale, falling back to the exact prior output so existing pages are
+     * unchanged. A `{year}` token in the copyright is replaced with the current year at render.
+     *
+     * @param array<string,string> $attributes
+     */
+    private function renderBottomBar(array $attributes): string
     {
-        $copyright = sprintf(
-            /* translators: %s: current year. */
-            __('© %s Perego Creative Studio — بيريجو. All rights reserved.', 'perego-site'),
-            gmdate('Y')
-        );
+        $suffix = $this->languageService->driver()->currentLocale() === 'ar' ? 'Ar' : 'En';
 
-        // The exact handoff bottom bar (spec 020 D1): the full studio copyright line — the bilingual
-        // brand name is part of the fixed identity, not translatable prose — and the Journal link
-        // ahead of the two legal links.
-        return '<div class="container site-footer__bottom">'
-            . '<p>' . esc_html($copyright) . '</p>'
-            . '<nav class="footer-legal" aria-label="' . esc_attr__('Legal', 'perego-site') . '">'
-            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/journal')) . '">' . esc_html__('Journal', 'perego-site') . '</a>'
-            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/terms')) . '">' . esc_html__('Terms & Conditions', 'perego-site') . '</a>'
-            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/privacy')) . '">' . esc_html__('Privacy Policy', 'perego-site') . '</a>'
-            . '</nav>'
-            . '</div>';
+        $copyright = trim((string) ($attributes['copyright' . $suffix] ?? ''));
+        $copyright = $copyright !== ''
+            ? str_replace('{year}', gmdate('Y'), $copyright)
+            : sprintf(
+                /* translators: %s: current year. */
+                __('© %s Perego Creative Studio — بيريجو. All rights reserved.', 'perego-site'),
+                gmdate('Y')
+            );
+
+        $links = $this->jsonAttribute($attributes, 'legalLinks' . $suffix, $this->seedLegalLinks());
+
+        $html = '<div class="container site-footer__bottom">';
+        $html .= '<p>' . esc_html($copyright) . '</p>';
+        $html .= '<nav class="footer-legal" aria-label="' . esc_attr__('Legal', 'perego-site') . '">';
+        foreach ($links as $link) {
+            $label = (string) ($link['label'] ?? '');
+            if ($label === '') {
+                continue;
+            }
+            $html .= '<a href="' . esc_url($this->legalHref((string) ($link['href'] ?? ''))) . '">' . esc_html($label) . '</a>';
+        }
+        $html .= '</nav>';
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * The default bottom-bar legal links (localized labels + routes) — used when no `legalLinks*`
+     * attribute is set, so the bar renders exactly as before: Journal ahead of the two legal links.
+     *
+     * @return list<array{label: string, href: string}>
+     */
+    private function seedLegalLinks(): array
+    {
+        return [
+            ['label' => __('Journal', 'perego-site'), 'href' => '/journal'],
+            ['label' => __('Terms & Conditions', 'perego-site'), 'href' => '/terms'],
+            ['label' => __('Privacy Policy', 'perego-site'), 'href' => '/privacy'],
+        ];
+    }
+
+    /**
+     * Resolve a legal-link target: an external, protocol-relative, mailto/tel, or same-page-anchor URL
+     * is used verbatim; an internal path is localized through the language driver (mirrors the header's
+     * CTA/nav rule) so it never becomes a homepage URL.
+     */
+    private function legalHref(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return $this->languageService->driver()->localizedUrl('/');
+        }
+
+        if (
+            str_starts_with($url, '#')
+            || str_starts_with($url, 'mailto:')
+            || str_starts_with($url, 'tel:')
+            || (bool) preg_match('#^(https?:)?//#i', $url)
+        ) {
+            return $url;
+        }
+
+        return $this->languageService->driver()->localizedUrl($url);
     }
 }
