@@ -4,7 +4,7 @@
 
 - [ ] T001 [P] Capture the full EN/AR public baseline matrix and route/interactions/a11y evidence in `sites/perego/specs/021-fse-visual-editing-ux/evidence/`.
 - [x] T002 [P] Inventory current blocks, renderers, attributes, metadata, template parts, and editor placeholders in `sites/perego/specs/021-fse-visual-editing-ux/contracts/`.
-- [ ] T003 Create `perego-site/src/Editor/` shared media/link/entity/term/repeater/preview controls and focused Jest tests.
+- [ ] T003 Extend the existing `perego-site/src/Editor/` toolkit (`MediaField`, `RepeaterControls`, `collection`) with in-canvas primitives (`EditableText`, `EditableMedia`, `RecordPicker`, `LinkControl`, `LanguagePair`) and focused Jest tests, **and add the markup-parity harness** (Jest snapshot of editor markup vs. a fixture of each block's PHP `render_callback` output). See DECISIONS 2026-07-21.
 - [ ] T004 Create normalized block-editor data/REST contracts, permissions, loading/error/empty handling, and Pest tests.
 - [ ] T005 Verify the foundation’s keyboard, screen-reader, RTL, and no-raw-ID/key acceptance criteria.
 
@@ -51,6 +51,10 @@
 - [ ] T032 Run focused editor E2E workflows and all Pest/Jest/Playwright suites.
 - [ ] T033 Run clean-code, wp, test, and docs guards; update site README, docs, PROGRESS, DECISIONS, and evidence.
 - [ ] T034 Commit, push, open/update stacked PR, and record merge/dependency state.
+
+## Standard for every visual-block slice (per DECISIONS 2026-07-21, refining framework #43)
+
+Static-layout blocks (Header, Footer, Hero, Services teaser, About, Service Inner Hero, What We Do, Process) render their **real markup in `edit()`** with in-canvas `RichText`/`MediaPlaceholder` and ship a **markup-parity test**; `<ServerSideRender>` is retained only for dynamic/query blocks (Clients, Portfolio grid, related/search) with a styled placeholder + `RecordPicker`. Repeaters use structured attributes with legacy JSON-string read-time normalization. Content-model rework also covers **Project admin UX (C13)** alongside the Client editor in T019/T022.
 
 ## Dependencies
 

@@ -1252,3 +1252,53 @@ items/contact channels/social links aren't language-specific data (a phone numbe
 translate), so — unlike the En/Ar text pairs above — these are single (non-bilingual) attributes shared
 across both locales, consistent with how they were previously hardcoded PHP consts shared by both
 languages.
+
+## 2026-07-21 — Spec 021: editor previews move from `ServerSideRender` iframes to live-canvas `edit()`
+markup guarded by parity tests (refines framework Decision #43); structured repeaters replace JSON-string
+attributes (reverses the round-4 note above, at the owner's explicit request)
+
+**Live-canvas editing, not an SSR iframe + sidebar — the owner asked for "the Bricks experience."** Framework
+Decision #43 mandated that every dynamic block preview its PHP `render_callback` via `<ServerSideRender>` —
+"one renderer, never a duplicated JS implementation." That gave an accurate but **non-interactive** preview:
+the canvas is a server-rendered iframe, and all editing happens in the right-hand Inspector (even the round-4
+RichText fields live in the sidebar, not on the design). The owner's directive this session — *"forget the
+current implementation, I want the Bricks/Elementor experience, editable in the canvas"* — makes that model
+the defect to remove. **Decision:** for **static-layout blocks** (header, footer, hero, services-teaser,
+home-about, service-hero, and the What-We-Do / Process sections), `edit()` now renders the **real component
+markup** using the **same compiled SCSS** the front-end loads (imported via `block.json` `style`/`editorStyle`),
+so the canvas is pixel-identical to production; editable text is `RichText` **placed in that markup**, media is
+`MediaPlaceholder`/`MediaReplaceFlow` **in place**, and the Inspector keeps only non-content settings (link
+targets, toggles, source mode). `<ServerSideRender>` is retained **only** for **dynamic/query blocks** whose
+content has no fixed value at edit time (clients-carousel, portfolio-grid, related/search), and even those get
+an on-brand styled placeholder rather than a bare box.
+
+**PHP stays the single front-end renderer; a parity test is what makes that safe.** The real risk this
+introduces is exactly what #43 was avoiding — editor markup and PHP output drifting apart. So this decision is
+only valid **with** its guard: each static block ships a **markup-parity test** (a Jest snapshot of the
+editor-rendered structure checked against a fixture of the PHP `render_callback` output). The front-end render
+path is unchanged and remains authoritative; `edit()` is a faithful editor-only projection of it, and the
+parity test fails the build if the two structures diverge. This is a **refinement of #43, not a repudiation**:
+#43's "one source of truth = the server renderer" still holds for what ships to visitors; we add an
+editor-only view of that same structure, tied to it by a test rather than by an iframe.
+
+**Structured repeaters replace JSON-string attributes — this reverses the round-4 note above, on the owner's
+call.** The round-4 entry deliberately stored nav items / contact channels / social links as a single
+JSON-`string` attribute and left a note telling future audits not to "fix" it back. An in-canvas repeater
+(add / reorder / remove items directly on the design) is materially cleaner to build and reason about over
+typed array/object attributes with a REST schema than over a hand-parsed JSON blob, and the owner explicitly
+approved "structured attribute arrays … never JSON strings" for this work. **Decision:** migrate these to
+structured attributes as each block is rebuilt, with an **idempotent read-time upgrade** — the PHP renderer and
+`edit()` accept the legacy JSON-string value and normalize it to the structured shape, so no saved content is
+lost and unedited blocks render unchanged until touched. The En/Ar-pair rule (round 4) and the "one instance
+in a shared template needs both languages as attributes" rule are unaffected and still apply.
+
+**Reusable editor toolkit so all 15 components are consistent.** The existing shared `perego-site/src/Editor/`
+directory (already holding `MediaField`, `RepeaterControls`, `collection`) is **extended** — not replaced — with
+the in-canvas primitives the live model needs (`EditableText`, `EditableMedia`, `RecordPicker`, `LinkControl`,
+`LanguagePair`) consumed by every rebuilt block, so "start clean" does not mean fifteen bespoke editors. The new
+primitives and the parity-test harness are built once, before the first component (Header) lands.
+
+**Rule of thumb going forward:** a block whose content is fixed at edit time renders its real markup in
+`edit()` (live-canvas, parity-tested); a block whose content is a runtime query keeps `<ServerSideRender>` with
+a styled placeholder. New repeaters use structured attributes; legacy JSON-string values are upgraded at read
+time, never dropped.

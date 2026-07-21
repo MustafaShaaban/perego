@@ -32,7 +32,7 @@ Replace editor-only text/form approximations with data-contract-driven visual bl
 ## Architecture and Delivery Slices
 
 1. **Baseline and contract inventory**: capture frozen public matrix; map every current block editor, renderer, attribute/meta owner, and migration source.
-2. **Editor foundation**: shared media/link/entity/hierarchical-term/repeater/preview/error components plus REST query contracts. No public asset changes.
+2. **Editor foundation**: extend the existing `perego-site/src/Editor/` toolkit (already has `MediaField`, `RepeaterControls`, `collection`) with in-canvas primitives (`EditableText`, `EditableMedia`, `RecordPicker`, `LinkControl`, `LanguagePair`) plus REST query contracts, **and a markup-parity test harness** (Jest snapshot of editor markup vs. a fixture of the PHP `render_callback` output). Built once before the first component. No public asset changes.
 3. **Shared chrome**: refactor Header and Footers to reuse public contract/classes in editor canvas, block unsafe navigation, add automatic/manual Services menu.
 4. **Homepage visual blocks**: Hero parent/slide, Services composer, About, Clients query composer; migrate existing attributes without changing public behavior.
 5. **Content-model UX**: hierarchical taxonomies; polished Client editor; service-project relationship and placement configuration; idempotent migration.
@@ -49,9 +49,18 @@ Replace editor-only text/form approximations with data-contract-driven visual bl
 | Service sections | Service post content/meta | locked template blocks and section attributes |
 | Service portfolio | Project records and taxonomy | ordered, validated service relation + placement metadata |
 
+## Editor rendering model (see DECISIONS 2026-07-21, refining framework #43)
+
+Two block classes replace the previous `<ServerSideRender>`-iframe-only preview:
+
+- **Static-layout blocks** (Header, Footer, Hero, Services teaser, About, Service Hero, What We Do, Process): `edit()` renders the **real component markup** using the **same compiled SCSS** the front-end loads (via `block.json` `style`/`editorStyle`), so the canvas is pixel-identical to production. Editable text is `RichText` placed in that markup; media uses `MediaPlaceholder`/`MediaReplaceFlow` in place; the Inspector holds only non-content settings. Each such block ships a **markup-parity test** so editor and PHP output cannot drift.
+- **Dynamic/query blocks** (Clients carousel, Portfolio grid, related/search): retain `<ServerSideRender>` but with an on-brand styled placeholder and a `RecordPicker` (select/reorder/add/exclude by title+thumbnail, no raw IDs).
+
+Repeaters (nav, slides, cards, steps, contact/social) use **structured array/object attributes**, not JSON strings; legacy JSON-string values are normalized at read time in both PHP and `edit()` so no saved content is lost.
+
 ## Public Render and Rollback
 
-Public renderers remain the authority. Editor code consumes their normalized data contract or equivalent DOM classes; editor-only styles are under `.editor-styles-wrapper`. Migrations are versioned/idempotent, preserve legacy values until acceptance, record a completion marker, and support rollback by restoring a prior version/legacy read fallback. A failed visual comparison reverts the relevant slice rather than changing the frontend baseline.
+Public renderers remain the authority. `edit()` is a faithful editor-only projection of the PHP render, tied to it by the parity test; editor-only styles are under `.editor-styles-wrapper`. Migrations are versioned/idempotent, preserve legacy values until acceptance, record a completion marker, and support rollback by restoring a prior version/legacy read fallback. A failed visual comparison reverts the relevant slice rather than changing the frontend baseline.
 
 ## Project Structure
 
