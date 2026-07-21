@@ -1,5 +1,29 @@
 # Perego — Decision Log
 
+## 2026-07-21 — Spec 021 C1: Header is the first true live-canvas block (real markup, not ServerSideRender)
+
+The header `edit()` no longer renders a `<ServerSideRender>` iframe; it renders the REAL front-end header
+markup (`HeaderSkeleton` in `site-header/preview.js`) — the same `.site-header__inner` tag/class skeleton
+that `SiteHeaderRenderer::render()` emits — styled by the theme's `main.css`, which is loaded into the
+editor canvas via `add_editor_style` (commit `76562fb`). This is the DECISIONS 2026-07-21 static-layout
+standard applied for the first time, and it establishes the pattern for the remaining static blocks.
+
+- **One skeleton, no drift.** `HeaderSkeleton` is pure (no editor-store components). `edit()` renders it
+  with two structurally identical override nodes — a `MediaUpload`-triggering logo anchor and a
+  `RichText` (`tagName="a"`) CTA — so in-canvas editing is added without changing the markup. The parity
+  test (`parity.test.js`) renders the same component with plain defaults and asserts its `.site-header__inner`
+  skeleton equals a captured PHP fixture (`__fixtures__/front-header.html`), so editor↔PHP drift fails CI.
+- **Route-neutral fixture.** The fixture is the live header from `/contact/`, where no top-level nav item is
+  active — matching the stateless editor preview (the lone `is-active`/`aria-current` is the lang-toggle's
+  current-language marker, which the preview renders identically).
+- **In-canvas vs Inspector.** CTA text and the logo are edited directly in the canvas. Bilingual nav (EN/AR
+  pairs + dropdowns), the Services-dropdown source, sticky, and the CTA link stay in the Inspector — the
+  canvas shows the **English** nav as its live surface; a single locale can't represent both nav languages
+  at once. The lang-toggle and hamburger are rendered statically for visual fidelity (front-end-only
+  behaviour, excluded from the parity comparison per the harness's per-block-omission allowance).
+- **Front end frozen.** No PHP/renderer change — `SiteHeaderRenderer` and its 28 Pest tests are untouched,
+  so public output is byte-identical; this slice is editor-only.
+
 ## 2026-07-21 — Spec 021: Service owns its Selected Work choices
 
 The `service-selected-work` block is shared by Service templates, so its project list cannot be saved on the

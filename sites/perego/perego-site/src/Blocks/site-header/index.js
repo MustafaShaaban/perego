@@ -9,67 +9,19 @@
  * null); the front-end sticky-scroll/hamburger/dropdown interactivity is unchanged, driven by view.js.
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { InspectorControls, MediaUpload, RichText, useBlockProps } from '@wordpress/block-editor';
 import { Button, CheckboxControl, Flex, FlexBlock, FlexItem, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
 import { chevronDown, chevronUp, closeSmall, plus } from '@wordpress/icons';
-import ServerSideRender from '@wordpress/server-side-render';
 import { MediaField } from '../../Editor/MediaField';
 import { RepeaterControls } from '../../Editor/RepeaterControls';
 import { moveItem } from '../../Editor/collection';
+import { HeaderSkeleton, SEED_AR, SEED_EN, defaultLogoUrl, parseNavItems } from './preview';
 import metadata from './block.json';
 import './style.scss';
-
-const SEED_EN = [
-	{ label: 'Home', href: '/' },
-	{ label: 'About Us', href: '/#about' },
-	{
-		label: 'Services', href: '/#services',
-		children: [
-			{ label: 'Video Editing', href: '/services/video-editing' },
-			{ label: '2D Motion Graphics', href: '/services/motion-graphics' },
-			{ label: 'Graphic Design', href: '/services/graphic-design' },
-			{ label: 'Website Making', href: '/services/website-making' },
-		],
-	},
-	{ label: 'Work', href: '/work' },
-	{ label: 'Journal', href: '/journal' },
-	{ label: 'Clients', href: '/#clients' },
-	{ label: 'Contact Us', href: '/contact' },
-];
-
-const SEED_AR = [
-	{ label: 'الرئيسية', href: '/' },
-	{ label: 'من نحن', href: '/#about' },
-	{
-		label: 'الخدمات', href: '/#services',
-		children: [
-			{ label: 'مونتاج الفيديو', href: '/services/video-editing' },
-			{ label: 'موشن جرافيك ثنائي الأبعاد', href: '/services/motion-graphics' },
-			{ label: 'تصميم جرافيك', href: '/services/graphic-design' },
-			{ label: 'صناعة المواقع', href: '/services/website-making' },
-		],
-	},
-	{ label: 'أعمالنا', href: '/work' },
-	{ label: 'المدونة', href: '/journal' },
-	{ label: 'العملاء', href: '/#clients' },
-	{ label: 'تواصل معنا', href: '/contact' },
-];
-
-function parseNavItems( raw, seed ) {
-	if ( ! raw ) {
-		return seed;
-	}
-	try {
-		const parsed = JSON.parse( raw );
-		return Array.isArray( parsed ) && parsed.length ? parsed : seed;
-	} catch ( e ) {
-		return seed;
-	}
-}
 
 function NavItemEditor( { label, items, onChange } ) {
 	const update = ( index, patch ) => {
@@ -246,6 +198,27 @@ function Edit( { attributes, setAttributes } ) {
 		setAttributes( { navItemsAr: JSON.stringify( items ) } );
 	};
 
+	const logoUrl = logoMedia?.source_url || defaultLogoUrl();
+
+	// The canvas renders the real header for the English nav (its live source of truth is the
+	// "Navigation — English" panel). Arabic nav, the Services-dropdown source, and the sticky/link
+	// settings are edited in the Inspector; the front-end PHP renderer stays the single renderer.
+	const logo = (
+		<MediaUpload onSelect={ ( media ) => setAttributes( { logoId: media.id } ) }
+			allowedTypes={ [ 'image' ] } value={ attributes.logoId }
+			render={ ( { open } ) => (
+				<a className="logo" href="#" aria-label={ __( 'Replace the header logo', 'perego-site' ) }
+					onClick={ ( event ) => { event.preventDefault(); open(); } }>
+					<img src={ logoUrl } alt="" className="logo__img" />
+				</a>
+			) } />
+	);
+	const cta = (
+		<RichText tagName="a" className="btn btn--accent header-cta" value={ attributes.ctaLabelEn }
+			allowedFormats={ [] } onChange={ ( ctaLabelEn ) => setAttributes( { ctaLabelEn } ) }
+			placeholder={ __( 'Start a Project', 'perego-site' ) } />
+	);
+
 	return (
 		<div { ...blockProps }>
 			<InspectorControls>
@@ -286,11 +259,14 @@ function Edit( { attributes, setAttributes } ) {
 				</PanelBody>
 			</InspectorControls>
 			<div className="perego-site-header__preview" onClick={ ( event ) => {
-				if ( event.target.closest( 'a' ) ) {
+				// Neutralize the preview's real nav anchors so a click never navigates the editor
+				// away; the RichText CTA and MediaUpload logo manage their own clicks above.
+				const link = event.target.closest( 'a' );
+				if ( link && ! link.isContentEditable && ! link.classList.contains( 'logo' ) ) {
 					event.preventDefault();
 				}
 			} }>
-				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+				<HeaderSkeleton navItems={ navEn } logoUrl={ logoUrl } logo={ logo } cta={ cta } />
 			</div>
 		</div>
 	);

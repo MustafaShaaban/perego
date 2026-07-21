@@ -2,6 +2,37 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-21) — Spec 021 C1/T007: Header is a true live-canvas block (real markup + parity test)
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. The header `edit()` now renders the REAL front-end
+  header markup instead of a `<ServerSideRender>` iframe — the DECISIONS 2026-07-21 static-layout standard,
+  applied for the first time. See DECISIONS 2026-07-21 (C1) for the full rationale.
+- **What changed (editor-only; front end frozen):**
+  - New `site-header/preview.js` — `HeaderSkeleton`, a pure component rendering the `.site-header__inner`
+    tag/class skeleton `SiteHeaderRenderer::render()` emits; also now the single home of `SEED_EN`/`SEED_AR`/
+    `parseNavItems` (moved out of `index.js`).
+  - `site-header/index.js` — `edit()` renders `HeaderSkeleton` with an in-canvas `RichText` CTA
+    (`tagName="a"`) and a click-to-replace `MediaUpload` logo; all Inspector controls kept. `ServerSideRender`
+    removed. Canvas shows the **English** nav as its live surface; bilingual nav / Services source / sticky /
+    CTA link stay in the Inspector.
+  - New `site-header/parity.test.js` + `__fixtures__/front-header.html` (captured live header from the
+    route-neutral `/contact/`) — asserts the editor skeleton structurally equals the PHP output, and that
+    drift (an extra nav item) is caught. First end-to-end use of the `src/Editor/parity.js` harness.
+  - The theme editor-canvas CSS enabler (`add_editor_style('assets/css/main.css')`) was already in place
+    from commit `76562fb`; confirmed `main.css` carries every `.site-header*` selector.
+- **Verified:** block Jest **118/118** (was 116; +2 parity); header Pest **28/28** unchanged (PHP untouched →
+  public output byte-identical); production `npm run build` clean. Guard Gate: clean-code-guard / wp-guard /
+  test-guard reviewed — no blocking findings (the repo runs no ESLint; house style matched, diff is −52/+28
+  semantic-only). Diff kept free of the stock-ESLint `--fix` churn.
+- **⚠️ NOT yet done — live-editor visual check.** The "pixel-identical canvas" look and the in-canvas
+  CTA/logo editing were **not** confirmed in a running WP editor: `perego.local` is approval-gated for the
+  automated browser and admin login needs a password I can't enter. Structure is proven by the parity test;
+  the *visual/interaction* confirmation needs the owner (or browser access) in the logged-in Site Editor →
+  template part **header**. This is the one open item for C1.
+- **Next:** owner eyeballs the header block in the live editor (canvas matches the front end; CTA edits inline;
+  clicking the logo opens the media library). Then start **C2 Footer (T009)** using the same
+  skeleton + parity pattern. T001's interactions/a11y evidence also still open.
+
 ## RESUME HERE (2026-07-21) — Spec 021 T001: complete EN/AR visual baseline captured reliably
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Green baseline confirmed first: block Jest **116/116**;
