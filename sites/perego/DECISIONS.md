@@ -1,5 +1,33 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 C3: Hero live-canvas (slide switcher via the real dots, structured `slides` array)
+
+The homepage Hero `edit()` now renders real markup (`HeroSkeleton` in `hero-slider/preview.js`) instead of
+`<ServerSideRender>`, applying the C1/C2 static-layout standard to a **multi-slide** block. Decisions specific
+to the Hero:
+
+- **The real dots are the slide switcher.** The front-end hero shows one slide at a time (non-active slides
+  carry `hidden`); the editor reuses exactly that — the currently-selected slide is visible and editable, the
+  `.hero__dots` buttons switch which slide is composed. This replaces the old ad-hoc "Slide 1/2/3" button
+  tablist + stacked `SlideFields`. Because parity ignores attributes (including `hidden`), the skeleton
+  rendered with the default `activeIndex` (0) still matches the captured fixture.
+- **First slide stays the `h1`, always.** `slideTitleTag(index)` returns `h1` for index 0 and `p` for the
+  rest, mirroring the renderer's pre-hydration rule, so there is exactly one `h1` in the DOM regardless of
+  which slide is selected. The shared `.hero__title` class makes every slide look identical, so editing a
+  later (`p`) slide in place is still WYSIWYG.
+- **Structured `slides` array replaces the legacy per-slide attributes.** Slides persist as one
+  `slides` array of `{ titleEn, textEn, titleAr, textAr }` (spec 021 structured repeater); `normalizeSlides`
+  upgrades the legacy `slide{n}…{En,Ar}` attributes on read so entered copy isn't lost. `HeroContent::resolve()`
+  already reads that array first (`composedSlides`), so the PHP renderer is untouched and unedited pages stay
+  byte-identical — proven by the unchanged Hero Pest suite (11/11).
+- **Editing surface:** in-canvas `RichText` for the selected slide's English headline + supporting text and
+  the CTA; the Inspector holds each slide's Arabic copy, the Arabic CTA, and slide management (add / duplicate
+  / reorder / remove via `RepeaterControls`), on the shared `../../Editor` primitives. Canvas shows English;
+  Arabic is edited in the Inspector — same rule as C1/C2.
+- **Parity:** `parity.test.js` pins the whole `.hero` section (prism, slides, CTA, dots, status) against
+  `__fixtures__/front-hero.html` (a live capture from `/`) and detects drift (an extra slide). Third block on
+  the harness.
+
 ## 2026-07-21 — Spec 021: unified block-Inspector design system + full end-user control (program)
 
 Owner review of C1/C2 raised two cross-cutting requirements for **every** block: the settings/options UI is

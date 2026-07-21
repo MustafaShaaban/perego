@@ -2,6 +2,35 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C3/T011–T012: Hero is a true live-canvas block (real markup + parity test)
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Third live-canvas slice — the homepage Hero — using the
+  same skeleton + markup-parity pattern as C1 (header) and C2 (footer). See DECISIONS 2026-07-22 (C3).
+- **What changed (editor-only; front end frozen):**
+  - New `hero-slider/preview.js` — `HeroSkeleton`: the REAL hero markup (prism, `.hero__inner` slides with
+    the first as `h1`, `.hero__cta`, `.hero__dots`, live-region status) that `HeroSliderRenderer::render()`
+    emits. Now the single home of the EN/AR seed slides + CTA (mirror of `HomeContent::COPY`, source of
+    truth), `normalizeSlides` (legacy per-slide attrs → structured `slides` array), and `prismUrl`/`slideTitleTag`.
+  - `hero-slider/index.js` — `edit()` renders `HeroSkeleton`. The selected slide's English headline + text
+    and the CTA are edited in-canvas with `RichText`; the real dots switch which slide is composed. Each
+    slide's Arabic copy, the Arabic CTA, and slide management (add/duplicate/reorder/remove, `RepeaterControls`)
+    live in the Inspector on the shared `../../Editor` primitives. Slides now persist as one structured
+    `slides` array attribute; `<ServerSideRender>` removed. The old slide-switcher/`SlideFields` UI is gone.
+  - New `hero-slider/parity.test.js` + `__fixtures__/front-hero.html` (captured live hero from `/`) — asserts
+    the whole `.hero` section structurally equals the PHP output and detects drift (an extra slide). Third
+    block on the parity harness.
+- **Verified:** block Jest **127/127** (was 125; +2 hero parity); Hero Pest **11/11** unchanged (PHP
+  untouched → public output byte-identical; the `slides`-array editor-attribute path it already covered is
+  exactly what the editor now writes); production `npm run build` clean. Guard Gate: wp-guard fixed one i18n
+  finding (dot `aria-label` was string-concatenated → now `sprintf(__('Slide %d'…))`, matching the renderer);
+  clean-code-guard / test-guard reviewed — no blocking findings.
+- **⚠️ Same open item as C1/C2: live-editor VISUAL check** (perego.local is browser-approval-gated + admin
+  login needed). Structure is parity-proven; the pixel look + in-canvas slide/CTA editing and dot-switching
+  need owner review in the Site Editor → `front-page` template (Hero block). Batched with C1/C2's review.
+- **Next:** owner eyeballs the Hero block live; then **C4 Services teaser (T013)** — the visual
+  query/manual/hybrid Services composer — same skeleton + parity pattern. T001 interactions/a11y evidence
+  also still open.
+
 ## RESUME HERE (2026-07-21) — Spec 021: unified Inspector design system + footer bottom bar fully dynamic
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Owner feedback after C1/C2: the block settings UI is
