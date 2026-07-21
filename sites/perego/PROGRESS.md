@@ -2,6 +2,31 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-21) — Spec 021 T001: complete EN/AR visual baseline captured reliably
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Green baseline confirmed first: block Jest **116/116**;
+  Header renderer Pest **28/28 (77 assertions)**. Both required servers were up (`perego.local` → 200, static
+  handoff `127.0.0.1:8777` → 200), so the outstanding T001 visual matrix was re-captured.
+- **What ran:** `capture-visual-recovery.mjs` across the per-slice acceptance widths **375/768/1440**, EN+AR,
+  all 24 route/states. The runner is already hardened (waits for `.preloader` hidden, tolerates CSP-blocked
+  optional fonts / absent optional interaction selectors), and reliability was **eyeball-verified** — the EN
+  1440 hero `actual` capture is the fully-rendered live page (header, CTA, "What We Believe", slide dots), not
+  a preloader overlay (the defect earlier batches risked).
+- **Result (cumulative `manifest.json`, now spanning all 8 viewports 320→wide):** **362 records, 0 horizontal
+  overflow, 0 diff dimension errors.** **18 `unavailable`** are only the 3 already-documented Arabic-alternate
+  gaps (`services/ar`, `not-found/ar`, `page/ar`) — no `hreflang=ar` is published for those routes, so this is
+  expected, not a regression. Diffs remain **unreviewed evidence only** (a diff is evidence, not acceptance),
+  and the EN baseline legitimately differs from the locked static handoff (different hero image/copy).
+- **T001 status:** the **visual** baseline matrix is now complete and reliable. The route/interactions/a11y
+  evidence portions of T001 (`verify-interactions.mjs`, `verify-a11y.mjs`) were **not** run this session and
+  remain open before T001 is fully closed.
+- **Next:** finish the **C1 Header live-canvas slice (T007)** — the header `edit()` still renders via
+  `<ServerSideRender>` (`src/Blocks/site-header/index.js:293`) with no markup-parity test, so it is not yet a
+  true static-layout live-canvas block per the DECISIONS 2026-07-21 standard. Convert `edit()` to render the
+  real header markup (in-canvas `RichText`/`MediaPlaceholder`, Inspector for non-content settings) and ship the
+  markup-parity test (`src/Editor/parity.js`). This is a larger, higher-risk UI slice that needs live WP-editor
+  verification and owner visual review — now backed by the fresh baseline above.
+
 ## RESUME HERE (2026-07-20) — Spec 021: FSE visual editing and backend UX
 
 - **Branch:** `feature/021-fse-visual-editing-ux` (stacked on the active visual-audit work).
