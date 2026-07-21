@@ -1,5 +1,29 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 C4: Services teaser live-canvas (composer on `RecordPicker`, cards as a seed preview)
+
+The homepage Services teaser `edit()` now renders real markup (`ServicesTeaserSkeleton` in
+`services-teaser/preview.js`) instead of `<ServerSideRender>`, applying the C1–C3 static-layout standard and
+folding the block's existing automatic/manual/hybrid composer onto the shared Inspector design system.
+
+- **In-canvas head text nests inside the real elements.** The heading and the "See All" label are edited
+  with `RichText tagName="span"` nested inside the real `h2.services-teaser__title` and
+  `a.link-arrow.services-teaser__link` — not as whole-element replacements. This keeps the arrow `svg` and the
+  `aria-labelledby` target id (`#servicesTeaserTitle`) that a whole-element `RichText` would drop, and because
+  parity renders the skeleton with plain defaults (no override nodes), the nested spans are edit-time-only and
+  never affect the test.
+- **The composer moves to `RecordPicker`.** The old bespoke `PanelBody` + `SelectControl` + `CheckboxControl`
+  UI is replaced by the shared primitive: a `manual` picker (ordered chosen list + add) for the
+  selected-first set and an `automatic` picker (per-item show/hide) for exclusions, driven by the existing
+  `servicesMode` / `serviceOrder` / `serviceExcludeIds` attributes. The PHP `cards()` composition is unchanged,
+  so the front end is byte-identical — proven by the unchanged ServicesTeaser Pest suite (11/11).
+- **Service cards render from the seed, as a design preview.** The four cards are a projection of the
+  `perego_service` CPT (label/image overlaid from each Service's teaser meta), and which cards appear on the
+  live site follows the composer. Resolving that live selection's images inside editor JS would need a bespoke
+  data layer, so the canvas shows the four **seed** cards as a faithful representation of the card design; the
+  Inspector composer + a help note own the live behaviour. The parity test validates the card markup; the CPT
+  overlay stays the renderer's job. Revisit if owner review wants the live selection mirrored in the canvas.
+
 ## 2026-07-22 — Spec 021 C3: Hero live-canvas (slide switcher via the real dots, structured `slides` array)
 
 The homepage Hero `edit()` now renders real markup (`HeroSkeleton` in `hero-slider/preview.js`) instead of

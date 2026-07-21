@@ -2,6 +2,40 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C4/T013: Services teaser is a true live-canvas block (real markup + parity + composer on shared primitives)
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Fourth live-canvas slice — the homepage Services teaser —
+  same skeleton + markup-parity pattern as C1–C3, and it also rolls the composer onto the shared Inspector
+  design system. See DECISIONS 2026-07-22 (C4).
+- **What changed (editor-only; front end frozen):**
+  - New `services-teaser/preview.js` — `ServicesTeaserSkeleton`: the REAL section markup (`.wavy-bg`,
+    `.services-teaser__head` with the `h2` + `.link-arrow` "See All" link, and `.service-cards` with four
+    seed cards) that `ServicesTeaserRenderer::render()` emits. Home of the EN/AR seed heading/see-all and the
+    seed cards (mirror of `HomeContent`, source of truth).
+  - `services-teaser/index.js` — `edit()` renders `ServicesTeaserSkeleton`. The heading + "See All" label are
+    edited in-canvas with `RichText` (nested in the real `h2`/`a`, so the arrow svg + `aria-labelledby` id are
+    kept); Arabic variants move to Inspector `TextControl`s. The automatic/manual/hybrid card composer was
+    rebuilt on the shared **`RecordPicker`** (ordered manual list + per-item show/hide) inside a `PanelSection`,
+    replacing the ad-hoc `PanelBody`/`CheckboxControl` UI. `<ServerSideRender>` removed; the old `LangGroup` +
+    `moveItem` composer deleted.
+  - New `services-teaser/parity.test.js` + `__fixtures__/front-services-teaser.html` (captured live from `/`) —
+    asserts the whole `.services-teaser` section structurally equals the PHP output and detects drift (an extra
+    card). Fourth block on the parity harness.
+  - **Cards are a seed design-preview.** The canvas shows the four seed cards regardless of composer mode
+    (per-card label/image are edited on each Service screen; the live set follows the composer). Documented in
+    the code + DECISIONS — resolving the live selection's images in editor JS is out of scope for this slice.
+- **Verified:** block Jest **129/129** (was 127; +2 services parity); ServicesTeaser Pest **11/11** unchanged
+  (PHP untouched → public output byte-identical; the manual/hybrid + En/Ar-attribute paths it covers are what
+  the editor still writes); production `npm run build` clean. Guard Gate: wp-guard (literal text domain, no
+  sentence concatenation), clean-code-guard (dead composer/`LangGroup` removed, `RecordPicker` reused — no dead
+  CSS left behind), test-guard reviewed — no blocking findings.
+- **⚠️ Same open item as C1–C3: live-editor VISUAL check** (perego.local is browser-approval-gated + admin
+  login needed). Structure is parity-proven; the pixel look + in-canvas heading/see-all editing and the
+  composer UX need owner review in the Site Editor → `front-page` template (Services teaser block).
+- **Next:** owner eyeballs the Services teaser block live; then **C5 Home About (T014)** — direct visual About
+  block editing with locked structural wrappers — same skeleton + parity pattern. T001 interactions/a11y
+  evidence also still open.
+
 ## RESUME HERE (2026-07-22) — Spec 021 C3/T011–T012: Hero is a true live-canvas block (real markup + parity test)
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Third live-canvas slice — the homepage Hero — using the

@@ -1,84 +1,70 @@
 /**
- * Perego services-teaser block — editor registration. The heading + "See All Services" link text are
- * RichText-editable directly in the canvas (spec 020 round 4) — previously 100% hardcoded with zero
- * admin UI. This block instance lives in the shared `front-page.html` FSE template, so — matching
- * `footer-careers`'/`clients-carousel`'s pattern for the same problem — each string is edited as an
- * En/Ar pair; `ServicesTeaserRenderer` picks the current-locale variant. The four service cards
- * themselves stay a Service-CPT-driven preview note (spec 012 — editing a Service updates its card).
- * Server-rendered (save returns null).
+ * Perego services-teaser block — editor registration (spec 021 C4 / T013; DECISIONS 2026-07-22).
+ *
+ * The canvas renders the REAL section markup (see preview.js), styled by the theme's `main.css` (loaded
+ * via `add_editor_style`), instead of a `ServerSideRender` iframe — the static-layout live-canvas standard
+ * shared with site-header (C1), site-footer (C2), and hero-slider (C3). The heading and the "See All
+ * Services" link text are edited in place with `RichText` (English canvas); the Arabic variants and the
+ * card composer (automatic / manual / hybrid selection, ordering, and per-card show/hide) live in the
+ * Inspector on the shared `../../Editor` primitives (`PanelSection`, `RecordPicker`).
+ *
+ * The four service cards themselves stay a projection of the `perego_service` CPT — their label/image are
+ * edited on each Service's own screen (spec 012), and which cards appear on the live site follows the
+ * composer — so the canvas shows the seed cards as a faithful design preview. Server-rendered (save
+ * returns null); hover is pure CSS.
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { InspectorControls, useBlockProps, RichText } from '@wordpress/block-editor';
-import { Button, CheckboxControl, PanelBody, SelectControl } from '@wordpress/components';
+import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-editor';
+import { SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
-import ServerSideRender from '@wordpress/server-side-render';
-import { moveItem } from '../../Editor/collection';
+import { PanelSection } from '../../Editor/PanelSection';
+import { RecordPicker } from '../../Editor/RecordPicker';
+import {
+	SEED_HEADING_AR,
+	SEED_HEADING_EN,
+	SEED_SEE_ALL_AR,
+	SEED_SEE_ALL_EN,
+	ServicesTeaserSkeleton,
+} from './preview';
 import metadata from './block.json';
 import './style.scss';
 
-const SEED_EN = { headingEn: 'Services we can help you with', seeAllEn: 'See All Services' };
-const SEED_AR = { headingAr: 'خدمات يمكننا مساعدتك بها', seeAllAr: 'عرض كل الخدمات' };
-
-function LangGroup( { dir, seed, headingKey, seeAllKey, attributes, setAttributes } ) {
-	return (
-		<fieldset className="perego-services-teaser__lang" dir={ dir }>
-			<RichText tagName="h2" className="services-teaser__title"
-				value={ attributes[ headingKey ] || seed[ headingKey ] }
-				onChange={ ( value ) => setAttributes( { [ headingKey ]: value } ) }
-				placeholder={ seed[ headingKey ] } />
-			<RichText tagName="span" className="services-teaser__link"
-				value={ attributes[ seeAllKey ] || seed[ seeAllKey ] }
-				onChange={ ( value ) => setAttributes( { [ seeAllKey ]: value } ) }
-				placeholder={ seed[ seeAllKey ] } />
-		</fieldset>
-	);
-}
+const serviceLabel = ( service ) => service.title?.rendered || __( 'Untitled Service', 'perego-site' );
 
 function ServicesComposer( { attributes, services, setAttributes } ) {
 	const mode = attributes.servicesMode || 'automatic';
 	const order = attributes.serviceOrder || [];
 	const excluded = attributes.serviceExcludeIds || [];
-	const serviceById = new Map( services.map( ( service ) => [ service.id, service ] ) );
-	const selected = order.map( ( id ) => serviceById.get( id ) ).filter( Boolean );
-	const label = ( service ) => service.title?.rendered || __( 'Untitled Service', 'perego-site' );
-	const updateSelection = ( id, enabled ) => setAttributes( {
-		serviceOrder: enabled ? [ ...order, id ] : order.filter( ( selectedId ) => selectedId !== id ),
-	} );
-	const updateExclusion = ( id, enabled ) => setAttributes( {
-		serviceExcludeIds: enabled ? [ ...excluded, id ] : excluded.filter( ( excludedId ) => excludedId !== id ),
-	} );
 
 	return (
-		<PanelBody title={ __( 'Service cards', 'perego-site' ) } initialOpen={ false }>
-			<SelectControl label={ __( 'Card source', 'perego-site' ) } value={ mode }
+		<PanelSection title={ __( 'Service cards', 'perego-site' ) }>
+			<SelectControl __nextHasNoMarginBottom label={ __( 'Card source', 'perego-site' ) } value={ mode }
 				options={ [
 					{ label: __( 'Automatic (current Service cards)', 'perego-site' ), value: 'automatic' },
 					{ label: __( 'Manual (selected Services only)', 'perego-site' ), value: 'manual' },
 					{ label: __( 'Hybrid (selected first, then automatic)', 'perego-site' ), value: 'hybrid' },
 				] }
 				onChange={ ( servicesMode ) => setAttributes( { servicesMode } ) } />
-			{ services.length === 0 && <p>{ __( 'No published Services are available in this language yet.', 'perego-site' ) }</p> }
-			{ mode !== 'automatic' && services.map( ( service ) => (
-				<CheckboxControl key={ service.id } label={ label( service ) }
-					checked={ order.includes( service.id ) }
-					onChange={ ( enabled ) => updateSelection( service.id, enabled ) } />
-			) ) }
-			{ mode !== 'manual' && services.map( ( service ) => (
-				<CheckboxControl key={ `exclude-${ service.id }` } label={ __( 'Show', 'perego-site' ) + `: ${ label( service ) }` }
-					checked={ ! excluded.includes( service.id ) }
-					onChange={ ( enabled ) => updateExclusion( service.id, ! enabled ) } />
-			) ) }
-			{ mode !== 'automatic' && selected.map( ( service, index ) => (
-				<div className="perego-services-teaser__service-order" key={ service.id }>
-					<span>{ label( service ) }</span>
-					<Button size="small" disabled={ index === 0 }
-						onClick={ () => setAttributes( { serviceOrder: moveItem( order, index, index - 1 ) } ) }>{ __( 'Move up', 'perego-site' ) }</Button>
-					<Button size="small" disabled={ index === selected.length - 1 }
-						onClick={ () => setAttributes( { serviceOrder: moveItem( order, index, index + 1 ) } ) }>{ __( 'Move down', 'perego-site' ) }</Button>
-				</div>
-			) ) }
-		</PanelBody>
+			{ mode !== 'automatic' && (
+				<RecordPicker mode="manual" records={ services } order={ order }
+					getLabel={ serviceLabel }
+					selectedHeading={ __( 'Shown cards (in order)', 'perego-site' ) }
+					addHeading={ __( 'Add a Service', 'perego-site' ) }
+					noneSelectedLabel={ __( 'No Services selected yet.', 'perego-site' ) }
+					emptyLabel={ __( 'No published Services are available in this language yet.', 'perego-site' ) }
+					onChangeOrder={ ( serviceOrder ) => setAttributes( { serviceOrder } ) } />
+			) }
+			{ mode !== 'manual' && (
+				<RecordPicker mode="automatic" records={ services } excluded={ excluded }
+					getLabel={ serviceLabel }
+					emptyLabel={ __( 'No published Services are available in this language yet.', 'perego-site' ) }
+					onChangeExcluded={ ( serviceExcludeIds ) => setAttributes( { serviceExcludeIds } ) } />
+			) }
+			<p className="perego-editor-help">
+				{ __( 'Each card’s label and image are edited on that Service’s own screen (Services in the admin menu).', 'perego-site' ) }
+			</p>
+		</PanelSection>
 	);
 }
 
@@ -94,30 +80,45 @@ function Edit( { attributes, setAttributes } ) {
 		[]
 	);
 
+	const headingNode = (
+		<RichText tagName="span"
+			value={ attributes.headingEn }
+			onChange={ ( headingEn ) => setAttributes( { headingEn } ) }
+			placeholder={ SEED_HEADING_EN } />
+	);
+	const seeAllNode = (
+		<RichText tagName="span" allowedFormats={ [] }
+			value={ attributes.seeAllEn }
+			onChange={ ( seeAllEn ) => setAttributes( { seeAllEn } ) }
+			placeholder={ SEED_SEE_ALL_EN } />
+	);
+
 	return (
 		<div { ...blockProps }>
 			<InspectorControls>
+				<PanelSection title={ __( 'Heading & link — Arabic', 'perego-site' ) }>
+					<TextControl __nextHasNoMarginBottom label={ __( 'Arabic heading', 'perego-site' ) }
+						value={ attributes.headingAr }
+						onChange={ ( headingAr ) => setAttributes( { headingAr } ) }
+						placeholder={ SEED_HEADING_AR } />
+					<TextControl __nextHasNoMarginBottom label={ __( 'Arabic “See All” label', 'perego-site' ) }
+						value={ attributes.seeAllAr }
+						onChange={ ( seeAllAr ) => setAttributes( { seeAllAr } ) }
+						placeholder={ SEED_SEE_ALL_AR } />
+				</PanelSection>
 				<ServicesComposer attributes={ attributes } services={ services } setAttributes={ setAttributes } />
 			</InspectorControls>
-			<fieldset className="perego-services-teaser__lang-group">
-				<legend>{ __( 'English', 'perego-site' ) }</legend>
-				<LangGroup dir="ltr" seed={ SEED_EN } headingKey="headingEn" seeAllKey="seeAllEn"
-					attributes={ attributes } setAttributes={ setAttributes } />
-			</fieldset>
-			<fieldset className="perego-services-teaser__lang-group">
-				<legend>{ __( 'Arabic', 'perego-site' ) }</legend>
-				<LangGroup dir="rtl" seed={ SEED_AR } headingKey="headingAr" seeAllKey="seeAllAr"
-					attributes={ attributes } setAttributes={ setAttributes } />
-			</fieldset>
-			<p className="perego-services-teaser__note">
-				{ __( 'The four service cards are managed on each Service’s own edit screen (Services in the admin menu).', 'perego-site' ) }
-			</p>
 			<div className="perego-services-teaser__preview" onClick={ ( event ) => {
-				if ( event.target.closest( 'a, button' ) ) {
+				// Neutralize the preview's real links so a click never navigates the editor away; the
+				// in-canvas RichText heading + link text manage their own clicks.
+				const link = event.target.closest( 'a' );
+				if ( link && ! link.isContentEditable ) {
 					event.preventDefault();
 				}
 			} }>
-				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+				<ServicesTeaserSkeleton heading={ attributes.headingEn || SEED_HEADING_EN }
+					seeAll={ attributes.seeAllEn || SEED_SEE_ALL_EN }
+					headingNode={ headingNode } seeAllNode={ seeAllNode } />
 			</div>
 		</div>
 	);
