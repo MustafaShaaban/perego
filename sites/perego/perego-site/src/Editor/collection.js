@@ -32,6 +32,23 @@ export function removeItem( items, index ) {
 }
 
 /**
+ * Split records into the ordered chosen list and the remaining available list — the selection semantics
+ * behind {@link RecordPicker}. Kept here (component-free) so blocks and tests rely on it without rendering.
+ *
+ * @param {Array}    records Records for the current language.
+ * @param {Array}    order   Chosen record ids, in display order.
+ * @param {Function} getId   Maps a record to its id.
+ * @return {{selected: Array, available: Array}} Chosen records (in `order`) and the rest.
+ */
+export function partitionRecords( records, order, getId = ( record ) => record.id ) {
+	const recordById = new Map( records.map( ( record ) => [ getId( record ), record ] ) );
+	return {
+		selected: order.map( ( id ) => recordById.get( id ) ).filter( Boolean ),
+		available: records.filter( ( record ) => ! order.includes( getId( record ) ) ),
+	};
+}
+
+/**
  * Read-time normalization for a repeater attribute (spec 021; DECISIONS 2026-07-21).
  *
  * New repeaters store a structured array. Blocks saved before the structured migration hold a legacy

@@ -47,6 +47,24 @@ add_action('after_setup_theme', static function (): void {
 
 
 /**
+ * Style the block Inspector sidebar (spec 021). The sidebar renders OUTSIDE the editor canvas iframe, so
+ * `add_editor_style()` above never reaches it — the shared `.perego-editor-*` control primitives
+ * (perego-site) are styled by this separately enqueued sheet. `editor-inspector.css` is compiled from
+ * `assets/src/scss/editor-inspector.scss` by `npm run styles`.
+ */
+add_action('enqueue_block_editor_assets', static function (): void {
+    \Corex\Assets\Assets::registerBase(
+        'perego-theme',
+        get_stylesheet_directory() . '/assets',
+        get_stylesheet_directory_uri() . '/assets',
+        (string) wp_get_theme()->get('Version'),
+    );
+
+    \Corex\Assets\Style::enqueue('perego-theme-editor-inspector', 'css/editor-inspector.css', ['base' => 'perego-theme']);
+});
+
+
+/**
  * SEO: keep search-results and 404 pages out of the index (`noindex, follow`) — thin/duplicate pages
  * per the handoff SEO_HANDOFF. Uses core's `wp_robots` filter so it composes with WordPress's own
  * robots meta and Polylang's hreflang. All other routes stay indexable.

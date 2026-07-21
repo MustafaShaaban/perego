@@ -1,4 +1,4 @@
-import { duplicateItem, moveItem, normalizeRepeater, removeItem } from './collection';
+import { duplicateItem, moveItem, normalizeRepeater, partitionRecords, removeItem } from './collection';
 
 describe( 'normalizeRepeater — structured repeater with legacy JSON-string upgrade', () => {
 	it( 'passes a structured array value through unchanged', () => {
@@ -41,5 +41,34 @@ describe( 'Perego editor collection helpers', () => {
 
 	it( 'removes only the selected item', () => {
 		expect( removeItem( items, 1 ).map( ( item ) => item.label ) ).toEqual( [ 'One', 'Three' ] );
+	} );
+} );
+
+describe( 'partitionRecords — RecordPicker selection semantics', () => {
+	const records = [
+		{ id: 1, title: 'Alpha' },
+		{ id: 2, title: 'Beta' },
+		{ id: 3, title: 'Gamma' },
+	];
+	const titles = ( list ) => list.map( ( record ) => record.title );
+
+	it( 'returns the chosen records in order and the rest as available', () => {
+		const { selected, available } = partitionRecords( records, [ 3, 1 ] );
+		expect( titles( selected ) ).toEqual( [ 'Gamma', 'Alpha' ] );
+		expect( titles( available ) ).toEqual( [ 'Beta' ] );
+	} );
+
+	it( 'ignores order ids with no matching record', () => {
+		expect( partitionRecords( records, [ 99, 2 ] ).selected.map( ( r ) => r.id ) ).toEqual( [ 2 ] );
+	} );
+
+	it( 'treats an empty order as nothing chosen (all available)', () => {
+		expect( titles( partitionRecords( records, [] ).available ) ).toEqual( [ 'Alpha', 'Beta', 'Gamma' ] );
+	} );
+
+	it( 'honors a custom id accessor', () => {
+		const keyed = [ { key: 'a', title: 'A' }, { key: 'b', title: 'B' } ];
+		const { selected } = partitionRecords( keyed, [ 'b' ], ( record ) => record.key );
+		expect( titles( selected ) ).toEqual( [ 'B' ] );
 	} );
 } );
