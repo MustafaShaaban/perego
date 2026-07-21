@@ -242,8 +242,7 @@ final class SiteHeaderRenderer
         $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath, $this->navItems($attributes, $locale)) . '</ul>';
         $html .= '</nav>';
 
-        $html .= '<a class="btn btn--accent header-cta" href="' . esc_url($driver->localizedUrl('/contact')) . '">'
-            . esc_html__('Start a Project', 'perego-site') . '</a>';
+        $html .= $this->renderCta($attributes, $locale);
 
         $html .= $this->renderLanguageToggle($driver->currentLocale());
 
@@ -258,6 +257,49 @@ final class SiteHeaderRenderer
         $html .= '</header><div id="navBackdrop" class="nav-backdrop" data-wp-on--click="actions.closeMenu"></div>';
 
         return $html;
+    }
+
+    /**
+     * The "Start a Project" CTA. Label is an editor-set En/Ar pair (bilingual text), defaulting to the
+     * handoff wording; the target is a single editor-set path shared by both locales, defaulting to the
+     * contact route. An empty label/URL keeps the exact prior output, so unedited headers are unchanged.
+     *
+     * @param array<string,mixed> $attributes
+     */
+    private function renderCta(array $attributes, string $locale): string
+    {
+        $suffix = $locale === 'ar' ? 'Ar' : 'En';
+        $label = trim((string) ($attributes['ctaLabel' . $suffix] ?? ''));
+        if ($label === '') {
+            $label = __('Start a Project', 'perego-site');
+        }
+
+        return '<a class="btn btn--accent header-cta" href="' . esc_url($this->ctaHref((string) ($attributes['ctaUrl'] ?? ''))) . '">'
+            . esc_html($label) . '</a>';
+    }
+
+    /**
+     * Resolves the CTA target. An empty value falls back to the contact route. An external, protocol-
+     * relative, mailto/tel, or same-page-anchor URL is used verbatim; only an internal path is localized
+     * through the language driver (mirrors the nav-item rule) so it never becomes a homepage URL.
+     */
+    private function ctaHref(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return $this->languageService->driver()->localizedUrl('/contact');
+        }
+
+        if (
+            str_starts_with($url, '#')
+            || str_starts_with($url, 'mailto:')
+            || str_starts_with($url, 'tel:')
+            || (bool) preg_match('#^(https?:)?//#i', $url)
+        ) {
+            return $url;
+        }
+
+        return $this->languageService->driver()->localizedUrl($url);
     }
 
     /** @param list<array{label: string, href: string, children?: list<array{label: string, href: string}>}> $items */

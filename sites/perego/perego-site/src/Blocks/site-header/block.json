@@ -15,6 +15,9 @@
 		"navItemsAr": { "type": "string", "default": "" },
 		"logoId": { "type": "number", "default": 0 },
 		"isSticky": { "type": "boolean", "default": true },
+		"ctaLabelEn": { "type": "string", "default": "" },
+		"ctaLabelAr": { "type": "string", "default": "" },
+		"ctaUrl": { "type": "string", "default": "" },
 		"servicesMenuMode": { "type": "string", "default": "manual" },
 		"servicesMenuOrder": { "type": "array", "default": [] },
 		"servicesMenuExcludeIds": { "type": "array", "default": [] }

@@ -104,6 +104,32 @@ it('renders the Start a Project CTA', function () {
     expect(renderHeader())->toContain('Start a Project');
 });
 
+it('uses a custom CTA label per locale when set, falling back to the default otherwise', function () {
+    expect(renderHeader('/', ['ctaLabelEn' => 'Get Started'], 'en'))
+        ->toContain('>Get Started</a>')
+        ->and(renderHeader('/', ['ctaLabelEn' => 'Get Started'], 'en'))->not->toContain('Start a Project');
+
+    expect(renderHeader('/', ['ctaLabelAr' => 'ابدأ الآن'], 'ar'))->toContain('>ابدأ الآن</a>');
+
+    expect(renderHeader('/', [], 'en'))->toContain('>Start a Project</a>');
+});
+
+it('links the CTA to the default contact route, or a custom internal path localized through the driver', function () {
+    expect(renderHeader('/', [], 'en'))->toContain('href="https://perego.local/contact"');
+
+    expect(renderHeader('/', ['ctaUrl' => '/quote'], 'en'))
+        ->toContain('href="https://perego.local/quote"');
+});
+
+it('keeps an external or same-page-anchor CTA URL as-is, never localized to a homepage URL', function () {
+    expect(renderHeader('/', ['ctaUrl' => 'https://cal.com/perego'], 'en'))
+        ->toContain('href="https://cal.com/perego"')
+        ->and(renderHeader('/', ['ctaUrl' => 'https://cal.com/perego'], 'en'))
+        ->not->toContain('perego.local/https');
+
+    expect(renderHeader('/', ['ctaUrl' => '#contact'], 'en'))->toContain('href="#contact"');
+});
+
 it('renders the services dropdown linking to all four service pages', function () {
     $html = renderHeader();
 

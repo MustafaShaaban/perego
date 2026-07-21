@@ -215,7 +215,22 @@ function Edit( { attributes, setAttributes } ) {
 						onChange={ ( isSticky ) => setAttributes( { isSticky } ) }
 					/>
 				</PanelBody>
-				<ServicesMenuEditor attributes={ attributes } services={ services } setAttributes={ setAttributes } />
+				<PanelBody title={ __( 'Start a Project button', 'perego-site' ) } initialOpen={ false }>
+						<TextControl label={ __( 'Button text — English', 'perego-site' ) }
+							value={ attributes.ctaLabelEn }
+							onChange={ ( ctaLabelEn ) => setAttributes( { ctaLabelEn } ) }
+							placeholder={ __( 'Start a Project', 'perego-site' ) } />
+						<TextControl label={ __( 'Button text — Arabic', 'perego-site' ) }
+							value={ attributes.ctaLabelAr }
+							onChange={ ( ctaLabelAr ) => setAttributes( { ctaLabelAr } ) }
+							placeholder="ابدأ الآن" />
+						<TextControl label={ __( 'Button link', 'perego-site' ) }
+							value={ attributes.ctaUrl }
+							onChange={ ( ctaUrl ) => setAttributes( { ctaUrl } ) }
+							placeholder="/contact"
+							help={ __( 'A path such as /contact is localized automatically; a full URL (https://…) or #anchor is used as-is.', 'perego-site' ) } />
+					</PanelBody>
+					<ServicesMenuEditor attributes={ attributes } services={ services } setAttributes={ setAttributes } />
 				<PanelBody title={ __( 'Navigation — English', 'perego-site' ) } initialOpen={ false }>
 					<NavItemEditor label={ __( 'English navigation', 'perego-site' ) } items={ navEn } onChange={ setNavEn } />
 				</PanelBody>

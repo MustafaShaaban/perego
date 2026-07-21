@@ -35,6 +35,18 @@ add_action('wp_enqueue_scripts', static function (): void {
 
 
 /**
+ * Load the compiled front-end design CSS into the block editor canvas so the live-canvas block
+ * previews (spec 021) render with the real Perego design instead of bare editor defaults. WordPress
+ * scopes these rules under `.editor-styles-wrapper`; `assets/css/main.css` is the same stylesheet the
+ * front end enqueues, kept as the single source of truth for the design (no editor-only fork).
+ */
+add_action('after_setup_theme', static function (): void {
+    add_theme_support('editor-styles');
+    add_editor_style('assets/css/main.css');
+});
+
+
+/**
  * SEO: keep search-results and 404 pages out of the index (`noindex, follow`) — thin/duplicate pages
  * per the handoff SEO_HANDOFF. Uses core's `wp_robots` filter so it composes with WordPress's own
  * robots meta and Polylang's hreflang. All other routes stay indexable.
