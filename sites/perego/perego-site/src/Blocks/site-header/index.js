@@ -10,10 +10,12 @@
  */
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { Button, CheckboxControl, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
+import { Button, CheckboxControl, Flex, FlexBlock, FlexItem, PanelBody, SelectControl, TextControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { useState } from '@wordpress/element';
+import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
+import { chevronDown, chevronUp, closeSmall, plus } from '@wordpress/icons';
 import ServerSideRender from '@wordpress/server-side-render';
 import { MediaField } from '../../Editor/MediaField';
 import { RepeaterControls } from '../../Editor/RepeaterControls';
@@ -120,53 +122,96 @@ function NavItemEditor( { label, items, onChange } ) {
 	);
 }
 
+const serviceTitle = ( service ) => decodeEntities( service?.title?.rendered || '' ) || __( 'Untitled Service', 'perego-site' );
+
+const pickerRowStyle = { padding: '6px 0', borderBlockEnd: '1px solid #f0f0f0' };
+const pickerTitleStyle = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' };
+const pickerHeadingStyle = { fontWeight: 600, margin: '12px 0 4px' };
+const pickerMutedStyle = { margin: '0 0 8px', color: '#757575' };
+
+/**
+ * Professional one-by-one picker for the Services dropdown links. Manual mode shows a chosen list
+ * (reorder / remove) plus an add list of the remaining Services; automatic mode lists every published
+ * Service with a per-item show/hide. No raw IDs — each row is the Service's own title.
+ */
 function ServicesMenuEditor( { attributes, services, setAttributes } ) {
 	const mode = attributes.servicesMenuMode || 'manual';
 	const order = attributes.servicesMenuOrder || [];
 	const excluded = attributes.servicesMenuExcludeIds || [];
 	const serviceById = new Map( services.map( ( service ) => [ service.id, service ] ) );
+
 	const selected = order.map( ( id ) => serviceById.get( id ) ).filter( Boolean );
-	const updateOrder = ( id, enabled ) => setAttributes( {
-		servicesMenuOrder: enabled ? [ ...order, id ] : order.filter( ( selectedId ) => selectedId !== id ),
-	} );
-	const updateExcluded = ( id, enabled ) => setAttributes( {
-		servicesMenuExcludeIds: enabled ? [ ...excluded, id ] : excluded.filter( ( excludedId ) => excludedId !== id ),
+	const available = services.filter( ( service ) => ! order.includes( service.id ) );
+
+	const add = ( id ) => setAttributes( { servicesMenuOrder: [ ...order, id ] } );
+	const remove = ( id ) => setAttributes( { servicesMenuOrder: order.filter( ( selectedId ) => selectedId !== id ) } );
+	const move = ( index, delta ) => setAttributes( { servicesMenuOrder: moveItem( order, index, index + delta ) } );
+	const setShown = ( id, isShown ) => setAttributes( {
+		servicesMenuExcludeIds: isShown ? excluded.filter( ( excludedId ) => excludedId !== id ) : [ ...excluded, id ],
 	} );
 
 	return (
 		<PanelBody title={ __( 'Services dropdown', 'perego-site' ) } initialOpen={ false }>
 			<SelectControl
-				label={ __( 'Source', 'perego-site' ) }
+				__nextHasNoMarginBottom
+				label={ __( 'Dropdown links', 'perego-site' ) }
+				help={ mode === 'manual'
+					? __( 'Pick and order the Services shown, one by one.', 'perego-site' )
+					: __( 'Every published Service is shown; hide any individually.', 'perego-site' ) }
 				value={ mode }
 				options={ [
-					{ label: __( 'Manual (keep the current menu until Services are selected)', 'perego-site' ), value: 'manual' },
-					{ label: __( 'Automatic (all published Services)', 'perego-site' ), value: 'automatic' },
+					{ label: __( 'Choose manually', 'perego-site' ), value: 'manual' },
+					{ label: __( 'All published Services', 'perego-site' ), value: 'automatic' },
 				] }
 				onChange={ ( servicesMenuMode ) => setAttributes( { servicesMenuMode } ) }
 			/>
-			{ services.length === 0 && <p>{ __( 'No published Services are available in this language yet.', 'perego-site' ) }</p> }
-			{ mode === 'manual' && services.map( ( service ) => (
-				<CheckboxControl key={ service.id } label={ service.title?.rendered || __( 'Untitled Service', 'perego-site' ) }
-					checked={ order.includes( service.id ) }
-					onChange={ ( enabled ) => updateOrder( service.id, enabled ) } />
-			) ) }
+
+			{ services.length === 0 && (
+				<p style={ pickerMutedStyle }>{ __( 'No published Services in this language yet.', 'perego-site' ) }</p>
+			) }
+
+			{ mode === 'manual' && services.length > 0 && (
+				<>
+					<p style={ pickerHeadingStyle }>{ __( 'Shown in the dropdown', 'perego-site' ) }</p>
+					{ selected.length === 0 && (
+						<p style={ pickerMutedStyle }>{ __( 'None yet — the current dropdown stays until you add one.', 'perego-site' ) }</p>
+					) }
+					{ selected.map( ( service, index ) => (
+						<Flex key={ service.id } align="center" style={ pickerRowStyle }>
+							<FlexBlock style={ pickerTitleStyle }>{ serviceTitle( service ) }</FlexBlock>
+							<FlexItem>
+								<Button size="small" icon={ chevronUp } label={ __( 'Move up', 'perego-site' ) }
+									disabled={ index === 0 } onClick={ () => move( index, -1 ) } />
+								<Button size="small" icon={ chevronDown } label={ __( 'Move down', 'perego-site' ) }
+									disabled={ index === selected.length - 1 } onClick={ () => move( index, 1 ) } />
+								<Button size="small" icon={ closeSmall } isDestructive label={ __( 'Remove', 'perego-site' ) }
+									onClick={ () => remove( service.id ) } />
+							</FlexItem>
+						</Flex>
+					) ) }
+
+					{ available.length > 0 && (
+						<>
+							<p style={ pickerHeadingStyle }>{ __( 'Add a Service', 'perego-site' ) }</p>
+							{ available.map( ( service ) => (
+								<Flex key={ service.id } align="center" style={ { padding: '4px 0' } }>
+									<FlexBlock style={ pickerTitleStyle }>{ serviceTitle( service ) }</FlexBlock>
+									<FlexItem>
+										<Button size="small" variant="secondary" icon={ plus }
+											onClick={ () => add( service.id ) }>{ __( 'Add', 'perego-site' ) }</Button>
+									</FlexItem>
+								</Flex>
+							) ) }
+						</>
+					) }
+				</>
+			) }
+
 			{ mode === 'automatic' && services.map( ( service ) => (
-				<CheckboxControl key={ service.id } label={ service.title?.rendered || __( 'Untitled Service', 'perego-site' ) }
+				<CheckboxControl __nextHasNoMarginBottom key={ service.id }
+					label={ serviceTitle( service ) }
 					checked={ ! excluded.includes( service.id ) }
-					onChange={ ( enabled ) => updateExcluded( service.id, ! enabled ) } />
-			) ) }
-			{ mode === 'manual' && selected.map( ( service, index ) => (
-				<div className="perego-site-header__service-order" key={ service.id }>
-					<span>{ service.title?.rendered || __( 'Untitled Service', 'perego-site' ) }</span>
-					<Button size="small" disabled={ index === 0 }
-						onClick={ () => setAttributes( { servicesMenuOrder: moveItem( order, index, index - 1 ) } ) }>
-						{ __( 'Move up', 'perego-site' ) }
-					</Button>
-					<Button size="small" disabled={ index === selected.length - 1 }
-						onClick={ () => setAttributes( { servicesMenuOrder: moveItem( order, index, index + 1 ) } ) }>
-						{ __( 'Move down', 'perego-site' ) }
-					</Button>
-				</div>
+					onChange={ ( isShown ) => setShown( service.id, isShown ) } />
 			) ) }
 		</PanelBody>
 	);
@@ -180,11 +225,13 @@ function Edit( { attributes, setAttributes } ) {
 		( select ) => attributes.logoId ? select( 'core' ).getMedia( attributes.logoId ) : null,
 		[ attributes.logoId ]
 	);
+	// REST only allows a fixed orderby set (menu_order and per_page:-1 are rejected → an empty list);
+	// order the pick list by title. The dropdown's display order is the editor's chosen order anyway.
 	const services = useSelect(
 		( select ) => select( 'core' ).getEntityRecords( 'postType', 'perego_service', {
-			per_page: -1,
+			per_page: 100,
 			status: 'publish',
-			orderby: 'menu_order',
+			orderby: 'title',
 			order: 'asc',
 		} ) || [],
 		[]
