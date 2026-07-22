@@ -2,6 +2,39 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Fix: the About section was an INVALID BLOCK in FSE (owner-reported); T035/T036 recorded
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Owner screenshot showed the homepage About section rendering
+  as **"Block contains unexpected or invalid content"** in the Front Page template.
+- **Root cause — a template defect, not a block defect.** `front-page.html` wrapped the section in a `core/group`
+  whose saved HTML hard-coded `id="about" aria-labelledby="home-about-title"`. `core/group`'s `save()` emits
+  neither (it has no `anchor` attribute set, and cannot emit `aria-labelledby` at all), so the editor's
+  regenerate-and-compare check invalidated the block. `home-about-bg` itself was already fine.
+- **Fix:** the template now carries exactly `<section class="wp-block-group home-about">` — what `save()`
+  produces — and the new `PeregoSite\Theme\TemplateSectionAttributes` restores both attributes on `render_block`
+  with `WP_HTML_Tag_Processor` (no regex). The group stays a real `core/group`, so core's render-time
+  `is-layout-flow wp-block-group-is-layout-flow` + `theme.json` layout classes are untouched. See DECISIONS
+  2026-07-22 (T035) for why a custom wrapper block was rejected.
+- **Verified:** curl-diff of the full **EN and AR** homepages before/after → **exactly one differing line each,
+  attribute order only** (`aria-labelledby id class` instead of `class id aria-labelledby`; same three
+  attributes, same values, same layout classes). DOM-identical, deliberately not byte-identical — recorded in
+  DECISIONS as the first departure from the C1–C8 byte-identical standard. Pest **374/374** (was 370; +4 new),
+  Jest **137/137** unchanged (no JS touched). `wp post list --post_type=wp_template` is empty, so no database
+  copy shadows the theme file. Guards reviewed: `render_block`, `next_tag`, `set_attribute`,
+  `get_updated_html` all verified against the installed core; no output, request data, query, or i18n surface.
+- **⚠️ Not confirmed by me:** the editor-side "warning is gone" check. `perego.local/wp-admin` needs a login I
+  cannot perform. The static proof is exact (the template now equals `core/group`'s `save()` output byte for
+  byte), but the owner should open Site Editor → Front Page to confirm visually.
+- **⚠️ Known follow-up, logged not fixed:** on the AR front page the seeded heading carries no `id`, so
+  `aria-labelledby="home-about-title"` dangles there. Pre-existing baseline; belongs to the AR a11y pass.
+- **Recorded in the spec:** **T035** (six more templates carry the same invalid-markup defect — full table in
+  `tasks.md`, each fixed inside its own page batch) and **T036** (the owner's link-control request: custom vs
+  dynamic, post-type select, record select, open-in-new-tab, plus a shared PHP resolver — built at first need,
+  header/footer/CTA retrofitted last).
+- **Next:** Batch 1 of the remaining-pages program — **Work single**: `project-gallery-lightbox` and
+  `project-navigation` (the latter has **no `index.js` at all**, so FSE shows "your site doesn't include support
+  for this block").
+
 ## RESUME HERE (2026-07-22) — Service + Work pages: C7 service-hero, C8 project-hero; T026/T027 need no code
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Moved past the homepage onto the next pages.

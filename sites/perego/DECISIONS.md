@@ -1,5 +1,48 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 T035: templates keep `core/group`; attributes core cannot express go back on `render_block`
+
+The owner reported the homepage About section rendering as **"Block contains unexpected or invalid content"** in
+FSE. It is a **template defect, not a block defect** — `home-about-bg` (fixed the same day) was fine. The section
+wrapper in `front-page.html` was a `core/group` whose saved HTML hard-coded two attributes `core/group`'s `save()`
+can never regenerate:
+
+```html
+<!-- wp:group {"tagName":"section","className":"home-about","layout":{"type":"default"}} -->
+<section class="wp-block-group home-about" id="about" aria-labelledby="home-about-title">
+```
+
+Gutenberg regenerates `save()`, compares attribute sets, sees two it cannot account for, and invalidates the
+block. Six other templates carry the same class of defect (T035).
+
+**Rejected: replace the wrapper with a custom Perego block.** It would have been declaratively clean and
+byte-exact — but core adds `is-layout-flow wp-block-group-is-layout-flow` and the `theme.json` layout/spacing
+rules to group blocks at **render** time, via the layout support. A custom block drops all of that silently.
+Measured on the live page: the rendered class list really is
+`wp-block-group home-about is-layout-flow wp-block-group-is-layout-flow`, none of which is in the template.
+
+**Chosen: the template carries exactly what `save()` produces; `PeregoSite\Theme\TemplateSectionAttributes`
+puts the rest back on `render_block`.** Core `core/group` behaviour is untouched, the editor can validate the
+template, and the public a11y contract survives. `WP_HTML_Tag_Processor::set_attribute()` does the writing — no
+regex, no string splicing.
+
+**The trade, stated plainly: DOM-identical, not byte-identical.** `WP_HTML_Tag_Processor` writes a restored
+attribute *in front of* the tag's existing ones, so `id`/`aria-labelledby` now precede `class` instead of
+following it. Verified by curl-diffing the full EN and AR homepages before and after: **exactly one line differs
+in each, and only in attribute order** — same three attributes, same values, same render-time layout classes.
+Attribute order is meaningless in HTML; nothing in CSS, JS, or the accessibility tree can observe it. This is the
+first deliberate departure from the "byte-identical" standard C1–C8 held to, and future T035 fixes inherit it, so
+each one is verified the same way rather than by `git diff --name-only` alone.
+
+Prefer, in order: a native expression core reproduces exactly (`anchor` for a plain `id`, `style.spacing` for a
+margin) → `wp:html` for genuinely raw markup → this class, for what core cannot express at all
+(`aria-labelledby`, `tabindex`).
+
+**Known follow-up, not fixed here:** `seed-home-about.php` gives the `home-about-title` anchor to the EN page's
+first heading only, so on the Arabic front page `aria-labelledby="home-about-title"` points at nothing. That is
+pre-existing baseline behaviour; it belongs to the AR a11y pass, not to a fix whose whole point is changing
+nothing visible.
+
 ## 2026-07-22 — Spec 021 C7/C8 + scope correction: the remaining gap is bare-sentence blocks, not SSR
 
 Extending the live-canvas standard past the homepage surfaced a **scope correction worth recording**, found by

@@ -61,6 +61,43 @@
 - [ ] T033 Run clean-code, wp, test, and docs guards; update site README, docs, PROGRESS, DECISIONS, and evidence.
 - [ ] T034 Commit, push, open/update stacked PR, and record merge/dependency state.
 
+## Phase 7 — Owner review findings (2026-07-22)
+
+- [ ] T035 Template block-validity sweep. Seven theme templates embed markup `core/group`'s `save()` cannot regenerate, so FSE renders them as "Block contains unexpected or invalid content". Fix each inside its page batch, then verify by diffing the rendered route.
+- [ ] T036 Structured link picker. Replace every free-text link URL with a shared `LinkPicker` (custom vs dynamic, post-type select, record select, open-in-new-tab) plus a shared PHP resolver. Build at first need; retrofit header/footer/CTA last.
+
+### T035 — the affected templates
+
+`front-page.html` is **done** (see below). Remaining, each with the offending markup:
+
+| Template | Offending markup inside a `core/group` boundary |
+|---|---|
+| `page-contact.html` | `id="contactChoose"` + an unwrapped `<div class="contact-hero__bg">…</div>` child |
+| `page.html` | `<main id="main" tabindex="-1">`; `post-hero__inner` `style="text-align:center"`; `prose` `style="margin-top:…"` |
+| `archive.html` | `post-hero__inner` `style="text-align:center;"`; `wp:query` `style="margin-top:…"` |
+| `home.html` | `wp:query` `style="margin-top:…"` |
+| `archive-perego_service.html` | `<main id="main" tabindex="-1">` |
+| `legal.html` | `<main id="main" tabindex="-1">` |
+| `search.html` | `<main id="main" tabindex="-1">` |
+
+Order of preference per case: **(1)** express it natively where core reproduces the string exactly — `anchor` for a plain `id`, `style.spacing.margin` for a margin; **(2)** wrap genuinely raw markup in `wp:html`, which core round-trips verbatim; **(3)** fall back to `PeregoSite\Theme\TemplateSectionAttributes` for attributes core cannot express at all (`aria-labelledby`, `tabindex`). Every fix is verified by curl-diffing the affected route before and after — expect DOM-identical, not byte-identical, wherever option 3 is used.
+
+`front-page.html` (the owner-reported About section) is fixed: the template now carries exactly `<section class="wp-block-group home-about">`, and `TemplateSectionAttributes` puts `id="about"` and `aria-labelledby="home-about-title"` back on `render_block`.
+
+### T036 — the link picker contract
+
+Editor (shared `Editor/LinkPicker.js`, superseding `LinkControl` for new work):
+
+1. **Link type** — *Custom URL* or *Existing content*.
+2. When *Existing content*: **Content type** — the site's public, viewable post types (from the `core` store's `getPostTypes`, minus `attachment`), then **Item** — that type's published records listed by their own title, never a raw ID (the `RecordPicker` rule).
+3. When *Custom URL*: the current free-text field, keeping the existing help text.
+4. **Open in a new tab** — toggle, both modes.
+
+Storage is additive so existing `{label, href}` data keeps working:
+`{label, href, linkKind: 'custom'|'dynamic', postType, postId, openInNewTab}`.
+
+Rendering is a shared PHP resolver: `custom` follows the existing `SiteHeaderRenderer::ctaHref()` rule (localize an internal path; use an external/`mailto:`/`tel:`/`#anchor` verbatim); `dynamic` resolves the Polylang-translated permalink for the current locale and falls back to `href` when the target is unpublished or gone; `openInNewTab` emits `target="_blank" rel="noopener"`, the pairing already used by `SiteFooterRenderer` and `ClientsCarouselRenderer`.
+
 ## Standard for every visual-block slice (per DECISIONS 2026-07-21, refining framework #43)
 
 Static-layout blocks (Header, Footer, Hero, Services teaser, About, Service Inner Hero, What We Do, Process) render their **real markup in `edit()`** with in-canvas `RichText`/`MediaPlaceholder` and ship a **markup-parity test**; `<ServerSideRender>` is retained only for dynamic/query blocks (Clients, Portfolio grid, related/search) with a styled placeholder + `RecordPicker`. Repeaters use structured attributes with legacy JSON-string read-time normalization. Content-model rework also covers **Project admin UX (C13)** alongside the Client editor in T019/T022.

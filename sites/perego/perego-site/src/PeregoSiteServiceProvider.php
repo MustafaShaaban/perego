@@ -77,6 +77,8 @@ final class PeregoSiteServiceProvider
         $this->registerContactServiceChooser();
         $this->registerForms();
 
+        $this->registerTemplateSectionAttributes();
+
         (new StructuredData())->register();
         (new \PeregoSite\Seo\PeregoAgentReadiness())->register();
         (new \PeregoSite\Seo\PeregoMeta($this->languageService->driver()->currentLocale()))->register();
@@ -91,6 +93,21 @@ final class PeregoSiteServiceProvider
             (new \PeregoSite\Admin\ClientMediaMetaBox())->register();
             (new \PeregoSite\Admin\ServicePortfolioMetaBox())->register();
         }
+    }
+
+    /**
+     * spec 021 T035: put back the structural attributes the theme templates need but `core/group`'s
+     * `save()` cannot generate, so the templates hold exactly what the block editor regenerates and
+     * stop rendering as "unexpected or invalid content". See TemplateSectionAttributes for the full
+     * rationale. Front-end only — the editor canvas has no need for them.
+     */
+    private function registerTemplateSectionAttributes(): void
+    {
+        $sections = new \PeregoSite\Theme\TemplateSectionAttributes();
+
+        add_filter('render_block', static function ($html, $block) use ($sections) {
+            return $sections->apply((string) $html, is_array($block) ? $block : []);
+        }, 10, 2);
     }
 
     /**
