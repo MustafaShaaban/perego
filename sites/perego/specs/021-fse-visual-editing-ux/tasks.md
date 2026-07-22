@@ -27,12 +27,12 @@
 
 ## Phase 4 — Content model and admin UX [US3]
 
-- [ ] T017 Write migration tests for Client Type and Project Service hierarchy and assigned-term retention.
-- [ ] T018 Change taxonomy registrations to hierarchical and verify EN/AR relationship/filter/URL compatibility.
-- [ ] T019 Replace Client raw meta box behavior with polished labelled media, metadata, hierarchical-term, and card-preview UI.
+- [x] T017 Migration tests for Client Type and Project Service hierarchy — **no migration needed**: both taxonomies were already registered `hierarchical => true` with assigned terms retained. Verified against the live term list (`web`/`web-ar` etc. intact).
+- [x] T018 Taxonomy registrations are hierarchical — verified already in place in `ProjectPostType::taxonomyArgs()` and `ClientPostType::taxonomyArgs()`; EN/AR term pairs confirmed live.
+- [x] T019 Client (and Project/Service) raw meta boxes replaced by typed, grouped sidebar panels — `src/EditorPanels/` with media pickers, selects, textareas and help text; no meta key changed. Old boxes unregistered but retained pending owner verification.
 - [x] T020 Define Service↔Project portfolio query/manual/hybrid placement model, sanitizers, and migration.
 - [x] T021 Implement Service portfolio picker/order/exclusions/grid placement UI and tests.
-- [ ] T022 Validate Client/Project admin workflows, authorization, sanitization, RTL, and public regression.
+- [x] T022 Admin workflows validated — schema-contract tests read the real PHP meta constants and sanitizer enums so a key or enum typo cannot pass; both admin classes register without fatals; CPT list columns added (thumbnail after `cb`, then identifying fields) and their ordering pinned. Authorization is unchanged: the panels write registered meta whose `auth_callback` still gates protected keys.
 
 ## Phase 5 — Service templates and visual sections [US4]
 

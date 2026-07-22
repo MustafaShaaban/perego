@@ -13,7 +13,13 @@ use PeregoSite\PostTypes\ServicePostType;
 
 defined('ABSPATH') || exit;
 
-/** A native Service editor for the selected-work query/manual/hybrid contract. */
+/** A native Service editor for the selected-work query/manual/hybrid contract. *
+ * ⚠️ SUPERSEDED (spec 021 Phase 4, 2026-07-22) — no longer registered. `PeregoSiteAdminFieldPanels`
+ * now provides these fields as typed, grouped controls in the block editor's document sidebar. This
+ * class is retained, with its tests, only until the owner has confirmed the panels work in a live
+ * editor — the panels could not be verified there during development (wp-admin needs a login the
+ * agent cannot perform). Delete this file and its test once that check passes; nothing references it.
+ */
 final class ServicePortfolioMetaBox
 {
     private const NONCE_ACTION = 'perego_service_portfolio_save';

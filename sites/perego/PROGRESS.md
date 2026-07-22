@@ -2,6 +2,44 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 Phase 4: ACF-grade sidebar fields + CPT list columns
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. The last of the three tracks. **All page batches,
+  the link picker, the T035 template sweep and the fields rework are now done.**
+- **`src/EditorPanels/`** — a new wp-scripts entry (`npm run build:panels`; `build` now chains
+  blocks + panels). One `registerPlugin` adds typed, grouped `PluginDocumentSettingPanel`s per post
+  type, driven by a declarative `schema.js` and one `match` on `field.type` in `fields.js` — the same
+  shape as the framework's `FieldSections` → `SettingsForm::control()`.
+- **What the raw inputs became:** the Service card image was an **attachment ID typed into a text box**
+  → a media picker with a thumbnail; site type and the canonical service key were free text where only
+  a fixed set resolves → selects; deliverables → a textarea; the Client statistic's `<strong>`
+  instruction moved out of the label into help text. The Project gallery and Service selected-work
+  pickers reuse `MediaField` / `RecordPicker`.
+- **Safeguard:** a select **never silently rewrites a stored value**. Several fields were free text, so
+  a post can hold something the enum does not list; `EnumControl` always includes the current value,
+  marked non-standard, and only replaces it when the editor actively picks something else.
+- **⚠️ A real mistake caught by rendering against a live post.** The schema first offered the
+  `ProjectPostType::CATEGORIES` keys (`video|motion|design|web`) for `_perego_service_slug` — **and the
+  test asserted the same wrong source**, so both agreed and passed. The live meta on all eight Service
+  posts holds the *route* slug (`video-editing|…`), which is what `ServiceContent::SLUG_KEY` and the
+  service tabs key on. Two vocabularies for the same four services. Fixed, and the test now reads
+  `ServiceContent::SLUG_KEY` plus asserts the two vocabularies differ.
+- **CPT list columns:** none of the three types had any (Projects showed Title/Services/Date across 154
+  rows). Each now leads with a thumbnail after the `cb` checkbox — the ordering was wrong on the first
+  pass and is now pinned for the with-`cb`, no-`cb` and client cases.
+- **⚠️ Old meta boxes unregistered but RETAINED on purpose.** `PostMetaBoxes`, `ProjectGalleryMetaBox`
+  and `ServicePortfolioMetaBox` keep their files and passing tests, marked SUPERSEDED. The panels could
+  not be verified in a live editor, and deleting a working tested UI for an unverified replacement is
+  the irreversible half of that trade. **Delete them once you confirm the panels work.**
+  `ClientMediaMetaBox` stays registered — the client gallery is a list of typed objects, the one
+  surface the shared primitives do not cover.
+- **Verified:** Pest **413/413**, Jest **193/193** (+9 schema-contract tests that read the real PHP
+  constants, so a meta-key typo cannot pass), build clean, both admin classes register without fatals
+  under `wp eval`, column order confirmed for all three types, and `/` + `/work/` **0 differing lines**
+  — the panels touch no front-end code.
+- **⚠️ Standing gap:** the editor UI itself is still unverified by me. wp-admin needs a login I will
+  not perform. Everything structural is proven; what remains is a look.
+
 ## RESUME HERE (2026-07-22) — Spec 021 C14 + C15 COMPLETE: every page done, T035 sweep finished
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. **No Perego block renders a bare sentence any more**,

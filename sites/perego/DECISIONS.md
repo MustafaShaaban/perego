@@ -1,5 +1,50 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 Phase 4: ACF-grade fields as sidebar panels, built natively
+
+Owner ask: post types and custom fields "must feel like the ACF experience and organized well".
+
+**Built natively, not on ACF — and that costs nothing here.** ACF 6.8.6 *is* active on this install,
+but with **zero field groups**: `wp post list --post_type=acf-field-group` is empty and nothing under
+`sites/perego/` references `Corex\Fields\FieldResolver`; every renderer calls `get_post_meta()`
+directly. So ACF is installed and entirely unused, while registering three CPTs and admin menus. The
+constitution's "no optional plugin as a hard dependency" rule therefore costs nothing to keep.
+**Flagged for the owner: the plugin looks removable.**
+
+**Sidebar panels, not upgraded meta boxes.** All the meta is already `show_in_rest`, so panels read and
+write through `useEntityProp` — no nonce, no save handler, no page reload. Four classic meta boxes
+(each with its own nonce, save loop and inline JS) collapse into one declarative schema plus one
+`match` on `field.type`, mirroring the framework's own `FieldSections` → `SettingsForm::control()`
+pattern. The gallery and portfolio pickers reuse `MediaField` and `RecordPicker` — the same controls
+editors already know from the blocks.
+
+**What the raw inputs became:** the Service card image was an **attachment ID typed into a text box** →
+a media picker with a thumbnail. Site type was free text where only five values resolve → a select.
+The canonical service key was free `sanitize_key` text → a select. The Client statistic still asks for
+inline `<strong>`, but now says so in help text under the field instead of inside the label.
+
+**The safeguard that matters: a select never silently rewrites a stored value.** Several of these were
+free text, so a post can hold something the enum does not list. `EnumControl` always includes the
+current value, marked as non-standard, and only replaces it when the editor actively picks something
+else.
+
+**A real mistake this caught.** The schema first offered the `ProjectPostType::CATEGORIES` keys
+(`video|motion|design|web`) for `_perego_service_slug` — **and the test asserted against the same wrong
+source**, so both agreed and passed. The live meta on all eight Service posts actually holds the
+*route* slug (`video-editing|motion-graphics|…`), which is what `ServiceContent::SLUG_KEY`, the service
+tabs and the contact pre-selection key on. Two vocabularies for the same four services. The test now
+reads `ServiceContent::SLUG_KEY` — the authority the renderers use — plus a second test asserting the
+two vocabularies are *not* the same, so the mix-up cannot silently return. Found by rendering the
+column against a real post, not by reading code.
+
+**The old meta boxes are unregistered but retained, deliberately.** `PostMetaBoxes`,
+`ProjectGalleryMetaBox` and `ServicePortfolioMetaBox` (and their passing tests) stay on disk with a
+SUPERSEDED note. The panels could not be verified in a live editor — wp-admin needs a login the agent
+cannot perform — and deleting a working, tested UI in favour of an unverified replacement is the
+irreversible half of that trade. Delete them once the owner confirms the panels work.
+`ClientMediaMetaBox` stays **registered**: the client gallery is a list of typed objects
+(`{type, id, url}`), not a flat ID list, and it is the one surface the shared primitives do not cover.
+
 ## 2026-07-22 — Spec 021 C13: fixing an invalid block moved core's layout classes, and that was visible
 
 The contact-hero group in `page-contact.html` carried two things `core/group`'s `save()` cannot

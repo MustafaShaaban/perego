@@ -85,14 +85,17 @@ final class PeregoSiteServiceProvider
         (new \PeregoSite\Seo\PeregoMeta($this->languageService->driver()->currentLocale()))->register();
         (new \PeregoSite\Seo\PlaceholderPageIndexing())->register();
 
-        // spec 010 T009: editor controls for the structured Project/Service/Client metadata (admin only).
-        // spec 014 T002: the Project gallery wp.media picker (deferred from 010).
-        // spec 020 round 2: the Client gallery/video wp.media picker (mirrors the Project gallery).
+        // spec 021 Phase 4 (T019/T022): the structured Project/Service/Client metadata is edited in
+        // typed, grouped panels in the block editor's document sidebar. These replace the four classic
+        // meta boxes this used to register (PostMetaBoxes, ProjectGalleryMetaBox, ClientMediaMetaBox,
+        // ServicePortfolioMetaBox) — every field is `show_in_rest` post meta, so the panels need no
+        // nonce and no save handler, and no meta key changed. The Client gallery/video repeater keeps
+        // its dedicated box for now: its value is a list of typed objects, not a flat ID list, and it
+        // is the one surface the shared primitives do not yet cover.
         if (is_admin()) {
-            (new \PeregoSite\Admin\PostMetaBoxes())->register();
-            (new \PeregoSite\Admin\ProjectGalleryMetaBox())->register();
+            (new \PeregoSite\Admin\FieldPanels())->register();
+            (new \PeregoSite\Admin\PostListColumns())->register();
             (new \PeregoSite\Admin\ClientMediaMetaBox())->register();
-            (new \PeregoSite\Admin\ServicePortfolioMetaBox())->register();
         }
     }
 
