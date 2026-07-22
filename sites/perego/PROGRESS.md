@@ -2,6 +2,24 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Fix: home-about-bg editor preview collapsed to zero height (owner-reported)
+
+- **Owner-reported after C5:** the "Home About Background" block was **invisible / unselectable in the block
+  editor**. Root cause: the live-canvas background `.home-about__bg` is `position: absolute; inset: 0`, and this
+  block (unlike hero/services-teaser) renders **no in-flow content** — the About text is the adjacent native
+  `wp:post-content` — so its editor wrapper `.perego-home-about-bg__editor` collapsed to **zero height**. The
+  old `ServerSideRender` box had height, so this was a C5 regression.
+- **Fix (editor-only CSS, purely additive):** `home-about-bg/style.scss` gains a
+  `.perego-home-about-bg__editor { position: relative; min-block-size: clamp(200px,32vh,380px); overflow: hidden }`
+  rule, making the wrapper the containing block for the absolute background so it renders as a **visible,
+  selectable preview tile**. That class is the editor `useBlockProps` wrapper and never appears on the front
+  end, so the rule is inert there. No markup, `index.js`, `preview.js`, `block.json`, or PHP change.
+- **Verified:** rule present in built `build/Blocks/home-about-bg/style-index.css`; home-about-bg parity **2/2**
+  still green (skeleton unchanged); full Jest **131/131**; build clean; diff is **+13/−0** — every front-end
+  `.home-about__bg` rule untouched → public output still byte-identical.
+- **Next:** continue the same treatment to the next pages, starting with the **Service pages** —
+  `service-hero` (T025), `what-we-do` (T026), `process` (T027).
+
 ## RESUME HERE (2026-07-22) — Spec 021 Phase 3 COMPLETE: the whole homepage now carries the editing treatment (T011–T016)
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Phase 3 (Homepage visual composition, US2) is done. Every
