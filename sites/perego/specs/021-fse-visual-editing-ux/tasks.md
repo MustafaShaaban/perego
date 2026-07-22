@@ -21,7 +21,7 @@
 - [x] T011 Write visual/editor tests for Hero parent/slide data and migration.
 - [x] T012 Replace the fixed Hero editor with parent/slide visual composition, safe controls, and migrated EN/AR content.
 - [x] T013 Implement visual Services query/manual/hybrid composer with card overrides, ordering, and migration.
-- [ ] T014 Implement direct visual About block editing with locked structural wrappers.
+- [x] T014 Implement direct visual About block editing with locked structural wrappers.
 - [ ] T015 Implement Clients automatic/manual/hybrid visual composer, placeholder media, and stable preview controls.
 - [ ] T016 Run homepage public visual/interaction regression at every baseline width and language.
 

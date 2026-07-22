@@ -2,6 +2,22 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C5/T014: Home About background is a true live-canvas block
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Fifth live-canvas slice — the homepage About section's
+  background. See DECISIONS 2026-07-22 (C5).
+- **What changed (editor-only; front end frozen):** the `home-about-bg` block is locked decorative chrome with
+  no editable content (the About *content* is the adjacent native `wp:post-content`, edited directly — the
+  "locked structural wrappers" of T014). New `home-about-bg/preview.js` `HomeAboutBgSkeleton` renders the real
+  `div.home-about__bg > img`; `edit()` renders it instead of `<ServerSideRender>`. New `parity.test.js` +
+  `__fixtures__/front-home-about-bg.html` pin it. Fifth block on the parity harness.
+- **Verified:** block Jest **131/131** (+2 parity); HomeAboutBg Pest **2/2** unchanged (PHP untouched →
+  byte-identical); build clean. Guards reviewed — no findings (no strings, no attrs, decorative only).
+- **⚠️ Same open item: live-editor VISUAL check** (perego.local browser-approval-gated). Structure parity-proven.
+- **Next:** **C6 Clients carousel (T015)** — the last homepage block. It is a DYNAMIC/query block, so it keeps
+  `ServerSideRender` + a styled placeholder and gains a `RecordPicker` composer (NOT a real-markup skeleton),
+  per the static-vs-dynamic rule. Then **T016** homepage public regression.
+
 ## RESUME HERE (2026-07-22) — Spec 021 C4/T013: Services teaser is a true live-canvas block (real markup + parity + composer on shared primitives)
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Fourth live-canvas slice — the homepage Services teaser —

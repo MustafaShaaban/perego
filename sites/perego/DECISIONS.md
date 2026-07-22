@@ -1,5 +1,15 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 C5: Home About background live-canvas (locked chrome, no controls)
+
+The `home-about-bg` block `edit()` renders real markup (`HomeAboutBgSkeleton`) instead of `<ServerSideRender>`,
+applying the C1–C4 static-layout standard. The block is **purely decorative chrome** — a full-bleed background
+image with no locale dependency and no editable content — so T014's "direct visual About editing with locked
+structural wrappers" is satisfied by the composition, not by this block: the About section's editorial content
+is the adjacent native `wp:post-content` (which the editor already edits directly), and this block stays locked
+with zero controls. Its only change is dropping the SSR iframe for the real `div.home-about__bg > img`, pinned
+by a parity test. No attribute/renderer change, so the front end is byte-identical (HomeAboutBg Pest 2/2).
+
 ## 2026-07-22 — Spec 021 C4: Services teaser live-canvas (composer on `RecordPicker`, cards as a seed preview)
 
 The homepage Services teaser `edit()` now renders real markup (`ServicesTeaserSkeleton` in
