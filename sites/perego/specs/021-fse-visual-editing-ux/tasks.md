@@ -61,6 +61,19 @@
 - [ ] T033 Run clean-code, wp, test, and docs guards; update site README, docs, PROGRESS, DECISIONS, and evidence.
 - [ ] T034 Commit, push, open/update stacked PR, and record merge/dependency state.
 
+## Phase 8 — Remaining pages (the bare-sentence blocks)
+
+Page batches, one commit each. C9–C10 done; the rest follow the standard below.
+
+- [x] C9 `project-gallery-lightbox` — Work single. Real `.portfolio.project-gallery` skeleton mirroring the edited Project's gallery meta, placeholder tiles in the shared template. Locked (no controls).
+- [x] C10 `project-navigation` — Work single. Had **no editor script at all** (FSE showed "your site doesn't include support for this block"); now renders the real prev/next nav and related-projects surface, with a `surface` select in the Inspector.
+- [ ] C11 `portfolio-grid` — Work archive (+ `archive.html` T035 fix).
+- [ ] C12 Journal + Search: `journal-header`, `related-posts`, `search-results`, `journal-comments`, `post-breadcrumb`, `post-reading-time` (+ `home.html` / `archive.html` T035 fixes).
+- [ ] C13 Contact: `contact-service-chooser`, `join-form` (+ `page-contact.html` T035 fix; first likely home of T036).
+- [ ] C14 Services archive: `services-overview` (+ `archive-perego_service.html` T035 fix).
+- [ ] C15 Legal + misc: `legal-toc`, `legal-updated`, `not-found`, `preloader`, `media-lightbox`, `footer-careers` (+ `legal.html` / `page.html` / `search.html` T035 fixes).
+- [ ] C16 Retrofit T036 onto the header nav/dropdown/CTA and footer links, with the shared PHP resolver.
+
 ## Phase 7 — Owner review findings (2026-07-22)
 
 - [ ] T035 Template block-validity sweep. Seven theme templates embed markup `core/group`'s `save()` cannot regenerate, so FSE renders them as "Block contains unexpected or invalid content". Fix each inside its page batch, then verify by diffing the rendered route.

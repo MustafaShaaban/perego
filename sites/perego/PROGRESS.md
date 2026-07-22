@@ -2,6 +2,36 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 Batch 1 (Work single): C9 project-gallery-lightbox, C10 project-navigation
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. First batch of the remaining-pages program — the Work single
+  template now has no placeholder blocks left.
+- **C9 `project-gallery-lightbox`:** `edit()` renders the real `.portfolio.project-gallery` section
+  (`ProjectGallerySkeleton`) — heading + `.work-masonry` grid of `.work-card` trigger buttons — instead of a bare
+  sentence. Locked preview (no attributes; images are the Project's `_perego_gallery_attachment_ids` meta, which
+  is `show_in_rest`, so the canvas mirrors the edited Project live and falls back to three placeholder tiles in
+  the shared template). Parity + drift + empty-state tests.
+- **C10 `project-navigation`:** the worst case in the sweep — it had **no editor script at all**, so FSE showed
+  "Your site doesn't include support for this block". Now renders both real surfaces (the `.pagination` prev/next
+  nav and the "Related projects" heading + `.blog-grid` + closing CTA), with the `surface` attribute on an
+  Inspector select. Related cards are a design preview of recent projects, not a reimplementation of
+  `relatedFor()` — same precedent as the services-teaser seed cards.
+- **⚠️ A real front-end regression was caught and removed, not shipped.** Adding `editorScript` made webpack
+  compile `project-navigation/style.scss` for the first time, so a previously-dead `"style"` declaration started
+  resolving and injected a stylesheet into every project single. Every selector in it is `.project-followup*`,
+  which **nothing** emits — dead CSS from a pre-rewrite design. Deleted the file and the declaration. See
+  DECISIONS 2026-07-22 (C9/C10); the lesson for later batches is to **curl-diff the route** after adding an
+  editor script, because `git diff --name-only` does not catch this.
+- **Verified:** project single `/work/visual-identity-system/` curl-diff **0 differing lines** (byte-identical);
+  Jest **145/145** (was 137; +8 parity/behaviour), Pest **374/374** unchanged (no PHP touched); build clean;
+  `/work/`, `/`, an EN and an AR project single all HTTP 200.
+- **⚠️ Not confirmed by me:** the live editor look of both blocks — `perego.local/wp-admin` needs a login I
+  cannot perform. Structure is parity-proven against captured live markup.
+- **Note:** `npm run lint:js` is red across the whole block tree (prettier + `jsx-a11y/anchor-is-valid` on the
+  `href="#"` preview links), including C1–C8 blocks. C9/C10 match the existing style; the lint gate is its own
+  cleanup, logged not fixed.
+- **Next:** Batch 2 — **C11 `portfolio-grid`** (Work archive), plus the `archive.html` T035 template fix.
+
 ## RESUME HERE (2026-07-22) — Fix: the About section was an INVALID BLOCK in FSE (owner-reported); T035/T036 recorded
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Owner screenshot showed the homepage About section rendering

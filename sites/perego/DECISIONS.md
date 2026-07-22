@@ -1,5 +1,35 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 C9/C10: adding an editor script resurrected dead CSS; the CSS went, not the fix
+
+`project-navigation` was the worst case in the whole spec-021 sweep: it had **no editor script at all**, so the
+block editor could not register it and the single-project template showed "Your site doesn't include support for
+this block" — a step below the bare-sentence blocks. Adding `editorScript` to its `block.json` fixed that and
+immediately produced an **unexpected front-end diff**: a `<style id="perego-theme-project-navigation-style-inline-css">`
+block appeared on every project single.
+
+Cause: `block.json` declared `"style": "file:./style-index.css"`, but webpack only emits a block's assets when
+that block has a JS entry. With no `index.js`, `style.scss` was never compiled, the declared file never existed,
+and WordPress silently skipped the enqueue. Giving the block an editor script made webpack compile the stylesheet
+for the first time, and the previously-dead declaration started resolving.
+
+The stylesheet itself is dead: every selector in it is `.project-followup*`, and a repo-wide search finds those
+class names in **no** renderer, template, or fixture — `ProjectNavigationRenderer` emits `.pagination`,
+`.section-title`, `.blog-grid`, and `.post-card` with inline styles. So the CSS is a leftover of an earlier design
+that has been unreachable since the renderer was rewritten.
+
+**Deleted `style.scss` and the `style` declaration** rather than shipping newly-live dead CSS or renaming its
+selectors to match (which would have changed the approved design under cover of an editor-only slice). The project
+single is byte-identical again — verified by curl-diff, 0 differing lines.
+
+**The general lesson for the remaining batches:** a block that has never had a JS entry may also have never had
+its declared assets built. Curl-diff the route after adding `editorScript`, don't assume "editor-only change ⇒
+front end frozen". `git diff --name-only` would not have caught this one.
+
+Also of note: `npm run lint:js` fails across the whole block tree on prettier formatting and
+`jsx-a11y/anchor-is-valid` (preview skeletons legitimately use `href="#"`), including blocks shipped in C1–C8.
+C9/C10 match the surrounding style rather than introducing a second one; the lint gate is a separate cleanup.
+
 ## 2026-07-22 — Spec 021 T035: templates keep `core/group`; attributes core cannot express go back on `render_block`
 
 The owner reported the homepage About section rendering as **"Block contains unexpected or invalid content"** in

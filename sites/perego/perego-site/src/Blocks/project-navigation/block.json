@@ -9,6 +9,6 @@
 	"attributes": {
 		"surface": { "type": "string", "default": "all" }
 	},
-	"style": "file:./style-index.css",
+	"editorScript": "file:./index.js",
   "supports": { "html": false }
 }
