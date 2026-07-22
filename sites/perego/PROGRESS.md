@@ -2,6 +2,33 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 Batch 2 (Work archive): C11 portfolio-grid, now editable
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. The Work pages (single + archive) are complete.
+- **C11 `portfolio-grid`:** a **dynamic/query block** — every card is a projection of the whole
+  `perego_project` archive — so per the static-vs-dynamic rule it keeps `<ServerSideRender>` and has **no
+  parity test by design**. Its render callback is context-free, so SSR shows the real grid, chips and pager in
+  the canvas. That alone replaces the bare sentence.
+- **It also stops being read-only.** The archive's editorial copy is now editable per locale on the shared
+  Inspector primitives: heading, intro, and the closing CTA (title/body/button), plus an explicit **"Show the
+  demo note"** toggle for the launch placeholder ("Example projects shown below — to be replaced with Perego's
+  real work"), which the owner will want gone at launch and which empty-means-seed could never remove.
+- **The renderer was not touched.** `PortfolioGridRenderer` already receives its copy as an array from
+  `PortfolioContent::gridStrings()`, so the override applies at that seam: `gridStrings(array $overrides = [])`
+  merges only **non-empty** values over the seed, and the new shared `Blocks\LocalizedAttributes::pick()`
+  resolves the `<name>En`/`<name>Ar` pairs to the current locale (the `$suffix = $locale === 'ar' ? 'Ar' : 'En'`
+  line that was being rewritten in every renderer). `groupLabel`/`noResults`/`uiHome` stay seed-only — they are
+  interface strings, not editorial copy, and a test pins that the block cannot override them.
+- **Verified:** `/work/` curl-diff **0 differing lines** for an unedited block, EN and AR both 200. End-to-end
+  override check via `wp eval do_blocks(...)` with attributes set: heading and CTA button change, untouched
+  fields keep seed copy, demo note is genuinely removed. Pest **385/385** (was 374; +11), Jest **145/145**
+  unchanged (no parity test for a dynamic block — correct), build clean. Every overridable string is escaped
+  with `esc_html()` at output in the renderer, so editor input cannot inject markup.
+- **⚠️ Not confirmed by me:** the live editor look — `perego.local/wp-admin` needs a login I cannot perform.
+- **Next:** Batch 3 — **C12 Journal + Search**: `journal-header`, `related-posts`, `search-results`,
+  `journal-comments`, `post-breadcrumb`, `post-reading-time`, plus the `home.html` and `archive.html` T035
+  template fixes.
+
 ## RESUME HERE (2026-07-22) — Spec 021 Batch 1 (Work single): C9 project-gallery-lightbox, C10 project-navigation
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. First batch of the remaining-pages program — the Work single

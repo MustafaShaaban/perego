@@ -67,7 +67,7 @@ Page batches, one commit each. C9–C10 done; the rest follow the standard below
 
 - [x] C9 `project-gallery-lightbox` — Work single. Real `.portfolio.project-gallery` skeleton mirroring the edited Project's gallery meta, placeholder tiles in the shared template. Locked (no controls).
 - [x] C10 `project-navigation` — Work single. Had **no editor script at all** (FSE showed "your site doesn't include support for this block"); now renders the real prev/next nav and related-projects surface, with a `surface` select in the Inspector.
-- [ ] C11 `portfolio-grid` — Work archive (+ `archive.html` T035 fix).
+- [x] C11 `portfolio-grid` — Work archive. **Dynamic/query block**, so it keeps `ServerSideRender` per the standard below; the Inspector gains the editable archive heading/intro and closing CTA (En/Ar, empty = seed copy) plus a toggle for the launch demo note. The Work archive template (`archive-perego_project.html`) has no `core/group` at all, so there is no T035 fix here — `archive.html` is the *journal* archive and belongs to C12.
 - [ ] C12 Journal + Search: `journal-header`, `related-posts`, `search-results`, `journal-comments`, `post-breadcrumb`, `post-reading-time` (+ `home.html` / `archive.html` T035 fixes).
 - [ ] C13 Contact: `contact-service-chooser`, `join-form` (+ `page-contact.html` T035 fix; first likely home of T036).
 - [ ] C14 Services archive: `services-overview` (+ `archive-perego_service.html` T035 fix).

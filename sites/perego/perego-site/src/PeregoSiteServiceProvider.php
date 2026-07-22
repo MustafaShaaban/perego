@@ -18,6 +18,7 @@ use PeregoSite\Blocks\PostReadingTimeRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\ContactServiceChooserRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
+use PeregoSite\Blocks\LocalizedAttributes;
 use PeregoSite\Blocks\LegalTocRenderer;
 use PeregoSite\Blocks\MediaLightboxRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
@@ -676,14 +677,19 @@ final class PeregoSiteServiceProvider
             $languageService = $this->languageService;
 
             register_block_type($this->blockDir('portfolio-grid'), [
-                'render_callback' => static function () use ($gridRenderer, $languageService): string {
-                    $content  = new PortfolioContent($languageService->driver()->currentLocale());
+                'render_callback' => static function (array $attributes) use ($gridRenderer, $languageService): string {
+                    $locale   = $languageService->driver()->currentLocale();
+                    $content  = new PortfolioContent($locale);
                     $projects = (new ProjectRepository())->allForGrid($content);
 
                     return $gridRenderer->render(
                         $projects,
                         $content->filterLabels(),
-                        $content->gridStrings(),
+                        // spec 021 C11: the archive heading/intro and closing CTA are editable per locale;
+                        // an empty field falls back to the seed copy, so an unedited block is unchanged.
+                        $content->gridStrings(LocalizedAttributes::pick($attributes, $locale, [
+                            'heading', 'intro', 'ctaTitle', 'ctaBody', 'ctaButton',
+                        ]) + ['showDemoNote' => (bool) ($attributes['showDemoNote'] ?? true)]),
                     );
                 },
             ]);
