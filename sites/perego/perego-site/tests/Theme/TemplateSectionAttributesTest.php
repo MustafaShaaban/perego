@@ -55,3 +55,42 @@ it('returns the html untouched when the block owns no restored attributes', func
         'attrs' => ['className' => 'page-section'],
     ]))->toBe($html);
 });
+
+/*
+ * spec 021 C12 — the journal templates. `home.html` and `archive.html` carried inline styles that
+ * neither `core/query` nor `core/group` can regenerate (`text-align` is not a group support), so both
+ * templates rendered as invalid blocks in FSE.
+ */
+
+it('restores the journal query loop spacing on both journal templates', function () {
+    $attributes = (new TemplateSectionAttributes())->attributesFor([
+        'blockName' => 'core/query',
+        'attrs' => ['className' => 'journal-archive__inner'],
+    ]);
+
+    expect($attributes)->toBe(['style' => 'margin-top:clamp(32px,4vw,52px)']);
+});
+
+it('restores the centred archive header', function () {
+    $attributes = (new TemplateSectionAttributes())->attributesFor([
+        'blockName' => 'core/group',
+        'attrs' => ['className' => 'post-hero__inner'],
+    ]);
+
+    expect($attributes)->toBe(['style' => 'text-align:center']);
+});
+
+it('keys on the block name too, so the same className on another block is untouched', function () {
+    $sections = new TemplateSectionAttributes();
+
+    // PortfolioGridRenderer emits its own `.post-hero__inner` inside the rendered block; that markup
+    // must never be rewritten by this filter.
+    expect($sections->attributesFor([
+        'blockName' => 'perego-theme/portfolio-grid',
+        'attrs' => ['className' => 'post-hero__inner'],
+    ]))->toBe([])
+        ->and($sections->attributesFor([
+            'blockName' => 'core/group',
+            'attrs' => ['className' => 'journal-archive__inner'],
+        ]))->toBe([]);
+});

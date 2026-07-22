@@ -44,7 +44,9 @@ use WP_HTML_Tag_Processor;
 final class TemplateSectionAttributes
 {
     /**
-     * Attributes to restore, keyed by the `core/group` `className` that identifies the section.
+     * Attributes to restore, keyed by `<blockName> <className>` — the pair that identifies a section.
+     * The block name is part of the key because the same className can appear on different core blocks
+     * (and inside a Perego renderer's own output, which this must never touch).
      *
      * @var array<string, array<string, string>>
      */
@@ -52,9 +54,19 @@ final class TemplateSectionAttributes
         // Homepage About section: `#about` is the header nav's in-page anchor target, and
         // `aria-labelledby` names the landmark from the first panel heading (seeded with the
         // matching anchor by scripts/seed-home-about.php).
-        'home-about' => [
+        'core/group home-about' => [
             'id' => 'about',
             'aria-labelledby' => 'home-about-title',
+        ],
+        // The journal index + category archive query loop (home.html, archive.html): the designed gap
+        // between the archive header and the post grid.
+        'core/query journal-archive__inner' => [
+            'style' => 'margin-top:clamp(32px,4vw,52px)',
+        ],
+        // The centred archive/page header block (archive.html, page.html). `text-align` is not a
+        // `core/group` support, so core cannot emit it from a block attribute.
+        'core/group post-hero__inner' => [
+            'style' => 'text-align:center',
         ],
     ];
 
@@ -66,18 +78,15 @@ final class TemplateSectionAttributes
      */
     public function attributesFor(array $block): array
     {
-        if (($block['blockName'] ?? null) !== 'core/group') {
-            return [];
-        }
-
+        $blockName = $block['blockName'] ?? null;
         $attrs = $block['attrs'] ?? [];
         $className = is_array($attrs) ? ($attrs['className'] ?? null) : null;
 
-        if (! is_string($className)) {
+        if (! is_string($blockName) || ! is_string($className)) {
             return [];
         }
 
-        return self::SECTIONS[$className] ?? [];
+        return self::SECTIONS[$blockName . ' ' . $className] ?? [];
     }
 
     /**

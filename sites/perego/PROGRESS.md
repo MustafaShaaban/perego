@@ -2,6 +2,28 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C12 COMPLETE: Journal + Search, six blocks + two template fixes
+
+- **Branch:** . C12 is done: no Journal or Search block renders a bare
+  sentence any more, and both journal templates are valid in FSE.
+- **Blocks:**  (title/lead editable per locale), , ,
+   (count heading + comment list incl. the reply variant + the whole #respond form),
+   (3-card grid, cards are a design preview of recent posts), .
+- ** pins its HEAD only, deliberately.** A real search renders one card per match — the
+  captured  page has **25 cards / 11 KB** — so a fixture of the results list would pin today's
+  content, not the contract, and would fail the moment a post is published. The head (breadcrumb, h1,
+  result-count lead, search form) is fixed markup and is fully parity-tested; the grid is documented as a
+  sample. Same reasoning that kept portfolio-grid on SSR.
+- **T035 fixes for this batch:**  and  carried inline styles neither
+   nor  can regenerate ( is not a group support), so both rendered
+  as invalid blocks.  now keys on **block name + className** — needed because
+   also appears inside PortfolioGridRenderer's own output, which must never be
+  rewritten; a test pins that.
+- **Verified:**  **1 changed line**,  **2 changed lines** — every one of them
+  the intended tag, differing only by attribute order and a dropped trailing  (both CSS-irrelevant,
+  the documented T035 trade). Six routes 200. Pest **410/410**, Jest **161/161** (+16), build clean.
+- **Next:** C13 Contact, C14 Services archive, C15 Legal/misc, then Track 3 (ACF-grade sidebar fields).
+
 ## RESUME HERE (2026-07-22) — Spec 021 C12 part 1: journal-header, post-breadcrumb, post-reading-time
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Three of C12's six blocks are done; the batch is
