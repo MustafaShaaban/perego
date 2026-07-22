@@ -68,6 +68,12 @@ final class TemplateSectionAttributes
         'core/group post-hero__inner' => [
             'style' => 'text-align:center',
         ],
+        // The contact hero (page-contact.html): `#contactChoose` is the in-page anchor the service
+        // chooser scrolls to. Its decorative background div is raw markup and is wrapped in `wp:html`
+        // in the template instead, which core round-trips verbatim.
+        'core/group contact-hero' => [
+            'id' => 'contactChoose',
+        ],
     ];
 
     /**

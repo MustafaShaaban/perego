@@ -94,3 +94,12 @@ it('keys on the block name too, so the same className on another block is untouc
             'attrs' => ['className' => 'journal-archive__inner'],
         ]))->toBe([]);
 });
+
+it('restores the contact hero anchor', function () {
+    $attributes = (new TemplateSectionAttributes())->attributesFor([
+        'blockName' => 'core/group',
+        'attrs' => ['className' => 'contact-hero'],
+    ]);
+
+    expect($attributes)->toBe(['id' => 'contactChoose']);
+});

@@ -1,5 +1,33 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 C13: fixing an invalid block moved core's layout classes, and that was visible
+
+The contact-hero group in `page-contact.html` carried two things `core/group`'s `save()` cannot
+regenerate: a raw `id="contactChoose"` and an **unwrapped `<div class="contact-hero__bg">`** child. The
+`id` moved to `TemplateSectionAttributes`; the raw div is now wrapped in `wp:html`, which core
+round-trips verbatim.
+
+**That second fix had a consequence the HTML diff alone did not explain.** Before it, core's layout
+support was latching onto the raw div, so `is-layout-flow wp-block-group-is-layout-flow` sat on
+`.contact-hero__bg` — a `position:absolute` decorative wrapper containing one `<img>`, where core's
+`:where(.is-layout-flow) > * { margin-block-start: 24px }` did nothing at all. Once the section became
+a well-formed group, the classes landed where they belong: **on the section**. Whose children are the
+bg div, the `sr-only` h1, and `.contact-hero__grid` — and the grid sets no margin of its own, so it
+would have gained **24px of top margin and pushed the whole contact form down**.
+
+Nothing in the test suite could have caught this: it is a CSS cascade outcome, not markup, and the
+markup diff looked like the usual attribute-order noise. It was found by reading what the moved classes
+actually select, against the theme's own compiled rules.
+
+**Fix:** one neutralizing rule, `.contact-hero.is-layout-flow > * { margin-block-start: 0 }`, mirroring
+the `.contact-hero__grid.is-layout-flow > .contact-choose` rule the stylesheet already carried for the
+identical reason one level deeper. Specificity `(0,2,1)` beats core's `(0,1,0)`, so it wins regardless
+of load order. The section is a full-bleed hero that owns its spacing through the grid's padding.
+
+**The rule this adds to the T035 playbook:** when a template fix changes a block's *structure* (not just
+its attributes), check where core's layout classes end up afterwards, and what they select. Attribute
+order is noise; a relocated `is-layout-flow` is not.
+
 ## 2026-07-22 — Spec 021 T036: the link picker, and why an unconfigured link must resolve to nothing
 
 Owner ask: every editable link should let you **pick a page** instead of typing a URL — custom vs

@@ -2,6 +2,29 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C13 COMPLETE: Contact page
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. `contact-service-chooser` and `join-form` both render
+  real markup with parity tests; `join-form`'s fixture is the block's own PHP render captured via
+  `wp eval do_blocks()`, which is the cleanest source when a block has no page to appear on.
+- **`page-contact.html` T035 fix:** the raw `id="contactChoose"` moved to `TemplateSectionAttributes`
+  and the decorative `.contact-hero__bg` div is wrapped in `wp:html` (core round-trips it verbatim).
+- **⚠️ A third regression caught — and this one no test could have caught.** Making the section a
+  well-formed group moved core's `is-layout-flow` classes off the decorative background div (where they
+  selected nothing) **onto the section**, whose children include `.contact-hero__grid`. Core's
+  `:where(.is-layout-flow) > * { margin-block-start: 24px }` would have **pushed the whole contact form
+  down 24px**. It is a CSS cascade outcome, not markup, so the HTML diff looked like ordinary
+  attribute-order noise. Neutralized with `.contact-hero.is-layout-flow > * { margin-block-start: 0 }`,
+  mirroring the `.contact-hero__grid.is-layout-flow > .contact-choose` rule the stylesheet already
+  carried for the same reason one level deeper. Specificity (0,2,1) beats core's (0,1,0).
+  **New rule for the remaining T035 fixes:** when a template fix changes a block's *structure*, check
+  where core's layout classes land afterwards and what they select. See DECISIONS 2026-07-22 (C13).
+- **Verified:** `/contact/` renders the same two tags changed only by attribute order and the relocated
+  layout classes, with the margin neutralized; five routes 200. Pest **411/411**, Jest **167/167**
+  (+6), theme SCSS recompiled, build clean.
+- **Next:** C14 Services archive (`services-overview` + `archive-perego_service.html`), C15 Legal/misc,
+  then Track 3 (ACF-grade sidebar fields).
+
 ## RESUME HERE (2026-07-22) — Spec 021 C12 COMPLETE: Journal + Search, six blocks + two template fixes
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. C12 is done: no Journal or Search block renders a

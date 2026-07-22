@@ -268,6 +268,17 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	margin-block-start: 0;
 }
 
+/* Same rule one level up (spec 021 C13). Until T035 the contact-hero section carried raw markup that
+ * core's layout support latched onto instead of the section itself, so `is-layout-flow` landed on the
+ * decorative `.contact-hero__bg` (where it did nothing) rather than the section. Wrapping that markup
+ * in `wp:html` made the section a well-formed group, so the layout classes now land where they should
+ * — and core's `:where(.is-layout-flow) > * { margin-block-start: 24px }` would push the grid down.
+ * The section is a full-bleed hero whose children are absolutely positioned or the grid itself; it
+ * owns its own spacing through `.contact-hero__grid`'s padding. */
+.contact-hero.is-layout-flow > * {
+	margin-block-start: 0;
+}
+
 .contact-form-wrap .corex-form__field {
 	display: flex;
 	flex-direction: column;
