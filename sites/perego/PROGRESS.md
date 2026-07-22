@@ -2,6 +2,30 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-23) — CoreX updated to upstream/main (PR #38); issue #114 fix confirmed compatible
+
+- **Branch:** `chore/corex-v0.35.0-update` → **PR #38** into `feature/001-global-foundation`. Spec-021
+  work on `feature/021-fse-visual-editing-ux` is untouched; PR #37 stays 10 Perego commits.
+- **v0.34.0 → upstream/main:** 116 commits, 240 files — **0 removed, 0 renamed**, so nothing Perego
+  calls disappeared. New: Notifications centre, reCAPTCHA v3, email transport advisory, better
+  `corex-runtime` error fidelity.
+- **Merged `main`, not the `v0.35.0` tag:** the #114 fix landed on `main` five commits *after* the tag
+  (their PR #123). The tag would not have delivered it.
+- **Their fix fits us — proven.** Our contract test `tests/Unit/Submissions/SubmissionInboxQueryTest`
+  survived the merge and passes **4/4 against upstream's implementation**. Our own implementation of
+  the feature was dropped; theirs is a strict superset.
+- **⚠️ Two files auto-merged cleanly and were WRONG.** `WpSubmissionsReader` ended up with the
+  `corex_form_slug` clause twice. Git reported success. Lesson recorded in DECISIONS: when both sides
+  implemented the same feature, check every file it touched, not just the conflicted ones.
+- **Verified:** CoreX unit 1407/49 vs 1266/29 before — all 20 new failures are pre-existing-style
+  Patchwork `DefinedTooEarly` harness errors, zero assertion failures. Perego Pest 268, Jest 76, build
+  clean. Every route byte-identical (EN + AR) bar the `corex-runtime.js` `?ver`. A live contact-form
+  submission returns `ok:true` and stores `corex_form_slug` with empty `corex_flow_id`.
+- **⚠️ For the owner:** the new Notifications admin screens are unverified — wp-admin needs a login I
+  will not perform. A test submission (id 502, "Merge Smoke") is left in the inbox on purpose: it is a
+  code-registered-form row, so you can use it to see the #114 filter working.
+- **Next:** review/merge PR #38, then bring the update into the spec-021 line when the branches meet.
+
 ## RESUME HERE (2026-07-22) — Spec 021 Phase 4: ACF-grade sidebar fields + CPT list columns
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. The last of the three tracks. **All page batches,

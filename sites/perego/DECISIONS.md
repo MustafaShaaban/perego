@@ -1,5 +1,46 @@
 # Perego — Decision Log
 
+## 2026-07-23 — CoreX updated to upstream/main; our issue #114 fix adopted, our implementation dropped
+
+Framework moved **v0.34.0 → upstream/main**: 116 commits, 240 files (124 added, 116 modified,
+**0 removed, 0 renamed** — additive, so nothing Perego calls disappeared). Landed on
+`chore/corex-v0.35.0-update` → **PR #38** into `feature/001-global-foundation`, mirroring how v0.34.0
+landed as PR #35.
+
+**Merged `main`, not the `v0.35.0` tag — deliberately.** The fix for the issue we raised upstream
+(CoreX **#114**, `corex_submission_filter_options`) landed on `main` **five commits after** the tag,
+via their PR #123. Merging the tag would have brought 111 commits and *not* the one thing the owner
+asked to confirm.
+
+**Our implementation of #114 is deleted in favour of upstream's.** We had built the same feature
+locally (`76fcdf3`) while the issue was open. Upstream's is a strict superset — same filter name, same
+`{id,name,slug}` contract, same `id => 0` "match by `corex_form_slug`" convention, same `slug:` prefix,
+same meta clause, plus a `SLUG_PREFIX` constant, a `normalize()` pass and a name sort. Carrying a fork
+edit on top of an upstreamed feature guarantees the same conflict at v0.36.0, so the fork edit goes.
+
+**⚠️ The finding worth remembering: two of the five feature files auto-merged *without* a conflict, and
+were wrong.** `WpSubmissionsReader` came out with the `corex_form_slug` meta clause **twice** — our
+`elseif` branch and upstream's `if` branch, both present. Git reported a clean auto-merge. A clean
+auto-merge of the same feature implemented twice is not a correct merge; all five files were taken from
+upstream wholesale instead. **When both sides implemented the same thing, do not trust auto-merge —
+check every file the feature touched, not just the ones git flagged.**
+
+**Their fix fits us, and that is proven, not assumed.** Our contract test
+`tests/Unit/Submissions/SubmissionInboxQueryTest` — written against *our* implementation, describing
+what we specified in the issue — survived the merge untouched and passes **4/4 against upstream's
+code**. Kept for exactly that reason.
+
+**Verification:** CoreX unit 1407 passed / 49 failed vs **1266 / 29 before** — all 20 new failures are
+Patchwork `DefinedTooEarly` harness errors in three new upstream test files, the same environmental
+failure already hitting 29 pre-existing tests; zero assertion failures. Perego Pest 268, Jest 76, build
+clean. Every public route byte-identical in EN and AR except the `corex-runtime.js` cache-busting
+`?ver`, which moved because that file genuinely changed. A real contact-form submission through the
+merged pipeline returns `ok:true` and stores `corex_form_slug` with an empty `corex_flow_id` — the
+exact code-registered case #114 was about.
+
+**The upstream remote stayed fetch-only throughout**; its push URL is still the
+`DISABLED_DO_NOT_PUSH_TO_COREX` placeholder, verified before and after.
+
 ## 2026-07-22 — Spec 021 Phase 4: ACF-grade fields as sidebar panels, built natively
 
 Owner ask: post types and custom fields "must feel like the ACF experience and organized well".
