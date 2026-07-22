@@ -2,6 +2,31 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 Phase 3 COMPLETE: the whole homepage now carries the editing treatment (T011–T016)
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Phase 3 (Homepage visual composition, US2) is done. Every
+  block the homepage composes now has the spec 021 editing treatment:
+  - **Static live-canvas (real markup + markup-parity test):** header (C1), footer (C2), hero-slider (C3),
+    services-teaser (C4), home-about-bg (C5). `<ServerSideRender>` removed from each; the editor canvas renders
+    the real front-end markup, styled by `add_editor_style('main.css')`.
+  - **Dynamic (kept `ServerSideRender` + shared composer):** clients-carousel (C6) — headings on `LanguagePair`,
+    the automatic/manual/hybrid picker on `RecordPicker`.
+  - The Inspector for every editable block is on the shared `../../Editor` design-system primitives.
+- **T016 homepage regression — 0 proven regressions.** The public front end is provably **byte-identical**:
+  across all six slices only editor `index.js`/`preview.js` + `*.test.js` + fixtures + docs changed — no
+  renderer PHP, theme template/part, `.scss`, front-end `view.js`, or `.css` (verified with `git diff
+  --name-only`; editor scripts don't load on the front end). Live smoke: `/` and the Arabic homepage both
+  HTTP 200 and render every section (`dir="rtl"`/`lang="ar"` correct on AR, AR hero heading present).
+  Full suites green: **Jest 131/131**, **Pest 370/370 (1108 assertions)**, `npm run build` clean.
+- **⚠️ Open (whole homepage): live-editor VISUAL check + pixel/viewport screenshot evidence.** perego.local is
+  browser-approval-gated and admin login needs a password I can't enter, so the "pixel-identical canvas" look,
+  the in-canvas editing/dot-switching/composer UX (C1–C6), and the 375/768/1440 EN+AR screenshot matrix (the
+  T001 evidence track) still need owner review or granted browser access. Structure is parity-proven and the
+  public output is byte-identical; what's unconfirmed is purely the *visual* editor experience.
+- **Next:** owner reviews the homepage blocks live in the Site Editor (template parts `header`/`footer` +
+  `front-page`); on approval, push the branch (PR #37). Then **Phase 4 — the content-model DISCUSSION GATE**
+  (duplicate Projects CPT + Client/Project fields) before any Phase 4 code, per the plan.
+
 ## RESUME HERE (2026-07-22) — Spec 021 C6/T015: Clients carousel composer + headings on shared Inspector primitives (dynamic block)
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Sixth slice — the homepage Clients carousel, the last

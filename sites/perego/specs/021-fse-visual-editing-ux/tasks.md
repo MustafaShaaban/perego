@@ -23,7 +23,7 @@
 - [x] T013 Implement visual Services query/manual/hybrid composer with card overrides, ordering, and migration.
 - [x] T014 Implement direct visual About block editing with locked structural wrappers.
 - [x] T015 Implement Clients automatic/manual/hybrid visual composer, placeholder media, and stable preview controls.
-- [ ] T016 Run homepage public visual/interaction regression at every baseline width and language.
+- [x] T016 Run homepage public visual/interaction regression at every baseline width and language.
 
 ## Phase 4 — Content model and admin UX [US3]
 
