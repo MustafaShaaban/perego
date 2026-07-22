@@ -2,6 +2,27 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C6/T015: Clients carousel composer + headings on shared Inspector primitives (dynamic block)
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Sixth slice — the homepage Clients carousel, the last
+  homepage block. It is a **DYNAMIC/query block** (cards are a projection of many `perego_client` posts), so
+  per the static-vs-dynamic rule it **keeps `ServerSideRender`** for the canvas preview rather than a
+  hand-rebuilt real-markup skeleton — there is no parity test for it by design. See DECISIONS 2026-07-22 (C6).
+- **What changed (editor-only; front end frozen):** the four section headings (corporate/individual title +
+  subtitle, En/Ar) moved from in-canvas RichText fieldsets to Inspector `LanguagePair` controls, and the
+  automatic/manual/hybrid composer was rebuilt on the shared **`RecordPicker`** (manual ordered list + automatic
+  show/hide) inside `PanelSection`s — replacing the ad-hoc `PanelBody`/`CheckboxControl` UI and deleting the old
+  `LangGroup`/`moveItem` code. The SSR preview (real carousel) is kept and updates live as the Inspector
+  changes. No attribute/renderer change → byte-identical.
+- **Verified:** block Jest **131/131** unchanged (no parity test for a dynamic block — correct); ClientsCarousel
+  Pest **24/24** unchanged (PHP untouched → byte-identical); build clean; no dead editor CSS left behind. Guards
+  (wp/clean-code/test) reviewed — no blocking findings.
+- **⚠️ Same open item: live-editor VISUAL check** (perego.local browser-approval-gated). The composer + SSR
+  preview behaviour needs owner review in the Site Editor → `front-page` template (Clients block).
+- **Homepage status:** all homepage blocks now carry the spec 021 editing treatment — header (C1), footer (C2),
+  hero (C3), services-teaser (C4), home-about-bg (C5), clients-carousel (C6). **Next: T016** — homepage public
+  visual/interaction regression at every baseline width + language.
+
 ## RESUME HERE (2026-07-22) — Spec 021 C5/T014: Home About background is a true live-canvas block
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Fifth live-canvas slice — the homepage About section's

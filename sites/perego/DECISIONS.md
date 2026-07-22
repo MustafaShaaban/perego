@@ -1,5 +1,24 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 C6: Clients carousel stays SSR (dynamic), composer + headings on shared primitives
+
+The Clients carousel is the homepage's one **dynamic** block: its cards are a projection of many published
+`perego_client` posts (each with its own logo/video), not content this single block instance owns. Per the
+static-vs-dynamic rule (DECISIONS 2026-07-21), it therefore **keeps its `ServerSideRender` canvas preview** —
+it is deliberately NOT converted to a real-markup skeleton, and has no parity test. What spec 021 changes is
+the editing surface, brought in line with C4's services-teaser treatment:
+
+- **Headings move to the Inspector.** The four section headings (corporate/individual title + subtitle, En/Ar)
+  were in-canvas RichText fieldsets sitting above the SSR — a duplicate of what the SSR already renders. They
+  are now `LanguagePair` controls in the Inspector; the SSR preview shows the real headings and updates live as
+  they change. (In-canvas RichText isn't feasible for a dynamic block whose content lives inside the SSR.)
+- **The composer moves to `RecordPicker`.** The bespoke `PanelBody`/`SelectControl`/`CheckboxControl` UI is
+  replaced per client type by a `manual` picker (ordered chosen list + add) and an `automatic` picker
+  (per-item show/hide), driven by the unchanged `{type}Mode`/`{type}Order`/`{type}ExcludeIds` attributes. The
+  PHP renderer is untouched, so the front end is byte-identical (ClientsCarousel Pest 24/24).
+- **Card media stays the Client's own concern.** Each client's tile/logo is edited on that Client's screen; a
+  help note says so. The C6 slice owns the block's composition + headings, not per-client media.
+
 ## 2026-07-22 — Spec 021 C5: Home About background live-canvas (locked chrome, no controls)
 
 The `home-about-bg` block `edit()` renders real markup (`HomeAboutBgSkeleton`) instead of `<ServerSideRender>`,
