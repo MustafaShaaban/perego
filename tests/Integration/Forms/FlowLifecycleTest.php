@@ -134,7 +134,7 @@ it('runs a published visitor flow through storage routing email inbox and timeli
     $created = $this->flowsController->create(lifecycleFlowRequest('POST', '/corex/v1/flows', $payload));
     $flowId = $created->get_data()['data']['flow']['id'];
     $publish = lifecycleFlowRequest('POST', '/corex/v1/flows/' . $flowId . '/publish', ['expected_version' => 1]);
-    $publish->set_param('id', $flowId);
+    $publish->set_url_params(['id' => $flowId]);
     $this->flowsController->publish($publish);
 
     $submit = lifecycleFlowRequest('POST', '/corex/v1/flows/' . $flowId . '/submit', [
@@ -143,7 +143,7 @@ it('runs a published visitor flow through storage routing email inbox and timeli
         'utm_source' => 'docs',
         'page_url' => 'https://example.test/contact',
     ]);
-    $submit->set_param('id', $flowId);
+    $submit->set_url_params(['id' => $flowId]);
     $response = $this->visitorController->submit($submit);
     $data = $response->get_data()['data'];
     $submissionId = $data['submission_id'];
@@ -161,7 +161,15 @@ it('runs a published visitor flow through storage routing email inbox and timeli
         ->and(get_post_meta($submissionId, 'corex_routing_json', true)['target_type'])->toBe('flow_owner')
         ->and(get_post_meta($submissionId, 'corex_email_json', true)['state'])->toBe('complete')
         ->and(get_post_meta($submissionId, 'corex_email_json', true)['bindings']['team_notification']['state'])->toBe('captured')
+        // The new headline delivery projection: an administrator can read the true outcome (spec 071 WS3).
+        ->and(get_post_meta($submissionId, 'corex_notification_delivery', true)['status'])->toBe('captured')
+        ->and(get_post_meta($submissionId, 'corex_notification_delivery', true)['provider'])->not->toBeEmpty()
         ->and((new CapturedEmailRepository($this->emailStore))->latest())->toHaveCount(1)
         ->and(get_post_meta($submissionId, 'corex_inbox_json', true)['status'])->toBe('new')
-        ->and(get_post_meta($submissionId, 'corex_submission_timeline', true)[0]['kind'])->toBe('flow.submitted');
+        // The pipeline now writes the canonical timeline shape the admin reads, and adds a
+        // notification event carrying the delivery outcome (spec 071 WS4).
+        ->and(get_post_meta($submissionId, 'corex_submission_timeline', true)[0]['stage'])->toBe('submitted')
+        ->and(get_post_meta($submissionId, 'corex_submission_timeline', true)[0]['summary']['kind'])->toBe('flow.submitted')
+        ->and(get_post_meta($submissionId, 'corex_submission_timeline', true)[1]['stage'])->toBe('notification')
+        ->and(get_post_meta($submissionId, 'corex_submission_timeline', true)[1]['summary']['delivery_status'])->toBe('captured');
 });

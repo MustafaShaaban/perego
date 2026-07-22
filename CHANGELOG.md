@@ -4,7 +4,129 @@ All notable changes to Corex are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to
 [Semantic Versioning](https://semver.org/) (pre-1.0: the API may still move).
 
-## [Unreleased]
+## [0.35.0] — 2026-07-22
+
+Spec 072 — the Notification Center and the Dashboard Command Center, plus the release where continuous
+integration started telling the truth. CoreX can now say what needs your attention instead of leaving you to
+find out by stumbling onto it. Alongside it, CI went from gating one test suite to four — and doing that
+uncovered a set of defects nobody could have hit locally, including a build that could not run on Linux and a
+setup script that could not complete on a fresh clone.
+
+### Added
+
+- **A Notification Center: CoreX can now tell you what needs your attention.** The framework already recorded
+  what happened — activity, jobs, access grants, email attempts — but nothing said *this needs you*. A failed
+  email, a submission assigned to you, a job that died or a readiness blocker left no signal you could act on;
+  you found out by stumbling onto it. Notifications are recipient-aware and resolvable, deliberately not a
+  second activity log: activity is the durable record of what happened, a notification is a targeted nudge for
+  specific people. Eight producers feed it — new and assigned submissions, notification-email failure, Email
+  Studio delivery failure, job failure, export ready, access request, login lockout, and readiness blockers —
+  each publishing through one service rather than reaching into another module's tables. Repeat occurrences of
+  the same condition merge into a single escalating item by dedup key instead of a hundred rows, a resolved
+  condition reopens if it recurs, and one user dismissing a shared notification never resolves it for everyone
+  else. Every read re-checks a single visibility predicate (`NotificationRecipient::canBeSeenBy`), so losing an
+  ability stops you seeing what it granted; recipients are targetable by user, ability, assignment or category
+  administrators, never by hard-coded WordPress roles.
+- **Where it appears.** A keyboard-operable bell in the CoreX header on every screen, showing your real unread
+  count and opening a focus-trapped drawer that returns focus where it came from; a full `CoreX →
+  Notifications` screen with saved views (Inbox, Requires attention, Assigned to me, Submissions, Security,
+  System, Updates, History) each a bounded server-side filter; an admin-toolbar entry off CoreX screens, which
+  never appears at the same time as the header bell; and an *Attention Required* card on Overview beside Recent
+  Activity. Access is governed by a new **Manage notifications** ability, which administrators inherit.
+- **Per-category preferences, with a floor.** You can mute categories you do not want in-app, but security,
+  system and operations are mandatory and cannot be switched off — enforced in the value object rather than by
+  whatever happens to be stored, so a hand-edited record cannot silence them either. Preferences live in user
+  meta rather than a managed table (DECISIONS #152).
+- **The framework's first recurring job.** A daily WP-Cron retention sweep prunes notifications older than 90
+  days, and only ones already resolved or expired — an unresolved condition is never pruned out from under you.
+  Permanent audit evidence stays in Activity, not in unbounded notification history.
+- **A Command Center on the WordPress dashboard.** Site operating state, your attention count and the readiness
+  blocker count, each a navigation link into CoreX and never an action. It runs local checks only: rendering it
+  makes no outbound HTTP request, which is asserted by a test rather than assumed. Two further widgets —
+  *Attention* and a Development-only one — are opt-in under `CoreX → Settings → Dashboard`, are never registered
+  for someone with no data to show, and the Development widget never appears outside Development.
+- **`GET /corex/v1/notifications` and its two-tier gate.** Reading and acting on your own notifications needs a
+  signed-in user and a REST nonce; resolving a shared condition additionally needs Manage notifications. The
+  service re-checks visibility on every call, so one user can never touch another's.
+- **Continuous integration now gates four suites instead of one.** Only the PHP unit tests ran before. CI now
+  also runs the JS suite, the integration suite against a real WordPress it provisions itself (MySQL plus
+  WordPress, wired the way `scripts/setup-wordpress.ps1` wires a developer machine), and the Playwright browser
+  suite against that site served by nginx. Provisioning lives in one composite action shared by both WordPress
+  jobs so the two environments cannot drift apart.
+
+### Changed
+
+- **Every pull request is checked, whatever its base.** The workflows filtered on `branches: [main, develop]`,
+  so a stacked PR — one opened against another feature branch — ran no checks at all. GitHub renders "no checks"
+  and "all checks passed" almost identically, so that read as green. Two PRs in this release had never been
+  tested when they were queued for merge, and between them they carried eight real unit failures that had been
+  recorded in the project's own notes as "pre-existing". They were not: `main` had none of them.
+
+### Fixed
+
+- **The admin bundle could not be built on Linux or any case-sensitive filesystem.** `src/admin/index.js`
+  imported `../access/` and `../blog/` while the committed directories are `Access` and `Blog`. Windows and
+  macOS resolve that; Linux does not. Since the built bundles are deliberately not committed — they are rebuilt
+  from source — this meant no contributor on Linux, and no Linux build environment, could produce the admin
+  JavaScript at all. It went unnoticed because the build had only ever run on Windows.
+- **`scripts/setup-wordpress.ps1` could not complete on a fresh clone**, which is the one situation it exists
+  for. It piped a here-string into `wp config create --extra-php`, and PowerShell 5.1 prepends a UTF-8 BOM when
+  piping to a native command, so `wp-config.php` received an invisible character before its first `define(` and
+  WordPress died on load three steps later, blaming WP-CLI. `wp config create` had exited 0, so the script's own
+  guard saw nothing wrong. Existing installs never hit it because the script skips config creation when the file
+  is already there. It also activated plugins in one alphabetical call, which fails because `corex-blocks` and
+  `corex-config` require `corex-core` and WP-CLI activates in the order it is given, and it never checked an
+  exit code — so a broken run and a healthy one looked the same. All three are fixed and verified by running the
+  script end to end against an isolated install.
+- **The integration suite no longer runs against no WordPress.** Its bootstrap required `./wp/wp-load.php`
+  inside an existence check and simply carried on when it was missing — and `wp/` is not in the repository, so
+  that is the state of a fresh clone. Tests that touched a core function died with a confusing undefined-function
+  error, and any test that did not could still pass, making a green integration run that proved nothing. It now
+  exits with a message saying what is missing and what to run instead.
+- **Dependency advisories are back inside a bounded policy.** The audit had drifted to 49 findings with 25 of
+  them unbounded, which failed the security gate on every pull request that touched a manifest. Compatible
+  upgrades cleared 28 of them; the remainder are recorded as explicit, time-limited exceptions with their
+  exposure, compensating control and upstream trigger, because the only fixes on offer were a downgrade of
+  `@wordpress/scripts` or a major Astro migration that belongs in its own reviewed change.
+
+- **A notification filter that was advertised and never applied.** `GET /notifications?status=read` was accepted
+  at the REST boundary, validated against the status vocabulary, documented as a per-user status filter — and
+  then ignored by every read, returning everything with a `200` and no indication the filter had done nothing.
+  `NotificationStatus` likewise described itself as derived from the record plus the user's state row while
+  nothing derived it, leaving each consumer to invent the precedence. There is now one derivation
+  (`NotificationStatus::derive`) with the collisions pinned by tests — resolved outranks expired, which outranks
+  a dismissal, then an unelapsed snooze, then read — the actor-scoped read applies it before pagination so the
+  total and the page agree, and every item carries its derived status so nothing re-implements it. Two surfaces
+  had been compensating for the gap: the drawer refetched unfiltered while its own mark-read removed items, so
+  anything you read reappeared when you reopened it, and it disagreed with the bell beside it; and the unread
+  count excluded only read and dismissed items while the list also excluded snoozed ones, so the badge could
+  promise work the screen refused to show. Both now ask for the same derived status. "Mark all as read" was also
+  marking snoozed items read, silently cancelling a reminder you had deliberately set.
+- **Editing an email template no longer fails with "Something went wrong."** Two defects stacked. WordPress
+  resolves a request's JSON body before its URL parameters, and the editor was posting the stored version's own
+  `id` alongside the fields it edits — so a save aimed at one template looked up a *version* id as if it were a
+  template, found nothing, and answered 404. Only templates that already had a saved revision could hit it,
+  which is why it looked intermittent. The message never reached the screen because the client assumed
+  `wp.apiFetch` resolves on an error status when core in fact rethrows the response, so every server error was
+  replaced with a generic one. Both ends are fixed: route identity is now read from the path where nothing can
+  shadow it (`Corex\Http\RouteParam`, applied across the Email Studio, Flows, Submissions and Data
+  controllers), and the transport reads error responses instead of discarding them. Per-field validation
+  messages the server was already sending now appear too.
+- **A hidden `/wp-admin` renders the theme's 404 properly styled.** It was correctly routed but visually
+  broken: `wp_common_block_scripts_and_styles()` returns early on `is_admin()`, so the response carried
+  `theme.json` tokens and no block CSS at all — no per-block sheets, no `wp-block-library`, and
+  `enqueue_block_assets` never fired. On a block theme whose `style.css` is metadata only, that is an unstyled
+  page. Spec 069 documented this as unreachable; that is true of a different gate, while this one is hooked to
+  `wp_enqueue_scripts` and runs long after the guard does. Measured on a real install: the hidden admin went
+  from **46,587 bytes to 79,711**, against a genuine 404's **79,964** — visually identical, with computed
+  typography, layout and header geometry matching exactly. It remains ~250 bytes apart rather than
+  byte-identical, because `wp_should_load_separate_core_block_assets()` genuinely cannot be reached on an admin
+  request, so this response gets the combined stylesheet where a front-end 404 gets separate ones
+  (`Corex\Config\Security\LoginProtection\LoginRouteGuard`).
+- **The site header no longer stretches edge to edge when its stylesheet loads as a file.** `.corex-header__inner`
+  carried a `max-inline-size` rule with the same specificity as WordPress's constrained-layout rule, so which
+  one won depended entirely on stylesheet order — inert on an ordinary page view, and wrong wherever the order
+  inverts.
 
 ## [0.34.0] — 2026-07-20
 

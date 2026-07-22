@@ -104,3 +104,6 @@ tests/e2e/fix*/
 # Raw design handoff reference (large binaries) — kept local, not shipped
 /_design_handoff/
 /Perego Creative Studio Final.zip
+
+# Ad-hoc screenshot/scratch output from local Playwright runs.
+output/
