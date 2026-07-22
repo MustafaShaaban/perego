@@ -1,5 +1,30 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 C7/C8 + scope correction: the remaining gap is bare-sentence blocks, not SSR
+
+Extending the live-canvas standard past the homepage surfaced a **scope correction worth recording**, found by
+auditing every block's `edit()` rather than assuming the roadmap:
+
+- **The `ServerSideRender` problem is essentially solved.** Only two blocks still import it: `clients-carousel`
+  (kept deliberately — dynamic, C6) and `service-selected-work` (= T028, gated on the content model). Six blocks
+  are converted (header, footer, hero-slider, services-teaser, home-about-bg, service-hero, project-hero).
+- **T026 "What We Do" and T027 "Process" need no code.** Verified against the live `/services/video-editing/`
+  markup: both sections are composed from **native core blocks** with Perego classNames inside each Service
+  post's `wp:post-content` — no custom block, no SSR, no custom `edit()`. Editors already get direct visual
+  editing, native image/layout controls, drag-reorder for process steps, and native icon media selection. The
+  spec-021 problem simply does not exist there (same as the homepage About section, T014). Marked done with a
+  note rather than inventing a block to "convert".
+- **The real remaining gap is different and worse than SSR:** ~18 blocks render a *bare sentence* in `edit()`
+  (e.g. project-hero returned the string "Project hero — breadcrumb, category, title (H1), and meta. Rendered
+  by ProjectHeroRenderer"). That shows the editor nothing at all — it is the placeholder-only state the owner
+  directive rejects. These are the "next pages" work, converted in page order.
+- **C7 `service-hero` / C8 `project-hero` are LOCKED previews.** Neither block has attributes — their content
+  is the queried Service/Project post plus a seed — so they render real markup with **no controls**, and the
+  canvas mirrors the post being edited when there is one (`getCurrentPostType()` guard, every lookup falling
+  back to the seed/placeholder so the shared template still previews correctly). C8's parity test caught a real
+  drift immediately: `get_the_post_thumbnail(…, 'large')` emits `attachment-large size-large wp-post-image`,
+  not just `wp-post-image` — the harness paying for itself.
+
 ## 2026-07-22 — Spec 021 C6: Clients carousel stays SSR (dynamic), composer + headings on shared primitives
 
 The Clients carousel is the homepage's one **dynamic** block: its cards are a projection of many published

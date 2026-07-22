@@ -39,8 +39,17 @@
 - [ ] T023 Write stable template-assignment migration and template-selection tests.
 - [ ] T024 Add Default and Website Making Service templates with protected approved composition.
 - [x] T025 Implement real visual Service Inner Hero including tabs and localized service links.
-- [ ] T026 Implement visual What We Do editor and supported image/layout controls.
-- [ ] T027 Implement Process parent/step visual editing, reordering, media/icon selection, and migration.
+- [x] T026 Implement visual What We Do editor and supported image/layout controls. **(no code needed — see note)**
+- [x] T027 Implement Process parent/step visual editing, reordering, media/icon selection, and migration. **(no code needed — see note)**
+
+> **T026/T027 note (2026-07-22, verified against the live `/services/video-editing/` markup).** "What We Do"
+> (`svc-whatwedo` / `__grid` / `__text` / `__media`) and "Process" (`process` / `process-list` / `process-step`
+> / `process-step__icon` / `process-arrow`) are **not custom blocks** — they are composed entirely from native
+> core blocks (`wp:group`, `wp:heading`, `wp:paragraph`, `wp:image`) with Perego classNames, living inside each
+> Service post's `wp:post-content`. There is no `ServerSideRender` and no custom `edit()` to replace, so the
+> spec-021 live-canvas problem does not apply: editors already edit these sections directly and visually, with
+> native image/layout controls, native drag-reorder for process steps, and native media selection for step
+> icons. Same situation as the homepage About section (T014). No migration is needed because nothing moves.
 - [ ] T028 Implement visual Service Portfolio section using the Phase 4 relation model.
 - [ ] T029 Validate every Service template in EN/AR, desktop/mobile, and public interactions.
 

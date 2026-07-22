@@ -2,6 +2,36 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Service + Work pages: C7 service-hero, C8 project-hero; T026/T027 need no code
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Moved past the homepage onto the next pages.
+- **C7 `service-hero` (T025):** `edit()` renders the real `.svc-hero` markup (`ServiceHeroSkeleton`) instead of
+  `<ServerSideRender>` — background, "Our Services" eyebrow, service name as `h1`, and the four-service tab rail
+  with each tab's main link + "Start your project" CTA. **Locked** preview (block has no attributes; copy comes
+  from the Service post title + teaser labels). Mirrors the Service post being edited (live title as `h1`, its
+  canonical slug as the active tab) with seed fallback. Parity + drift + "exactly one is-active" tests.
+- **C8 `project-hero`:** replaced an `edit()` that returned a **bare sentence** with the real `.post-hero`
+  markup (breadcrumb, category eyebrow, `h1`, featured image, client/year/role/deliverables meta). Locked
+  preview that mirrors the Project post being edited (title, category term, featured image, meta), placeholders
+  in the shared template. `metaRows()` reproduces the renderer's drop-empty-values guard and is unit-tested.
+  **The parity test immediately caught a real drift:** `get_the_post_thumbnail(…, 'large')` emits
+  `attachment-large size-large wp-post-image`, not just `wp-post-image`.
+- **⚠️ Scope correction (audited, not assumed) — see DECISIONS 2026-07-22 (C7/C8):**
+  - The **SSR problem is essentially solved**. Only `clients-carousel` (deliberate, dynamic) and
+    `service-selected-work` (T028, content-model gated) still import `ServerSideRender`.
+  - **T026 "What We Do" + T027 "Process" need NO code** — verified against live `/services/video-editing/`
+    markup, both are **native core blocks** inside each Service's `wp:post-content` (no custom block, no SSR),
+    so they are already directly editable with native image/layout/reorder controls. Marked done with a note.
+  - **The real remaining gap:** ~18 blocks still render a *bare sentence* in `edit()` (the placeholder-only
+    state the owner directive rejects). That is the "next pages" work.
+- **Verified:** block Jest **137/137** (+3 service-hero, +3 project-hero); ServiceHero Pest **6/6**, ProjectHero
+  Pest **6/6** unchanged (PHP untouched → byte-identical); build clean. Guards reviewed — no findings.
+- **Next (page order):** `project-gallery-lightbox` + `project-navigation` (Work single), `portfolio-grid`
+  (Work archive, dynamic → composer), then Journal/Search (`journal-header`, `related-posts`, `search-results`,
+  `journal-comments`, `post-breadcrumb`, `post-reading-time`), Contact (`contact-service-chooser`, `join-form`),
+  `services-overview` (Services archive), and the legal/misc blocks. **T028 `service-selected-work` stays last —
+  it is gated on the Phase 4 content-model discussion.**
+
 ## RESUME HERE (2026-07-22) — Fix: home-about-bg editor preview collapsed to zero height (owner-reported)
 
 - **Owner-reported after C5:** the "Home About Background" block was **invisible / unselectable in the block
