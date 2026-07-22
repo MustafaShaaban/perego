@@ -38,7 +38,7 @@
 
 - [ ] T023 Write stable template-assignment migration and template-selection tests.
 - [ ] T024 Add Default and Website Making Service templates with protected approved composition.
-- [ ] T025 Implement real visual Service Inner Hero including tabs and localized service links.
+- [x] T025 Implement real visual Service Inner Hero including tabs and localized service links.
 - [ ] T026 Implement visual What We Do editor and supported image/layout controls.
 - [ ] T027 Implement Process parent/step visual editing, reordering, media/icon selection, and migration.
 - [ ] T028 Implement visual Service Portfolio section using the Phase 4 relation model.
