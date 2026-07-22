@@ -2,6 +2,33 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-23) — AR/EN parity fixed; CoreX at v0.35.1 (PR #38)
+
+- **The Arabic site was never "in an old design".** Every EN/AR page pair is structurally identical,
+  loads the same `main.css`, and AR sets `dir="rtl"` correctly. Three real defects were behind that
+  impression, all now fixed.
+- **① The clients lightbox bug (the owner's actual report).** EN rendered
+  `<button class="indiv-card" data-video="…">`; AR rendered inert `<div class="indiv-card">`.
+  **Polylang does not copy post meta to translations**, so the Arabic client posts had no
+  `_perego_client_video_url` and the renderer took its no-video branch — cards that looked right and
+  did nothing. New `PeregoSite\Content\TranslatedMeta` (extracted from `ProjectRepository`, which had
+  already solved this for Projects) gives Clients the linked-English fallback for video URL/type,
+  gallery, subtitle, statistic **and** featured image (27 of 31 AR clients had no thumbnail either).
+- **② Eight AR-only demo clients** (`…تجريبي` = *demo*) moved to **draft**, not deleted. Published
+  clients now **23 EN / 23 AR**. Clients were the only content type with a gap.
+  **⚠️ DB-only change — production needs the same eight unpublished separately.**
+- **③ Stale Arabic catalogue.** Regenerated the POT: **389 strings** vs the committed 172. Of 52
+  visitor-facing strings, **20 had no Arabic**; all translated and verified in the rendered AR pages.
+  The ~90 admin/editor strings stay English by the owner's choice — the next i18n pass.
+- **Ordering mattered:** unpublishing the demo clients first would have left AR with three inert cards
+  and no working lightbox at all, since the four that worked were the demo ones. Renderer fix landed first.
+- **Verified:** AR and EN now both render **3 individual lightbox buttons + 20 corporate cards**; EN
+  output **byte-identical** on every route; Pest **417** (+4), Jest **193**, build clean; ten routes 200.
+- **CoreX v0.35.1** merged onto `chore/corex-v0.35.0-update` (PR #38 retitled): 3 commits/23 files past
+  v0.35.0, did not touch the five #114 files, CoreX unit 1408/49 — same environmental Patchwork baseline.
+- **Next:** Track C — the remaining spec-021 tasks, starting with the Phase 6 release gates
+  (T030–T032) which gate the rest.
+
 ## RESUME HERE (2026-07-23) — CoreX updated to upstream/main (PR #38); issue #114 fix confirmed compatible
 
 - **Branch:** `chore/corex-v0.35.0-update` → **PR #38** into `feature/001-global-foundation`. Spec-021

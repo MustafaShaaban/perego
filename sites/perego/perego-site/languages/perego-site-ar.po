@@ -224,3 +224,71 @@ msgstr "قل مرحبًا."
 
 msgid "Select a range"
 msgstr "اختر نطاقًا"
+
+# ── spec 021 AR parity (2026-07-23): visitor-facing strings that rendered in
+# ── English on Arabic pages because this catalogue predated them.
+
+# Clients carousel
+msgid "Corporate client logos"
+msgstr "شعارات عملائنا من الشركات"
+
+msgid "Individual clients"
+msgstr "عملاؤنا الأفراد"
+
+msgid "Previous clients"
+msgstr "العملاء السابقون"
+
+msgid "More clients"
+msgstr "المزيد من العملاء"
+
+msgid "More"
+msgstr "المزيد"
+
+# Contact service chooser
+msgid "Choose your service (select one or more)"
+msgstr "اختر خدمتك (يمكنك اختيار خدمة أو أكثر)"
+
+msgid "Tap to select one or more services. Tap again to deselect."
+msgstr "اضغط لاختيار خدمة أو أكثر، واضغط مرة أخرى لإلغاء الاختيار."
+
+# Portfolio grid pagination
+msgid "Projects pagination"
+msgstr "تنقّل بين صفحات المشاريع"
+
+msgid "Previous page"
+msgstr "الصفحة السابقة"
+
+msgid "Page %d"
+msgstr "صفحة %d"
+
+msgid "Next page"
+msgstr "الصفحة التالية"
+
+msgid "Load more"
+msgstr "عرض المزيد"
+
+# Project gallery / media
+msgid "Open project media %d"
+msgstr "افتح وسائط المشروع %d"
+
+msgid "Open %s"
+msgstr "افتح %s"
+
+msgid "Gallery"
+msgstr "معرض الأعمال"
+
+msgid "Project"
+msgstr "مشروع"
+
+# Global chrome
+msgid "Skip to content"
+msgstr "تخطَّ إلى المحتوى"
+
+msgid "Language"
+msgstr "اللغة"
+
+msgid "Perego بيريجو"
+msgstr "بيريجو Perego"
+
+msgid "© %s Perego Creative Studio — بيريجو. All rights reserved."
+msgstr "© %s بيريجو — Perego Creative Studio. جميع الحقوق محفوظة."

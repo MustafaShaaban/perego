@@ -11,6 +11,7 @@ namespace PeregoSite\Repositories;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\PortfolioContent;
+use PeregoSite\Content\TranslatedMeta;
 use PeregoSite\PostTypes\ProjectPostType;
 use WP_Post;
 use WP_Query;
@@ -196,17 +197,16 @@ final class ProjectRepository
         return $this->metaWithEnFallback($post, ProjectPostType::META_VIDEO_URL);
     }
 
-    /** A post's own meta value, falling back to its linked EN translation's value when empty. */
+    /**
+     * A post's own meta value, falling back to its linked EN translation's value when empty.
+     *
+     * Delegates to the shared {@see TranslatedMeta}: this rule was private here until the Arabic
+     * clients carousel turned out to need the identical fallback (its cards rendered inert because
+     * Polylang does not copy meta to translations). One implementation, two callers.
+     */
     private function metaWithEnFallback(WP_Post $post, string $key): string
     {
-        $value = (string) get_post_meta($post->ID, $key, true);
-        if ($value !== '') {
-            return $value;
-        }
-
-        $enId = $this->enTranslationId($post);
-
-        return $enId === 0 ? '' : (string) get_post_meta($enId, $key, true);
+        return TranslatedMeta::string($post, $key);
     }
 
     /**
@@ -216,13 +216,7 @@ final class ProjectRepository
      */
     private function enTranslationId(WP_Post $post): int
     {
-        if (! function_exists('pll_get_post')) {
-            return 0;
-        }
-
-        $enId = (int) pll_get_post($post->ID, 'en');
-
-        return ($enId === 0 || $enId === $post->ID) ? 0 : $enId;
+        return TranslatedMeta::englishId($post);
     }
 
     /**

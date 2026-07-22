@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\ClientsContent;
+use PeregoSite\Content\TranslatedMeta;
 use PeregoSite\PostTypes\ClientPostType;
 use WP_Query;
 
@@ -105,13 +106,15 @@ final class ClientsCarouselRenderer
     private function corporateCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
-        $gallery = ClientPostType::sanitizeGallery(get_post_meta($client->ID, ClientPostType::META_GALLERY, true));
+        // Media is language-neutral and Polylang does not copy meta to translations, so an Arabic
+        // client reads its linked English record's gallery — otherwise the AR card renders inert.
+        $gallery = ClientPostType::sanitizeGallery(TranslatedMeta::value($client, ClientPostType::META_GALLERY));
         $galleryUrls = array_filter(array_map([$this, 'galleryItemUrl'], $gallery));
 
         if ($galleryUrls !== []) {
             $trigger = ' data-gallery="' . esc_attr(implode(',', $galleryUrls)) . '"';
         } else {
-            $logoUrl = has_post_thumbnail($client->ID) ? (string) get_the_post_thumbnail_url($client->ID, 'large') : '';
+            $logoUrl = $this->thumbnailUrl($client);
             $trigger = $logoUrl !== '' ? ' data-image="' . esc_url($logoUrl) . '"' : '';
         }
 
@@ -120,6 +123,41 @@ final class ClientsCarouselRenderer
         $html .= '</button>';
 
         return $html;
+    }
+
+    /**
+     * The post whose featured image this card should show: the client itself, or its linked English
+     * record when the translation has none of its own.
+     *
+     * Polylang gives a translation its own thumbnail slot and leaves it empty, so on this install 27
+     * of 31 Arabic clients have no featured image while their English counterparts do. Without this,
+     * the Arabic cards render with no logo at all.
+     */
+    private function thumbnailSourceId(\WP_Post $client): int
+    {
+        if (has_post_thumbnail($client->ID)) {
+            return $client->ID;
+        }
+
+        $enId = TranslatedMeta::englishId($client);
+
+        return ($enId !== 0 && has_post_thumbnail($enId)) ? $enId : 0;
+    }
+
+    /** The card logo's URL, following the English fallback; empty when neither post has one. */
+    private function thumbnailUrl(\WP_Post $client): string
+    {
+        $id = $this->thumbnailSourceId($client);
+
+        return $id === 0 ? '' : (string) get_the_post_thumbnail_url($id, 'large');
+    }
+
+    /** The card thumbnail's `<img>`, following the English fallback; empty when neither post has one. */
+    private function thumbnailHtml(\WP_Post $client): string
+    {
+        $id = $this->thumbnailSourceId($client);
+
+        return $id === 0 ? '' : (string) get_the_post_thumbnail($id, 'medium', ['loading' => 'lazy', 'alt' => '']);
     }
 
     /** @param array{type:string,id:int,url:string} $item */
@@ -144,11 +182,14 @@ final class ClientsCarouselRenderer
     private function individualCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
-        $sub = (string) get_post_meta($client->ID, ClientPostType::META_SUB, true);
-        $stat = (string) get_post_meta($client->ID, ClientPostType::META_STAT, true);
-        $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => '']) : '';
-        $videoUrl = (string) get_post_meta($client->ID, ClientPostType::META_VIDEO_URL, true);
-        $videoType = ClientPostType::sanitizeVideoType((string) get_post_meta($client->ID, ClientPostType::META_VIDEO_TYPE, true));
+        // Every value below is language-neutral card data, and Polylang does not copy meta to
+        // translations: read through TranslatedMeta so an Arabic client inherits its linked English
+        // record's video and card details. Without this the AR carousel rendered inert `<div>`s.
+        $sub = TranslatedMeta::string($client, ClientPostType::META_SUB);
+        $stat = TranslatedMeta::string($client, ClientPostType::META_STAT);
+        $thumb = $this->thumbnailHtml($client);
+        $videoUrl = TranslatedMeta::string($client, ClientPostType::META_VIDEO_URL);
+        $videoType = ClientPostType::sanitizeVideoType(TranslatedMeta::string($client, ClientPostType::META_VIDEO_TYPE));
         $opensLightbox = $videoUrl !== '' && $videoType !== 'external';
 
         if ($opensLightbox) {

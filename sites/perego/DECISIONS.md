@@ -1,5 +1,52 @@
 # Perego — Decision Log
 
+## 2026-07-23 — The AR/EN "old design" gap was a meta-translation bug, not a design divergence
+
+The owner reported the Arabic site being "in an old design". **It is not.** Every EN/AR page pair —
+home, contact, terms, privacy, journal, all four services, work, search — is **structurally identical**,
+loads the **same `main.css`**, and AR correctly sets `dir="rtl"`. There is no second design and no
+layout fork. Three real defects were hiding behind that impression.
+
+**1. The clients carousel did not open the lightbox on Arabic.** The owner's actual words —
+*"the clients section in the home page doesn't open lightbox as the english"* — were exactly right.
+EN rendered `<button class="indiv-card" data-video="…">`; AR rendered inert
+`<div class="indiv-card">`. **Root cause: Polylang does not copy post meta to translations.** The
+Arabic client posts have no `_perego_client_video_url` of their own, so `ClientsCarouselRenderer` —
+which read `get_post_meta($client->ID, …)` directly — took its no-video branch. The cards looked
+correct and did nothing when clicked. Same for featured images: 27 of 31 Arabic clients have none while
+their English counterparts do.
+
+**The fix reuses what already existed.** `ProjectRepository` had solved this privately for Projects
+(*"AR projects carry no featured image of their own; reuse the linked EN post's"*). That logic is now
+`PeregoSite\Content\TranslatedMeta`, used by both — one implementation instead of each surface
+rediscovering the bug. Clients read video URL, video type, gallery, subtitle, statistic and featured
+image through it.
+
+**2. Eight Arabic-only demo client records.** Titled `عميل مؤسسي تجريبي` / `منشئ محتوى تجريبي` —
+literally *demo corporate client* / *demo content creator*, with no English counterparts, which is why
+AR showed 7 individual cards to EN's 3. Moved to **draft**, not deleted — reversible. Clients were the
+only content type with a gap; projects (77/77), services (4/4), posts (9/9) and pages (5/5) were
+already 1:1. Published clients are now **23 EN / 23 AR**.
+
+**⚠️ This is a database change and does not travel in git.** It applies to the local dev DB only;
+production needs the same eight records unpublished separately.
+
+**3. A stale Arabic catalogue.** `perego-site-ar.mo` was dated Jul 16 and its POT was older still, so
+every string added since rendered in English on Arabic pages. Regenerating the POT found **389 strings**
+where the committed one had 172. Of the 52 visitor-facing strings, **20 had no Arabic** — the clients
+carousel labels, the contact chooser's help text and group label, the portfolio pager, the gallery
+labels, "Skip to content" and "Language". All 20 translated and verified **in the rendered AR pages**,
+not in the `.po`. The ~90 admin/editor strings remain English by the owner's explicit choice, and are
+the obvious next i18n pass.
+
+**Ordering mattered:** unpublishing the demo clients first would have left the Arabic carousel with
+three inert cards and **no working lightbox at all**, since the four that did work were the demo ones.
+The renderer fix landed first.
+
+**Verified:** EN output **byte-identical** on every route (the fix is AR-only by construction); AR and
+EN now both render 3 individual lightbox buttons and 20 corporate cards; Pest **417** (+4 regression
+tests pinning the English-fallback rule in both directions), Jest **193**, build clean.
+
 ## 2026-07-23 — CoreX updated to upstream/main; our issue #114 fix adopted, our implementation dropped
 
 Framework moved **v0.34.0 → upstream/main**: 116 commits, 240 files (124 added, 116 modified,
