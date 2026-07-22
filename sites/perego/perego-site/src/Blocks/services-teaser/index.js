@@ -18,6 +18,7 @@ import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-edi
 import { SelectControl, TextControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import { LinkPicker, linkFromAttributes, linkToAttributes } from '../../Editor/LinkPicker';
 import { PanelSection } from '../../Editor/PanelSection';
 import { RecordPicker } from '../../Editor/RecordPicker';
 import {
@@ -105,6 +106,14 @@ function Edit( { attributes, setAttributes } ) {
 						value={ attributes.seeAllAr }
 						onChange={ ( seeAllAr ) => setAttributes( { seeAllAr } ) }
 						placeholder={ SEED_SEE_ALL_AR } />
+				</PanelSection>
+				<PanelSection title={ __( '“See all” link', 'perego-site' ) }>
+					<LinkPicker
+						showLabel={ false }
+						link={ linkFromAttributes( attributes, 'seeAll' ) }
+						hrefText={ __( 'Links to', 'perego-site' ) }
+						hrefHelp={ __( 'Leave empty for the services archive. A path such as /work is localized automatically.', 'perego-site' ) }
+						onChange={ ( next ) => setAttributes( linkToAttributes( next, 'seeAll' ) ) } />
 				</PanelSection>
 				<ServicesComposer attributes={ attributes } services={ services } setAttributes={ setAttributes } />
 			</InspectorControls>

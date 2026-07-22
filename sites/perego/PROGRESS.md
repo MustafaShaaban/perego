@@ -2,6 +2,38 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 T036: the link picker (Track 1 of 3 complete)
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Owner set the order **link picker → pages → fields**
+  so no block gets edited twice. This is the picker.
+- **New shared primitives:** `src/Editor/LinkPicker.js` (link type → content type → record by title →
+  open-in-new-tab, with `linkFromAttributes`/`linkToAttributes` for prefixed single links) and
+  `PeregoSite\Blocks\LinkTarget` (resolves `{href, target/rel}`). `LanguageDriver` gains
+  `localizedPermalink(int $postId)` — Polylang resolves the translation via `pll_get_post()`, the
+  fallback driver returns `get_permalink()`, so an **Arabic page links to the Arabic record**.
+- **Applied to:** header nav items + dropdown links + CTA; footer legal links + contact channels;
+  hero-slider CTA; services-teaser "See all"; portfolio-grid closing CTA; project-navigation closing
+  CTA. Breadcrumbs/logo/route links stay derived, and social links keep their existing control — both
+  deliberate, see DECISIONS.
+- **De-duplication:** `SiteHeaderRenderer::ctaHref()` and `SiteFooterRenderer::legalHref()` were the
+  same rule written twice; both deleted in favour of `LinkTarget`. Their suites (28 + 13) pass
+  **unchanged**, which is the proof custom-URL behaviour did not move.
+- **⚠️ A second front-end regression caught by curl-diff, not by tests.** Routing the portfolio CTA
+  through `LinkTarget::href()` turned `/contact` into `/contact/` on the live `/work/` page: a pure
+  renderer's literal `home_url('/contact')` default is not the same string as the driver's canonical
+  permalink for that page. Added `hrefIfSet()`, which returns an empty string for an unconfigured link
+  so the renderer keeps its own default. Every test was green and `git diff --name-only` showed nothing
+  unexpected — only the route diff found it. See DECISIONS 2026-07-22 (T036).
+- **Verified:** `/`, `/ar/`, `/work/`, `/work/visual-identity-system/` all **0 differing lines**;
+  six routes HTTP 200. Pest **404/404** (was 385; +19), Jest **145/145**, build clean. End-to-end via
+  `wp eval`: a dynamic CTA resolves to the picked page's permalink with `target="_blank" rel="noopener"`,
+  a custom URL is used verbatim, and an unconfigured link is byte-identical to before.
+- **⚠️ Not confirmed by me:** the picker's look and feel in the editor — `perego.local/wp-admin` needs a
+  login I cannot perform.
+- **Next:** Track 2 — the remaining page batches, each adopting the picker as it is built: **C12 Journal
+  + Search**, then C13 Contact, C14 Services archive, C15 Legal/misc. Then Track 3, the ACF-grade
+  sidebar fields.
+
 ## RESUME HERE (2026-07-22) — Spec 021 Batch 2 (Work archive): C11 portfolio-grid, now editable
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. The Work pages (single + archive) are complete.

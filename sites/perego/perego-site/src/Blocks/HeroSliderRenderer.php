@@ -65,8 +65,12 @@ final class HeroSliderRenderer
             . 'data-wp-on--pointerup="actions.pointerUp">';
         $html .= '<div class="hero__content hero-enter">';
         $html .= $this->renderSlides($slides);
+        // spec 021 T036: the CTA may name a page instead of the default contact route.
+        $cta = LinkTarget::fromAttributes($attributes);
+        $linkTarget = new LinkTarget($this->languageService->driver());
         $html .= '<div class="hero__cta">'
-            . '<a class="btn btn--accent" href="' . esc_url($this->languageService->driver()->localizedUrl('/contact')) . '">'
+            . '<a class="btn btn--accent" href="' . esc_url($linkTarget->href($cta, '/contact')) . '"'
+            . $linkTarget->targetAttributes($cta) . '>'
             . wp_kses_post($hero['cta']) . '</a>'
             . '</div>';
         $html .= '</div>'; // .hero__content

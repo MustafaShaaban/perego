@@ -288,3 +288,52 @@ it('resolves a manually selected Service to the current Polylang translation', f
     expect($html)->toContain('>Arabic service<')
         ->and($html)->toContain('href="https://perego.local/ar/services/video-editing-2"');
 });
+
+/*
+ * spec 021 T036 — the link picker. `ctaUrl` and each nav item's `href` stay the custom-URL value, so
+ * every header saved before the picker existed keeps resolving through the path it always did; the
+ * new keys only add the "point at a page" and "open in a new tab" behaviours on top.
+ */
+
+it('resolves a CTA that points at a page to that page permalink', function () {
+    Functions\when('get_permalink')->alias(fn (int $id): string => 'https://perego.local/contact/');
+
+    expect(renderHeader('/', ['ctaLinkKind' => 'dynamic', 'ctaPostId' => 57], 'en'))
+        ->toContain('href="https://perego.local/contact/"');
+});
+
+it('falls back to the stored custom URL when a picked CTA page no longer exists', function () {
+    Functions\when('get_permalink')->justReturn(false);
+
+    expect(renderHeader('/', ['ctaLinkKind' => 'dynamic', 'ctaPostId' => 999, 'ctaUrl' => '/quote'], 'en'))
+        ->toContain('href="https://perego.local/quote"');
+});
+
+it('opens the CTA in a new tab only when asked, always pairing rel=noopener', function () {
+    expect(renderHeader('/', ['ctaOpenInNewTab' => true], 'en'))
+        ->toContain('target="_blank" rel="noopener"');
+
+    expect(renderHeader('/', [], 'en'))->not->toContain('target="_blank"');
+});
+
+it('resolves a nav item that points at a page, and can open it in a new tab', function () {
+    Functions\when('get_permalink')->alias(fn (int $id): string => 'https://perego.local/work/case-study/');
+
+    $html = renderHeader('/', [
+        'navItemsEn' => json_encode([
+            ['label' => 'Case study', 'href' => '/fallback', 'linkKind' => 'dynamic', 'postId' => 31, 'openInNewTab' => true],
+        ]),
+    ], 'en');
+
+    expect($html)->toContain('href="https://perego.local/work/case-study/"')
+        ->and($html)->toContain('target="_blank" rel="noopener"');
+});
+
+it('leaves a nav item with no linkKind on the original localized-path behaviour', function () {
+    $html = renderHeader('/', [
+        'navItemsEn' => json_encode([['label' => 'Work', 'href' => '/work']]),
+    ], 'en');
+
+    expect($html)->toContain('href="https://perego.local/work"')
+        ->and($html)->not->toContain('target="_blank"');
+});

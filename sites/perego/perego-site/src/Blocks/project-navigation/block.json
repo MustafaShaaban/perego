@@ -1,14 +1,19 @@
 {
-  "$schema": "https://schemas.wp.org/trunk/block.json",
-  "apiVersion": 3,
-  "name": "perego-theme/project-navigation",
-  "title": "Perego Project Navigation",
-  "category": "theme",
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/project-navigation",
+	"title": "Perego Project Navigation",
+	"category": "theme",
 	"description": "Dynamic adjacent and related project links for a project single.",
 	"textdomain": "perego-site",
 	"attributes": {
-		"surface": { "type": "string", "default": "all" }
+		"surface": { "type": "string", "default": "all" },
+		"ctaUrl": { "type": "string", "default": "" },
+		"ctaLinkKind": { "type": "string", "default": "custom" },
+		"ctaPostType": { "type": "string", "default": "" },
+		"ctaPostId": { "type": "number", "default": 0 },
+		"ctaOpenInNewTab": { "type": "boolean", "default": false }
 	},
 	"editorScript": "file:./index.js",
-  "supports": { "html": false }
+	"supports": { "html": false }
 }

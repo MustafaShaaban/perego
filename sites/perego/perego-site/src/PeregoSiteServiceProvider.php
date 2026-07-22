@@ -97,6 +97,31 @@ final class PeregoSiteServiceProvider
     }
 
     /**
+     * Resolve one of a block's prefixed link attributes to `{href, target}` for a renderer that takes
+     * already-resolved data (spec 021 T036). Renderers that hold their own LanguageService build their
+     * own `LinkTarget`; these pure ones are handed the result instead, so they stay unit-testable.
+     *
+     * `hrefIfSet` (not `href`) so an unconfigured link yields an empty href and the renderer keeps its
+     * own default route untouched — see that method for why the difference is not cosmetic.
+     *
+     * @param array<string, mixed> $attributes the block's attributes
+     * @return array{href: string, target: string}
+     */
+    private static function resolvedLink(
+        LanguageService $languageService,
+        array $attributes,
+        string $prefix
+    ): array {
+        $target = new \PeregoSite\Blocks\LinkTarget($languageService->driver());
+        $link = \PeregoSite\Blocks\LinkTarget::fromAttributes($attributes, $prefix);
+
+        return [
+            'href' => $target->hrefIfSet($link),
+            'target' => $target->targetAttributes($link),
+        ];
+    }
+
+    /**
      * spec 021 T035: put back the structural attributes the theme templates need but `core/group`'s
      * `save()` cannot generate, so the templates hold exactly what the block editor regenerates and
      * stop rendering as "unexpected or invalid content". See TemplateSectionAttributes for the full
@@ -690,6 +715,8 @@ final class PeregoSiteServiceProvider
                         $content->gridStrings(LocalizedAttributes::pick($attributes, $locale, [
                             'heading', 'intro', 'ctaTitle', 'ctaBody', 'ctaButton',
                         ]) + ['showDemoNote' => (bool) ($attributes['showDemoNote'] ?? true)]),
+                        // spec 021 T036: the closing CTA may name a page instead of the contact route.
+                        self::resolvedLink($languageService, $attributes, 'cta'),
                     );
                 },
             ]);
@@ -728,7 +755,11 @@ final class PeregoSiteServiceProvider
                     return (new ProjectNavigationRenderer(
                         new ProjectRepository(),
                         new PortfolioContent($languageService->driver()->currentLocale()),
-                    ))->render($queried instanceof \WP_Post ? $queried : null, (string) ($attributes['surface'] ?? 'all'));
+                    ))->render(
+                        $queried instanceof \WP_Post ? $queried : null,
+                        (string) ($attributes['surface'] ?? 'all'),
+                        self::resolvedLink($languageService, $attributes, 'cta'),
+                    );
                 },
             ]);
         });

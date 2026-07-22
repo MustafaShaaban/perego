@@ -30,8 +30,9 @@ final class PortfolioGridRenderer
      * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}> $projects
      * @param array<string, string> $filterLabels ordered, keyed by slug ('all' first); values are labels
      * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string} $strings
+     * @param array{link?: array<string, mixed>, target?: string} $cta the closing CTA's resolved link (spec 021 T036)
      */
-    public function render(array $projects, array $filterLabels, array $strings): string
+    public function render(array $projects, array $filterLabels, array $strings, array $cta = []): string
     {
         $html = '<section class="page-section">';
         $html .= '<div class="container">';
@@ -63,7 +64,7 @@ final class PortfolioGridRenderer
         $html .= $this->renderPager(count($projects));
         $html .= '</div></section>';
 
-        $html .= $this->renderCta($strings);
+        $html .= $this->renderCta($strings, $cta);
 
         return $html;
     }
@@ -74,18 +75,22 @@ final class PortfolioGridRenderer
      * ServicesOverviewRenderer's own closing CTA uses.
      *
      * @param array{ctaTitle?: string, ctaBody?: string, ctaButton?: string} $strings
+     * @param array{href?: string, target?: string} $cta resolved by LinkTarget; empty keeps the contact route
      */
-    private function renderCta(array $strings): string
+    private function renderCta(array $strings, array $cta = []): string
     {
         if (empty($strings['ctaTitle'])) {
             return '';
         }
 
+        $href = (string) ($cta['href'] ?? '') !== '' ? (string) $cta['href'] : (string) home_url('/contact');
+
         $html = '<section class="page-section" aria-labelledby="pfCta" style="border-top:1px solid rgba(255,255,255,0.08);">';
         $html .= '<div class="container" style="text-align:center;max-width:820px;">';
         $html .= '<h2 class="section-title" id="pfCta">' . esc_html($strings['ctaTitle']) . '</h2>';
         $html .= '<p class="section-lead" style="margin:16px auto 28px;">' . esc_html($strings['ctaBody'] ?? '') . '</p>';
-        $html .= '<a class="btn btn--accent" href="' . esc_url(home_url('/contact')) . '">' . esc_html($strings['ctaButton'] ?? '') . '</a>';
+        $html .= '<a class="btn btn--accent" href="' . esc_url($href) . '"' . (string) ($cta['target'] ?? '') . '>'
+            . esc_html($strings['ctaButton'] ?? '') . '</a>';
         $html .= '</div></section>';
 
         return $html;

@@ -116,3 +116,40 @@ it('leaves paths bare in the default language (no prefix, no broken translation)
     expect($driver->localizedUrl('/work'))->toBe('https://perego.local/work')
         ->and($driver->localizedUrl('/contact'))->toBe('https://perego.local/contact/');
 });
+
+/*
+ * spec 021 T036 — the link picker's dynamic mode. An editor picks a record in whichever language they
+ * happen to be working in; the link must resolve to the translation for the language being SERVED.
+ */
+
+it('resolves a picked record to its translation for the current locale', function () {
+    Functions\when('pll_current_language')->justReturn('ar');
+    // The editor picked the English Service (id 25); Polylang links it to the Arabic one (id 26).
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale): int => $id === 25 && $locale === 'ar' ? 26 : $id);
+    Functions\when('get_permalink')->alias(fn (int $id): string => 'https://perego.local/' . ($id === 26 ? 'ar/khadamat/' : 'services/video-editing/'));
+
+    expect((new PolylangLanguageDriver())->localizedPermalink(25))
+        ->toBe('https://perego.local/ar/khadamat/');
+});
+
+it('falls back to the picked record when it has no translation for the current locale', function () {
+    Functions\when('pll_current_language')->justReturn('ar');
+    // A half-translated site: pll_get_post returns falsy, so the record itself must still be linked.
+    Functions\when('pll_get_post')->justReturn(0);
+    Functions\when('get_permalink')->alias(fn (int $id): string => 'https://perego.local/work/only-in-english/');
+
+    expect((new PolylangLanguageDriver())->localizedPermalink(25))
+        ->toBe('https://perego.local/work/only-in-english/');
+});
+
+it('returns an empty permalink for a missing record, so callers can fall back to a custom URL', function () {
+    Functions\when('pll_current_language')->justReturn('en');
+    Functions\when('pll_get_post')->justReturn(0);
+    Functions\when('get_permalink')->justReturn(false);
+
+    $driver = new PolylangLanguageDriver();
+
+    expect($driver->localizedPermalink(0))->toBe('')
+        ->and($driver->localizedPermalink(-1))->toBe('')
+        ->and($driver->localizedPermalink(999))->toBe('');
+});

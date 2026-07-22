@@ -17,7 +17,7 @@ import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
 import { LabeledRepeater } from '../../Editor/LabeledRepeater';
 import { LanguagePair } from '../../Editor/LanguagePair';
-import { LinkControl } from '../../Editor/LinkControl';
+import { LinkPicker, linkFromAttributes, linkToAttributes } from '../../Editor/LinkPicker';
 import { MediaField } from '../../Editor/MediaField';
 import { PanelSection } from '../../Editor/PanelSection';
 import { RecordPicker } from '../../Editor/RecordPicker';
@@ -45,9 +45,8 @@ function NavItemEditor( { items, onChange } ) {
 				} );
 				return (
 					<>
-						<LinkControl label={ item.label } href={ item.href } hrefHelp={ NAV_HREF_HELP }
-							onChangeLabel={ ( label ) => update( index, { label } ) }
-							onChangeHref={ ( href ) => update( index, { href } ) } />
+						<LinkPicker link={ item } hrefHelp={ NAV_HREF_HELP }
+							onChange={ ( next ) => update( index, next ) } />
 						{ item.children && (
 							<LabeledRepeater
 								items={ item.children }
@@ -56,11 +55,10 @@ function NavItemEditor( { items, onChange } ) {
 								addLabel={ __( 'Add dropdown link', 'perego-site' ) }
 								createItem={ () => ( { label: __( 'New dropdown link', 'perego-site' ), href: '/' } ) }
 								renderItem={ ( child, childIndex ) => (
-									<LinkControl label={ child.label } href={ child.href }
+									<LinkPicker link={ child }
 										labelText={ __( 'Dropdown label', 'perego-site' ) }
 										hrefText={ __( 'Dropdown link', 'perego-site' ) }
-										onChangeLabel={ ( label ) => updateChild( childIndex, { label } ) }
-										onChangeHref={ ( href ) => updateChild( childIndex, { href } ) } />
+										onChange={ ( next ) => updateChild( childIndex, next ) } />
 								) }
 							/>
 						) }
@@ -180,11 +178,14 @@ function Edit( { attributes, setAttributes } ) {
 						onChangeAr={ ( ctaLabelAr ) => setAttributes( { ctaLabelAr } ) }
 						placeholderEn={ __( 'Start a Project', 'perego-site' ) }
 						placeholderAr="ابدأ الآن" />
-					<TextControl __nextHasNoMarginBottom label={ __( 'Button link', 'perego-site' ) }
-						value={ attributes.ctaUrl }
-						onChange={ ( ctaUrl ) => setAttributes( { ctaUrl } ) }
-						placeholder="/contact"
-						help={ __( 'A path such as /contact is localized automatically; a full URL (https://…) or #anchor is used as-is.', 'perego-site' ) } />
+					{ /* The CTA is a single link, so its picker hides the label field — the button text
+					     is the bilingual pair above. `ctaUrl` stays the custom-URL half (spec 021 T036). */ }
+					<LinkPicker
+						showLabel={ false }
+						link={ linkFromAttributes( attributes ) }
+						hrefText={ __( 'Button link', 'perego-site' ) }
+						hrefHelp={ __( 'A path such as /contact is localized automatically; a full URL (https://…) or #anchor is used as-is.', 'perego-site' ) }
+						onChange={ ( next ) => setAttributes( linkToAttributes( next ) ) } />
 				</PanelSection>
 				<ServicesMenuEditor attributes={ attributes } services={ services } setAttributes={ setAttributes } />
 				<PanelSection title={ __( 'Navigation — English', 'perego-site' ) }>

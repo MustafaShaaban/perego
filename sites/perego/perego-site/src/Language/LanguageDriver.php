@@ -49,6 +49,17 @@ interface LanguageDriver
     public function localizedUrl(string $path): string;
 
     /**
+     * The permalink for a chosen record **in the current locale** (spec 021 T036). Where `localizedUrl()`
+     * takes a stable site path, this takes a post the editor picked in the block Inspector — which they
+     * will usually have picked in one language — and resolves the translation that belongs to the
+     * language being rendered, so an Arabic page links to the Arabic record.
+     *
+     * Returns an empty string when the record is missing, unpublished, or otherwise has no permalink, so
+     * callers can fall back to a stored custom URL rather than emit a broken link.
+     */
+    public function localizedPermalink(int $postId): string;
+
+    /**
      * Whether the driver's own URLs fully carry the language (so switching is real navigation and
      * the client must NOT persist/override the language). True for Polylang (directory URLs like
      * /ar/…); false for the cookie/query fallback, which relies on client-side persistence.

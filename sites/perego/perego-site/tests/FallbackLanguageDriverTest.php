@@ -78,3 +78,25 @@ it('rejects a locale that is not offered', function () {
 
     expect(fn () => $driver->urlFor('fr'))->toThrow(InvalidArgumentException::class);
 });
+
+/*
+ * spec 021 T036 — the link picker's dynamic mode with no translation plugin: one record per piece of
+ * content, so the current locale's permalink is simply the record's permalink.
+ */
+
+it('resolves a picked record to its own permalink', function () {
+    Functions\when('get_permalink')->alias(fn (int $id): string => 'https://perego.local/contact/');
+
+    expect((new FallbackLanguageDriver([]))->localizedPermalink(57))
+        ->toBe('https://perego.local/contact/');
+});
+
+it('returns an empty permalink for a missing record, so callers can fall back to a custom URL', function () {
+    Functions\when('get_permalink')->justReturn(false);
+
+    $driver = new FallbackLanguageDriver([]);
+
+    expect($driver->localizedPermalink(0))->toBe('')
+        ->and($driver->localizedPermalink(-1))->toBe('')
+        ->and($driver->localizedPermalink(999))->toBe('');
+});

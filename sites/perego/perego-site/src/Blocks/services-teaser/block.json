@@ -16,7 +16,12 @@
 		"seeAllAr": { "type": "string", "default": "" },
 		"servicesMode": { "type": "string", "default": "automatic" },
 		"serviceOrder": { "type": "array", "default": [] },
-		"serviceExcludeIds": { "type": "array", "default": [] }
+		"serviceExcludeIds": { "type": "array", "default": [] },
+		"seeAllUrl": { "type": "string", "default": "" },
+		"seeAllLinkKind": { "type": "string", "default": "custom" },
+		"seeAllPostType": { "type": "string", "default": "" },
+		"seeAllPostId": { "type": "number", "default": 0 },
+		"seeAllOpenInNewTab": { "type": "boolean", "default": false }
 	},
 	"supports": {
 		"html": false

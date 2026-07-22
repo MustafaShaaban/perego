@@ -15,6 +15,7 @@ import { SelectControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { decodeEntities } from '@wordpress/html-entities';
 import { __ } from '@wordpress/i18n';
+import { LinkPicker, linkFromAttributes, linkToAttributes } from '../../Editor/LinkPicker';
 import { PanelSection } from '../../Editor/PanelSection';
 import {
 	ProjectAdjacentSkeleton,
@@ -89,6 +90,16 @@ function Edit( { attributes, setAttributes } ) {
 						onChange={ ( value ) => setAttributes( { surface: value } ) }
 					/>
 				</PanelSection>
+				{ surface !== 'adjacent' && (
+					<PanelSection title={ __( 'Closing call to action', 'perego-site' ) }>
+						<LinkPicker
+							showLabel={ false }
+							link={ linkFromAttributes( attributes ) }
+							hrefText={ __( 'Button link', 'perego-site' ) }
+							hrefHelp={ __( 'Leave empty for the contact page. The button text comes from the project labels.', 'perego-site' ) }
+							onChange={ ( next ) => setAttributes( linkToAttributes( next ) ) } />
+					</PanelSection>
+				) }
 			</InspectorControls>
 			{ surface !== 'related' && <ProjectAdjacentSkeleton /> }
 			{ surface !== 'adjacent' && <ProjectRelatedSkeleton cards={ cards } /> }

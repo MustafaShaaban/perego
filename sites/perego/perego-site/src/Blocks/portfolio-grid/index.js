@@ -22,6 +22,7 @@ import { TextareaControl, ToggleControl } from '@wordpress/components';
 import ServerSideRender from '@wordpress/server-side-render';
 import { __ } from '@wordpress/i18n';
 import { LanguagePair } from '../../Editor/LanguagePair';
+import { LinkPicker, linkFromAttributes, linkToAttributes } from '../../Editor/LinkPicker';
 import { PanelSection } from '../../Editor/PanelSection';
 import metadata from './block.json';
 import './style.scss';
@@ -93,7 +94,13 @@ function Edit( { attributes, setAttributes } ) {
 					<LanguagePair
 						label={ __( 'Button text', 'perego-site' ) }
 						{ ...pair( 'ctaButton' ) }
-						help={ __( 'The button always links to the contact page.', 'perego-site' ) }
+					/>
+					<LinkPicker
+						showLabel={ false }
+						link={ linkFromAttributes( attributes ) }
+						hrefText={ __( 'Button link', 'perego-site' ) }
+						hrefHelp={ __( 'Leave empty for the contact page.', 'perego-site' ) }
+						onChange={ ( next ) => setAttributes( linkToAttributes( next ) ) }
 					/>
 				</PanelSection>
 			</InspectorControls>

@@ -63,7 +63,12 @@ final class ServicesTeaserRenderer
         $html .= '<div class="services-teaser__head">';
         $html .= '<h2 class="services-teaser__title reveal" id="' . self::HEADING_ID . '">'
             . wp_kses_post($heading) . '</h2>';
-        $html .= '<a class="link-arrow services-teaser__link reveal" data-delay="1" href="' . esc_url($this->languageService->driver()->localizedUrl('/services')) . '">'
+        // spec 021 T036: "See all" may name a page instead of the default services archive.
+        $seeAllLink = LinkTarget::fromAttributes($attributes, 'seeAll');
+        $linkTarget = new LinkTarget($this->languageService->driver());
+        $html .= '<a class="link-arrow services-teaser__link reveal" data-delay="1" href="'
+            . esc_url($linkTarget->href($seeAllLink, '/services')) . '"'
+            . $linkTarget->targetAttributes($seeAllLink) . '>'
             . esc_html($seeAll)
             . $this->arrowSvg()
             . '</a>';

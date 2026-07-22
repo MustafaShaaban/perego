@@ -18,7 +18,12 @@
 		"ctaBodyAr": { "type": "string", "default": "" },
 		"ctaButtonEn": { "type": "string", "default": "" },
 		"ctaButtonAr": { "type": "string", "default": "" },
-		"showDemoNote": { "type": "boolean", "default": true }
+		"showDemoNote": { "type": "boolean", "default": true },
+		"ctaUrl": { "type": "string", "default": "" },
+		"ctaLinkKind": { "type": "string", "default": "custom" },
+		"ctaPostType": { "type": "string", "default": "" },
+		"ctaPostId": { "type": "number", "default": 0 },
+		"ctaOpenInNewTab": { "type": "boolean", "default": false }
 	},
 	"editorScript": "file:./index.js",
 	"viewScriptModule": "file:./view.js",

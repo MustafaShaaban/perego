@@ -13,7 +13,7 @@ import { useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { LabeledRepeater } from '../../Editor/LabeledRepeater';
 import { LanguagePair } from '../../Editor/LanguagePair';
-import { LinkControl } from '../../Editor/LinkControl';
+import { LinkPicker } from '../../Editor/LinkPicker';
 import { PanelSection } from '../../Editor/PanelSection';
 import { FooterSkeleton, SEED_BLURB_AR, SEED_BLURB_EN, SEED_CONTACT_CHANNELS, SEED_LEGAL_LINKS, SEED_SOCIAL_LINKS, SOCIAL_NETWORKS, defaultCopyright, parseList } from './preview';
 import metadata from './block.json';
@@ -31,11 +31,10 @@ function ContactChannelsEditor( { channels, onChange } ) {
 				createItem={ () => ( { label: '', href: '' } ) }
 				createCopy={ ( channel ) => ( { ...channel } ) }
 				renderItem={ ( channel, index ) => (
-					<LinkControl label={ channel.label } href={ channel.href }
+					<LinkPicker link={ channel }
 						labelText={ __( 'Display text', 'perego-site' ) }
 						hrefText={ __( 'Link (mailto:… or tel:…)', 'perego-site' ) }
-						onChangeLabel={ ( label ) => update( index, { label } ) }
-						onChangeHref={ ( href ) => update( index, { href } ) } />
+						onChange={ ( next ) => update( index, next ) } />
 				) }
 			/>
 		</PanelSection>
@@ -83,9 +82,7 @@ function LegalLinksEditor( { links, onChange } ) {
 			createItem={ () => ( { label: '', href: '' } ) }
 			createCopy={ ( link ) => ( { ...link } ) }
 			renderItem={ ( link, index ) => (
-				<LinkControl label={ link.label } href={ link.href }
-					onChangeLabel={ ( label ) => update( index, { label } ) }
-					onChangeHref={ ( href ) => update( index, { href } ) } />
+				<LinkPicker link={ link } onChange={ ( next ) => update( index, next ) } />
 			) }
 		/>
 	);

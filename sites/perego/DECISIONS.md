@@ -1,5 +1,41 @@
 # Perego — Decision Log
 
+## 2026-07-22 — Spec 021 T036: the link picker, and why an unconfigured link must resolve to nothing
+
+Owner ask: every editable link should let you **pick a page** instead of typing a URL — custom vs
+dynamic, post type, then the record — plus an *open in a new tab* toggle.
+
+**Storage is additive, so nothing migrates.** The plain `href` (and `ctaUrl`, `seeAllUrl`, …) stays the
+custom-URL value; `linkKind`/`postType`/`postId`/`openInNewTab` join it as siblings. A link saved before
+the picker has no `linkKind`, which `LinkTarget` reads as `custom` — the exact path it already took. No
+deprecation, no attribute rewrite, no invalid blocks. Keeping `href` populated also gives dynamic mode a
+real fallback for when a picked record is later unpublished.
+
+**Scope: CTA, nav and editorial links only.** Breadcrumbs, the logo, and the Home/Our Work/Journal route
+links stay derived. A mis-set breadcrumb silently breaks navigation and there is no reason to point
+"Home" anywhere but home. Social links also keep their existing control: they are external by
+definition, the renderer already forces `target="_blank" rel="noopener"`, and their real control is the
+network→icon mapping.
+
+**One rule, one implementation.** `SiteHeaderRenderer::ctaHref()` and `SiteFooterRenderer::legalHref()`
+were the same twenty lines twice; both are gone, replaced by `PeregoSite\Blocks\LinkTarget`. The header
+and footer suites (28 + 13) pass unchanged, which is the proof that custom-URL behaviour did not move.
+
+**The finding worth keeping: `hrefIfSet()` vs `href()`.** Routing the portfolio CTA through `href()`
+changed the live `/work/` page — `http://perego.local/contact` became `http://perego.local/contact/`.
+Cause: the pure renderers own a default route as a literal `home_url('/contact')`, and resolving that
+same route through the language driver returns the page's canonical permalink, which carries a trailing
+slash. So "resolve the link, falling back to the default route" is **not** behaviour-preserving for a
+block nobody has edited. `hrefIfSet()` answers with an empty string when a link is unconfigured, and the
+renderer keeps its own literal default. The two shapes are now explicit:
+
+- a renderer holding a `LanguageService` builds its own `LinkTarget` and calls `href($link, $fallback)`;
+- a pure renderer is handed `{href, target}` resolved with `hrefIfSet()`, and an empty href means
+  "unconfigured — use your own default".
+
+Only a curl-diff caught this; every test was green and `git diff --name-only` showed only expected
+files. Same lesson as C9/C10, from a completely different direction.
+
 ## 2026-07-22 — Spec 021 C9/C10: adding an editor script resurrected dead CSS; the CSS went, not the fix
 
 `project-navigation` was the worst case in the whole spec-021 sweep: it had **no editor script at all**, so the

@@ -69,15 +69,15 @@ Page batches, one commit each. C9–C10 done; the rest follow the standard below
 - [x] C10 `project-navigation` — Work single. Had **no editor script at all** (FSE showed "your site doesn't include support for this block"); now renders the real prev/next nav and related-projects surface, with a `surface` select in the Inspector.
 - [x] C11 `portfolio-grid` — Work archive. **Dynamic/query block**, so it keeps `ServerSideRender` per the standard below; the Inspector gains the editable archive heading/intro and closing CTA (En/Ar, empty = seed copy) plus a toggle for the launch demo note. The Work archive template (`archive-perego_project.html`) has no `core/group` at all, so there is no T035 fix here — `archive.html` is the *journal* archive and belongs to C12.
 - [ ] C12 Journal + Search: `journal-header`, `related-posts`, `search-results`, `journal-comments`, `post-breadcrumb`, `post-reading-time` (+ `home.html` / `archive.html` T035 fixes).
-- [ ] C13 Contact: `contact-service-chooser`, `join-form` (+ `page-contact.html` T035 fix; first likely home of T036).
+- [ ] C13 Contact: `contact-service-chooser`, `join-form` (+ `page-contact.html` T035 fix).
 - [ ] C14 Services archive: `services-overview` (+ `archive-perego_service.html` T035 fix).
 - [ ] C15 Legal + misc: `legal-toc`, `legal-updated`, `not-found`, `preloader`, `media-lightbox`, `footer-careers` (+ `legal.html` / `page.html` / `search.html` T035 fixes).
-- [ ] C16 Retrofit T036 onto the header nav/dropdown/CTA and footer links, with the shared PHP resolver.
+- [x] C16 Retrofit T036 onto the header nav/dropdown/CTA and footer links, with the shared PHP resolver. **Done up front** (owner-chosen order: link picker → pages → fields), so each remaining page batch adopts the picker as it is built rather than being edited twice.
 
 ## Phase 7 — Owner review findings (2026-07-22)
 
 - [ ] T035 Template block-validity sweep. Seven theme templates embed markup `core/group`'s `save()` cannot regenerate, so FSE renders them as "Block contains unexpected or invalid content". Fix each inside its page batch, then verify by diffing the rendered route.
-- [ ] T036 Structured link picker. Replace every free-text link URL with a shared `LinkPicker` (custom vs dynamic, post-type select, record select, open-in-new-tab) plus a shared PHP resolver. Build at first need; retrofit header/footer/CTA last.
+- [x] T036 Structured link picker — replace every free-text link URL with a shared picker (custom vs dynamic, post-type select, record select, open-in-new-tab) plus a shared PHP resolver. **Done:** `Editor/LinkPicker.js`, `PeregoSite\Blocks\LinkTarget`, and `LanguageDriver::localizedPermalink()`, applied to the header nav/dropdown/CTA, footer legal links and contact channels, hero-slider CTA, services-teaser "See all", and the portfolio-grid and project-navigation CTAs. Each remaining page batch adopts it as it is built.
 
 ### T035 — the affected templates
 

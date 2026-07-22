@@ -32,6 +32,8 @@ defined('ABSPATH') || exit;
  */
 final class SiteFooterRenderer
 {
+    private ?LinkTarget $linkTarget = null;
+
     /**
      * Contact channels from the approved design handoff (locale-neutral facts, not translatable
      * prose) — the seed used when no `contactChannels` block attribute has been set.
@@ -149,7 +151,11 @@ final class SiteFooterRenderer
         foreach ($channels as $channel) {
             // bdi isolates the LTR email/phone text from the surrounding RTL paragraph direction so
             // digit groups and punctuation don't reorder under the Arabic bidi algorithm.
-            $html .= '<li><a href="' . esc_url($channel['href'] ?? '') . '"><bdi>' . esc_html($channel['label'] ?? '') . '</bdi></a></li>';
+            // Channels are mailto:/tel: in practice, which LinkTarget passes through verbatim; routing
+            // them through it lets an editor point one at a real page instead (spec 021 T036).
+            $html .= '<li><a href="' . esc_url($this->linkTarget()->href($channel, '/contact')) . '"'
+                . $this->linkTarget()->targetAttributes($channel) . '><bdi>'
+                . esc_html($channel['label'] ?? '') . '</bdi></a></li>';
         }
 
         $html .= '</ul>';
@@ -301,7 +307,8 @@ final class SiteFooterRenderer
             if ($label === '') {
                 continue;
             }
-            $html .= '<a href="' . esc_url($this->legalHref((string) ($link['href'] ?? ''))) . '">' . esc_html($label) . '</a>';
+            $html .= '<a href="' . esc_url($this->linkTarget()->href($link, '/')) . '"'
+                . $this->linkTarget()->targetAttributes($link) . '>' . esc_html($label) . '</a>';
         }
         $html .= '</nav>';
         $html .= '</div>';
@@ -325,26 +332,12 @@ final class SiteFooterRenderer
     }
 
     /**
-     * Resolve a legal-link target: an external, protocol-relative, mailto/tel, or same-page-anchor URL
-     * is used verbatim; an internal path is localized through the language driver (mirrors the header's
-     * CTA/nav rule) so it never becomes a homepage URL.
+     * The shared link resolver, built from this renderer's language driver (spec 021 T036). Replaces
+     * this class's own copy of the localize-internal-paths rule, which is now one implementation shared
+     * with the header.
      */
-    private function legalHref(string $url): string
+    private function linkTarget(): LinkTarget
     {
-        $url = trim($url);
-        if ($url === '') {
-            return $this->languageService->driver()->localizedUrl('/');
-        }
-
-        if (
-            str_starts_with($url, '#')
-            || str_starts_with($url, 'mailto:')
-            || str_starts_with($url, 'tel:')
-            || (bool) preg_match('#^(https?:)?//#i', $url)
-        ) {
-            return $url;
-        }
-
-        return $this->languageService->driver()->localizedUrl($url);
+        return $this->linkTarget ??= new LinkTarget($this->languageService->driver());
     }
 }

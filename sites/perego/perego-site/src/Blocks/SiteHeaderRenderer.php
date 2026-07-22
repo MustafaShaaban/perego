@@ -30,6 +30,8 @@ use PeregoSite\PostTypes\ServicePostType;
  */
 final class SiteHeaderRenderer
 {
+    private ?LinkTarget $linkTarget = null;
+
     public function __construct(private readonly LanguageService $languageService)
     {
     }
@@ -274,32 +276,22 @@ final class SiteHeaderRenderer
             $label = __('Start a Project', 'perego-site');
         }
 
-        return '<a class="btn btn--accent header-cta" href="' . esc_url($this->ctaHref((string) ($attributes['ctaUrl'] ?? ''))) . '">'
+        // spec 021 T036: the CTA may now name a page instead of a URL. `ctaUrl` stays the custom-URL
+        // value, so a header saved before the picker existed resolves through exactly the old path.
+        $cta = LinkTarget::fromAttributes($attributes);
+
+        return '<a class="btn btn--accent header-cta" href="' . esc_url($this->linkTarget()->href($cta, '/contact')) . '"'
+            . $this->linkTarget()->targetAttributes($cta) . '>'
             . esc_html($label) . '</a>';
     }
 
     /**
-     * Resolves the CTA target. An empty value falls back to the contact route. An external, protocol-
-     * relative, mailto/tel, or same-page-anchor URL is used verbatim; only an internal path is localized
-     * through the language driver (mirrors the nav-item rule) so it never becomes a homepage URL.
+     * The shared link resolver, built from this renderer's language driver. Held lazily because the
+     * driver is resolved per request and a renderer may render several links.
      */
-    private function ctaHref(string $url): string
+    private function linkTarget(): LinkTarget
     {
-        $url = trim($url);
-        if ($url === '') {
-            return $this->languageService->driver()->localizedUrl('/contact');
-        }
-
-        if (
-            str_starts_with($url, '#')
-            || str_starts_with($url, 'mailto:')
-            || str_starts_with($url, 'tel:')
-            || (bool) preg_match('#^(https?:)?//#i', $url)
-        ) {
-            return $url;
-        }
-
-        return $this->languageService->driver()->localizedUrl($url);
+        return $this->linkTarget ??= new LinkTarget($this->languageService->driver());
     }
 
     /** @param list<array{label: string, href: string, children?: list<array{label: string, href: string}>}> $items */
@@ -315,10 +307,12 @@ final class SiteHeaderRenderer
             $ariaCurrent = $isActive ? ' aria-current="page"' : '';
             // A pure fragment ("#contact") is a same-page anchor and language-neutral — localizing
             // it would turn it into an absolute homepage URL and break the anchor on every subpage.
-            $url = str_starts_with($item['href'], '#') ? $item['href'] : $driver->localizedUrl($item['href']);
+            // Anything else goes through LinkTarget, which also resolves a picked page (spec 021 T036).
+            $url = $this->linkTarget()->href($item, $item['href'] ?? '/');
+            $newTab = $this->linkTarget()->targetAttributes($item);
 
             $html .= '<li' . ($classes !== '' ? ' class="' . esc_attr($classes) . '"' : '') . ($hasChildren ? ' data-wp-interactive="perego/site-header"' : '') . '>';
-            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url($url) . '"' . $ariaCurrent
+            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url($url) . '"' . $ariaCurrent . $newTab
                 . ($hasChildren ? ' aria-haspopup="true" aria-expanded="false" data-wp-on--click="actions.toggleMobileDropdown"' : '') . '>'
                 . esc_html($item['label'])
                 . ($hasChildren ? ' <svg class="nav-caret" width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '')
@@ -327,9 +321,11 @@ final class SiteHeaderRenderer
             if ($hasChildren) {
                 $html .= '<ul class="dropdown">';
                 foreach ($item['children'] as $child) {
+                    // A Services-menu child resolved from a real Service post already carries its
+                    // absolute URL; anything else is an editor-configured link.
                     $childUrl = (string) ($child['absoluteUrl'] ?? '');
-                    $childUrl = $childUrl !== '' ? $childUrl : $driver->localizedUrl($child['href']);
-                    $html .= '<li><a href="' . esc_url($childUrl) . '">'
+                    $childUrl = $childUrl !== '' ? $childUrl : $this->linkTarget()->href($child, $child['href'] ?? '/');
+                    $html .= '<li><a href="' . esc_url($childUrl) . '"' . $this->linkTarget()->targetAttributes($child) . '>'
                         . esc_html($child['label']) . '</a></li>';
                 }
                 $html .= '</ul>';

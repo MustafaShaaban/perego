@@ -19,6 +19,7 @@ import { InspectorControls, RichText, useBlockProps } from '@wordpress/block-edi
 import { Button, TextControl, TextareaControl } from '@wordpress/components';
 import { useState } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
+import { LinkPicker, linkFromAttributes, linkToAttributes } from '../../Editor/LinkPicker';
 import { PanelSection } from '../../Editor/PanelSection';
 import { RepeaterControls } from '../../Editor/RepeaterControls';
 import {
@@ -109,6 +110,14 @@ function Edit( { attributes, setAttributes } ) {
 						value={ attributes.ctaAr }
 						onChange={ ( ctaAr ) => setAttributes( { ctaAr } ) }
 						placeholder={ SEED_CTA_AR } />
+				</PanelSection>
+				<PanelSection title={ __( 'CTA link', 'perego-site' ) }>
+					<LinkPicker
+						showLabel={ false }
+						link={ linkFromAttributes( attributes ) }
+						hrefText={ __( 'Button link', 'perego-site' ) }
+						hrefHelp={ __( 'Leave empty for the contact page. A path such as /work is localized automatically.', 'perego-site' ) }
+						onChange={ ( next ) => setAttributes( linkToAttributes( next ) ) } />
 				</PanelSection>
 			</InspectorControls>
 			<div className="perego-hero-slider__preview" onClick={ ( event ) => {
