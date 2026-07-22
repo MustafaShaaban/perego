@@ -13,7 +13,7 @@
   `_perego_client_video_url` and the renderer took its no-video branch — cards that looked right and
   did nothing. New `PeregoSite\Content\TranslatedMeta` (extracted from `ProjectRepository`, which had
   already solved this for Projects) gives Clients the linked-English fallback for video URL/type,
-  gallery, subtitle, statistic **and** featured image (27 of 31 AR clients had no thumbnail either).
+  gallery **and** featured image (27 of 31 AR clients had no thumbnail either). **Subtitle and statistic deliberately do NOT fall back** — the matrix caught the first cut printing the English `intertainment show` onto Arabic cards. Rule: media crosses languages, editorial copy does not.
 - **② Eight AR-only demo clients** (`…تجريبي` = *demo*) moved to **draft**, not deleted. Published
   clients now **23 EN / 23 AR**. Clients were the only content type with a gap.
   **⚠️ DB-only change — production needs the same eight unpublished separately.**
@@ -23,7 +23,7 @@
 - **Ordering mattered:** unpublishing the demo clients first would have left AR with three inert cards
   and no working lightbox at all, since the four that worked were the demo ones. Renderer fix landed first.
 - **Verified:** AR and EN now both render **3 individual lightbox buttons + 20 corporate cards**; EN
-  output **byte-identical** on every route; Pest **417** (+4), Jest **193**, build clean; ten routes 200.
+  output **byte-identical** on every route; Pest **418** (+5), Jest **193**, build clean; ten routes 200. The **T031 EN/AR matrix** shows all seven page pairs structurally identical.
 - **CoreX v0.35.1** merged onto `chore/corex-v0.35.0-update` (PR #38 retitled): 3 commits/23 files past
   v0.35.0, did not touch the five #114 files, CoreX unit 1408/49 — same environmental Patchwork baseline.
 - **Next:** Track C — the remaining spec-021 tasks, starting with the Phase 6 release gates

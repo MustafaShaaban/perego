@@ -389,16 +389,35 @@ it('resolves an Arabic client video from its linked English record, so the AR ca
     Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 21 && $locale === 'en' ? 210 : 0);
     Functions\when('get_post_meta')->alias(fn (int $id, string $key) => match (true) {
         $id === 210 && $key === ClientPostType::META_VIDEO_URL => 'https://www.youtube.com/embed/from-english',
-        $id === 210 && $key === ClientPostType::META_SUB => 'From the English record',
+        // Editorial copy on the English record — must NOT be inherited (see the next test).
+        $id === 210 && $key === ClientPostType::META_SUB => 'English subtitle',
         default => '',
     });
 
     $html = renderClients();
 
     expect($html)->toContain('<button type="button" class="indiv-card" data-video="https://www.youtube.com/embed/from-english"')
-        ->and($html)->toContain('From the English record')
         // The exact defect: no inert div is left behind for a client whose EN record has a video.
         ->and($html)->not->toContain('<div class="indiv-card" role="listitem">');
+});
+
+it('does NOT inherit the English subtitle or statistic — media crosses languages, editorial copy does not', function () {
+    // The first cut of this fix pulled sub/stat through the same fallback, which printed the English
+    // wording ("intertainment show", live on the EN records) onto Arabic cards — the very language
+    // leak this pass removes. An untranslated card shows no subtitle and still opens its video.
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 21 && $locale === 'en' ? 210 : 0);
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key) => match (true) {
+        $id === 210 && $key === ClientPostType::META_VIDEO_URL => 'https://www.youtube.com/embed/from-english',
+        $id === 210 && $key === ClientPostType::META_SUB => 'intertainment show',
+        $id === 210 && $key === ClientPostType::META_STAT => '<strong>+1M</strong> views',
+        default => '',
+    });
+
+    $html = renderClients();
+
+    expect($html)->toContain('data-video="https://www.youtube.com/embed/from-english"')
+        ->and($html)->not->toContain('intertainment show')
+        ->and($html)->not->toContain('+1M');
 });
 
 it('prefers the translated post own meta over the English record when it has its own', function () {

@@ -43,9 +43,24 @@ the obvious next i18n pass.
 three inert cards and **no working lightbox at all**, since the four that did work were the demo ones.
 The renderer fix landed first.
 
+**Where the fallback stops, and why — the T031 matrix caught this.** The first cut routed the card
+*subtitle* and *statistic* through the same English fallback. The regression matrix then flagged
+`intertainment show` rendering on the Arabic homepage: the three English client records carry that
+subtitle (misspelled, incidentally — *entertainment*), no Arabic record has one, so the fallback was
+printing English editorial copy onto Arabic cards — **the exact language leak this pass exists to
+remove.** The rule is now explicit: **media crosses languages, editorial copy does not.** Video URL,
+video type, gallery and featured image fall back; subtitle and statistic do not. An untranslated card
+shows no subtitle — which is the prompt to enter Arabic copy — and still opens its video. Pinned by a
+test that fails if either value is ever inherited again.
+
 **Verified:** EN output **byte-identical** on every route (the fix is AR-only by construction); AR and
-EN now both render 3 individual lightbox buttons and 20 corporate cards; Pest **417** (+4 regression
-tests pinning the English-fallback rule in both directions), Jest **193**, build clean.
+EN now both render 3 individual lightbox buttons and 20 corporate cards, with no English leak on AR;
+the EN/AR structural matrix is identical across all seven page pairs; Pest **418** (+5 regression tests
+pinning the fallback rule in both directions), Jest **193**, build clean.
+
+**Content notes for the owner** (not code): the English client subtitle reads `intertainment show` —
+a misspelling of *entertainment*; and the three individual client records have no Arabic subtitle or
+statistic, so those Arabic cards render without them until the copy is entered.
 
 ## 2026-07-23 — CoreX updated to upstream/main; our issue #114 fix adopted, our implementation dropped
 

@@ -182,14 +182,19 @@ final class ClientsCarouselRenderer
     private function individualCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
-        // Every value below is language-neutral card data, and Polylang does not copy meta to
-        // translations: read through TranslatedMeta so an Arabic client inherits its linked English
-        // record's video and card details. Without this the AR carousel rendered inert `<div>`s.
-        $sub = TranslatedMeta::string($client, ClientPostType::META_SUB);
-        $stat = TranslatedMeta::string($client, ClientPostType::META_STAT);
+        // MEDIA falls back to the linked English record, because Polylang does not copy meta to
+        // translations and a video/thumbnail is the same asset in either language. Without this the
+        // Arabic carousel rendered inert `<div>`s that looked right and did nothing when clicked.
         $thumb = $this->thumbnailHtml($client);
         $videoUrl = TranslatedMeta::string($client, ClientPostType::META_VIDEO_URL);
         $videoType = ClientPostType::sanitizeVideoType(TranslatedMeta::string($client, ClientPostType::META_VIDEO_TYPE));
+        // COPY deliberately does NOT fall back. The subtitle and statistic are editorial text, not
+        // assets: inheriting them would print the English wording on an Arabic card (the live EN
+        // records carry "intertainment show"), which is the language leak this whole pass exists to
+        // remove. An untranslated card shows no subtitle — the prompt to enter Arabic copy — while
+        // still opening its video.
+        $sub = (string) get_post_meta($client->ID, ClientPostType::META_SUB, true);
+        $stat = (string) get_post_meta($client->ID, ClientPostType::META_STAT, true);
         $opensLightbox = $videoUrl !== '' && $videoType !== 'external';
 
         if ($opensLightbox) {
