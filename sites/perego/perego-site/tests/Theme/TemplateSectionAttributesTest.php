@@ -103,3 +103,37 @@ it('restores the contact hero anchor', function () {
 
     expect($attributes)->toBe(['id' => 'contactChoose']);
 });
+
+/*
+ * spec 021 C14 — the `<main>` landmark shared by archive-perego_service, legal, page and search.
+ * `#main` is the skip-link target and `tabindex="-1"` is what lets the skip link move focus there;
+ * `core/group` can emit neither, so both are restored together.
+ */
+
+it('restores the main landmark id and tabindex on a tagName=main group', function () {
+    $attributes = (new TemplateSectionAttributes())->attributesFor([
+        'blockName' => 'core/group',
+        'attrs' => ['tagName' => 'main'],
+    ]);
+
+    expect($attributes)->toBe(['id' => 'main', 'tabindex' => '-1']);
+});
+
+it('matches the main landmark on tagName even though those groups carry no className', function () {
+    $sections = new TemplateSectionAttributes();
+
+    expect($sections->attributesFor([
+        'blockName' => 'core/group',
+        'attrs' => ['tagName' => 'main', 'className' => 'anything'],
+    ]))->toBe(['id' => 'main', 'tabindex' => '-1'])
+        // A section-tag group is not the landmark.
+        ->and($sections->attributesFor([
+            'blockName' => 'core/group',
+            'attrs' => ['tagName' => 'section'],
+        ]))->toBe([])
+        // …and neither is a main-tagged non-group block.
+        ->and($sections->attributesFor([
+            'blockName' => 'core/cover',
+            'attrs' => ['tagName' => 'main'],
+        ]))->toBe([]);
+});

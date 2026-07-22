@@ -2,6 +2,36 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C14 + C15 COMPLETE: every page done, T035 sweep finished
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. **No Perego block renders a bare sentence any more**,
+  and **all seven templates flagged by T035 are fixed.**
+- **C14 `services-overview`:** the real composition — hero + four service tabs, the two-column intro,
+  the process rail (steps interleaved with arrows, never one after the last — pinned by a test), the
+  selected-work masonry, and the closing CTA. Parity pins the **fixed sections**; the masonry renders
+  one tile per project (23 here, 9 KB), so it is a documented sample — the same split as
+  `search-results`.
+- **⚠️ Finding for the owner: the services archive is unreachable.** `ServicePostType` registers the
+  CPT with `has_archive => false`, so `/services/` **404s** while `/services/<slug>/` works. That makes
+  `archive-perego_service.html` — and the whole `services-overview` block — dead on the public site
+  today. The block still needed a real canvas (it is insertable, and the template renders the moment
+  the archive is enabled), but **enabling the archive is a decision, not a bug fix**, so nothing here
+  changes the public site. Flagging rather than flipping the flag.
+- **C15:** `legal-toc`, `legal-updated`, `not-found`, `preloader`, `media-lightbox` all render real
+  markup with parity tests. `media-lightbox` deliberately previews **visible** although the front end
+  ships it `hidden` — a hidden element shows nothing, which is exactly what the bare sentence did.
+  `footer-careers` moved off its two stacked `<fieldset>`s onto the standard: English edited in place
+  in the real footer markup, Arabic on `LanguagePair`.
+- **T035 complete.** The last four templates shared the `<main id="main" tabindex="-1">` landmark;
+  `id` and `tabindex` are restored together because `anchor` could give the id but never the tabindex,
+  and splitting the pair across two mechanisms would be worse. Because those attributes preceded
+  `class` in the original markup, the restored output is **byte-identical** — `/?s=design` diffs to
+  **0 lines** against a baseline captured before the change.
+- **Verified:** `/`, `/work/`, `/contact/`, `/?s=design` all **0 differing lines**; `/terms/`,
+  `/privacy/`, `/journal/`, a service single and the 404 all correct. Pest **413/413**, Jest
+  **184/184** (+17), build clean.
+- **Next:** Track 3 — the ACF-grade sidebar fields and CPT admin list columns (Phase 4: T017–T022).
+
 ## RESUME HERE (2026-07-22) — Spec 021 C13 COMPLETE: Contact page
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. `contact-service-chooser` and `join-form` both render

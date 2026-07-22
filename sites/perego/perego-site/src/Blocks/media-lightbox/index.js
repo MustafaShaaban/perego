@@ -1,18 +1,28 @@
 /**
- * Editor registration for perego-theme/media-lightbox. Server-rendered (save returns null); the
- * dialog markup comes from MediaLightboxRenderer and view.js wires every [data-image]/[data-video]/
- * [data-gallery] trigger on the page to it.
+ * Perego media-lightbox block — editor registration (spec 021 C15; DECISIONS 2026-07-22). The canvas renders the
+ * REAL markup (`MediaLightboxSkeleton` in preview.js), styled by the theme's `main.css` via
+ * `add_editor_style`, replacing an `edit()` that returned a bare sentence.
+ *
+ * **Locked** preview with no controls — see preview.js for what derives each part.
+ * Server-rendered (save returns null).
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { __ } from '@wordpress/i18n';
+import { useBlockProps } from '@wordpress/block-editor';
+import { MediaLightboxSkeleton } from './preview';
 import metadata from './block.json';
 import './style.scss';
 
-registerBlockType( metadata.name, {
-	edit: () =>
-		__(
-			'Media lightbox — the site-wide accessible dialog for image/video/gallery triggers. Rendered once by MediaLightboxRenderer.',
-			'perego-site'
-		),
-	save: () => null,
-} );
+function Edit() {
+	return (
+		<div { ...useBlockProps( { className: 'perego-media-lightbox__editor' } ) }
+			onClick={ ( event ) => {
+				if ( event.target.closest( 'a, button' ) ) {
+					event.preventDefault();
+				}
+			} }>
+			<MediaLightboxSkeleton />
+		</div>
+	);
+}
+
+registerBlockType( metadata.name, { edit: Edit, save: () => null } );

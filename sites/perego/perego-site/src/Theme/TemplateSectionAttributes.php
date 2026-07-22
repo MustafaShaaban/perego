@@ -77,6 +77,22 @@ final class TemplateSectionAttributes
     ];
 
     /**
+     * The `<main>` landmark shared by the four templates that wrap it in a `core/group`
+     * (archive-perego_service, legal, page, search). `#main` is the skip-link target and
+     * `tabindex="-1"` is what lets the skip link actually move focus there — neither of which
+     * `core/group` can emit (`anchor` would give the id, but never the tabindex, and splitting the
+     * pair across two mechanisms is worse than keeping them together).
+     *
+     * Keyed on `tagName` rather than className because these groups have no className of their own.
+     *
+     * @var array<string, string>
+     */
+    private const MAIN_LANDMARK = [
+        'id' => 'main',
+        'tabindex' => '-1',
+    ];
+
+    /**
      * The attributes a parsed block needs restored — empty for every block this class does not own.
      *
      * @param array<string, mixed> $block a parsed block, as passed to the `render_block` filter
@@ -86,9 +102,19 @@ final class TemplateSectionAttributes
     {
         $blockName = $block['blockName'] ?? null;
         $attrs = $block['attrs'] ?? [];
-        $className = is_array($attrs) ? ($attrs['className'] ?? null) : null;
 
-        if (! is_string($blockName) || ! is_string($className)) {
+        if (! is_string($blockName) || ! is_array($attrs)) {
+            return [];
+        }
+
+        // The `<main>` landmark groups carry no className, so they are matched on their tagName.
+        if ($blockName === 'core/group' && ($attrs['tagName'] ?? '') === 'main') {
+            return self::MAIN_LANDMARK;
+        }
+
+        $className = $attrs['className'] ?? null;
+
+        if (! is_string($className)) {
             return [];
         }
 
