@@ -337,9 +337,14 @@ final class PeregoSiteServiceProvider
             ]);
 
             register_block_type($this->blockDir('journal-header'), [
-                'render_callback' => static function () use ($languageService): string {
+                'render_callback' => static function (array $attributes) use ($languageService): string {
+                    $locale = $languageService->driver()->currentLocale();
+
+                    // spec 021 C12: the archive title/lead are editable per locale; an empty field
+                    // falls back to the seed copy, so an unedited block is unchanged.
                     return (new JournalHeaderRenderer(
-                        new GlobalContent($languageService->driver()->currentLocale())
+                        new GlobalContent($locale),
+                        LocalizedAttributes::pick($attributes, $locale, ['title', 'lead']),
                     ))->render();
                 },
             ]);

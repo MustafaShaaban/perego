@@ -19,13 +19,24 @@ use PeregoSite\Content\GlobalContent;
  */
 final class JournalHeaderRenderer
 {
-    public function __construct(private readonly GlobalContent $content)
-    {
+    /**
+     * @param array{title?: string, lead?: string} $overrides the block's editable copy, already
+     *        resolved to the current locale by `LocalizedAttributes::pick` (spec 021 C12)
+     */
+    public function __construct(
+        private readonly GlobalContent $content,
+        private readonly array $overrides = [],
+    ) {
     }
 
     public function render(): string
     {
-        $j = $this->content->journal();
+        // The Content class owns the seed-vs-override rule; only a non-empty override wins, so an
+        // unedited block renders exactly what it always did.
+        $j = $this->content->journal([
+            'h1' => $this->overrides['title'] ?? null,
+            'lead' => $this->overrides['lead'] ?? null,
+        ]);
 
         $html = '<div class="post-hero__inner" style="text-align:center;">';
         $html .= '<nav class="page-crumb" style="justify-content:center;" aria-label="' . esc_attr__('Breadcrumb', 'perego-site') . '">';

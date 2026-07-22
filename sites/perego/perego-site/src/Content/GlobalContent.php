@@ -206,9 +206,30 @@ final class GlobalContent
     ];
 
     /** @return array<string, string> */
-    public function journal(): array
+    /**
+     * The journal-archive copy, with the journal-header block's editable overrides applied
+     * (spec 021 C12, same seam as `PortfolioContent::gridStrings()`).
+     *
+     * Only a non-empty override wins, so clearing a field in the editor restores the seed rather than
+     * blanking the page, and an unedited block renders exactly what it always did. `minRead` stays
+     * seed-only — it is a `sprintf` format string belonging to the translation catalogue, not editorial
+     * copy, and an editor who dropped its `%d` would break every reading estimate on the site.
+     *
+     * @param array{h1?: string, lead?: string} $overrides
+     * @return array<string, string>
+     */
+    public function journal(array $overrides = []): array
     {
-        return self::COPY[$this->locale]['journal'];
+        $copy = self::COPY[$this->locale]['journal'];
+
+        foreach (['h1', 'lead'] as $key) {
+            $value = $overrides[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                $copy[$key] = $value;
+            }
+        }
+
+        return $copy;
     }
 
     /** The localized "Home" breadcrumb root label (handoff `ui.breadcrumbHome`). */

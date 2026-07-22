@@ -2,6 +2,32 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-22) — Spec 021 C12 part 1: journal-header, post-breadcrumb, post-reading-time
+
+- **Branch:** `feature/021-fse-visual-editing-ux`. Three of C12's six blocks are done; the batch is
+  deliberately split because the other three are a different problem (below).
+- **`journal-header`:** real `.post-hero__inner` skeleton (breadcrumb + `h1` + lead) replacing a bare
+  sentence, with the **title and lead editable per locale** — reusing the seed-override seam C11
+  established, now on `GlobalContent::journal( array $overrides )`. `minRead` stays seed-only: it is a
+  `sprintf` format string, and an editor who dropped its `%d` would break every reading estimate.
+- **`post-breadcrumb` / `post-reading-time`:** locked previews of the real markup. The breadcrumb
+  mirrors the edited post's title live and drops the Journal step on a page, exactly as the renderer
+  does — pinned by a test.
+- **Deliberately NOT done in this commit — the other three C12 blocks.** `journal-comments`,
+  `related-posts` and `search-results` are all **context/query-driven** (the queried post, the related
+  query, `?s=`), so a hand-built skeleton would need a fixture of whatever the query happened to
+  return: the live search page renders **25 result cards / 11 KB**, the same problem that made
+  portfolio-grid a `ServerSideRender` block. They need the dynamic treatment and a decision on the
+  sample shape, not a rushed skeleton. Recorded in `tasks.md` under C12.
+- **Verified:** `/journal/` and an English journal single both **0 differing lines**; Pest **404/404**
+  (+3 journal-header override tests), Jest **152/152** (+7 parity), build clean.
+- **⚠️ Still not confirmed by me:** anything about the editor's *appearance*. The owner offered
+  wp-admin credentials; entering a password is something I will not do, so the browser session has to
+  be opened by the owner. Once it is, the live editor check for every block so far can be done in one
+  pass.
+- **Next:** finish C12 (the three dynamic blocks + `home.html`/`archive.html` T035 fixes), then C13
+  Contact, C14 Services archive, C15 Legal/misc. Then Track 3, the ACF-grade sidebar fields.
+
 ## RESUME HERE (2026-07-22) — Spec 021 T036: the link picker (Track 1 of 3 complete)
 
 - **Branch:** `feature/021-fse-visual-editing-ux`. Owner set the order **link picker → pages → fields**
