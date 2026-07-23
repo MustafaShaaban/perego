@@ -19,11 +19,19 @@ final readonly class SubmissionInboxQuery
 {
     public const STATUSES = ['new', 'in_progress', 'replied', 'closed', 'spam', 'archived'];
 
+    /** Marks a `flow` value as a form slug rather than a flow id. */
+    public const SLUG_PREFIX = 'slug:';
+
     private const MAX_PAGE_SIZE = 100;
 
     private function __construct(
         public string $search,
         public int $flowId,
+        /**
+         * Set instead of `flowId` when the chosen form has no flow row — a form registered in code
+         * through `FormRegistry`, whose submissions carry `corex_form_slug` and no `corex_flow_id`.
+         * Exactly one of the two is ever set.
+         */
         public string $formSlug,
         public string $status,
         public string $owner,
@@ -54,15 +62,17 @@ final readonly class SubmissionInboxQuery
             throw new InvalidArgumentException('The submission date range is invalid.');
         }
 
-        // The `flow` filter carries either a numeric DB flow id or `slug:<form-slug>` for a
-        // code-registered form (which has no flow id and is matched on `corex_form_slug` instead).
-        $flowInput = trim((string) ($input['flow'] ?? ''));
-        $formSlug  = str_starts_with($flowInput, 'slug:') ? sanitize_key(substr($flowInput, 5)) : '';
-        $flowId    = $formSlug === '' ? max(0, (int) $flowInput) : 0;
+        // `flow` is either a numeric flow id or `slug:<form-slug>` for a code-registered form that
+        // has no flow row. Casting the latter with (int) would silently yield 0 — "all forms" —
+        // which reads as a filter that quietly ignored you.
+        $flow     = trim((string) ($input['flow'] ?? ''));
+        $formSlug = str_starts_with($flow, self::SLUG_PREFIX)
+            ? sanitize_key(substr($flow, strlen(self::SLUG_PREFIX)))
+            : '';
 
         return new self(
             search: trim((string) ($input['search'] ?? '')),
-            flowId: $flowId,
+            flowId: $formSlug === '' ? max(0, (int) $flow) : 0,
             formSlug: $formSlug,
             status: $status,
             owner: $owner,

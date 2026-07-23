@@ -2,6 +2,22 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-23) — CoreX v0.35.1 merged into this branch
+
+- **PR #38 is merged** into `feature/001-global-foundation` (merge commit `0e40627`), and that base is
+  now merged **into this branch**: the framework here is `upstream/main` (v0.35.1 + our issue-#114 fix),
+  no longer v0.34.0. Merged by hand over SSH because `gh pr merge` is refused — the OAuth token has no
+  `workflow` scope and the PR touches `.github/workflows/`. All seven checks were green on the merged tip.
+- **Only `PROGRESS.md` and `DECISIONS.md` conflicted** (each branch appends at the top); both sides kept,
+  newest first. No source file conflicted.
+- **`DECISIONS.md` now carries the 2026-07-23 corrections** — the 49 Pest failures were *ours*
+  (`SubmissionInboxQueryTest` defining `sanitize_key()` at file scope, blocking Patchwork for 49 later
+  tests), not "environmental"; and the root Jest sweep now excludes `sites/`, which leaves the client
+  JS suite running in **no CI job at all**. Both supersede any earlier "environmental baseline" wording
+  below.
+- **Next:** spec 021 — merge this branch into `feature/021-fse-visual-editing-ux` (PR #37), then Track C,
+  starting with the Phase 6 release gates T030–T032.
+
 ## RESUME HERE (2026-07-20) — Spec 020 round 15: work filters/pager + lightbox nav (live-verified)
 
 - **Branch:** `feature/020-home-visual-audit`. Owner re-tested round 14: work filters still didn't filter,

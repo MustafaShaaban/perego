@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 
 use Corex\Http\Middleware\Request;
 use Corex\Http\Middleware\Response;
+use Corex\Http\RouteParam;
 use DomainException;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -54,7 +55,7 @@ final readonly class SubmissionsController
     public function show(WP_REST_Request $request): WP_REST_Response
     {
         return $this->gateway->read($request, function () use ($request): Response {
-            $record = $this->services->queries->detail(get_current_user_id(), absint($request->get_param('id')));
+            $record = $this->services->queries->detail(get_current_user_id(), RouteParam::int($request));
             if ($record === null) {
                 throw new DomainException(__('Submission was not found.', 'corex'));
             }
@@ -67,7 +68,7 @@ final readonly class SubmissionsController
     {
         return $this->gateway->mutate($request, $this->updateShape(), function (Request $safe) use ($request): Response {
             $scope = $this->scope();
-            $id = absint($request->get_param('id'));
+            $id = RouteParam::int($request);
             $expected = (string) ($safe->input['expected_updated_at'] ?? '');
             $record = null;
             if (($safe->input['status'] ?? '') !== '') {
@@ -99,7 +100,7 @@ final readonly class SubmissionsController
             'visibility' => 'sanitize_key',
         ], fn (Request $safe): Response => Response::ok(['note' => $this->services->workflow->addNote(
             $this->scope(),
-            absint($request->get_param('id')),
+            RouteParam::int($request),
             (string) ($safe->input['body'] ?? ''),
             (string) ($safe->input['visibility'] ?? 'corex-team'),
         )]));
@@ -112,7 +113,7 @@ final readonly class SubmissionsController
             'body' => 'wp_kses_post',
         ], fn (Request $safe): Response => Response::ok(['result' => $this->services->email->reply(
             $this->scope(),
-            absint($request->get_param('id')),
+            RouteParam::int($request),
             new SubmissionReply((string) ($safe->input['subject'] ?? ''), (string) ($safe->input['body'] ?? '')),
         )->toArray()]));
     }
@@ -122,7 +123,7 @@ final readonly class SubmissionsController
         return $this->gateway->mutate($request, ['attempt_id' => 'sanitize_text_field'], fn (Request $safe): Response =>
             Response::ok(['result' => $this->services->email->resend(
                 $this->scope(),
-                absint($request->get_param('id')),
+                RouteParam::int($request),
                 (string) ($safe->input['attempt_id'] ?? ''),
             )->toArray()]));
     }
@@ -131,7 +132,7 @@ final readonly class SubmissionsController
     {
         return $this->gateway->read($request, fn (): Response => Response::ok(['log' => $this->services->email->log(
             $this->scope(),
-            absint($request->get_param('id')),
+            RouteParam::int($request),
             sanitize_text_field((string) $request->get_param('attempt_id')),
         )]));
     }
@@ -178,7 +179,7 @@ final readonly class SubmissionsController
     public function downloadExport(WP_REST_Request $request): WP_REST_Response
     {
         return $this->gateway->read($request, fn (): Response => Response::ok([
-            'artifact' => $this->services->exports->download($this->scope(), absint($request->get_param('export'))),
+            'artifact' => $this->services->exports->download($this->scope(), RouteParam::int($request, 'export')),
         ]));
     }
 
@@ -253,7 +254,10 @@ final readonly class SubmissionsController
 
         return [
             'search' => sanitize_text_field((string) ($value['search'] ?? '')),
-            'flow' => $this->flowParam($value['flow'] ?? 0),
+            // Not absint(): `flow` may be `slug:<form-slug>` for a form registered in code, and
+            // absint() would flatten that to 0 — so a filtered export would quietly cover every
+            // form instead of the one that was chosen. SubmissionInboxQuery validates both shapes.
+            'flow' => $this->flowFilter($value['flow'] ?? 0),
             'status' => sanitize_key((string) ($value['status'] ?? '')),
             'owner' => sanitize_text_field((string) ($value['owner'] ?? '')),
             'date_from' => sanitize_text_field((string) ($value['date_from'] ?? '')),
@@ -261,18 +265,17 @@ final readonly class SubmissionsController
         ];
     }
 
-    /**
-     * The `flow` filter is either a numeric DB flow id or `slug:<form-slug>` for a code-registered
-     * form. Preserve the slug form (a plain absint would drop it to 0) so filtered export honours a
-     * code-form selection, exactly as the inbox listing does.
-     */
-    private function flowParam(mixed $value): string
+    /** Either a flow id or `slug:<form-slug>`; anything else narrows to nothing. */
+    private function flowFilter(mixed $value): string
     {
-        $value = trim((string) $value);
+        $value = trim((string) (is_scalar($value) ? $value : ''));
 
-        return str_starts_with($value, 'slug:')
-            ? 'slug:' . sanitize_key(substr($value, 5))
-            : (string) absint($value);
+        if (str_starts_with($value, SubmissionInboxQuery::SLUG_PREFIX)) {
+            return SubmissionInboxQuery::SLUG_PREFIX
+                . sanitize_key(substr($value, strlen(SubmissionInboxQuery::SLUG_PREFIX)));
+        }
+
+        return (string) absint($value);
     }
 
     /** @return array<string,mixed> */
