@@ -176,17 +176,23 @@ final class SettingsRegistry implements FieldSections
                     'captcha.score_threshold' => [
                         'label'     => 'reCAPTCHA v3 score threshold',
                         'type'      => 'text',
-                        'help'      => '0.0–1.0. 0.5 is a common starting point — adjust after reviewing traffic.',
+                        'help'      => '0.0–1.0. Defaults to 0.3 — conservative for ordinary low-traffic sites. Watch real traffic before raising it; a higher threshold rejects more legitimate visitors. Only protected CoreX forms are covered.',
                         'help_url'  => 'https://developers.google.com/recaptcha/docs/v3#interpreting_the_score',
                         'help_link' => 'reCAPTCHA v3 score docs',
                         'show_for'  => ['key' => 'captcha.driver', 'values' => ['recaptcha']],
                     ],
                     'captcha.action' => [
-                        'label'     => 'reCAPTCHA v3 action',
+                        'label'     => 'reCAPTCHA v3 action (global default)',
                         'type'      => 'text',
-                        'help'      => 'A label for the protected action, e.g. contact_form or login.',
+                        'help'      => 'Optional. Each form derives its own action from its slug (corex_form_<slug>); a form can override it. Leave blank unless you need one shared action.',
                         'help_url'  => 'https://developers.google.com/recaptcha/docs/v3#actions',
                         'help_link' => 'reCAPTCHA v3 action docs',
+                        'show_for'  => ['key' => 'captcha.driver', 'values' => ['recaptcha']],
+                    ],
+                    'captcha.allowed_hostnames' => [
+                        'label'     => 'Allowed hostnames',
+                        'type'      => 'text',
+                        'help'      => 'Comma-separated exact hostnames a verification may originate from (e.g. example.com, staging.example.com). Leave blank to allow this site’s own host only. Matched exactly, never by partial match. The secret key never reaches the browser.',
                         'show_for'  => ['key' => 'captcha.driver', 'values' => ['recaptcha']],
                     ],
                 ],
@@ -247,6 +253,24 @@ final class SettingsRegistry implements FieldSections
                         'help'      => 'Found in the Cloudflare dashboard under your account home / API section.',
                         'help_url'  => 'https://developers.cloudflare.com/fundamentals/setup/find-account-and-zone-ids/',
                         'help_link' => 'Find your Cloudflare account ID',
+                    ],
+                ],
+            ],
+            // The optional Dashboard widgets (spec 072 US7 / FR-025). Opt-in by definition, so every
+            // field here defaults to off; the Command Center widget is not listed because it is
+            // registered for everyone with CoreX visibility (FR-023) and is not optional.
+            'dashboard' => [
+                'title'  => 'Dashboard',
+                'fields' => [
+                    'dashboard.widgets.attention' => [
+                        'label' => 'Attention widget',
+                        'type'  => 'checkbox',
+                        'help'  => 'Lists your unread CoreX notifications on the WordPress dashboard. Hidden automatically when you have none.',
+                    ],
+                    'dashboard.widgets.development' => [
+                        'label' => 'Development widget',
+                        'type'  => 'checkbox',
+                        'help'  => 'Shows the operating mode and its warnings. Only ever appears while the site is in Development.',
                     ],
                 ],
             ],

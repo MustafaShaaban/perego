@@ -34,7 +34,9 @@ it('renders the real sections as ARIA tabs in the fixed order', function () {
 
     preg_match_all('/data-corex-tab="([a-z]+)"/', $html, $matches);
 
-    expect($matches[1])->toBe(['brand', 'mail', 'forms', 'captcha', 'media', 'insights', 'advanced'])
+    // 'dashboard' carries the spec-072 optional-widget toggles; Advanced stays last as the
+    // read-only diagnostics catch-all.
+    expect($matches[1])->toBe(['brand', 'mail', 'forms', 'captcha', 'media', 'insights', 'dashboard', 'advanced'])
         ->and($html)->toContain('role="tablist"')
         ->toContain('role="tab"')
         ->toContain('role="tabpanel"')
@@ -176,9 +178,9 @@ it('adds captcha reference links + helper copy with safe external attributes', f
         ->toContain( 'https://developers.google.com/recaptcha/docs/v3#interpreting_the_score' )
         ->toContain( 'https://developers.google.com/recaptcha/docs/v3#actions' )
         ->toContain( 'Create reCAPTCHA keys' )
-        // practical helper copy for the v3 fields
-        ->toContain( '0.5 is a common starting point' )
-        ->toContain( 'contact_form or login' )
+        // practical helper copy for the v3 fields — corrected to the shipped default (spec 071)
+        ->toContain( 'Defaults to 0.3' )
+        ->toContain( 'corex_form_' )
         ->toContain( 'target="_blank"' )
         ->toContain( 'rel="noopener noreferrer"' );
 });

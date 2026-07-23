@@ -2694,3 +2694,393 @@ session -- three new Playwright tests silently depended on login protection bein
 enable it themselves and restore the exact prior value.
 
 Status: Both fixed. Integration suite is fully green (158/158) for the first time this session.
+
+## #143 -- Spec 070: a route's identity comes from its path, never its payload
+
+Context: saving an Email Studio template draft answered 404 for a template that plainly existed, and the UI
+showed only "Something went wrong. Please try again."
+
+Two independent defects, stacked, which is why neither was obvious.
+
+`WP_REST_Request::get_parameter_order()` resolves JSON body params and the query string *before* URL params.
+`saveDraft()` read `get_param('id')`, and the editor was posting the stored version's own `id` in the body --
+it built the draft as `{ ...EMPTY_DRAFT, ...latest }`, spreading the whole version record (`id`, `template_id`,
+`version`, `checksum`, `created_by`, `created_at`) into the payload. So a save aimed at template 3859 looked up
+version id 3860 as a template, found nothing, and 404'd. Only templates that already had a saved version could
+trigger it -- one with none uses `emptyDraft()`, which carries no `id`. That is why it looked intermittent.
+
+The message was lost separately. `corex-runtime.js` called `wp.apiFetch({ parse: false })` and assumed a
+non-2xx *resolves*; core's `parseAndThrowError()` rethrows the raw `Response`, so the `response.ok === false`
+branch was dead code and every 4xx/5xx fell into the blanket `.catch` and became a generic error. The server's
+"That email template was not found." never left the wire.
+
+Decision: fix both ends, and treat the param shadowing as a class rather than an instance. New
+`Corex\Http\RouteParam` reads `get_url_params()` directly, which nothing can shadow, applied to every
+route-captured identifier in `EmailStudioController`, `FlowController`, `SubmissionsController` and
+`DataManagementController` (24 `::int`, 1 `::string`). `source` in `DataManagementController` deliberately
+stays on `get_param()` -- `migrations()` reads it as a query filter on a route that captures no `source`, so
+converting it would have broken a working endpoint.
+
+Why record it: `get_param()` reads as the obvious accessor and is wrong for anything the route captured. Four
+controllers had the same latent trap and `get_url_params()` appeared nowhere in the codebase. The integration
+tests missed it because they set route ids with `set_param()`, which WordPress files under the *body* -- so the
+tests were modelling the exact mistake the production code made. They now use `set_url_params()`, which is what
+`WP_REST_Server::dispatch()` actually does.
+
+Status: Fixed and verified live -- the save returns 201 with a new version. 164/164 integration green.
+
+## #144 -- Spec 070: the hidden-admin 404 was unstyled, and 069 said that was impossible
+
+Context: the owner reported that a hidden `/wp-admin` "redirects to unstyled page". Spec 069 had recorded the
+same response as a documented, unfixable limitation.
+
+069's analysis named `wp_should_load_separate_core_block_assets()`, which does return on `is_admin()` before its
+own filter -- accurate, and it is why the two responses are still ~250 bytes apart. But it is not what emptied
+the page. That was `wp_common_block_scripts_and_styles()`, which opens
+`if ( is_admin() && ! wp_should_load_block_editor_scripts_and_styles() ) return;`. On a hidden admin 404 both
+hold, so the response got no per-block sheets, no monolithic `wp-block-library`, no `wp-block-library-theme`,
+and `enqueue_block_assets` never fired. `wp_enqueue_global_styles` has no such gate, so `theme.json` tokens
+still printed -- colours and custom properties, no block layout or appearance CSS. On a block theme with no
+`functions.php` and a metadata-only `style.css`, that renders as broken.
+
+It was always reachable: that gate is hooked to `wp_enqueue_scripts`, which fires during `wp_head()`, long
+after `render404()` runs on `wp_loaded`. `LoginRouteGuard::enqueueBlockStyles()` now fills it. Enqueuing
+directly rather than filtering `should_load_block_editor_scripts_and_styles` is deliberate -- that filter would
+also satisfy the block-*editor* branch and pull in editor assets a real front-end 404 never carries, widening
+the fingerprint in the other direction.
+
+Fixing it surfaced a second, older bug. `.corex-header__inner { max-inline-size: 100% }` has the same
+specificity as core's `.is-layout-constrained > :where(...)`, so which one won depended purely on stylesheet
+order. Inline block styles print later on a normal front-end request, so core won and the theme rule was
+already inert; when the sheet loads as a `<link>` instead -- which is what core does whenever on-demand block
+assets are off -- the order inverted and the header stretched edge to edge. The guard now applies to
+`.corex-header` only.
+
+Why record it: the 069 measurement (46,587 B vs 79,968 B) was read purely as a fingerprinting risk. A 42% gap
+in a rendered page is not a fingerprint, it is missing CSS, and nobody made that connection for a release. When
+a limitation is written down as impossible, it stops being re-examined -- so 069's spec was corrected in place
+rather than left standing with a newer document quietly disagreeing.
+
+Status: Fixed. 46,587 B -> 79,711 B against a 79,964 B control; computed font, layout and header geometry now
+match the genuine 404 exactly. e2e now asserts `wp-block-library` is present and the size gap stays under 5%.
+
+## #145 -- Spec 070 shipped without plan.md or tasks.md, and the backfill says so
+
+Date: 2026-07-20
+
+Decision: Backfill `plan.md`, `tasks.md`, and `checklists/requirements.md` into
+`specs/070-transport-error-fidelity-and-admin-style-parity/` before spec 071 starts, and record the
+deviation here rather than closing the gap silently.
+
+Why: 070 shipped with `spec.md` alone. The constitution's Pre-Implementation Confirmation Rule -- added at
+v1.2.0 specifically to stop code preceding a reviewed plan -- requires the full artifact set, and 070 is the
+exact failure mode that rule exists to prevent. The work itself is sound and verified (164/164 integration,
+298/298 Jest, 8/8 e2e, guards clean); the process record was missing, and a missing process record is what
+lets the next spec skip the step too.
+
+The backfilled documents are labelled retroactive at the top of each file. They reconstruct what was actually
+done -- the file set is reconciled against commit `f9c5656`, not asserted -- and they claim no foresight the
+session did not have. `tasks.md` marks every task complete because every task is verifiably complete; T028
+(the backfill itself) is the one open item.
+
+The checklist deliberately **fails four items**. `070/spec.md` is a root-cause narrative written for
+engineers: it names `get_parameter_order()`, `parseAndThrowError()`, `wp_common_block_scripts_and_styles()`,
+file paths and line-level mechanics, and states its outcome in response bytes. That violates the
+"no implementation details / written for non-technical stakeholders" criteria, and marking those items passing
+would have been the easy lie. They are marked failing, with the reason recorded: both defects were owner-
+reported symptoms whose causes were not what the symptoms suggested, and 069 had already written one of them
+off as unreachable -- so the mechanics were the only durable value the document had. The correct split is
+069's (stakeholder statement in `spec.md`, mechanics in `plan.md`); the backfilled `plan.md` now carries the
+mechanics, but `spec.md` was **not** retro-edited to make the checklist pass, because rewriting a shipped spec
+to flatter a later checklist misrepresents what was actually reviewed at implementation time.
+
+Alternatives considered: log an exception and proceed to 071 with no backfill (rejected: leaves the debt in
+place and normalises the bypass); rewrite `070/spec.md` into stakeholder language so the checklist passes
+cleanly (rejected: dishonest about what was reviewed, and destroys the root-cause record); treat 070 as
+out of scope for this session (rejected: 070 is unmerged, local-only, and 071 branches directly off it, so
+its record is this session's responsibility).
+
+**The backfill earned its keep immediately.** Running `docs-guard` over the new artifacts caught a false claim
+in `070/spec.md` that had shipped with the code and that the backfill had faithfully copied forward:
+"`failureMessage()` surfaces `details.fields`". There is no `failureMessage()` in `corex-runtime.js`, and the
+string `fields` does not appear in that file at all. The bullet named a symbol that never existed and
+described a mechanism that never ran. What actually happens is passthrough — `normalise()` returns a valid
+envelope verbatim via `isEnvelope()`, so the controller's field errors were never being transformed; they were
+discarded wholesale because the rejection path fell into the blanket catch and got `genericError()`. Routing
+it through `fromResponse()` is the whole fix, and the Jest case "keeps field details from a rejected
+validation response" tests exactly that.
+
+Corrected in `spec.md` in place, plus `plan.md` and `tasks.md` T018. Note the failure mode: the backfill
+propagated the error by trusting `spec.md` rather than reading `corex-runtime.js` — the same shortcut that put
+it in `spec.md` in the first place. A spec is not a source of truth about its own implementation; the code is.
+Everything else verified clean (13 file paths, the 24 `::int` + 1 `::string` counts, the 5 `RouteParamTest`
+cases including the literal 3859/3860 shadowing, the byte figures, and the in-place 069 correction).
+
+Status: Final.
+
+## #146 -- Spec 071: reCAPTCHA v3 gets a typed verdict, not a wider boolean
+
+Date: 2026-07-20
+
+Decision: Add a `Corex\Security\VerifyingChallenge` interface (`challenge(token, ChallengeContext):
+ChallengeVerification`) that extends the existing boolean `ChallengeVerifier`, rather than widening
+`verify()` or bolting score-handling onto `RemoteCaptcha`. reCAPTCHA v3 gets a dedicated
+`RecaptchaV3Captcha` driver; turnstile/hcaptcha keep `RemoteCaptcha` unchanged.
+
+Why: a `bool` has nowhere to carry a score, an action, or a reason -- which is precisely why
+`captcha.score_threshold` and `captcha.action` were stored settings that nothing read, and why
+selecting reCAPTCHA rejected every real submission (the token field was never rendered, so the
+always-empty token failed closed). The typed verdict is the place the score lives. Extending rather
+than changing the contract keeps honeypot/null/remote drivers working untouched -- the same
+Mailer -> AttemptingMailer precedent already in the codebase. `ProtectionStage` picks the typed path
+via `instanceof VerifyingChallenge` and falls back to `verify()` otherwise.
+
+The verification runs nine checks fail-closed in a fixed order: token present -> transport ok ->
+parseable -> success -> hostname (exact allowlist, never substring) -> action (server-derived) ->
+expiry -> score -> replay. **Replay is deliberately last**: only a token that has passed every other
+check is ever recorded, so a forged token cannot poison the replay store and a token rejected only on
+score stays replayable if the threshold is later lowered. The plan's R3 table originally listed
+replay before score; the plan's own stated rationale ("recorded only on an otherwise-passing token")
+required last, and the code and tests follow the rationale.
+
+Alternatives considered: widen `ChallengeVerifier::verify()` to return a result object (rejected:
+breaks every existing driver and caller); read `score` inside `RemoteCaptcha` (rejected: conflates
+three providers with different response shapes into one branch-heavy method); a v3-only boolean with
+score checked in `ProtectionStage` (rejected: puts provider-response parsing in the pipeline stage,
+and still cannot express action/hostname/expiry outcomes to the admin).
+
+Status: Final.
+
+## #147 -- Spec 071: CaptchaAction lives in corex-forms, not the captcha add-on
+
+Date: 2026-07-20
+
+Decision: Place `CaptchaAction` (the reCAPTCHA action derivation) in `Corex\Forms\Submission`, not
+in the captcha add-on where plan.md and the extension-api contract originally put it.
+
+Why: the action is a Forms concept -- it is derived from a flow slug, and both the block renderer and
+the protection stage (both in corex-forms) call it. The verifier only *compares* the action it is
+handed; it never derives one. Had it stayed in the add-on, corex-forms would hard-depend on an
+optional add-on, breaking a site that runs forms without captcha -- a Principle IX violation. Moving
+it keeps the dependency arrow pointing the right way: the add-on may depend on forms, never the
+reverse. The plan and extension-api contract were corrected in place with a note.
+
+Alternatives considered: keep it in the add-on and guard every call with `class_exists` (rejected:
+scatters optional-dependency checks through the renderer); duplicate the derivation on both sides
+(rejected: the browser and server would then be able to disagree on the action, which is exactly the
+FR-004 failure the single shared function prevents).
+
+Status: Final.
+
+## #148 -- Spec 071: per-form protection stays out of the version checksum when empty
+
+Date: 2026-07-20
+
+Decision: `FlowConfiguration` gains a seventh `protection` array, defaulted to `[]`. `checksum()`
+omits the key entirely from its canonical document when the array is empty; only a form that actually
+declares protection changes its hash. Normalisation lives in `Corex\Forms\Flow\FlowProtection`, called
+at both serialisation boundaries (stored-payload read and REST input), not in the validator.
+
+Why: the checksum is compared on publish to detect version drift, and every published version on every
+live site already stored a hash computed over six arrays. A new key in the canonical document would
+re-hash all of them at once, reading as universal drift. Omitting an empty protection block makes the
+field invisible to untouched forms -- backward compatibility by construction (FR-025), covered by a
+test that a defaulted config and an explicit-empty config hash identically.
+
+The transient-backed replay guard (`TokenReplayGuard`) deserves the same note: it keys on an
+HMAC-SHA256 fingerprint of the token (never the plaintext) with a TTL just longer than the token's
+own validity window. The TTL is the bound and the cleanup -- an expired entry is harmless because an
+expired token fails the age check first -- so no new table and no pruning job were added, satisfying
+the "bounded and prunable" requirement without new persistence.
+
+Conditional front-end loading uses a render-time `ProtectedFormRegistry` the block renderer populates,
+read by a `wp_footer`-hooked asset controller. This is a deliberate, documented deviation from
+Principle VI (block.json declares assets): whether a form needs the provider script is a runtime
+property of the resolved flow's stored config, not a static property of the block, so a block.json
+declaration would load the script on every page containing any form -- the opposite of FR-001. The
+registry approach is strictly more conditional: an empty registry enqueues nothing.
+
+Alternatives considered: version the checksum algorithm (rejected: forces a migration of every stored
+hash); a dedicated replay table with a cron prune (rejected: adds persistence and a recurring job the
+TTL already makes unnecessary); scan page content for forms to decide enqueue (rejected: fragile, and
+the owner request explicitly preferred a declarative projection).
+
+Status: Final.
+
+## #149 -- Spec 071 WS3: forms event listeners register lazily, and delivery reuses MailResult states
+
+Date: 2026-07-20
+
+Decision: (1) The flow submission pipeline now reaches a `wp_mail()` floor when CoreX Mail is
+inactive, via a shared `NotificationDispatcher` (RoutedMailer → AttemptingMailer → Mailer →
+wp_mail), instead of recording 'unrouted' and sending nothing. (2) The delivery outcome is a typed
+`NotificationDelivery` that reuses the canonical `Corex\Mail\MailResult` state vocabulary rather than
+inventing a parallel one, adding only `not_attempted`, `unavailable`, and `rejected`. `wp_mail()`
+returning true maps to `accepted`, never `sent`. (3) Forms event listeners are registered as lazy
+closures, so they (and their mail dependency graph) are built on first dispatch, not at boot.
+
+Why (1): the flow path had no fallback below RoutedMailer, so a site with CoreX Mail inactive saved
+the submission and silently sent no notification -- the single most expensive failure the system can
+produce (a lost enquiry with no trace). The legacy event path already had the ladder; extracting it
+into one service and using it from both closes the gap and removes the duplication.
+
+Why (2): the owner request is explicit -- "if the existing CoreX Mail typed attempt system uses
+canonical names, reuse them instead of creating competing vocabulary." Two vocabularies for one fact
+is exactly the drift to avoid. `accepted != sent` is the honesty rule: a transport taking a message
+is not proof it reached an inbox, so the public/admin surfaces must never imply delivery from
+acceptance.
+
+Why (3): wiring the dispatcher into `SendEmailListener` -- which is constructed at boot to register
+it as a listener -- made the Email Studio `RoutedMailer` resolve at boot, loading the mail stack's
+translations before `init` (a WP 6.7 "translation too early" notice). Registering the listener as a
+lazy closure defers the whole graph to request time and is the more correct shape anyway: booting a
+plugin should not force-construct every listener's dependencies (Principle II). Caught by a front-page
+debug.log delta check, not by a test -- so the check earned its place in the evidence routine.
+
+Alternatives considered: a parallel `enum { saved_sent, saved_failed, ... }` for form delivery
+(rejected: competing vocabulary the owner forbade); keep the ladder duplicated in both paths
+(rejected: two copies drift, and the legacy copy already carried the wp_mail->sent bug); inject the
+mailers into the dispatcher as lazy factory closures to avoid boot resolution (rejected: the lazy
+*listener* registration fixes the root cause -- eager construction of a boot-time object -- without
+making the dispatcher's own constructor awkward or untestable).
+
+Status: Final.
+
+## #150 -- Spec 071 WS4/WS5: one timeline shape, and an evidence-only transport advisory
+
+Date: 2026-07-20
+
+Decision: (1) The submission timeline has one canonical event shape
+(`{id, submission_id, stage, outcome, summary, created_at}`) written by both the pipeline and the
+admin services; the pipeline's old `{kind, state, occurred_at}` shape is gone, and legacy rows of it
+are hydrated on read rather than dropped. A new `notification` timeline event carries the delivery
+outcome. (2) The FluentSMTP boundary advisory reads only public signals -- the configured
+`mail.from.address` domain vs `home_url()`, and `has_filter('wp_mail_from')`/`wp_mail_from_name` --
+never the transport plugin's tables or credentials, and never fabricates a "detected" state where no
+signal exists.
+
+Why (1): two writers wrote the same meta key in two shapes. The admin React list already papered
+over it with `event.stage || event.kind` fallbacks, so it was not literally blank -- but a single
+source of truth is correct, and adding the notification event (so an admin sees the delivery outcome
+in the history, not just "submitted") needs the canonical shape anyway. Hydration on read means no
+migration and no lost history for submissions written before the fix.
+
+Why (2): the owner asked for FluentSMTP guidance without CoreX becoming FluentSMTP or depending on
+it. A registered `wp_mail_from` filter is the supported, public signal that some plugin is forcing
+the From header; the From-domain-vs-site-domain comparison is a second public signal. Both are
+credential-free and stable. Scraping FluentSMTP's option rows or decrypting its settings would be
+more precise and would violate the optional-dependency rule -- so where the public signal is silent,
+the advisory shows general guidance and makes no claim. The delivery badge and this advisory both
+carry the same honesty rule the whole spec turns on: a transport accepting a message is not proof it
+reached an inbox.
+
+Alternatives considered: version the timeline shape and migrate stored rows (rejected: hydration on
+read is cheaper and lossless); detect FluentSMTP by its version constant to name it specifically
+(rejected: borderline reliance on an internal, and unnecessary -- the filter signal is enough and
+FluentSMTP is named only as the common example in guidance, not as a detected fact).
+## #154 -- CI runs every PR and the JS suite; "green" must name which suites ran
+
+Date: 2026-07-22
+
+Decision: `.github/workflows/ci.yml` runs on every pull request regardless of base, and runs the JS unit
+suite as its own job. A completion claim must state which suites were run and their counts, not that
+"everything is green".
+
+Why: three separate reporting failures surfaced in one session, each with healthy code behind it.
+1. Eight unit failures across the 070/071/072 stack were recorded as "8 pre-existing unrelated failures".
+   `main` had none of them; the stack introduced all eight (DECISIONS #153).
+2. PRs #118 and #119 targeted feature branches, and the workflow filtered `pull_request` to
+   `[main, develop]`, so neither ever ran CI. GitHub renders an empty check-rollup almost identically to
+   a passing one, so "no failing checks" read as "checks passed" when it meant "never tested".
+3. `tests/token-inventory.test.js` regenerates its artifacts from source and fails on drift -- a good
+   guard that **nothing in CI ever invoked**. Spec 072's CSS additions left the committed inventory
+   stale, and the branch gate still reported every suite green, because the JS suite was not among the
+   suites it ran.
+
+In all three the tests were adequate and the summary was not. The mitigations are therefore mechanical
+rather than procedural: unfiltered `pull_request` triggers so a stacked PR cannot skip the gates, and a
+`js` job so a suite cannot be silently omitted. Integration and Playwright remain environment-gated and
+still need a provisioned WordPress -- that gap is real and stated here rather than papered over.
+
+Consequence for reports: "full unit 1448 passed / 0 failed, integration 197/0, JS 306/0, e2e 6/0" is a
+verification claim; "all tests pass" is not, because it hides which suites were skipped.
+
+## #151 -- Spec 072 T015: the notification drawer is NOT added to the spec-068 ApprovedComponentInventory
+
+Date: 2026-07-21
+
+Decision: The `NotificationDrawer`/bell are verified by a Playwright e2e (`tests/e2e/notification-center.spec.js`)
+for their accessibility contract, and are NOT declared in `addons/corex-ui/src/ApprovedComponentInventory.php`,
+despite spec 072 `tasks.md` (T015) calling for it. That inventory strictly reconciles against the spec-068
+design file `Corex Blocks & Components.dc.html` -- its test asserts exactly 77 approved components
+(33/8/13/23 per category). The notification drawer is a spec-072 runtime component that the spec-068 design
+file does not approve.
+
+Why: adding the drawer would force `expectedCounts()` and the `->toHaveCount(77)` total to 79 and claim a
+design approval that does not exist -- the precise dishonesty that inventory test guards against. The
+inventory's job is "the framework never claims a component the approved design didn't", not "every runtime
+widget is listed". Forcing the entry would either break the count reconciliation or require editing the
+spec-068 design source, which is out of spec-072 scope. The drawer's real, harder-to-fake guarantee -- focus
+trap, Escape, focus-return, aria-modal -- is proven by the live browser e2e instead, which is stronger
+verification than an inventory row.
+
+Alternatives considered: add the entry and bump the counts to 79 (rejected: falsely asserts spec-068 design
+approval and breaks the strict reconciliation); extend the spec-068 design file to include the drawer
+(rejected: out of scope for spec 072, and the design file is the source of truth for spec 068, not 072). If
+the owner later wants CoreX-072 admin components tracked in a governed inventory, that is a new, spec-072-owned
+inventory -- not an edit to spec 068's.
+
+## #152 -- Spec 072 T020: notification preferences live in user meta, not a managed table
+
+Date: 2026-07-21
+
+Decision: `WpNotificationPreferenceStore` persists per-user category preferences in **user meta**
+(`corex_notification_preferences`), not in a new managed table -- despite T020's wording ("a new managed
+table, schema 3->4"). Only muted categories are stored; everything defaults to shown, and the mandatory
+categories (security / system / operations) are enforced by the `NotificationPreference` value object, never
+by what happens to be persisted.
+
+Why: preferences are small, per-user, low-volume, and WordPress-native -- exactly the case the constitution
+and wp-guard reserve for options/transients/user-meta ("simple persistent data via user meta, not a custom
+table; don't reinvent the platform"). A managed table here would add a schema version, a migration, and a
+join for data WordPress already stores per user for free. The notification *records* are high-volume and
+shared, so they earn their tables (spec 072 T008); a user's handful of category toggles do not.
+
+Alternatives considered: a `notification_preferences` managed table keyed by (user_id, category) with a
+schema 3->4 bump (rejected: reinvents user meta for no benefit -- no cross-user query needs it, and retention
+never prunes it); a single site option (rejected: preferences are per-user, not global).
+
+Status: Final.
+
+## #153 -- The 070/071/072 stack was never tested by CI, and its "pre-existing" failures were its own
+
+Date: 2026-07-22
+
+Decision: stacked PRs must be verified with a full local suite run on each branch before they are queued
+for merge, and the CI trigger's blind spot is treated as a known gap rather than assumed coverage.
+
+Why: `.github/workflows/ci.yml` triggers only on `pull_request: branches: [main, develop]`. PR #118 targeted
+`spec/070` and PR #119 targeted `spec/071`, so **neither ever ran CI** -- `gh run list` for those branches
+returns empty, and their status rollups were empty, which reads as "no failures" rather than "never tested".
+The one branch CI did test (#117, base `main`) failed.
+
+What that hid: eight unit failures that earlier gate notes recorded as "8 pre-existing unrelated failures
+(Email mock-ordering, Security emoji-shim, Theme SCSS)". They were not pre-existing and not unrelated --
+every one was introduced by this stack, and `main` has none of them:
+- **Security (1)** -- spec 070 added `restoreBlockStyles()` to `dropAdminContext()`, which registers a hook
+  unconditionally. A spec-069 test asserted `Functions\expect('add_action')->never()` -- a blanket
+  expectation that forbids the method ever hooking anything again, rather than the emoji-specific claim its
+  name made. Scoped it with `->with(...)`, and added the test `restoreBlockStyles()` never had.
+- **Email (6)** -- spec 071's new `TokenReplayGuardTest` stubs `wp_salt`. Brain Monkey defines a stubbed
+  function into the global namespace **permanently** (PHP cannot undefine one), so
+  `function_exists('wp_salt')` in `EmailAttemptRepository::recipientHash()` stays true for the rest of the
+  process, and every later unstubbed call throws. Those tests had only ever passed by taking the fallback
+  branch -- i.e. by suite order. Fixed by stubbing `wp_salt` where the code path needs it.
+- **Theme (1)** -- spec 071 added a raw `font-size: 1em` that token governance rejects; it now carries the
+  repo's documented `corex-token-allow` escape hatch, like the `inline-size`/`block-size` beside it.
+
+Result: 070 = 1292/0, 071 = 1370/0, 072 = 1426/0 unit; 072 integration 186/0. Lesson recorded because the
+failure mode was *reporting*, not code: an empty check-rollup on a stacked PR is not evidence of green, and
+"pre-existing" is a claim that must be verified against the base branch before it is written down.
+
+Status: Final.

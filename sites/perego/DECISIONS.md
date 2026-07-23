@@ -486,6 +486,55 @@ localized post permalink directly. That avoids guessing translated custom-post s
 template part language-safe. The renderer also considers both the selected and translated IDs for exclusion,
 so an editor can configure the menu from either language.
 
+## 2026-07-23 — Correction: the 49 Pest failures were ours, not "environmental"
+
+Through the v0.35.0 and v0.35.1 merges I reported the CoreX unit suite's 49 failures as an
+**environmental Patchwork quirk**, on the strength of a local A/B showing 29 already failing at the
+merge base. **That conclusion was wrong**, and CI on PR #38 proved it by reproducing the numbers
+exactly — 49 failed / 1408 passed. A local A/B tells you a failure is *pre-existing*; it does not tell
+you it is *environmental*. Those are different claims and I ran them together.
+
+**Real cause — and it was our own file.** `tests/Unit/Submissions/SubmissionInboxQueryTest.php`, the
+contract test kept through the merge to prove upstream's #114 fix satisfied our requirements, defines
+`function sanitize_key()` at file scope. Once PHP defines a function for real, Patchwork can no longer
+redefine it, so **every later test that stubs it through Brain Monkey dies with `DefinedTooEarly`** —
+including upstream's own `SubmissionInboxQueryFlowTest`, which covers exactly the same contract. One
+file, 49 casualties.
+
+Removed. It had already done its job (4/4 green against upstream's implementation, which is what
+justified dropping our fork's version of the feature), and upstream's test covers the same four cases
+plus a hostile-input case ours lacked. **Suite: 1453 passed, 0 failed.**
+
+**The lesson worth keeping: a test file that defines a global function can break tests it never
+touches.** Stub through Brain Monkey (`Functions\when(...)`), never `if (! function_exists(...))` at
+file scope, in any suite Patchwork instruments.
+
+## 2026-07-23 — Root Jest swept the client site; excluded `sites/`
+
+Second, independent CI failure on PR #38, and **pre-existing** — the merge base fails identically
+(6 suites / 55 tests). Upstream's new run-CI-on-every-PR workflow merely exposed it.
+
+The framework's root `jest.config.js` ignores `wp/` and `docs-app/` but not `sites/`, so it swept the
+client site's Interactivity view tests. Those resolve `@wordpress/interactivity` through a
+`moduleNameMapper` that exists only in the site's own Jest config — the module is a WordPress runtime
+script handle, not an installed package — so from the root sweep every one fails to resolve.
+
+`sites/` is a fork-level directory upstream does not have, so excluding it from the framework's root
+sweep is the correct fix rather than teaching a framework config about a client path. Root Jest **252
+passed**; the client suite runs from its own directory.
+
+**Correction (same day):** the exclusion comment first documented the recovery command as
+`npm run test:js --workspace=sites/perego/perego-site`. That command does not work — `sites/` is
+deliberately *not* in the root `workspaces` array, so npm answers `No workspaces found`. The command
+is `cd sites/perego/perego-site && npm run test:js`, and it is now written that way in
+`jest.config.js`. Verified green there: **11 suites / 76 tests**. Naming a suite's only remaining
+runner and getting that name wrong is how a suite stops being run at all.
+
+**⚠️ Gap this leaves:** the client site's JS tests now run in **no CI job at all** — the local run above
+is the only thing exercising them. Closing it means adding a step to an upstream-owned workflow file,
+which will conflict on every future CoreX update unless upstream takes it; the alternative is a
+fork-owned workflow of our own that upstream never touches. Owner decision, still open.
+
 ## 2026-07-20 — Spec 020 round 15: owner re-report — filters/pager still dead, lightbox nav position
 
 Round 14 fixed the reply-chip's `[hidden]`-override bug but missed the **identical bug on the work grid**, and
