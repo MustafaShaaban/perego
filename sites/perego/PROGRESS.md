@@ -20,7 +20,15 @@
   193**, build clean, five routes 200. Guards: wp-guard, clean-code-guard, docs-guard.
 - **Still owner-verifiable only:** the canvas itself (wp-admin login). Open Site Editor → Front Page and
   confirm the panels render and edit; saving should list *Home* beside the template.
-- **Next:** Track C — Phase 6 release gates T030–T032.
+- **Track C started: T030 DONE.** All eight migration scripts run twice on live data — **0 changes on
+  every pass**, so they are safe to re-run after any deploy; six routes byte-identical after the sweep.
+  Rollback rehearsed for real (export → sweep → restore): content fingerprint 154 projects / 46 clients
+  / 1 template part identical across the restore, six routes 200 and byte-identical. Spec 021 adds no
+  schema migration of its own — its repeater/slide upgrades are read-time normalisation covered by Jest.
+  Evidence `specs/021-fse-visual-editing-ux/evidence/t030-migration-rollback.md`; rollback point
+  `wp/db-backup-t030-20260723-183636.sql` (gitignored).
+- **Next:** T031 (public screenshot/DOM/console/overflow/a11y regression matrix) then T032 (editor E2E +
+  all suites); together they gate T033/T034.
 
 ## (previous, 2026-07-23) — three owner-reported defects fixed
 

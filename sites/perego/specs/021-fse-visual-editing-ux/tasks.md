@@ -63,7 +63,12 @@
 
 ## Phase 6 — Migration, release verification, documentation [US5]
 
-- [ ] T030 Run idempotent migration on existing data and complete rollback rehearsal.
+- [x] T030 Run idempotent migration on existing data and complete rollback rehearsal. **Done
+  2026-07-23** — all eight migration scripts run twice against live data, every one reporting 0 changes
+  on both passes; six routes byte-identical after the sweep; export → sweep → restore rehearsed with the
+  content fingerprint (154 projects / 46 clients / 1 template part) and all six routes matching after the
+  restore. Spec 021 adds no schema migration of its own — its repeater/slide upgrades are read-time
+  normalisation covered by Jest. Evidence: `evidence/t030-migration-rollback.md`.
 - [ ] T031 Run full public screenshot/DOM/console/overflow/a11y regression matrix and resolve only proven regressions.
 - [ ] T032 Run focused editor E2E workflows and all Pest/Jest/Playwright suites.
 - [ ] T033 Run clean-code, wp, test, and docs guards; update site README, docs, PROGRESS, DECISIONS, and evidence.
