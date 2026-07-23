@@ -4,19 +4,641 @@
 > Updated at the end of every working session.
 
 ---
-## RESUME HERE (2026-07-12) -- Spec 069 unified model routing in verification
+## RESUME HERE (2026-07-22) -- **v0.35.1 RELEASED** (correction release, tag `v0.35.1` = `ec6b48e`, on GitHub + Azure).
 
-- **Branch:** `feature/perego-unified-model-routing`, tracking Perego `origin/feature/002-home`; do not use or push to the CoreX upstream remote for this work.
-- **Scope:** Docs/Planning and Developer Tooling only. Spec 069 adds one provider-neutral Model Routing Gate for Codex and Claude Code. It changes no WordPress/CoreX/Perego product runtime, generated `dist/`, or `wp/wp-content/` source.
-- **Implemented:** shared L/M/H/V policy; Codex Terra/medium default with Luna/Terra/Sol route agents and maximum three threads/depth one; Claude Sonnet/medium default with Haiku/Sonnet/Opus route agents; explicit sole-writer/no-worktree/cross-provider-handoff/override/rollback rules; English workflow docs with a concise Arabic mirror; deterministic `npm run verify:model-routing` plus fixture-driven Node tests.
-- **Verified:** static validator passes; validator tests pass (3/3); `codex --strict-config doctor` is clean and reports Terra selected; `claude doctor` is clean. The Spec Kit prerequisite helper rejects the user-required `feature/...` branch naming convention, so cross-artifact consistency was completed manually against Spec 069 instead. No material spec/plan/tasks mismatch found.
-- **Environment-gated:** live provider-agent prompts were not run. A bounded explicit Claude read-only smoke probe was blocked by workspace data-export policy before execution. Therefore configured agent files and client diagnostics are verified, but automatic delegation, agent discovery in an interactive session, and runtime-confirmed child model identity are not claimed as passed.
-- **Final guard/hygiene:** docs-guard, clean-code-guard, and test-guard manual review passes found no shipping issue; `git diff --check`, Node syntax, JSON parsing, targeted changed-asset secret/placeholder review, and the static validator/test suite pass.
-- **Git handoff:** commits `3386012` and `299c781` are pushed only to `origin/feature/perego-unified-model-routing`. Draft Perego PR [#9](https://github.com/MustafaShaaban/perego/pull/9) targets `feature/002-home`; remote diff inspection confirms only the 36 intended routing files. GitHub currently reports no checks configured for this branch, so there is no CI result to await.
+Three fixes, no new capability: issue **#114** (a form registered in code through `FormRegistry` could be
+listed but not filtered — the filter was built only from DB flows and the inbox matched `corex_flow_id`,
+which those submissions do not carry), the login screen's remember-me row + language selector (PR #123),
+and **`wp corex version` now reaching `docs-app/src/version.ts`** (PR #126). That last one closes the gap
+flagged during the v0.35.0 release: the command stamped 16 files and missed the one that tells the docs
+site which version it describes, so a release could ship with the documentation advertising the previous
+version and nothing catching it — v0.35.0 did. **It stamps 17 files now, and v0.35.1 is the first release
+stamped entirely by the command with nothing bumped by hand.**
+
+Gate: all five CI checks green on PR #127 (PHP unit, JS, integration, Playwright, CodeQL). Locally
+**unit 1453** (6304 assertions), **JS 306** (57 suites).
+
+**Nothing is in flight.** The next spec remains the owner decision described below.
 
 ---
-## RESUME HERE (2026-07-11) -- Spec 068 MERGED to `main` (PR #98, merge commit `9d54ce0`, on upstream + origin). Post-merge security/UI fixes shipped.
-## RESUME HERE (2026-07-20) -- Spec 069 MERGED to `main` (PR #107). Released as **v0.34.0**.
+## (previous, 2026-07-22) -- **v0.35.0 RELEASED. All five open PRs merged; `main` green on four CI suites.**
+
+**Merged, in this order** (each verified green before the next): **#121** dependency advisory remediation →
+**#120** CI on every PR + integration + browser suites → **#117** spec 070 → **#118** spec 071 → **#119**
+spec 072. `develop` was not involved; feature branches PR straight to `main`. Order mattered: #121 cleared the
+advisory gate that was holding #120 UNSTABLE, and merging #120 second meant the three stack PRs were judged by
+the new four-suite CI as they retargeted — which is the first time any of them had been tested by anything but
+the PHP unit job. All three passed on a freshly provisioned install. `DECISIONS.md` conflicted on every stack
+merge (each branch appends entries); resolved by keeping both sides, so #143–#154 are all present.
+
+**`main` CI: four jobs green** — PHP unit 1291 · JS 240 (38 suites) · integration 158 · browser 42.
+Locally on the dev site the unit suite is **1448/0**, but the integration suite is **order-flaky** there
+(Pest randomises order; different tests fail per run — Forms flow specs one run, the dashboard widget the
+next). CI is the authority and provisions fresh; the local failures are accumulated dev-site state, most
+likely the ~20 real contact-form submissions the e2e suite has posted into `corex.local` during this work.
+**Worth cleaning the local dev DB before trusting a local integration run.**
+
+**Released v0.35.0** on `release/v0.35.0`: `wp corex version 0.35.0 --path=wp` stamped **16** files (4 plugins,
+11 add-ons, `theme/style.css`). Note `docs-app/src/version.ts` is **not** covered by that command and was
+bumped by hand — worth folding into `VersionCommand` next time. CHANGELOG cut from `[Unreleased]` to
+`[0.35.0]` with Added / Changed / Fixed covering the Notification Center, the CI expansion, the Linux-only
+build break, the fresh-clone setup failures, and the dependency policy.
+
+**After the release, two more PRs merged to `main`** (both green on all five checks, both pushed to `origin`
+and `upstream`/Azure — `main` is `1eb5093` on both):
+- **#123** — issue **#114** (a code-registered form could be listed but not filtered: the filter was built
+  only from DB flows, and the inbox matched `corex_flow_id`, which those submissions do not carry) plus two
+  login-screen fixes. Adds the `corex_submission_filter_options` filter with `id: 0` meaning "match by
+  `corex_form_slug`", `slug:<form-slug>` parsing in `SubmissionInboxQuery`, and the matching meta clause.
+  Login: the remember-me row is a flex row with token spacing — scoped through `#login form` because core's
+  `#login form p { margin-bottom: 0 }` is an ID at (1,0,2) and silently beat a class-only rule — and core's
+  language switcher (the control Polylang fills) now matches the text inputs. That select stays native: a
+  **fourth boundary** alongside DECISIONS #141's three, since `wp-login.php` loads no admin bundle, so
+  `CorexSelect` does not exist there.
+- **#124** — `ROADMAP.md` refreshed: specs 069–072 added, §17's "active direction: Spec 068" banner retired,
+  and a candidates list for the next spec. **This closes the "no defined next feature" blocker below.**
+
+**Still open, recorded not forgotten:** three browser specs excluded with evidence (two block-editor
+first-open, one flow-builder — see `tests/e2e/playwright.config.js`); the next spec is now an **owner
+decision** between the candidates in ROADMAP.md §17 (cheapest first: the Astro 7 migration whose four
+bounded exceptions expire 2026-09-30, then the three excluded browser specs; M3/M4 are the only real
+feature direction — the `docs-app/src/version.ts` item was closed by PR #126 in v0.35.1); `develop` is ~40
+commits behind `main` and effectively retired; T021 (`NotificationChannelPolicy`) deliberately unbuilt.
+
+---
+## (previous, 2026-07-22) -- Spec 072 (Notification Center & Command Center) COMPLETE + gated on `spec/072-notification-center-and-dashboard`; **PR #119 open, blocked only on human review + the 070→071→072 stack merge**. Everything below is the build log for that branch.
+
+**Phase A (spec 071) is committed, pushed, and PR'd.** Working tree was 79 uncommitted files; now
+three logical commits on `spec/071` (`docs(070)` backfill · `feat(071)` implementation · `docs(071)`
+guides+artifacts), stacked on `spec/070`. Both branches pushed to `origin`:
+- **PR #117** — spec 070 (base `main`): transport error fidelity + hidden-admin styling + its
+  backfilled Spec Kit artifacts. **Open, not merged.**
+- **PR #118** — spec 071 (base `spec/070`, stacked): Phase A. Auto-retargets to `main` when #117
+  merges. **Open, not merged.** Review #117 first.
+
+**Repo cleanup done (owner-authorized):** deleted 4 merged local branches (develop, fix/067, fix/069,
+release/v0.34.0) and pruned 23 stale merged remote branches on `origin`. `origin` now holds only
+`main`, `develop`, `spec/070`, `spec/071`, and the **13 Dependabot** branches (left untouched — a
+separate dependency track, and GitHub reports 18 vulnerability alerts worth a spec-056 pass). The
+spec-055 wip stash is preserved. Site healthy (front page 200).
+
+**Phase B (Notification Center, spec 072) — foundation + persistence store shipped on `spec/072`.**
+Branched off committed `spec/071`; Environment Gate re-verified. `FOUNDATION_SCHEMA_VERSION` now `'3'`
+(the two new tables); verified applied live on corex.local (`cx_corex_notifications` present, front
+page 200). Two commits:
+- **`21bc159` — Spec Kit + value objects (T003–T006, 12 unit tests):** `spec.md`/`plan.md`/
+  `data-model.md`/`tasks.md`. `Corex\Notifications\*` VOs — NotificationSeverity/Category/Status
+  (closed, ranked); **NotificationRecipient** — the single `canBeSeenBy()` predicate every read/count
+  re-checks (user/users/ability/assigned/category_admins, fail-closed, never a hard-coded WP role);
+  NotificationAction (nav-only, ability-gated); **Notification** (dedup-keyed occurrence merging,
+  resolution ≠ user-dismissal, secret-free via `assertNoSecretKeys`).
+- **`032d980` — persistence store + contracts (T007–T010, +2 unit + 9 integration, all green):**
+  contracts `NotificationRepository`/`Service`/`Producer`/`ChannelPolicy` + `NotificationQuery` VO
+  (page-size clamped, filters allowlist-validated, FR-026). `NotificationTable` +
+  `NotificationUserStateTable` (dedup-unique record + per-user private state) registered as
+  ManagedTables; schema `2`→`3`. **`WpNotificationRepository`** mirrors `WpActivityRepository`
+  discipline (prepared statements, UTC, bounded 500-row candidate scan, select-then-delete prune) and
+  adds the dedup-keyed upsert with occurrence-merge + recurrence-reopen, the per-user state join, and
+  the PHP-side visibility filter every read applies (FR-002/003). `NotificationServiceImpl` resolves
+  the current WP actor. Guards clean (wp-guard, clean-code-guard).
+
+**T011 (Access) — done.** `CorexAbility::MANAGE_NOTIFICATIONS` (`corex_manage_notifications`, SENSITIVE,
+group `notifications`) added to the catalog after operations, in `$allAreaAbilities` so `MANAGE_ADMIN`
+implies it and `AbilityCompatibility` grants it to every `manage_options` holder; `AREA_NOTIFICATIONS`
+on `ActivityEvent`; `AdminPage::requestAbilityFor` maps `notifications`/`corex-notifications`. Coverage
+test updated (group list + admin-inherits-it assertion). Verified: 35 Access unit tests green;
+`AccessMatrix` enumerates the catalog dynamically so it picks the row up with no assertion break; live
+admin resolves `current_user_can('corex_manage_notifications') === true`; front page 200. Guards clean.
+
+**T012 (Producer registry) — done.** `Corex\Notifications\NotificationProducerRegistry` — availability-
+gated (FR-014), idempotent; wired as a container singleton and registered in `ConfigServiceProvider`
+boot via `registerNotificationProducers()`. 2 unit tests.
+
+**T013 (Producers) — IN PROGRESS: first slice (Submission producer) shipped.** The codebase emits almost
+no domain events, so each producer needs a signal added to its subsystem — delivered as independent
+slices. Slice 1 (the marquee Phase-A integration):
+- `SubmissionProcessedEvent` (new forms domain event) dispatched from `FlowVisitorSubmissionService`
+  after a stored visitor submission, carrying Phase A's typed `NotificationDelivery`.
+- `SubmissionNotificationProducer` (`plugins/corex-config/src/Notifications/Producers/`) publishes
+  `submission.new` (severity ACTION, occurrence-merged per form via dedup `submission.new:{slug}`,
+  targeted at `MANAGE_SUBMISSIONS`) and — only on a genuine delivery failure — `submission.email_failed`
+  (severity ERROR, `email` category so T021's channel policy keeps it off email = FR-021 loop guard).
+- Verified: 4 producer unit tests + 20 Notifications unit + 22 Forms integration green; **live
+  end-to-end** (boot → dispatch → producer → service → repo → DB created both rows, cleaned up); front
+  page 200. Guards clean.
+
+**T013 slice 2 (Access request producer) — shipped.** `AccessRequestedEvent` dispatched from
+`AccessService::requestAccess` via a new optional `EventDispatcher` (mirroring its existing optional
+`RoutedMailer` output — constructor 7→8, both call sites updated, `AccessServiceTest`'s 7-arg
+construction still valid). `AccessRequestNotificationProducer` publishes `access.request` (ACTION,
+`access` category, unique dedup `access.request:{id}` — each request individually decided, never merged
+→ `MANAGE_ACCESS`). Verified: 3 producer unit tests + 58 Notifications/Access unit + 3 Access
+integration green; live end-to-end (dispatch → row created → cleaned); front page 200. Guards clean.
+Two producers now register at boot: `["forms.submissions","access.requests"]`.
+
+**T013 slice 3 (Job failure producer) — shipped.** `JobFinishedEvent` dispatched from `JobRunner` at
+every terminal state via a DRY `persist()` helper (EventDispatcher auto-injected — the container
+resolves the non-builtin typed param before its null default, so the nullable is test-only).
+`JobFailureNotificationProducer` publishes `job.failed` (ERROR, `jobs` category, dedup
+`job.failed:{id}` → `MANAGE_OPERATIONS`) on failure only; the raw job error summary is deliberately
+kept off the notification (no secret-free guarantee, unlike Phase A's MailResult) — a unit test asserts
+a password-bearing sample never reaches it. Verified: 3 producer unit tests + 34 Notifications/Jobs
+unit + 4 Jobs integration green; live end-to-end; front page 200. Guards clean. Three producers now
+register at boot: `["forms.submissions","access.requests","jobs.failures"]`.
+
+**Producer pattern is now established & repeatable** (used 3×): add a domain `*Event` in the source
+module (implements `Corex\Events\Event`), dispatch it from that module's service via an injected/optional
+`EventDispatcher`, add a `*NotificationProducer` in `corex-config/.../Producers/` that listens and
+publishes through `NotificationService`, register it in `registerNotificationProducers()`, TDD the
+producer against a recording fake, then live-verify boot→dispatch→row.
+
+**T013 slice 4 (Export-ready producer) — shipped.** `ExportReadyNotificationProducer` reuses
+`JobFinishedEvent` (no new plumbing): on a completed job whose kind ends `.export` it publishes
+`export.ready` (INFORMATION, `imports_exports` category, dedup `export.ready:{id}`) to the actor who ran
+it (`forUser`) — export completion is personal, unlike the operational failure notification. Verified:
+4 producer unit tests + 30 Notifications unit green; live end-to-end; front page 200. Guards clean.
+**Four producers register at boot:** `["forms.submissions","access.requests","jobs.failures","jobs.exports"]`.
+
+**T013 slice 5 (Login-lockout producer) — shipped.** `LoginLockoutEvent` dispatched from
+`LoginProtectionEnforcer` only on the transition *into* a lockout (decision reasonCode
+`threshold_exceeded`, not every failure nor an already-active refusal) via an optional `EventDispatcher`.
+`LoginLockoutNotificationProducer` publishes `security.lockout` (WARNING, `security` category) keyed by
+identity (`security.lockout:{identity}` → repeated lockouts of one account merge into one escalating
+signal) to `MANAGE_OPERATIONS`. Verified: 4 producer unit tests + 47 Security integration (enforcer's
+3-arg construction still valid) green; live end-to-end; front page 200. Guards clean. **Five producers
+register at boot:** `["forms.submissions","access.requests","jobs.failures","jobs.exports","security.lockouts"]`.
+
+**T014 (REST `NotificationController`) — core shipped.** `corex/v1/notifications`: `GET` list (bounded,
+filtered via `NotificationQuery`), `/count`, `GET /{id}` (grouped detail), `POST {id}/read|unread|
+dismiss|snooze`, `POST /read-all`, `POST {id}/resolve`. **Two-tier gate:** read/own-action = signed-in
+user + REST nonce (the service re-checks visibility so one user can't touch another's); manage =
+`MANAGE_NOTIFICATIONS` + nonce (resolve). Every response enveloped. To support it, `NotificationService`
+gained `findForCurrentActor` + `mark{Read,Unread}/dismiss/snooze/markAllReadForCurrentActor` + `resolveById`,
+`WpNotificationRepository` gained `findForActor`, and a shared `tests/Support/RecordingNotificationService`
+double was extracted (the interface expansion broke the 5 producer-test fakes — now all use the double).
+Verified: 4 REST integration tests (list/count, nonce-gated read 403-without/200-with, visibility 404,
+manage-tier resolve) + 9 repo integration + full unit (1394 pass / 8 pre-existing) green; 9 routes
+register live; front page 200. Guards clean. **preferences** endpoints deferred to T020.
+
+**T013 slice 6 (Submission-assigned producer) — shipped.** `SubmissionAssignedEvent` dispatched from
+`SubmissionWorkflowService::assign` via an optional `EventDispatcher` (2→3 ctor; all its unit/integration
+constructions use 2 args, still valid). `SubmissionAssignedNotificationProducer` notifies the assignee
+(`forUser`, `submission.assigned`, ACTION, dedup `submission.assigned:{id}:{userKey}`) only for person
+assignments — never team/role, never self-assignment. Verified: 4 producer unit + 63 Notifications/
+Submissions unit + 4 Submissions integration green; live end-to-end; front page 200. Guards clean.
+**Six producers register at boot:** forms.submissions, access.requests, jobs.failures, jobs.exports,
+security.lockouts, submissions.assignments.
+
+**T013 slice 7 (Email Studio failure producer) — shipped.** `EmailStudioDeliveryFailedEvent` dispatched
+from `EmailStudioService::dispatch` in the **corex-email addon** via an optional `EventDispatcher` (6→7
+ctor; factory + all test constructions pass 6 args, still valid) on any unsuccessful `MailResult` — a
+DRY `announce()` covers both return points. `EmailStudioFailureNotificationProducer` (corex-config)
+publishes `email.delivery_failed` (ERROR, `email` category, dedup by provider so an outage merges) to
+`MANAGE_EMAIL`, skipping test sends (consumer-side policy). Dependency-aware: registered unconditionally
+but inert when the addon is absent (isAvailable → class_exists on the addon event). Verified: 3 producer
+unit + 97 Notifications/Email unit + 12 Email/Mail integration green; live end-to-end (addon active →
+`email.failures` registers, dispatch → row → cleaned); front page 200. Guards clean. **Seven producers
+register at boot:** forms.submissions, access.requests, jobs.failures, jobs.exports, security.lockouts,
+submissions.assignments, email.failures.
+
+**T013 slice 8 (Readiness producer) — shipped. T013 is now COMPLETE.** `ReadinessEvaluatedEvent`
+dispatched from `ProductionReadinessSnapshotFactory::fromCurrentSite` via an optional `EventDispatcher`
+(1→2 ctor; the checks are local so it is safe on the render path, FR-015). `ReadinessNotificationProducer`
+reconciles the whole snapshot each evaluation — blocking checks publish `readiness.blocker` (WARNING,
+dedup `readiness.blocker:{key}` so recurrence merges/reopens), non-blocking checks resolve theirs
+(FR-010 condition lifecycle), idempotent — to `MANAGE_OPERATIONS`. The shared `RecordingNotificationService`
+gained resolve-tracking for the test. Verified: 4 producer unit + 76 Notifications/Operations unit green;
+live end-to-end; front page 200. Guards clean. **Eight producers register at boot:** forms.submissions,
+access.requests, jobs.failures, jobs.exports, security.lockouts, submissions.assignments, email.failures,
+operations.readiness — the full FR-013 set.
+
+**T015 started — bell + header-actions filter shipped (drawer + CSS next).** `AdminPage::open()` now
+applies `corex_admin_header_actions` (trusted-HTML region, each contributor escapes its own content,
+like the WordPress admin bar). `NotificationBell` (corex-config) is a server-rendered, keyboard-operable
+`<button>` carrying `data-corex-notification-bell` + dialog ARIA (for the drawer to bind), showing the
+actor's real unread count — badge capped at `99+`, true count in the `aria-label` (FR-016). Registered on
+boot; verified rendering live in the CoreX header. 4 unit tests green; AdminPage's 22 tests unaffected
+(filter defaults empty). Guards clean.
+
+**T015 slice 2 (drawer component + CSS) — shipped.** `NotificationDrawer` (React/`@wordpress/element`,
+`plugins/corex-config/src/admin/components/`) — role=dialog, aria-modal, **focus trap** (Tab cycles in
+the panel), **Escape** closes, **focus return** to the bell via the `NotificationCenter` controller —
+consumes the live REST API (`GET /notifications`, `POST {id}/read`, `/read-all`) with honest loading/
+error/empty/list states. Mounted from `admin/index.js` onto `[data-corex-notification-bell]`; token-based
+drawer CSS added to the shell stylesheet (token-governance test green; used a raw scrim value via
+`corex-token-allow`, no invented tokens). `wp-scripts build` compiles clean (153 KiB). The bundle is
+enqueued per-product-screen today, so the drawer is interactive on those screens now; the bell renders
++ counts everywhere. Build output is gitignored (CI rebuilds from the committed source). Front page 200.
+
+**T015 slice 3 (global enqueue) — shipped. The bell now opens on every CoreX screen.** A dedicated
+`src/notification-ui` webpack entry (3.9 KiB, second build in corex-config's `build` script → `build/
+notification-ui`) is enqueued in `CorexAdminAssets::enqueue` on all CoreX screens; the bell mount was
+removed from the per-screen product bundle so the drawer mounts exactly once even where both bundles load.
+Depends on `corex-runtime` + `wp-api-fetch` (nonce auto-configured on admin). Case-safe dir (`notification-ui`,
+not colliding with the PHP `src/Notifications/` on case-insensitive filesystems). Verified live-enqueued on
+the Overview screen (`toplevel_page_corex-settings`); `CorexAdminAssetsTest` updated (5 pass); front 200,
+admin 302. Guards clean.
+
+**T015 COMPLETE — bell + drawer, verified live in a real browser.** Playwright e2e
+(`tests/e2e/notification-center.spec.js`, 2 tests green against corex.local): the header bell opens the
+drawer, Escape closes it and returns focus to the bell (aria-expanded toggles), and focus is trapped
+inside the panel. The `ApprovedComponentInventory` declaration was deliberately NOT done — the drawer is a
+spec-072 runtime component and that inventory strictly reconciles the spec-068 design file's 77 components
+(adding it would falsely claim a design approval and break the count test); the accessibility contract is
+proven by the e2e instead. DECISIONS #151.
+
+**T016 started — screen + list app shipped.** PHP `NotificationsScreen` registers **CoreX → Notifications**
+(slug `corex-notifications`, gated on `MANAGE_NOTIFICATIONS`), rendering the shared shell + a
+`#corex-notifications-app` React mount. React `NotificationsApp` (mounted from `admin/index.js`, in the
+build/admin bundle): paginated list from `GET /notifications`, unread-only + severity filters (bounded
+server-side via `NotificationQuery`), per-item mark-read, bulk mark-all, honest loading/error/empty/list
+states. Verified: build compiles; menu registers + screen renders live (admin); 164 config + 3 foundation
+integration green; front 200. The shell bell + drawer also appear on this screen.
+
+**T016 COMPLETE.** The Notifications screen now has tabbed saved views (Inbox / Requires attention /
+Submissions / Security / System — each a bounded REST filter) + a severity refine, token CSS, and
+Playwright e2e (3 tests green live: bell/drawer + screen tab-switching). Assigned-to-me / updates / history
+views await a recipient/resolved filter on `NotificationQuery` (a later API extension, noted).
+
+**T017 COMPLETE — admin-toolbar notification entry.** `NotificationToolbar` adds a single server-rendered
+`admin_bar_menu` node (unread count, 99+ cap, true count in label, link to `corex-notifications`), gated on
+`MANAGE_NOTIFICATIONS` and shown only *off* CoreX screens — the shell header bell owns those, so the two
+never appear at once (verified live: added on the dashboard, skipped on `toplevel_page_corex-settings`). No
+admin bundle loaded. 3 unit tests green.
+
+**T018 COMPLETE — Overview *Attention Required* card.** A compact card in the Overview secondary grid
+(`OverviewRenderer::attentionCard`) shows the actor's unread count + an honest empty state and links to the
+Notifications screen, reusing the one bounded `unreadCountForCurrentActor` (no new query). Recent Activity
+untouched (added alongside, per FR-019). Verified live; 16 Overview unit tests green.
+
+**T022 COMPLETE — retention + the framework's first recurring job.** `NotificationRetention`
+(PrunableStore, 90-day window, delegates to the repository's bounded `pruneOlderThan` — only resolved/
+expired notifications are removed, unresolved conditions persist) seeds `RetentionSweep` in the container;
+`RetentionScheduler` books a daily `corex_retention_sweep` WP-Cron event (idempotent via `wp_next_scheduled`)
+that runs `RetentionSweep::apply()`. Verified live (cron booked; preview shows the 90-day notifications
+store; apply runs clean). 1 unit test + 216 unit/config + 3 foundation integration green.
+
+**T020 backend COMPLETE (preferences).** `NotificationPreference` VO (per-category in-app toggle; mandatory
+security/system/operations never mutable — enforced in the VO, not by what's stored),
+`NotificationPreferenceStore` interface + `WpNotificationPreferenceStore` on **user meta** (per-user,
+low-volume, WordPress-native — not a managed table; DECISIONS #152), and REST `GET`/`POST
+/notifications/preferences` — which **closes T014's deferred preferences endpoints**. 4 VO unit + 1
+integration test (mandatory never muted) green; route registers live. Preferences **UI** (a React panel on
+the screen) remains.
+
+**T020 COMPLETE (preferences backend + UI).** `PreferencesPanel` React component behind a **Preferences**
+tab on the Notifications screen: per-category in-app toggles, mandatory categories disabled + explained,
+each change POSTs the full map and re-reads the authoritative result. Token CSS; build compiles; Playwright
+e2e extended (the tab shows the panel with `security` disabled) — all 3 notification e2e green live.
+
+**T023 COMPLETE — Dashboard Command Center widget (Phase C started).** `CommandCenterWidget` registers on
+`wp_dashboard_setup` (dashboard/normal/core), gated on `MANAGE_ADMIN`/`manage_options`; server-renders the
+operations mode, the `unreadCountForCurrentActor` attention count, and the readiness blocker count — all
+escaped, with three navigation-only links (Operations & Security, Notifications). Local checks only, no
+remote calls (FR-015); WP handles Screen Options. Verified live (registered at dashboard/normal/core;
+renders 3 nav links); 164 config + 3 foundation green; front 200.
+
+**T025 COMPLETE (core) — dashboard widget verified, including no-remote-call.** `CommandCenterWidgetTest`
+(integration, real WP): registers the widget, renders the three rows with navigation-only links, and asserts
+**no outbound HTTP** during render (FR-015) via a `pre_http_request` guard. Server-rendered PHP, so no Jest
+needed. 3 tests green.
+
+**T027 (docs) + T028 (gate) COMPLETE.** Docs: `docs/en/03-operations/notifications.md` (surfaces, producer
+table, REST API, preferences, retention/privacy, Dashboard widget, "adding a producer") — every reference
+verified against source (docs-guard). **Final gate:** full unit **1417 passed** (8 pre-existing unrelated
+failures), full integration **185 passed / 0 failed**, 3 Playwright e2e green live, front 200. Fixed a
+test-isolation leak my `CommandCenterWidgetTest` introduced (a lingering admin screen from `set_current_screen`
+broke `MaintenanceModeTest`) — the integration suite is now fully green.
+
+**Spec 072 is functionally complete and gated.** Everything substantive ships: the entire Notification Center
+(contracts, store, service, 8 producers, REST with the two-tier gate, bell/drawer/screen/toolbar/Overview
+card, full preferences, retention recurring job), the Dashboard Command Center widget (no-remote-call
+guaranteed), and the operations guide.
+
+**Pushed + PR'd.** `spec/072` is pushed to `origin`; **PR #119** is OPEN and **MERGEABLE**, based on
+`spec/071-form-delivery-and-recaptcha-reliability` (stacked — auto-retargets to `main` as 070→071 merge).
+Blocked only on human review + the stack merge order (PR #117 spec-070 → #118 spec-071 → #119 spec-072).
+
+**T026 COMPLETE — performance guard.** `NotificationPerformanceTest` (integration) seeds 10k notifications
+and asserts `unreadCountForActor`, a filtered `queryForActor` page, and `pruneOlderThan` each finish well
+within budget, then cleans up its seed. This is the evidence behind FR-026: the store caps its candidate
+scan at 500 rows and paginates in PHP, so volume never slows a read. Green.
+
+**T019 COMPLETE — the e2e matrix.** `tests/e2e/notification-center.spec.js` is now **6 tests green live**
+(was 3). The three added prove what only a real browser can: **toolbar-not-doubled** (off a CoreX screen the
+admin-bar node links to the center and no shell bell exists; on a CoreX screen the bell shows and the toolbar
+node stands down — asserted both directions, so neither surface can silently vanish); **light/dark/RTL** (the
+drawer's computed background differs per theme, proving it paints from shell tokens not a hardcoded colour,
+and `dir="rtl"` alone flips the panel edge-to-edge, proving `inset-inline-end` was never written as `right`);
+**mobile containment** (opening the drawer at 375×812 adds no horizontal overflow past the screen's own
+baseline). No Jest was added: both surfaces are server-rendered PHP, and the 99+ cap with the true count in
+the accessible label is already asserted in `NotificationBellTest` + `NotificationToolbarTest` — proving it in
+a browser would need 100+ seeded rows to learn nothing new. `lint-js` clean (also cleared three pre-existing
+lint errors the file carried). Task list reconciled: T014's preferences sub-item, T015 "drawer finish", and
+T016 "screen finish" were all completed earlier but left unticked — now closed with their real resolutions.
+
+**STACK CI REPAIRED (2026-07-22) — the whole 070→071→072 stack is now green.** PR #117's CI was **failing**
+and its merge state BLOCKED; #118 and #119 had **never run CI at all** (`.github/workflows/ci.yml` triggers
+only on PRs targeting `main`/`develop`, and those two target their parent branches — an empty check-rollup
+read as "no failures" when it actually meant "never tested"). Fixed at the source branch of each defect:
+- **`spec/070` (e8294f5)** — `LoginRouteGuardTest`'s blanket `expect('add_action')->never()` was invalidated
+  by spec 070's own `restoreBlockStyles()`. Scoped the expectation to the emoji hook it was always about,
+  and added the test `restoreBlockStyles()` shipped without (mutation-verified: removing the production call
+  fails the new test). **1292 passed / 0 failed.** CI on #117 now green (27s), merge state clear.
+- **`spec/071` (ff4f989)** — six Email tests died on `wp_salt is not defined nor mocked`: Brain Monkey
+  defines a stub into the global namespace *permanently*, so spec 071's new `TokenReplayGuardTest` stub made
+  `function_exists('wp_salt')` true forever and `EmailAttemptRepository::recipientHash()` blew up in every
+  later test. They had only passed by suite order. Plus one token-governance violation (`font-size: 1em` on
+  a dashicon → documented `corex-token-allow`). **1370 passed / 0 failed.**
+- **`spec/072` (3b1667f)** — merged 071 down. **Unit 1426 passed / 0 failed; integration 186 passed / 0
+  failed; 6 e2e green.**
+
+**CI now gates FOUR suites, and the local provisioner was broken for fresh clones — all on PR #120.**
+Final state, all green in one run: **PHP unit 1291 · JS 240 (38 suites) · integration 158 · browser 42**.
+Beyond the trigger fix below, that branch adds a **`js` job** (`npm run test:js`, which *nothing* in CI ran —
+that is how a stale committed token-inventory artifact survived spec 072's CSS additions while the gate
+reported every suite green), an **`integration` job** that provisions MySQL 8 + WordPress and runs the
+**real-WordPress suite in CI for the first time**, and a **`browser` job** running Playwright against that
+site served by **nginx + php-fpm**. Provisioning lives in the composite action
+`.github/actions/provision-wordpress`, shared by both WordPress jobs so they cannot drift, mirroring
+`scripts/setup-wordpress.ps1`. Getting it green took three rounds, each exposing a genuine
+defect rather than a workflow typo:
+- **Plugin activation order** — `corex-blocks`/`corex-config` declare `Requires Plugins: corex-core` and WP-CLI
+  activates in the order given, so an alphabetical list fails ("Only activated 2 of 4"). The same bug was in
+  `scripts/setup-wordpress.ps1`, whose comment claimed WordPress resolves the order; it does not.
+- **Add-ons were never activated** — the suite resolves add-on services from the container, so Bookings,
+  Careers, Newsletter and Profile died on `BindingResolutionException`. Now `wp plugin activate --all`.
+- **`LoginRecoveryTest` read ambient config as setup** — the guard matches the slug by *path* under pretty
+  permalinks and by *query string* under plain ones, and the test asserted path behaviour without setting the
+  option. It passed on a dev install and failed on fresh WordPress; it now pins and restores
+  `permalink_structure`. **A latent test bug only a clean environment could reveal.**
+
+**`scripts/setup-wordpress.ps1` could never have worked on a fresh clone.** Verified by *running* it against an
+isolated install (`-WpDir wp-verify -DbName corex_setup_verify` — the safe way to test provisioning without
+touching corex.local): it piped a here-string into `wp config create --extra-php`, and **PowerShell 5.1 prepends
+a UTF-8 BOM when piping to a native command**, so `wp-config.php` received `<U+FEFF>define(...)`. `config create`
+still exited 0, so the script's guard passed and the run died three steps later at `wp core install` with "Call
+to undefined function define()". Existing installs never saw it — the script skips config creation when the file
+exists. Now uses `wp config set --raw --type=constant` (no pipe), activates `corex-core` first, then `--all`, and
+checks `$LASTEXITCODE` on every must-succeed step. Re-verified end to end: **15/15 plugins active on a clean
+install**, scratch DB and directory removed, live site still 200. `tests/bootstrap-integration.php` also now
+**exits 1** when `./wp` is absent instead of running the suite against no WordPress at all. DECISIONS #154.
+
+**The browser job also exposed a Linux-only build break and a pile of wrong assumptions — mine.**
+`npm run build` failed on any case-sensitive filesystem: `src/admin/index.js` imported `../access/` and
+`../blog/` while the committed directories are `Access` and `Blog`, so **no non-Windows contributor could
+build the admin bundle**. Nobody noticed because the build only ever ran on Windows. Then the browser suite
+went **19 → 42** passing, mostly by fixing the *site* rather than seeding fixtures: the CI install defaulted
+to **plain permalinks**, under which WordPress ignores the path — every URL served the home page (200, never
+404) and `/wp-json/` did not resolve. Five specs I had excluded as "needs seeded content" were collateral from
+that one setting, and one had been *passing against the home page*. Only two genuinely needed fixtures
+(a `/contact/` page; three `corex_submission` rows). **Lesson recorded in `tests/e2e/playwright.config.js`:
+read the failing assertion before seeding anything.**
+
+**Three browser specs stay excluded, with evidence rather than guesses.** Two block-editor specs trade the
+failure — whichever opens the editor *first* fails to see the inserter, and excluding one hands that slot to
+the other (demonstrated both ways). A captured trace rules out console errors, failed requests, `php -S` vs
+nginx, worker starvation and the welcome-guide modal; the editor header renders just after the assertion
+gives up, yet budgets of 30s/45s/120s/150s all fail and the largest destabilised neighbouring specs. The
+flow-builder spec times out mid-interaction and is *not* shown to be environmental — possibly a real slow
+path. Also noted: `trace: 'retain-on-failure'` is opt-in behind `COREX_E2E_TRACE`, because recording every
+test reproducibly broke a timing-sensitive spec.
+
+**The CI gap itself is fixed — PR #120 (`fix/ci-run-on-every-pr`, base `main`, opened 2026-07-22).** Drops the
+`branches: [main, develop]` filter from the `pull_request` trigger in `ci.yml`, `codeql.yml`, and
+`dependency-security.yml`, so every PR runs the gates whatever its base (`docs.yml`/`e2e.yml` stay
+deliberately scoped; dependency-security keeps its `paths` filter). Its own CI proves it: **CI green (35s) +
+CodeQL green**, and all three workflows triggered on the PR. `Validate dependency advisories` fails there —
+**pre-existing, not caused by this change**: Dependabot PR #115, which predates it, shows the same failure.
+That check is the repo's real advisory backlog and is non-required (`mergeStateStatus` UNSTABLE, still
+MERGEABLE) — and it is now **fixed by PR #121** (below), after which #120 goes clean too.
+
+**Advisory backlog cleared — PR #121 (`fix/056-advisory-backlog`, base `main`, opened 2026-07-22), spec 056's
+long-planned pass, all three gates GREEN + `mergeStateStatus` CLEAN.** 49 findings (npm-root 42 / npm-docs 7,
+25 unbounded + 1 metadata mismatch) → **21, every one bounded**. Followed spec 056's own order:
+- **P1 fix what is compatible** — `npm audit fix` (never `--force`; US1 scenario 3 forbids forced
+  downgrades) at root + docs-app cleared **28 findings**; lockfiles only, no `package.json` touched.
+- **P2 bound the rest** — the 8 with no compatible fix got full-schema exceptions (exposure, reason, control,
+  owner, review date, upstream trigger): `adm-zip`/`linkify-it` (npm's only "fix" is
+  `@wordpress/scripts@19.2.4` — a *downgrade* from the pinned `^32.4.1`), `webpack-dev-server` ×2 (localhost
+  dev server; `@wordpress/scripts` pins the vulnerable range), and `astro` ×3 + `sharp` (docs site is a
+  static build — no SSR, so the XSS paths have no attacker-controlled source; sharp runs only over repo
+  images at build time).
+- **P3 isolate majors** — the astro fix is `astro@7.1.3` (major) and was **left alone**; it belongs to the
+  held Astro 7 migration (PRs #60/#111), and every exception's `upstreamTrigger` points at it.
+- Also removed **4 stale exceptions** (`@babel/core`, `http-proxy-middleware`, `@opentelemetry/core`,
+  `js-yaml`) whose advisories no longer exist — the verifier fails stale entries so accepted risk cannot
+  outlive its finding.
+- Toolchain re-verified against the lockfile churn: **Jest 55 suites / 294 tests**, every wp-scripts webpack
+  build compiles, **docs-app 284 pages**, PHP **1291 passed**.
+- ⚠️ **The 8 new entries are risk acceptances and need a maintainer's sign-off**, not just a green check —
+  the exposure analysis is written into each entry for review.
+
+**Correction to the record:** the "8 pre-existing unrelated failures" this file and T028 previously reported
+were **not** pre-existing and **not** unrelated — `main` has none of them; the stack introduced all eight.
+DECISIONS #153. **Merging is now the only remaining step and needs the owner** — the merge command is
+permission-gated in the agent environment, so #117 → #118 → #119 must be merged by hand (all three are green
+and mergeable).
+
+**T024 COMPLETE — optional opt-in Dashboard widgets (US7 closed).** `OptionalDashboardWidgets` (corex-config)
+declares a catalogue — `corex_attention` (the actor's own unread items, bounded to 5) and `corex_development`
+(mode + warnings, Development-only) — each entry naming its ability, its Development-only flag, and its render
+callback. FR-025's four conditions sit in one **pure** `shouldRegister()` (opt-in · ability · has-data · mode),
+the `LoginRouteGuard` idiom, so every rule is unit-testable without WordPress. **The opt-in is a real
+setting** — US7's independent test is literally "enable an optional widget in settings" — so each entry names
+a Config dot-key (`dashboard.widgets.*`) declared as a checkbox in a new **Dashboard** tab of
+`SettingsRegistry`; the settings form saves it to the option the Config engine already reads
+(`dashboard.widgets.attention` → `corex_dashboard_widgets_attention`). One mechanism, no bespoke option. A
+unit test asserts every catalogued widget is declared as a togglable checkbox — a widget with no setting
+would be opt-in in name only — and unknown ids **fail closed**. `SettingsTabsTest`'s pinned tab order was
+updated for the new real section (Advanced stays last).
+`hasData()` is short-circuited behind opt-in + ability — a widget nobody enabled must not cost a query on
+every dashboard load just to decide not to appear. Both widgets reuse canonical services and are
+**navigation-only** (no forms, no buttons). Verified: 8 unit + 6 integration green; **full suites 1434 unit /
+192 integration, 0 failed**; live on corex.local (no opt-in ⇒ nothing; opted-in Development widget absent in
+PRODUCTION, present in DEVELOPMENT; render nav-only; site restored exactly); front 200. wp-guard clean — the
+guard pass itself caught the eager-`hasData()` query and an implicit render-callback ternary.
+
+**Latent T014 defect fixed + the saved views completed (2026-07-22).** Chasing an "unread" bug in the new
+Attention widget led to the root cause: **`NotificationQuery::$status` was accepted by the REST list endpoint,
+validated against the vocabulary, documented as "a per-user status filter" — and never read by any query**
+(`grep status WpNotificationRepository` returned nothing). `?status=read` returned everything with a 200.
+`NotificationStatus` likewise called itself "derived from the record plus the user's state row" while nothing
+derived it. Now: **`NotificationStatus::derive()`** owns the precedence (resolved ▸ expired ▸ dismissed ▸
+unelapsed snooze ▸ read/unread — resolution is a fact about the record and outranks any one user's state,
+FR-010), `queryForActor()` applies the filter from the actor's own state *before* pagination so `total` and
+the page agree, and every presented item carries `user_state.status`. Both call sites then **lost** their
+hand-rolled copies — the widget and drawer just ask for `status=unread`. Also fixed: the drawer refetched
+unfiltered while its own mark-read removed items, so read items reappeared on reopen and it disagreed with
+the bell beside it.
+
+**That unblocked FR-018's remaining saved views, which now all ship:** Inbox / Requires attention / **Assigned
+to me** / Submissions / Security / System / **Updates** / **History** / Preferences. History = `status=resolved`;
+Updates = `severity=information`; Assigned to me = a new `assigned_to_me` filter backed by
+`NotificationRecipient::targetsUserDirectly()`, narrower than `canBeSeenBy()` on purpose so the view is not
+just the inbox again for any ability holder. Verified: **1448 unit / 195 integration, 0 failed**; 6 e2e green
+(now asserting every named view renders and History raises no error state); front 200.
+
+**Remaining — optional / deferred, none blocking:** T021
+`NotificationChannelPolicy` (speculative until an email delivery channel exists — the producers already tag
+mail failures `email` for it); the assigned-to-me/updates/history screen views (need a recipient/resolved
+filter on `NotificationQuery` — an API extension, deliberately not smuggled into the screen work).
+**Tracked note:** `reopenByDedupKey` has no caller yet (recurrence-reopen is inline in `upsertByDedupKey`) —
+decide whether an explicit reopen endpoint needs it or drop it. MFA excluded throughout.
+
+---
+## (previous, 2026-07-20b) -- Spec 071 US1 COMPLETE on `spec/071-form-delivery-and-recaptcha-reliability`.
+
+**Branch** `spec/071-form-delivery-and-recaptcha-reliability`, cut from the unpushed spec-070 tip
+`f9c5656` (070 is local-only, 1 ahead of `origin/main`, not yet merged). This is Phase A of a larger
+three-phase goal (Form Delivery reliability → Notification Center → Dashboard Command Center). **MFA
+and its whole family are explicitly out of scope by owner instruction, in every phase.**
+
+**Spec Kit artifacts written first** (learning from 070's gap): `specs/071-.../` has spec, plan,
+research, data-model, contracts, quickstart, checklists, tasks, evidence. 070's missing artifacts were
+**backfilled** (plan/tasks/checklists) and logged as `DECISIONS.md` #145 — `docs-guard` caught a false
+claim in 070's own spec.md while doing so (a `failureMessage()` that never existed), now corrected in
+place.
+
+**What Phase A US1 fixes — a live regression, not a feature.** Selecting reCAPTCHA in settings
+rejected *every* real submission: the form rendered no `captcha_token` field and no provider script,
+so the always-empty token failed closed. `RemoteCaptcha` also never read `score`/`action`, so the
+threshold and action settings were inert — there was no reCAPTCHA v3 at all.
+
+**Done and verified (US1):**
+- `Corex\Security\VerifyingChallenge` + `ChallengeVerification` + `ChallengeContext` — a typed verdict
+  that can carry a score, extending the boolean `ChallengeVerifier` without breaking it (DECISIONS #146).
+- `RecaptchaV3Captcha` — nine fail-closed checks in order: token → transport → parse → success →
+  hostname (exact allowlist) → action (server-derived) → expiry → score → **replay last** (so only
+  valid tokens are recorded; score-rejected tokens stay retryable). `TokenReplayGuard` is transient +
+  HMAC-fingerprint, TTL-bounded, no new table/job.
+- `CaptchaAction` (in corex-forms, not the add-on — DECISIONS #147) derives the action from the flow
+  slug; the *same* function stamps the form and computes the server expectation, so browser and server
+  cannot disagree (FR-004).
+- Per-form `protection` config on `FlowConfiguration`, checksum-neutral when empty so every published
+  version keeps its stored hash (DECISIONS #148). `FlowProtection::normalize` at both serialisation
+  boundaries; round-trips proven by 15/15 Forms integration tests.
+- Conditional loading: `ProtectedFormRegistry` (render-time) + `CaptchaAssetController` (`wp_footer`) —
+  the provider script loads only on pages with a protected form, once, site-key only (secret never
+  leaves the server). `corex-captcha-v3.js` fetches a **fresh token per submit** (never at load),
+  locks double-submit, and shows a recoverable, translated error on failure.
+- `ProtectionStage` rewritten: typed path when the driver supports it, legacy boolean otherwise;
+  honeypot + throttle untouched; typed outcome + effective threshold persisted to `spam` metadata.
+
+**WS3 — truthful delivery outcome + wp_mail fallback — also DONE (2026-07-20b).** The other P1 core.
+- `NotificationDelivery` — a typed, redacting outcome reusing the canonical `MailResult` vocabulary
+  plus `not_attempted`/`unavailable`/`rejected`. `wp_mail()` true → `accepted`, **never** `sent`
+  (FR-015). `NotificationDispatcher` — the shared RoutedMailer → AttemptingMailer → Mailer →
+  `wp_mail()` ladder, extracted from the legacy listener and **added to the flow path**, which had no
+  floor: with CoreX Mail inactive a builder-form submission used to save and send *nothing*, silently.
+- `EmailStage` rewired: routed (CoreX Mail active) path preserved exactly, plus a wp_mail fallback and
+  a headline `corex_notification_delivery` projection an admin can read. `SendEmailListener` now
+  delegates to the dispatcher (removing the duplicated ladder and fixing its own wp_mail→`sent` bug).
+- **A regression I introduced and fixed:** wiring the dispatcher made `SendEmailListener` resolve the
+  Email Studio `RoutedMailer` *at boot* (loading mail translations before `init`). Fixed by
+  registering the forms event listeners **lazily** — built on first dispatch, not at boot — which also
+  lightens boot. Caught by a front-page log-delta check; now zero new log lines. DECISIONS #149.
+
+- **Verification (US1 + WS3):** 163/163 unit (Captcha+Forms+new Security), 23/23 Forms+Submissions
+  integration (routed *and* legacy paths preserved; the delivery projection asserted end-to-end in
+  `FlowLifecycleTest`), 303/303 Jest, JS lint clean, `php -l` clean, front page 200 with zero new log
+  lines. **Guards clean:** wp-guard, clean-code-guard (each with one finding fixed). Evidence:
+  `specs/071-.../evidence.md`.
+- **Pre-existing, not mine:** `LoginRouteGuardTest` "emoji shim" fails in isolation (mock-state leak
+  from spec 070) — reproduced with my edits *stashed*, so it predates this branch. Flagged, not absorbed.
+
+**WS4 (timeline + inbox surfacing) + captcha settings — also DONE (2026-07-20b).**
+- Unified the submission-timeline onto the one canonical shape the admin reads (`TimelineStage` +
+  `SubmissionRepository::appendTimeline`), added a `notification` timeline event carrying the delivery
+  status, and hydrate legacy `{kind,state,occurred_at}` rows on read (`WpSubmissionsReader`).
+- Surfaced delivery in the Submissions inbox: a `delivery` projection on every row (honest
+  `unavailable` for legacy), and a React `DeliveryBadge` (text + dashicon + accessible name, tone
+  tokens, never colour-alone) in the list column and detail, across all seven states.
+- Corrected the captcha settings: threshold help now states the shipped 0.3 default, action help
+  explains per-form `corex_form_<slug>` derivation, added a hostname-allowlist field.
+- **Verification:** 327 unit (Forms+Captcha+Security+Config), 23 Forms+Submissions integration,
+  303/303 Jest (token inventory regenerated for the new CSS tokens), CSS lint clean, config bundle
+  builds. DECISIONS #149 covers WS3; WS4/settings need no new decision.
+
+**WS5 (FluentSMTP transport advisory) — also DONE (2026-07-20b).** `TransportAdvisory` +
+`TransportAdvisoryResult` read only public signals (configured From-domain vs site host,
+`has_filter('wp_mail_from')`/`wp_mail_from_name`) — never a transport plugin's tables or credentials
+(FR-027), and never a fabricated "detected" where no evidence exists (FR-029). Surfaced as a
+"Sending & transport" panel on the Email Studio screen. 6/6 unit; boot clean; token inventory
+regenerated. Guidance: CoreX composes via wp_mail(), a transport (e.g. FluentSMTP) delivers,
+acceptance ≠ inbox delivery, SMTP credentials stay owned by the transport plugin.
+
+**US4 (per-form Protection panel) — also DONE (2026-07-21).** A **Protection** tab in the flow
+builder (`ProtectionTab.js` + `StageRail`/`FlowEditorPanel` wiring) lets an author set captcha
+mode (inherit/on/off) + optional action/threshold overrides, via `CorexSelect` (never a native
+select). Sparse storage keeps an all-inherit form checksum-neutral; the field round-trips through the
+editor and the REST presenter/mapper. `protectionTab.test.js` 3/3, `PerFormProtectionTest` 4/4; JS +
+CSS lint clean; bundle builds; boot clean.
+
+**PHASE A IS COMPLETE AND GATE-GREEN (2026-07-21).** US1 · WS3 · WS4 · WS5 · US4 · captcha settings ·
+docs — all implemented, tested, documented, and verified over the full diff.
+
+**Phase A gate results** (full detail in `specs/071-.../evidence.md`):
+- Composer valid; `php -l` clean; `git diff --check` clean (CRLF-only warnings).
+- **Full integration 166/168** — the 2 failures are `LoginUrlRewritingTest` (spec-070 login-hiding),
+  **proven pre-existing** (reproduced with my changes stashed). **Full Jest 306/306, 57 suites.**
+- `composer test` hits the **pre-existing order-dependent segfault** (spec 070 §Out of scope,
+  reproduced identically with my changes stashed); every suite passes in isolation.
+- CSS lint clean; full build exit 0; `verify:dependencies` shows 27 **pre-existing** advisories
+  (no dependency-manifest change by me — spec 056's track).
+- **Playwright 7/7** (submissions-inbox + forms-flow + console) — the inbox (new DeliveryBadge) and
+  builder (new Protection tab) render at mobile/tablet/desktop/wide **+ RTL**, no console errors.
+- **All guards clean:** wp-guard, clean-code-guard, docs-guard, test-guard (one redundant test
+  merged), ui-ux-pro-max (one raw `3px` → `--corex-admin-state-border` token).
+- **Deferred, env-gated:** T004/T018/T028/T040 — a live reCAPTCHA-v3 **token** E2E needs a real dev
+  site key on `corex.local`; the existing E2E specs don't use captcha so they pass without one, and
+  the server-side verification is exhaustively unit-tested (28 captcha cases). Provide a key to add it.
+- The inherited `Illegal characters in the subject field` warning is **not** surfaced or caused by
+  this work (subjects are built via `sprintf(__('New "%s" form submission'))`); it remains open.
+
+Nothing committed, pushed, or merged. **Phase B (Notification Center) may now begin**, gated on this
+green Phase A. Two
+spec-070 login-hiding integration tests fail **pre-existing** (reproduced with my changes stashed):
+`LoginRouteGuardTest` emoji-shim, `LoginUrlRewritingTest` multisite welcome-email — flagged for a
+separate fix, not absorbed. Phases B (Notification Center) and C (Dashboard) follow, gated on the
+Phase A gate passing.
+
+**Nothing committed, pushed, or merged** — working tree changes only, as instructed.
+
+---
+## (previous) Spec 070 IMPLEMENTATION-COMPLETE on `spec/070-transport-error-fidelity`.
+
+Two owner-reported defects against v0.34.0, both reproduced on `corex.local` before any code changed,
+and neither with the cause its symptom suggested. Full write-up:
+`specs/070-transport-error-fidelity-and-admin-style-parity/spec.md`.
+
+1. **Email Studio template save 404'd**, shown as "Something went wrong. Please try again."
+   Two stacked bugs. WordPress resolves JSON body params *before* URL params, and the editor was
+   posting the stored version's own `id` (it built the draft with `{ ...EMPTY_DRAFT, ...latest }`),
+   so the controller looked up version 3860 as a template and 404'd. The real message never
+   surfaced because `corex-runtime.js` assumed `wp.apiFetch({ parse: false })` *resolves* on a
+   non-2xx — core rethrows the raw Response, so every server error hit the blanket catch. Fixed at
+   both ends: new `Corex\Http\RouteParam` reads `get_url_params()` (unshadowable, applied across 4
+   controllers), and the transport now reads error responses. **Verified: save returns 201.**
+2. **Hidden `/wp-admin` rendered unstyled.** `wp_common_block_scripts_and_styles()` returns early on
+   `is_admin()`, so the 404 got no block CSS whatsoever — only `theme.json` tokens, which have no
+   such gate. Spec 069 called this unreachable; that is true of a *different* gate. This one is
+   hooked to `wp_enqueue_scripts`, long after `render404()` runs on `wp_loaded`.
+   **Verified: 46,587 B → 79,711 B against a 79,964 B control, visually identical.**
+   069's spec has been corrected in place rather than left standing.
+
+- **Verification:** 164/164 integration, 298/298 Jest, 8/8 security-access e2e. Guards clean
+  (wp-guard, clean-code-guard, test-guard). Lint on `corex-runtime.js`: 123 problems before → 114
+  after (file is intentionally buildless ES5; pre-existing).
+- **Next:** review and merge `spec/070-transport-error-fidelity`, then cut **v0.35.0**.
+- **Known, unrelated, still open:** recurring `Mail rejected: Illegal characters in the subject
+  field` in `debug.log`; `WP_DEBUG_DISPLAY` is `true` in `wp/wp-config.php`; a pre-existing PHP
+  segfault partway through the unit suite (identical with and without this work — 143 PASS blocks,
+  crash after `BootLoggerTest`, passes in isolation); `output/` is still untracked Playwright
+  evidence.
+
+---
+## (previous) Spec 069 MERGED to `main` (PR #107). Released as **v0.34.0**.
 
 - **PR #107 merged** to `main` (merge commit on `origin/main`), then cut `release/v0.34.0`: 16 version files
   bumped (4 plugin + 11 addon headers, 14 `*_VERSION` constants, `theme/style.css`) and the CHANGELOG written.

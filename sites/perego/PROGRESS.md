@@ -2,7 +2,26 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE
+## RESUME HERE (2026-07-23) — this branch is the **CoreX update track**, and it is finished
+
+- **Branch:** `chore/corex-v0.35.0-update` → **PR #38** into `feature/001-global-foundation`.
+  **All seven checks green on the exact tip `7105ec2`** (PHP unit · Jest · integration · Playwright ·
+  CodeQL ×2 · dependency advisories); `MERGEABLE` / `CLEAN`; **zero reviews**. It is waiting on the
+  owner, not on engineering.
+- **Locally re-verified before recommending the merge:** client Pest **268 passed** (812 assertions)
+  and client Jest **11 suites / 76 tests** — the JS suite matters because, since `sites/` was excluded
+  from the framework's root sweep, **no CI job runs it**. See `DECISIONS.md` (2026-07-23) for that gap
+  and for the two corrections that closed this branch's CI failures.
+- **The live product record is on `feature/021-fse-visual-editing-ux` (PR #37), not here.** That branch
+  is ~69 commits ahead of this one and carries its own newer RESUME HERE; its stated next step is
+  **spec 021 Track C, starting with the Phase 6 release gates (T030–T032)**. Neither branch contains
+  the other — 021 still has to take the CoreX update after #38 merges, and when it does, its record
+  still repeats the "environmental Patchwork baseline" claim this branch disproved.
+- **Everything below is the 009–019 program history** and remains accurate for that work.
+
+---
+
+## (previous) RESUME HERE
 
 - **Date/time:** 2026-07-15 (~13:40 UTC)
 - **Branch:** `feature/011-global-shell-preloader` (stacked on 010←009←008). **PRs open:** #17 (spec 009, base 008), #18 (spec 010, base 009).

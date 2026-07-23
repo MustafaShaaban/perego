@@ -19,5 +19,13 @@ module.exports = {
 		'/node_modules/',
 		'<rootDir>/wp/',
 		'<rootDir>/docs-app/',
+		// Client sites under `sites/` are a fork-level addition upstream does not have, and each
+		// carries its own Jest config — Perego's maps `@wordpress/interactivity` to a local mock,
+		// because that module is a WordPress runtime script handle, not an installed package. Swept
+		// in from here the mapping is absent and every Interactivity view test fails to resolve it.
+		// Those suites run from their own directory — `sites/perego/perego-site` is not an npm
+		// workspace of this root, so `--workspace=` does not reach it:
+		// `cd sites/perego/perego-site && npm run test:js`.
+		'<rootDir>/sites/',
 	],
 };
