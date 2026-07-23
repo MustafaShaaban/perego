@@ -35,6 +35,6 @@
     "devDependencies": {
         "@playwright/test": "^1.61.1",
         "@wordpress/env": "^11.8.1",
-        "@wordpress/scripts": "^32.4.1"
+        "@wordpress/scripts": "^33.0.0"
     }
 }
