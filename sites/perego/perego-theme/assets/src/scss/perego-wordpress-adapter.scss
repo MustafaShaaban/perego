@@ -543,6 +543,15 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 .pagination button[hidden] { display: none; }
 #portfolioEmpty[hidden] { display: none; }
 
+/* RTL arrow links — the mirror must survive hover (owner-reported on the Arabic home page's
+ * "عرض كل الخدمات"). The reference stylesheet mirrors the arrow on `[dir="rtl"] .link-arrow svg`
+ * (scaleX(-1)) but nudges it on the more specific `[dir="rtl"] .link-arrow:hover svg`, and `transform`
+ * is a single property, not a list that merges: on hover the nudge REPLACED the mirror, so the arrow
+ * snapped from pointing inline-end to pointing inline-start and slid the wrong way. Compose both, and
+ * note the nudge is +6px, not -6px: after scaleX(-1) the element's own X axis is flipped, so a positive
+ * translate advances the arrow in its own reading direction. LTR is untouched. */
+[dir="rtl"] .link-arrow:hover svg { transform: scaleX(-1) translateX(6px); }
+
 /* Perego addition, not in the reference stylesheet: the seeded demo projects always carry a real
  * (placeholder-labelled) featured image, but content types with no photo at all yet — e.g. a service
  * post surfaced in Search — have nothing to show in a .post-card__media box, and

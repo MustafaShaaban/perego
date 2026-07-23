@@ -1,5 +1,90 @@
 # Perego — Decision Log
 
+## 2026-07-23 — Owner report: uneditable Front Page, RTL arrow, header Contact link
+
+Four causes behind three symptoms; none of them shared a fix.
+
+**1. A live-canvas preview must not be a fixed, full-viewport overlay.** The `preloader` and
+`media-lightbox` previews render their real markup (spec 021 C15) and that markup is
+`position: fixed; inset: 0`. On the front end each stays hidden until its view script shows it, and the
+previews deliberately omit that lifecycle — so in the canvas iframe each anchored to the iframe viewport
+and covered the whole Front Page template. Deleting the preloader just revealed the dialog behind it.
+Fixed with editor-only CSS in `perego-editor.scss` (until now an empty placeholder, which is exactly
+what it was reserved for): un-fix both into bounded, selectable tiles. `block-size: auto` is part of the
+fix — the adapter pins the live preloader to `100dvh`, so un-fixing alone left a screenful-tall tile.
+
+**The rule worth keeping: any block whose skeleton is fixed or absolutely-positioned chrome needs an
+editor-only box.** That is now the second instance, after `home-about-bg` (2026-07-22) collapsed to zero
+height for the mirror-image reason. Check it whenever a locked preview is added.
+
+**2. `orderby: menu_order` and `per_page: -1` are not valid REST arguments.** `services-teaser`'s editor
+asked for both, so `/wp/v2/perego_service` answered **400 `rest_invalid_param`** and the Services picker
+was silently empty. `site-header/index.js` already carried the correct query *and a comment explaining
+this exact constraint* — the knowledge existed and the second caller did not reuse it. Now mirrored,
+comment included.
+
+**3. The header's Contact link: a JS seed drifted from the PHP seed, and a Site Editor save made the
+drift permanent.** `SiteHeaderRenderer::seedNavItems()` has always seeded `#contact` (every page's
+footer carries `id="contact"`; the Contact page is reached through the "Start a Project" CTAs), and that
+is what the handoff specifies — *"Contact Us `#contact` (footer anchor on home; on inner pages resolves
+to the footer `#contact`)"*, `docs/pages/_global-partials.md` in the V2 handoff, with the same decision
+recorded here on 2026-07-16 ("Header 'Contact Us' is the bare `#contact` fragment"). But the
+editor-side `SEED_EN`/`SEED_AR` in `site-header/preview.js` said `/contact`. The seed only applies while
+the block has no stored attributes — and the first Site Editor save wrote the JS seed into the `header`
+template part, in both languages. From then on the stored value was the site's real nav.
+
+Two fixes, because a code fix alone changes nothing on a site that has already saved:
+`preview.js` now matches the PHP seed, and `scripts/migrate-header-contact-anchor.php` rewrites the
+saved attribute. **The seed docblock used to say hrefs were "volatile / parity-ignored"** — true of the
+parity test, false of the site, and that is what let the drift through. Corrected.
+
+**⚠️ `wp_update_post()` unslashes what you give it.** The first run of the migration ate every backslash
+in the block comment's `"` escapes; the stored JSON stopped parsing and the renderer fell back to
+the PHP seed — which reads as the whole nav reverting (order *and* Arabic labels), not as a corrupted
+attribute. Restored from the pre-migration backup and re-ran with `wp_slash()`. **Any script that
+rewrites `post_content` through `wp_update_post()` must wrap it in `wp_slash()`**, and the tell-tale
+symptom of forgetting is stored data that silently degrades to its default.
+
+**4. Canvas fonts were blocked by CORS.** `add_editor_style()` inlines `main.css` into an `about:srcdoc`
+iframe whose origin is `null`, and font fetches are always CORS-mode, so the editor rendered in fallback
+faces. A scoped `.htaccess` in `assets/fonts/` sets `Access-Control-Allow-Origin` for font files only,
+guarded by `<IfModule mod_headers.c>` so a host without the module keeps today's behaviour. Verified
+serving `Access-Control-Allow-Origin: *` locally. The front end is same-origin and was never affected.
+
+**Public output is unchanged apart from the intended link.** A curl-diff of `/` and `/ar/` against the
+pre-change capture shows exactly one changed line per language: the Contact href. The RTL arrow fix
+below is CSS-only.
+
+**⚠️ Deploy note: `main.css` is enqueued as `?ver=0.1.0`, the theme version**, so a CSS-only fix does
+not reach a returning visitor's cache until that version is bumped. Both CSS fixes here are affected.
+
+## 2026-07-23 — The RTL arrow flipped on hover because `transform` is one property, not a list
+
+The Arabic home page's "عرض كل الخدمات" arrow snapped from pointing inline-end to pointing inline-start
+the moment it was hovered. The reference stylesheet mirrors the arrow on `[dir="rtl"] .link-arrow svg`
+(`scaleX(-1)`) but nudges it on the more specific `[dir="rtl"] .link-arrow:hover svg`
+(`translateX(-6px)`). `transform` does not merge across rules — the more specific declaration replaces
+the whole value — so hovering discarded the mirror.
+
+Fixed in `perego-wordpress-adapter.scss`, the client-owned layer that loads after the immutable
+reference sheet (the same route as the spec-020 `[hidden]` overrides):
+`[dir="rtl"] .link-arrow:hover svg { transform: scaleX(-1) translateX(6px); }`.
+
+**The sign is deliberate: `+6px`, not `-6px`.** After `scaleX(-1)` the element's own X axis is flipped,
+so a positive translate advances the arrow in its own reading direction. Verified in a real browser —
+hovered computed transform is `matrix(-1, 0, 0, 1, -6, 0)` (mirror kept, 6px leftward) with the link in
+its accent-soft hover colour; LTR is unchanged at `matrix(1, 0, 0, 1, 6, 0)`.
+
+**Verification gotcha worth remembering:** the first two Playwright runs reported no nudge at all,
+because the first-visit preloader was still covering the page and `:hover` never landed on the link.
+`el.matches(':hover')` is the check that exposes it — a transform reading alone looks like a CSS bug.
+
+**Noted, not changed:** `services-teaser/style.scss` defines a `.perego-link-arrow` twin of this
+primitive that **no renderer emits** (the markup uses the reference's `.link-arrow`). Its RTL variant is
+built by rtlcss, which negates `translateX(6px)` to `-6px` on top of the authored `scaleX(-1)` — the
+same double-flip, dormant only because the class is unused. Left alone as dead CSS rather than fixed
+blind; worth deleting or adopting deliberately.
+
 ## 2026-07-23 — The AR/EN "old design" gap was a meta-translation bug, not a design divergence
 
 The owner reported the Arabic site being "in an old design". **It is not.** Every EN/AR page pair —

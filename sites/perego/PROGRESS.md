@@ -2,7 +2,33 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-23, latest) — CoreX v0.35.1 is now *in* this branch; Track C is next
+## RESUME HERE (2026-07-23, latest) — three owner-reported defects fixed; Track C still next
+
+- **The Front Page template is editable again.** Two unrelated causes: the `preloader` and
+  `media-lightbox` live-canvas previews render real markup that is `position: fixed; inset: 0`, so each
+  covered the whole canvas (deleting one revealed the other); and `services-teaser`'s editor asked REST
+  for `orderby=menu_order` + `per_page=-1`, both rejected → the **400** in the console and an empty
+  Services picker. Editor-only CSS in `perego-editor.scss` turns both overlays into bounded tiles;
+  the query now mirrors `site-header/index.js`, which already had it right.
+- **The Arabic "عرض كل الخدمات" arrow no longer flips on hover.** The reference sheet's RTL mirror
+  (`scaleX(-1)`) was replaced by its own more-specific hover nudge, because `transform` is a single
+  property. Composed in the adapter as `scaleX(-1) translateX(6px)` — verified in a real browser at
+  `matrix(-1, 0, 0, 1, -6, 0)`.
+- **The header "Contact Us" jumps to the footer again, EN and AR.** The PHP seed always said
+  `#contact`; the editor's JS seed said `/contact` and a Site Editor save baked it into the `header`
+  template part. Seed corrected **and** `scripts/migrate-header-contact-anchor.php` added to fix the
+  saved data. **⚠️ Database change — production must run the migration too** (LAUNCH-CHECKLIST).
+- **Canvas fonts load again** — a scoped `assets/fonts/.htaccess` sets `Access-Control-Allow-Origin`,
+  which the `about:srcdoc` editor iframe needs; verified serving locally.
+- **Verified:** client Pest **418** (1202 assertions), client Jest **39 suites / 193**, theme + block
+  builds clean, seven routes 200. Public output curl-diffed against a pre-change capture: **exactly one
+  changed line per language**, the Contact href. DB backup `wp/db-backup-20260723-163939.sql`.
+- **⚠️ Two things to carry:** `main.css` is enqueued as `?ver=0.1.0` (the theme version), so CSS fixes
+  do not reach cached browsers until it is bumped; and `wp_update_post()` unslashes its input, so any
+  `post_content` rewrite needs `wp_slash()` (learned the hard way — see DECISIONS).
+- **Next:** unchanged — Track C, Phase 6 release gates (T030–T032).
+
+## RESUME HERE (2026-07-23) — CoreX v0.35.1 is now *in* this branch; Track C is next
 
 - **The update chain landed.** PR **#38 merged** into `feature/001-global-foundation` (`0e40627`), which
   merged into `feature/020-home-visual-audit` (`9d8e2d7`), which is merged here. This branch now builds on

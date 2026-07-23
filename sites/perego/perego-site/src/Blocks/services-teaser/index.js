@@ -71,11 +71,14 @@ function ServicesComposer( { attributes, services, setAttributes } ) {
 
 function Edit( { attributes, setAttributes } ) {
 	const blockProps = useBlockProps( { className: 'perego-services-teaser__editor' } );
+	// REST only allows a fixed orderby set (menu_order and per_page:-1 are rejected → a 400 and an
+	// empty picker); order the pick list by title, as site-header/index.js already does. The teaser's
+	// own card order comes from the composer's serviceOrder and ServiceCatalog, not from this list.
 	const services = useSelect(
 		( select ) => select( 'core' ).getEntityRecords( 'postType', 'perego_service', {
-			per_page: -1,
+			per_page: 100,
 			status: 'publish',
-			orderby: 'menu_order',
+			orderby: 'title',
 			order: 'asc',
 		} ) || [],
 		[]

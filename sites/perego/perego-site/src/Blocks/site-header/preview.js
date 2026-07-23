@@ -17,9 +17,14 @@ import { __ } from '@wordpress/i18n';
 
 /**
  * The seed nav shown until an editor sets `navItemsEn`/`navItemsAr`. Mirrors
- * `SiteHeaderRenderer::seedNavItems()` (labels differ per locale; hrefs are volatile / parity-ignored),
- * so the default editor canvas matches the default front-end header. Shared by `index.js` and the
- * markup-parity test.
+ * `SiteHeaderRenderer::seedNavItems()` (labels differ per locale), so the default editor canvas matches
+ * the default front-end header. Shared by `index.js` and the markup-parity test.
+ *
+ * **Hrefs must mirror the PHP seed too**, even though the parity test ignores them: the first Site
+ * Editor save writes these values into the header template part, and from then on they are the site's
+ * real nav. That is how "Contact Us" came to point at `/contact` — this seed said so while the PHP seed
+ * said `#contact` (the footer anchor the handoff intends, present on every page). See
+ * scripts/migrate-header-contact-anchor.php for the matching data fix.
  */
 export const SEED_EN = [
 	{ label: 'Home', href: '/' },
@@ -36,7 +41,7 @@ export const SEED_EN = [
 	{ label: 'Work', href: '/work' },
 	{ label: 'Journal', href: '/journal' },
 	{ label: 'Clients', href: '/#clients' },
-	{ label: 'Contact Us', href: '/contact' },
+	{ label: 'Contact Us', href: '#contact' },
 ];
 
 export const SEED_AR = [
@@ -54,7 +59,7 @@ export const SEED_AR = [
 	{ label: 'أعمالنا', href: '/work' },
 	{ label: 'المدونة', href: '/journal' },
 	{ label: 'العملاء', href: '/#clients' },
-	{ label: 'تواصل معنا', href: '/contact' },
+	{ label: 'تواصل معنا', href: '#contact' },
 ];
 
 /** Parse a stored nav-items JSON string, falling back to `seed` when empty or invalid. */
