@@ -1,0 +1,15 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/home-about",
+	"title": "Perego Home About",
+	"category": "theme",
+	"icon": "align-left",
+	"description": "The homepage About panels. The copy lives in the front page's own content — this block renders it on the site and makes it editable inside the Front Page template canvas. English and Arabic each keep their own page.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"usesContext": [ "postId", "postType" ],
+	"supports": {
+		"html": false
+	}
+}

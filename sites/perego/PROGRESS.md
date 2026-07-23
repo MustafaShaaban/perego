@@ -2,7 +2,27 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-23, latest) — three owner-reported defects fixed; Track C still next
+## RESUME HERE (2026-07-23, latest) — About is editable in the Front Page canvas; Track C is next
+
+- **New `perego-theme/home-about` block replaces `wp:post-content` in `front-page.html`.** The template
+  canvas showed core's "This is the Content block…" placeholder because About is the front page's own
+  content and `render_block_core_post_content()` returns early with no `postId` context. The block now
+  owns the editing surface while the pages keep the text: `edit()` binds the canvas to the page with
+  `useEntityBlockEditor` (real glass panels, natively editable), and the renderer delegates to a real
+  `core/post-content` `WP_Block` so the front end is unchanged.
+- **Public output byte-identical:** curl-diff of `/` and `/ar/` vs the pre-change capture — **0 changed
+  lines** in both. Arabic still renders from page 97 via the seeded `postId` context; no Arabic
+  attribute exists. Proof the swap is live: the resolved template contains the block and no longer
+  contains `wp:post-content`.
+- **Binding follows context:** on a page screen it is the page being edited (Arabic page → Arabic
+  panels); only the template screen falls back to `page_on_front`.
+- **Verified:** client Pest **423** (1207 assertions, +5 renderer tests), client Jest **39 suites /
+  193**, build clean, five routes 200. Guards: wp-guard, clean-code-guard, docs-guard.
+- **Still owner-verifiable only:** the canvas itself (wp-admin login). Open Site Editor → Front Page and
+  confirm the panels render and edit; saving should list *Home* beside the template.
+- **Next:** Track C — Phase 6 release gates T030–T032.
+
+## (previous, 2026-07-23) — three owner-reported defects fixed
 
 - **The Front Page template is editable again.** Two unrelated causes: the `preloader` and
   `media-lightbox` live-canvas previews render real markup that is `position: fixed; inset: 0`, so each

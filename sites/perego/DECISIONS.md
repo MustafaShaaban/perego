@@ -1,5 +1,44 @@
 # Perego — Decision Log
 
+## 2026-07-23 — About panels: a block that owns the editing surface, not the content
+
+The Front Page template canvas showed core's *"This is the Content block…"* placeholder where the About
+panels belong, and nothing there could be edited. Not our bug: About is the front page's own
+`post_content`, and `render_block_core_post_content()` returns an empty string unless
+`$block->context['postId']` is set — a template being edited has no post. Spec 004 T012 put the copy in
+the page deliberately, and each language keeps its own page, which is how Polylang works.
+
+**Decision: a real `perego-theme/home-about` block whose content stays in the pages.** The block replaces
+`wp:post-content` in `front-page.html` and provides the editing surface; the pages keep the text.
+
+- **Front end delegates to core instead of imitating it.** The renderer builds a real
+  `core/post-content` `WP_Block` with the same context and returns its render. The wrapper classes
+  (`entry-content wp-block-post-content has-global-padding is-layout-constrained …`) are not literals in
+  core — `get_block_wrapper_attributes()` computes them from the block's registered layout support — so
+  hand-writing them would drift the first time core changed one. Output is **byte-identical**: a
+  curl-diff of `/` and `/ar/` against the pre-change capture shows **zero changed lines**.
+- **Language needs no code.** `block.json` declares `usesContext: ["postId","postType"]` and
+  `render_block()` seeds that from the global post, so `/` renders page 42 and `/ar/` page 97 — the
+  Arabic panels keep coming from the Arabic page, with no Arabic attribute anywhere.
+- **The editor binds to an entity.** `edit()` uses `useEntityBlockEditor` + controlled inner blocks —
+  the same mechanism core's post-content block uses in the page editor — so the canvas holds the page's
+  real `glass-panel` blocks, styled by `main.css`, natively editable. Edits mark the page dirty, so the
+  Site Editor lists it beside the template on save.
+- **Which page it binds to follows the context.** On a page screen it is the page being edited (so the
+  Arabic page's editor shows Arabic); only the template screen, which has no post, falls back to
+  `page_on_front`. Without that branch the Arabic page's editor would have shown English panels while
+  the site rendered Arabic.
+
+**Why not attributes, which is the shape of every other section block.** Moving the copy into En/Ar
+attributes would have reversed spec 004 T012, taken Arabic copy out of the Arabic page, and — the part
+that would have bitten later — left the pages' own content unrendered, so anything typed into the Home
+page afterwards would silently never appear. The owner chose "a block like the others" *and* "leave the
+Arabic copy in the Arabic page"; those two are only compatible this way.
+
+**The general rule this establishes:** when a section's content legitimately lives outside the template,
+the block owns the *editing surface* and delegates rendering to whatever core block already owns the
+*content*. Reach for attributes only when the content has nowhere else to live.
+
 ## 2026-07-23 — Owner report: uneditable Front Page, RTL arrow, header Contact link
 
 Four causes behind three symptoms; none of them shared a fix.

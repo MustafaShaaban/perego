@@ -21,7 +21,15 @@
 - [x] T011 Write visual/editor tests for Hero parent/slide data and migration.
 - [x] T012 Replace the fixed Hero editor with parent/slide visual composition, safe controls, and migrated EN/AR content.
 - [x] T013 Implement visual Services query/manual/hybrid composer with card overrides, ordering, and migration.
-- [x] T014 Implement direct visual About block editing with locked structural wrappers.
+- [x] T014 Implement direct visual About block editing with locked structural wrappers. **Reopened and
+  closed again 2026-07-23 (owner report).** Treating About as "already editable because it is
+  `wp:post-content`" was only true on the *page* screen: in the Front Page **template** canvas core can
+  only draw its "This is the Content block…" placeholder, because `render_block_core_post_content()`
+  returns early without a `postId` context. New `perego-theme/home-about` block replaces the
+  `wp:post-content` in `front-page.html` — the front end delegates to a real `core/post-content`
+  `WP_Block` (byte-identical output, and each language renders its own page via the seeded context), while
+  `edit()` binds the canvas to the page with `useEntityBlockEditor`, so the real glass panels render and
+  their text is editable in place. **The copy never moved out of the pages** (spec 004 T012 stands).
 - [x] T015 Implement Clients automatic/manual/hybrid visual composer, placeholder media, and stable preview controls.
 - [x] T016 Run homepage public visual/interaction regression at every baseline width and language.
 

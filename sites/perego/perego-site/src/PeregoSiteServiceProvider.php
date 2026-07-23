@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\HomeAboutBgRenderer;
+use PeregoSite\Blocks\HomeAboutRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PostBreadcrumbRenderer;
 use PeregoSite\Blocks\PostReadingTimeRenderer;
@@ -45,6 +46,7 @@ use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Repositories\ProjectRepository;
 use PeregoSite\Seo\StructuredData;
 use PeregoSite\Services\LanguageService;
+use WP_Block;
 
 /**
  * The Perego site service provider — the composition root where the site's pieces are wired:
@@ -845,6 +847,14 @@ final class PeregoSiteServiceProvider
             $aboutBgRenderer = new HomeAboutBgRenderer();
             register_block_type($this->blockDir('home-about-bg'), [
                 'render_callback' => static fn (): string => $aboutBgRenderer->render(),
+            ]);
+
+            // Takes the third argument for its `postId`/`postType` context — that is what tells the
+            // block which language's front page to render (see HomeAboutRenderer).
+            $aboutRenderer = new HomeAboutRenderer();
+            register_block_type($this->blockDir('home-about'), [
+                'render_callback' => static fn (array $attributes, string $content, WP_Block $block): string
+                    => $aboutRenderer->render($block),
             ]);
         });
     }
