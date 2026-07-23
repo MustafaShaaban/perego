@@ -35,11 +35,19 @@ script handle, not an installed package — so from the root sweep every one fai
 
 `sites/` is a fork-level directory upstream does not have, so excluding it from the framework's root
 sweep is the correct fix rather than teaching a framework config about a client path. Root Jest **252
-passed**; the client suite runs from its own workspace.
+passed**; the client suite runs from its own directory.
 
-**⚠️ Gap this leaves:** the client site's JS tests now run in **no CI job at all**. Adding a workspace
-step to the workflow would close it — worth doing, but it edits an upstream-owned workflow file, so it
-will conflict on every future CoreX update unless upstream takes it.
+**Correction (same day):** the exclusion comment first documented the recovery command as
+`npm run test:js --workspace=sites/perego/perego-site`. That command does not work — `sites/` is
+deliberately *not* in the root `workspaces` array, so npm answers `No workspaces found`. The command
+is `cd sites/perego/perego-site && npm run test:js`, and it is now written that way in
+`jest.config.js`. Verified green there: **11 suites / 76 tests**. Naming a suite's only remaining
+runner and getting that name wrong is how a suite stops being run at all.
+
+**⚠️ Gap this leaves:** the client site's JS tests now run in **no CI job at all** — the local run above
+is the only thing exercising them. Closing it means adding a step to an upstream-owned workflow file,
+which will conflict on every future CoreX update unless upstream takes it; the alternative is a
+fork-owned workflow of our own that upstream never touches. Owner decision, still open.
 
 ## 2026-07-14 — Homepage editable seam: teaser ← Service CPT meta; hero ← block attributes (spec 012 T002)
 

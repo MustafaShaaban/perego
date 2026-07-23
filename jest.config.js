@@ -23,7 +23,9 @@ module.exports = {
 		// carries its own Jest config — Perego's maps `@wordpress/interactivity` to a local mock,
 		// because that module is a WordPress runtime script handle, not an installed package. Swept
 		// in from here the mapping is absent and every Interactivity view test fails to resolve it.
-		// Those suites run from their own workspace: `npm run test:js --workspace=sites/perego/perego-site`.
+		// Those suites run from their own directory — `sites/perego/perego-site` is not an npm
+		// workspace of this root, so `--workspace=` does not reach it:
+		// `cd sites/perego/perego-site && npm run test:js`.
 		'<rootDir>/sites/',
 	],
 };
