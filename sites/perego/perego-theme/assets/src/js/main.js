@@ -4,6 +4,8 @@
  * helper). Styles compile separately from assets/src/scss/ (`npm run styles`). Keep this small
  * and dependency-free — progressive enhancement only.
  */
+import { initCustomSelects } from './select';
+
 // Progressive-enhancement flag (handoff main.js:10): the reference stylesheet only hides
 // `.reveal` elements under a `.js` root, so a no-JS visit renders everything visible.
 document.documentElement.classList.add( 'js' );
@@ -171,4 +173,7 @@ document.addEventListener( 'DOMContentLoaded', () => {
 	document.querySelectorAll( '.corex-form' ).forEach( ( form ) => {
 		form.noValidate = true;
 	} );
+
+	// Styled listbox over each native <select> — see select.js for why the native control stays.
+	initCustomSelects();
 } );
