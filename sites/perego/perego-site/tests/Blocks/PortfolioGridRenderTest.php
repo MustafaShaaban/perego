@@ -57,10 +57,20 @@ it('renders one card per project with its category and excerpt', function () {
         ->and($html)->toContain('Client: Sample · 2026');
 });
 
+it('combines a gallery and a video into one mixed lightbox gallery', function () {
+    $html = renderGrid([
+        ['title' => 'Mixed', 'url' => '/work/mixed', 'category' => 'video', 'categoryLabel' => 'Video Editing', 'excerpt' => '', 'thumbUrl' => 'https://perego.local/t.png', 'thumbAlt' => 'T', 'gallerySrcs' => ['https://perego.local/1.png', 'https://perego.local/2.png'], 'videoUrl' => 'https://perego.local/reel.mp4'],
+    ]);
+
+    // view.js picks a renderer per slide, so images and a video can share one gallery.
+    expect($html)->toContain('data-gallery="https://perego.local/1.png,https://perego.local/2.png,https://perego.local/reel.mp4"')
+        ->and($html)->not->toContain('data-video=');
+});
+
 it('opens each card in the lightbox instead of navigating to a project page', function () {
     $html = renderGrid();
 
-    // A video wins, then a real multi-image gallery, then the single image.
+    // A video alone wins, then a real multi-image gallery, then the single image.
     expect($html)->toContain('data-video="https://perego.local/reel.mp4"')
         ->and($html)->toContain('data-gallery="https://perego.local/a.png,https://perego.local/b.png"')
         // Cards are buttons now — no card should link to a single project page.

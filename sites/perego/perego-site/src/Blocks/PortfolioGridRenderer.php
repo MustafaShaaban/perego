@@ -158,22 +158,32 @@ final class PortfolioGridRenderer
     }
 
     /**
-     * The card's lightbox trigger attribute, in the same precedence the showcase cards use: a video
-     * wins, then a real multi-image gallery, then the single featured image. A project with no media at
-     * all yields no trigger — the card then does nothing on click rather than opening an empty dialog,
-     * which matters because the client noted not every project has content yet.
+     * The card's lightbox trigger attribute. A project carrying a gallery AND a video opens both as one
+     * mixed gallery; otherwise a video wins, then a real multi-image gallery, then the single featured
+     * image. A project with no media at all yields no trigger — the card then does nothing on click
+     * rather than opening an empty dialog, which matters because the client noted not every project has
+     * content yet.
      *
      * @param array{thumbUrl: string, gallerySrcs: list<string>, videoUrl?: string} $project
      */
     private function lightboxTrigger(array $project): string
     {
         $videoUrl = (string) ($project['videoUrl'] ?? '');
+        $gallery = $project['gallerySrcs'];
+
+        // A project with BOTH becomes one mixed gallery rather than hiding its stills behind the video.
+        // media-lightbox/view.js picks a renderer per slide (`mediaType()` -> embed / video / img), so a
+        // single data-gallery list can carry images and a video together.
+        if ($videoUrl !== '' && count($gallery) > 1) {
+            return 'data-gallery="' . esc_attr(implode(',', [...$gallery, $videoUrl])) . '"';
+        }
+
         if ($videoUrl !== '') {
             return 'data-video="' . esc_attr($videoUrl) . '"';
         }
 
-        if (count($project['gallerySrcs']) > 1) {
-            return 'data-gallery="' . esc_attr(implode(',', $project['gallerySrcs'])) . '"';
+        if (count($gallery) > 1) {
+            return 'data-gallery="' . esc_attr(implode(',', $gallery)) . '"';
         }
 
         $image = $project['thumbUrl'] !== '' ? $project['thumbUrl'] : ($project['gallerySrcs'][0] ?? '');
