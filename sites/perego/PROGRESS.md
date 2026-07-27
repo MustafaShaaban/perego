@@ -2,7 +2,39 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-27, latest) — Client round 4: phases 1-3 done, portfolio + iOS remaining
+## RESUME HERE (2026-07-27, latest) — Client round 4 complete except two blocked captures
+
+**Portfolio rebuilt.** 154 seeded demos cut to **4** (one per lightbox type: mixed photos+video,
+gallery, video, single image — both languages), then **27 of the client's 29 real projects** imported
+with screenshots, in EN and AR, linked through Polylang. Live grid: 31 projects per language, every card
+with an image and a working trigger, no console errors.
+
+- **Two could not be captured and are NOT imported** — shipping a broken image to a client portfolio is
+  worse than an absent one:
+  - **ETCC** (`etcc.gov.ae`) — a preloader spinner that never resolves under automation. Confirmed over
+    two passes, the second with `networkidle` plus a content-present check. **Needs a manual screenshot.**
+  - **Health Promotion Department** (`hpd.ae`) — `ERR_NAME_NOT_RESOLVED`; the domain does not resolve at
+    all. **Worth checking with the client whether that site still exists.**
+- **Descriptions were deliberately not invented.** The client supplied names and URLs only, so each
+  project carries title, live URL, category and screenshot. The single description is e&'s, in the
+  client's own words ("Framework upgrade participation"). Arabic titles are the organisations' names —
+  proper nouns — so **Arabic project copy is still a follow-up**.
+- A project with photos AND a video now opens **one mixed lightbox**; `media-lightbox/view.js` already
+  chose a renderer per slide, so the capability existed and was simply unused.
+
+**Also done this session:** high-res wave pattern (3200x1720, 667 KB — PNG beats WebP for sparse line
+art on alpha, and keeps all 42 alpha levels); the iOS "Our Process" report diagnosed as the sticky
+header's scrim, not that section's layout — verified byte-identical between WebKit and Chromium.
+
+**Verified:** Pest **447 (1259 assertions)**, Jest **39 suites / 193**.
+
+**Backups:** `wp/db-backup-portfolio-rebuild-20260727-101810.sql` (pre-rebuild, gitignored).
+
+**REMAINING:** journal content trimmed to 4-5 posts with fuller body text; Arabic copy for the 27
+projects; the two blocked screenshots. **Also still open:** the domain rename's `wp search-replace`, and
+the Arabic service-tab CTA localization bug.
+
+## (previous, 2026-07-27) — Client round 4: phases 1-3 done, portfolio + iOS remaining
 
 **This session added:**
 
