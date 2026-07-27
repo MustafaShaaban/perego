@@ -1,5 +1,351 @@
 # Perego — Decision Log
 
+## 2026-07-27 — Client round 4, phase 3: legal content and the share row
+
+### The legal documents converted to real blocks, not a pasted blob
+
+All four documents (Privacy + Terms, EN + AR) use semantic Word styles — `Title`, `LegalDate`,
+`Heading1` ×25, `Heading2` ×20, `ListBullet` ×60 — so the conversion is a style lookup, not heuristics on
+bold and font size. EN and AR produced **identical block counts** (121 and 120), which is the useful
+signal that the translations are structurally parallel and neither lost a section.
+
+**The emitted markup has to match what core's `save()` would produce**, or the editor flags the page
+"Block contains unexpected or invalid content" — a defect this project has hit twice. Shapes were
+verified against this install (WP 7.0.2) before writing: headings carry `class="wp-block-heading"`, lists
+are `<ul class="wp-block-list">` wrapping `core/list-item`. After loading, every page was re-parsed with
+`parse_blocks()` and each block name checked against the registry, rather than trusting the write.
+
+**Headings carry `anchor` attributes (`s1`…`sN`), which paid off unplanned:** the theme's existing
+`initLegalToc()` builds its "On this page" panel from heading ids, so the sidebar TOC populated itself in
+both languages with no extra work.
+
+**The document's own "Last updated" line is dropped on purpose.** `legal.html` already renders that from
+the curated `_perego_legal_updated` meta via `LegalUpdatedRenderer`; keeping the paragraph printed the
+date twice. The meta is set to the document date instead, which is the mechanism that was designed for it.
+
+### Share row: plain URLs, no third-party script
+
+Each network endpoint is a documented GET URL, so the row costs nothing at page load and cannot track a
+reader before they choose to share. That also keeps it inside the "no frameworks" rule with no exception
+needed. The four networks are real anchors — shareable, middle-clickable, keyboard-reachable — not
+buttons wired to `window.open`.
+
+**Copy-link is the one control that genuinely needs script**, and it needs a fallback: the site runs on
+`http://` locally, where `navigator.clipboard` is **undefined** because it requires a secure context.
+Verified in the browser (`isSecureContext: false`, `navigator.clipboard: false`) — without the
+`execCommand` path the button would silently do nothing on any non-HTTPS environment.
+
+### Journal cards clamped in CSS, not truncated in PHP
+
+Title at 2 lines, excerpt at 3, with the row stretched and a reserved second title line. The full text
+stays in the DOM for search engines and screen readers, and nothing is lost if the grid ever goes
+single-column. Measured: every row now reports one height across its three cards.
+
+## 2026-07-27 — Client round 4, phases 1-2: transparent service tabs and layout corrections
+
+**The services-page tabs are now genuinely transparent.** The handoff had `rgba(34,12,58,0.55)` plus
+`backdrop-filter: blur(14px)` — frosted panels that hid the hero photograph the client wanted showing
+through. Now a 0.20 tint with `blur(4px)`: enough to keep the label legible over busy areas, little
+enough that the photo reads. The active/hover fill moved from the handoff's bright pink
+(`#e98bf7 → --accent → #c24fe0`) to the reference's deeper violet, and the label + CTA stay **white** —
+the handoff forced `#2a0148`, which was correct on pink and unreadable on violet.
+
+**Contrast measured over the actual photograph**, which is the real risk once a card stops being opaque:
+6.93 / 15.44 / 14.07 / 15.14 : 1 at rest, and 6.81-7.03:1 hovered. The weakest case is the active card
+over the subject's face, still comfortably past AA.
+
+**Home services cards** start after the heading column and shrank to 223px (the client's reference
+measures ~229). Implemented as `inline-size: min(100%, 980px); margin-inline-start: auto` inside a
+`min-width: 901px` query, so the block stylesheet's ≤900px and ≤560px rules keep winning. **The logical
+property mirrors correctly for free**: measured on the live site, the row sits at x=388 in LTR and x=72
+in RTL — the heading column swaps sides, which is what `margin-inline-start` is for.
+
+**Our Work keeps only its bottom waves.** The layer is clipped to the lower 55% of the section with the
+artwork anchored to its bottom, rather than cropping the image — cropping would have flattened the corner
+curves. It now reads as a continuation of the Clients section above it instead of restating the pattern.
+
+**About panels are no longer justified.** Justified text in a narrow measure opens rivers of white space,
+and it is worse in Arabic, where the renderer stretches kashida to fill the line.
+
+### Correction to a previous report: the `/start-a-project` slug did change
+
+The client reported the page "still using contact slug". It is not: the DB has `post_name =
+start-a-project` / `start-a-project-2`, both permalinks resolve, and `/contact` 301s with its query
+string. A full-database search found `contact` only in 13 `corex_email_log` rows — historical
+form-submission log titles, unrelated to routing. Most likely a cached 301 in the browser.
+
+## 2026-07-26 — Client round 3: two framework-adjacent fixes, and a URL rename
+
+### `/contact` → `/start-a-project`, and why the route is now a constant
+
+The page has been titled "Start a Project" all along; only its URL still said `contact`, for a page the
+site has no other name for (the header's "Contact Us" is an anchor to the footer, not a page).
+
+`PolylangLanguageDriver::translatedEntityUrl()` resolves a path with `url_to_postid( home_url( $path ) )`
+and returns that page's *translation* permalink. **A path literal therefore only works while it matches
+the English page's real permalink** — the moment the slug changed, any leftover `'/contact'` would stop
+resolving, the driver would fall through to `languagePrefixedUrl()`, and the Arabic site would link to a
+`/ar/contact` that does not exist. The failure is silent: the page renders, one language's link 404s.
+
+So the route has exactly one definition, `PeregoSite\Theme\SiteRoutes::START_PROJECT`, and the eight
+literals across the renderers now reference it. `LegacyRouteRedirect` 301s the old paths **preserving the
+query string** — every service page links `?service=<slug>`, which is what preselects the service, so
+dropping it would turn a working deep link into a blank form.
+
+Slugs were changed with `wp post update --post_name=…`, which touches only that column. Not
+`wp_update_post()` — that unslashes `post_content` and destroyed a template part's JSON attributes
+earlier the same day.
+
+### The "(optional)" marker moved from CSS to the server
+
+There was already a `::after { content: " (optional)" }` hardcoded to phone + company. It printed
+**English on the Arabic form** — CSS strings cannot go through the translation catalogue — and only
+covered two fields by name. `PeregoSite\Forms\OptionalFieldMarker` now appends a translated span to every
+label that carries no `corex-form__required`, on core's `render_block` hook.
+
+Client-side rather than in `corex-forms` because that renderer is framework code this site must not edit
+and it exposes no label filter. A regex is used rather than `WP_HTML_Tag_Processor` because the processor
+can rewrite attributes but cannot insert a child node; the input is one known renderer's output and the
+pattern is pinned to its class contract, so anything unrecognised is left untouched. Six Pest cases,
+including idempotency — `render_block` can run more than once.
+
+### The select is enhanced, not replaced
+
+`corex-forms` deliberately kept a native `<select>` and says why in its own stylesheet: the accessible
+`CorexSelect` lives in the admin bundle, and shipping it would put React on a public form and make the
+control JS-dependent. That reasoning holds, so `assets/src/js/select.js` layers a listbox over the native
+control instead of replacing it — the `<select>` stays in the DOM, stays what submits, and is hidden with
+the clip technique rather than `display: none` so it remains focusable.
+
+**Only rendered selects are enhanced.** The contact form's `services[]` is a sr-only data carrier for the
+visual `contact-service-chooser` block; enhancing it would have built a second picker nobody can reach.
+`getClientRects().length` is the guard.
+
+No library, per the owner's steer: the site has no UI dependencies and the native control had to survive
+regardless, so a library would have added weight without removing the fallback requirement.
+
+### Cards: the flat filter becomes a gradient
+
+The client's `filter.png` value (flat `#10002B` at 70%) becomes a bottom-weighted gradient, with the
+overlay receding to 0.72 and the photo scaling 1.06 on hover, gated behind
+`prefers-reduced-motion: no-preference`. Contrast was re-measured from rendered pixels in both states —
+15.62/13.39/16.40/18.04 at rest, 10.01/**7.78**/12.53/15.90 hovered — so the lightest card still clears AA
+with room while hovered, which is the state the gradient weakens.
+
+### Known, left alone: service tab CTAs are not localized
+
+`ServiceHeroRenderer` and `ServicesOverviewRenderer` build `?service=` links with `home_url()`, which is
+not language-aware, so an Arabic service page's "Start your project" button points at the English page.
+This is **pre-existing** (the line was `home_url('/contact?service=…')` before the rename) and fixing it
+needs a language driver plumbed into renderers that currently take none — out of scope for a URL rename.
+Tracked separately.
+
+## 2026-07-26 — Client round part 2: image encoding, the card filter, and Work as a home section
+
+### The About image was pixelated because of how I encoded it, not because of the source
+
+Two compounding mistakes, both measurable, both worth not repeating:
+
+- **Downscaled below the rendered size.** I wrote 2280px wide, but `object-fit: cover` on this section
+  renders the image **~3098px wide at a 1440 viewport and ~3180px at 1920** — the section is taller
+  than the viewport, so height drives the scale, not width. My first estimate (~2420px) assumed a
+  900px-tall box and was wrong. **Measure the rendered size; do not derive it from the viewport.**
+- **JPEG q82 with 4:2:0 chroma**, which is the worst case for dark smooth gradients.
+
+Now 3200x1190 WebP q95, 99 KB (from a 1.9 MB PNG). Upscaled from the 2850px source with Lanczos on
+purpose: the browser would magnify it anyway, and doing it once at encode time beats the browser's
+per-paint scaling. Verified `naturalWidth >= renderedWidth` at both viewports.
+
+**`npm run images` cannot be used for assets like this** and the renderer says so: the script does not
+resize, and it recompresses at its own fixed quality — passing a carefully encoded file through it
+silently undoes the encoding. That is the trap that produced the banding.
+
+### The service-card "filter" was an asset, not a guess
+
+`filter.png` (908x908, the same size as the card art, so it is a whole-card overlay) sampled top to
+bottom is **flat `#10002B` at 70% alpha** — it does not vary. It is not a gradient. Compositing it over
+the four supplied photos and measuring the label band gives **12.27-18.80:1**, so it carries legibility
+alone and replaces the handoff's bottom-gradient outright rather than stacking with it. Value lives in
+`theme.json` (`settings.custom.perego.color.card-filter`). Cards also went `5/6` → **`1/1`** and cards
+2 and 4 now share one offset, both measured off the client's reference (~229x232 per card, both offsets
+~115px). The supplied art being square is the same call from the asset side.
+
+### Work: keep the routes, just stop linking to them
+
+The client's wording — *"keep the current design of the work page as it but we will not redirect to
+it"* — is the constraint. So `archive-perego_project.html` and `single-perego_project.html` still
+resolve; nothing links to them. The grid moved into `front-page.html` as a `home-work` section, the
+header nav's Work item became the `/#work` anchor, and the cards became `<button>`s carrying the
+`data-video` / `data-gallery` / `data-image` trigger that `media-lightbox/view.js` already binds
+site-wide. **No new lightbox was written** — this reuses the component and mirrors
+`ServiceSelectedWorkRenderer::card()`, including its precedence (video, then a real multi-image
+gallery, then the single image). A project with no media gets no trigger at all, so a card never opens
+an empty dialog — the client noted the content is not there for every project yet.
+
+Verified the home section behaves identically to the archive page: same filter result (design → 9
+cards, all `data-category="design"`), same pager, and the lightbox opens and closes via Escape, the
+close button, and the backdrop on both.
+
+### `wp_update_post()` destroys block attributes that contain JSON strings
+
+Updating the saved header nav with `wp_update_post()` **corrupted post 501**: it runs `wp_unslash()` on
+the content, which stripped the backslash from all 180 `\u0022` sequences the block serializer uses to
+escape quotes inside JSON-string attributes, leaving unparseable `u0022`. Restored from the pre-change
+backup and redone with **`$wpdb->update()`, which does not unslash**, then verified by `parse_blocks()`
++ `json_decode()` rather than by eyeballing the content.
+
+Two further traps found while recovering: `wp db import` with a **backslash path** silently mangles the
+filename inside its `SOURCE` statement and still reports `Success:` — use forward slashes and verify the
+data. And `wp db export`/`import` need `mysqldump`/`mysql` on PATH (`C:\wamp64\bin\mysql\mysql8.3.0\bin`).
+**Take the backup before touching content, and prove a restore by re-reading the data, not by exit code.**
+
+### Services hero: new art, and why the shared file was replaced this time
+
+The client's `services-hero-bg.png` replaces `svc-hero-bg.png` on **both** the services overview and the
+individual service pages, because both consumers are the same services hero — unlike the About case,
+where the other consumer was a different page type (Contact) and a new filename was required. Same
+question asked both times ("who else references this asset?"); different answer, different action.
+
+Shipped as `svc-hero-bg.webp` at native 2000x900, **112 KB against the old 2708 KB PNG**. Verified not
+upscaled: `object-fit: cover` scales it 0.92 at a 1440 viewport. The old PNG is deleted rather than left
+as a 2.7 MB orphan. `object-position: center top` needed no change — the new art centres its subject.
+
+The services-overview fixture could not be recaptured from a live render: `perego_service` is registered
+with `has_archive => false`, so `/services/` 404s and that block has no route of its own. Its fixture was
+updated by substitution instead, which is safe here because parity ignores `src` — noted so nobody
+assumes the fixture is stale.
+
+### Header CTA matches the AR/EN chips, but keeps its own text colour
+
+The CTA adopts `.lang-toggle__btn` metrics (10px/14px padding, 10px radius, 15px) — verified identical
+at 43px tall. Also found while doing this: `perego-reference.scss:154` hides *every* `.header-cta` below
+1024px, which is why the mobile menu had no CTA at all — the panel copy re-shows only itself.
+
+**Follow-up the same day: the header-bar CTA now matches the AR chip completely**, not just in shape —
+the translucent idle fill, white label, and the brighter hover, measured pixel-identical to
+`.lang-toggle__btn` in both states. The hover label colour has to be stated explicitly
+(`--accent-soft`): the AR chip inherits it from the reference's `a:hover`, but on the CTA
+`.btn--accent:hover` would otherwise win with its dark-on-accent value.
+
+This also retires the contrast concern the first pass carried. The earlier version kept a solid accent
+fill and therefore needed `--cta-text-on-accent`, because white on `--accent` (#d86af3) measures ~2.4:1
+and would have failed AA on the site's primary action. On the translucent violet the label is white at
+~12:1, so matching the chip is now the *more* accessible option, not a trade against it.
+
+**The mobile panel CTA deliberately stays the solid accent button** (client's call). That is why the
+override is scoped `.site-header__inner > .header-cta` rather than to `.header-cta` generally — the two
+copies now diverge on purpose, and the scoping is what keeps them apart.
+
+## 2026-07-26 — Client round: new About art and new service-card photos
+
+Two of the five client comments from this round. Both are asset swaps, but neither was a drop-in.
+
+**About background — the reference's `object-position` was tuned to the old art, so the swap reframed
+the section.** The client supplied a wider "zoomed out" hooded-figure image (2850x1060, 2.69:1) to
+replace `about-hooded.png` (1600x900). Under the reference's `object-position: 28% center` the new
+crop pushed the figure behind the glass panels and clipped the Perego logo off its hoodie. Swept
+28/45/55/62/70/78% against the real 1440px render: **62%** centres the figure in the free column with
+the logo readable (70% clips the logo off the left edge).
+
+- **RTL gets the same 62%, overriding the reference's mirrored `72%`.** Measured on the live render:
+  `.home-about__panels` is at x 748-1368 in LTR and **692-1368 in RTL** — the panels never mirror, so
+  the free column is the left side in both directions. Mirroring the background would put the figure
+  straight back behind the panels. The reference's LTR/RTL pair was compensating for the old art.
+- **Shipped as a new file, `about-hooded-wide.jpg`, not an overwrite.** `about-hooded.png` is also the
+  Contact page hero (`page-contact.html`); overwriting it would have silently restyled Contact, which
+  the client did not ask for. General rule: check who else references an asset before replacing it.
+- 1.9 MB PNG → **38 KB JPEG** at 2280x848.
+
+**Service card photos — the theme's optimize script does not resize, so raw drop-in was a regression.**
+The four supplied images are 908x909 squares; passing them straight through `npm run images` produced
+**1.3-1.7 MB PNGs each** against the ~350 KB art they replace — ~5 MB added to the homepage. Pre-sized
+to the shipped 560x680 convention (the card is `aspect-ratio: 5/6` with `object-fit: cover`, so the
+browser would crop the sides anyway) they land at **79-232 KB**. The squares' baked rounded corners are
+harmless: the card already applies `border-radius` + `overflow: hidden`.
+
+**The white labels still pass on the new photos, including the two light ones.** Two of the new images
+are much brighter than the art they replace, so the labels were re-checked against sampled render
+pixels rather than by eye: 12.09:1 (2D Motion), 14.43:1, 15.78:1, 17.17:1 — all well past WCAG AA. The
+handoff overlay gradient is what carries it; it was left unchanged, since the client asked only for new
+images. An eyeball read of the screenshot suggested the light cards had lost contrast; measuring
+disproved it.
+
+## 2026-07-26 — Footer contact: one professional mailbox on the new primary domain
+
+The footer shipped two personal Gmail addresses (`mostafa.emam3313@gmail.com`, `yehemam2@gmail.com`) on
+every page. The client has settled on **`peregoads.com`** as the primary domain (they also hold
+`perego.info`, unused for now), so the pair is replaced by a single mailbox: **`info@peregoads.com`**.
+
+**Why `info@` and not `contact@` or `hello@`.** The owner asked for the best fit for an Egypt / Saudi /
+UAE audience rather than naming one. In those markets `info@` is the conventional, expected general
+business address; `hello@` reads as informal Western-startup style, and `contact@` is understood but less
+standard. The code constant stays named `CONTACT_EMAIL` — it names the role, not the local-part.
+
+**The `+996` phone was a typo and is fixed to `+966`.** +996 is Kyrgyzstan; Saudi Arabia is +966, and the
+second number is +20 (Egypt). It had been live on the site. Footer is now one email + two phones.
+
+**No data migration was needed, because the seed *is* the live content.** The footer template part is not
+customised in the database (`wp post list --post_type=wp_template_part` returns only `header`), so no
+`contactChannels` block attribute exists and `SiteFooterRenderer::SEED_CONTACT_CHANNELS` renders directly.
+Editing the seed changed the site. Worth remembering the general shape: for these hybrid blocks, "is the
+template part customised?" decides whether a content change is a code edit or a content migration.
+
+**Three places had to move together, and the parity test is what enforces it:**
+
+- `SiteFooterRenderer::SEED_CONTACT_CHANNELS` — the source of truth, PHP.
+- `site-footer/preview.js` `SEED_CONTACT_CHANNELS` — the editor-canvas mirror.
+- `__fixtures__/front-footer.html` — regenerated from the live render, not hand-edited. Dropping one
+  `<li>` is a *structural* change, and `normalizeMarkup` compares the children array, so a stale fixture
+  fails the parity test. That is the guard working as designed.
+
+`PeregoEmailRenderer::CONTACT_EMAIL` was `contact@perego.com` — a placeholder on a domain we do not own,
+appearing in the signature of every outgoing email. It now matches the footer. Its two constructor/provider
+`siteUrl` fallbacks pointed at `https://perego.local`; they now point at `https://peregoads.com`, because a
+fallback that reaches a real recipient should name the real site, not a dev host.
+
+## 2026-07-26 — Service card label: white and centred, and why two stylesheets carry one rule
+
+Owner request: the home page service card labels should be **white and horizontally centred over the bottom
+of the card**, instead of the handoff's accent pink pinned to the inline-start edge.
+
+**The measure is kept, not removed.** `max-inline-size: calc(6.2em + 48px)` is what breaks `2D Motion
+Graphics` onto two lines without a `<br>` in the markup — the handoff's line breaks reproduced in CSS so
+editor-supplied labels (spec 012) keep wrapping in any language. Centring the *text* alone would have left
+those two lines inside a box still stuck at the inline-start edge, because the label is absolutely positioned
+with `inset-inline: 0` and a max width. `margin-inline: auto` is what actually centres the box; `text-align:
+center` then centres each line within it. Both are needed — verified in a real browser at 1440px, 390px, and
+on `/ar/`: `offCenterPx: 0` on all four cards in every case.
+
+**No hover rule is needed.** The card is an `<a>`, so the label previously inherited
+`a:hover { color: var(--accent-soft) }` from `perego-reference.scss`. Because the label now sets its own
+`color`, that inherited hover value can no longer reach it — the label stays white in every state and the
+lift plus accent glow border remain the only hover cues. This was the owner's choice between the two.
+
+**The same four declarations live in two files, and the theme copy is the one that does the work.**
+`.service-card__label` is declared by both the theme's `main.css` and the services-teaser block's
+`style-index.css`, at identical `(0,1,0)` specificity. The theme sheet wins in **both** contexts, for two
+different reasons — worth separating, because only one of them is about specificity:
+
+- **Front end — load order.** The block stylesheets are inlined in `<head>` (services-teaser at line 61 of
+  the rendered home page); `main.css` links after them, at line 112. Equal specificity, so the later sheet
+  wins.
+- **Editor canvas — specificity.** `functions.php` passes `main.css` through `add_editor_style()`, which
+  scopes every selector under `.editor-styles-wrapper`. That makes the theme rule `(0,2,0)` against the block
+  sheet's `(0,1,0)`, so it wins regardless of order.
+
+`perego-reference.scss` is the immutable handoff sheet, so the theme-side change goes in
+`perego-wordpress-adapter.scss`, the client-owned layer that loads after it inside `main.css`. Confirmed live
+on the front end and by replaying the editor's own scoping over the two compiled stylesheets.
+
+**So editing only the block's `style.scss` would have changed nothing visible, in either context** — not
+just in the editor. The block sheet is updated anyway, and must be: leaving it asserting
+`color: accent; text-align: start` would leave the block's own stylesheet describing a design that no longer
+ships, and it would become the live value the moment anything reorders the enqueues.
+
+The general rule this leaves behind: **when a class is declared by both a block stylesheet and the theme
+stylesheet, find out which one is actually winning before editing either — then change the winner, and keep
+the other in sync.** Do not assume the block's own stylesheet governs its own markup; here it does not.
+
 ## 2026-07-23 — About panels: a block that owns the editing surface, not the content
 
 The Front Page template canvas showed core's *"This is the Content block…"* placeholder where the About

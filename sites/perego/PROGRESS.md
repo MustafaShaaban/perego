@@ -2,7 +2,208 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-23, latest) — About is editable in the Front Page canvas; Track C is next
+## RESUME HERE (2026-07-27, latest) — Client round 4: phases 1-3 done, portfolio + iOS remaining
+
+**This session added:**
+
+- **All four legal pages** (Privacy + Terms, EN + AR) converted from the client's `.docx` to real core
+  blocks — 121/121 and 120/120, identical counts per language pair. Heading `anchor`s wired themselves
+  into the theme's existing "On this page" TOC. The duplicated date line is gone; the template's
+  `_perego_legal_updated` meta drives it.
+- **`perego-theme/post-share`** — new block on the single template: X, LinkedIn, Facebook, WhatsApp,
+  copy-link. Plain share URLs, no third-party script. 8 Pest cases.
+- **Journal cards** clamped to 2-line titles / 3-line excerpts; every row now measures one height.
+
+**Verified:** Pest **446 (1257 assertions)**, Jest **39 suites / 193**. Four legal routes 200 in both
+languages; share row exercised in-browser including the `execCommand` clipboard fallback (the site is
+`http://` locally, so `navigator.clipboard` is undefined — the fallback is not optional).
+
+**REMAINING in this round:**
+
+- **Portfolio rebuild** — delete the 154 demo projects, keep 4-5 with mixed media (gallery / video /
+  mixed) for lightbox variety, add the **29 real client projects** with Playwright screenshots. Owner's
+  wording for e&/Etisalat is "framework upgrade participation", not ownership. **Back up the DB first**;
+  delete with `wp post delete --force` so meta and attachments go too.
+- **Journal content** — cut to 4-5 posts with real body text so reading time is meaningful.
+- **iOS "Our Process" bug** — blocked: `npx playwright install webkit` is required. Only Chromium is
+  installed and its iPhone emulation fakes the viewport, not the engine.
+- **High-quality waves pattern** — blocked: the client pasted the image into chat rather than saving a
+  file. Current `wavy-corners.png` is 1800x1013 and gets magnified across tall sections, which is the
+  quality complaint. Needs the source file (or a regenerated SVG, which would be resolution-independent).
+
+**Also still open:** domain rename (`wp search-replace` + `wp rewrite flush`); the Arabic service-tab CTA
+localization bug; **rounds 3 and 4 are both uncommitted.**
+
+## (previous, 2026-07-27) — Client round 4: phases 1-2 done, 3-4 remaining
+
+**Done and verified:**
+
+- **Services-page tabs** now transparent with the hero showing through; active state is the reference's
+  violet with white labels. Contrast over the photo measured 6.81-15.44:1 across all states.
+- **Home services cards** start after the heading column, 223px (was 302). Mirrors correctly in RTL
+  (x=388 LTR / x=72 AR) via `margin-inline-start: auto`.
+- **Our Work** keeps only its bottom waves. **About panels** no longer justified. **Individual client
+  card titles** down to `clamp(15px, 1.15vw, 18px)`. **Journal single** has the waves pattern.
+- Pest **438**, Jest **39/193**. No horizontal overflow at 1440/768/390 in either language.
+
+**REMAINING — the bulk of the round:**
+
+- **Legal pages**: Privacy (3,124 words / 22 sections) and Terms (3,458 / 25) from the client's `.docx`
+  into pages 40 and 38 as structured blocks. Both extract cleanly with `unzip -p … word/document.xml`.
+  Arabic pages 41/39 have no supplied translation — they keep current content.
+- **Journal**: cap card title/excerpt for level rows; cut to 4-5 posts with real body text so reading
+  time is meaningful; **add functional social sharing** (none exists today — new block, plain share URLs,
+  no third-party script).
+- **Portfolio rebuild**: delete the 154 demo projects, keep 4-5 with mixed media for lightbox variety,
+  add the **29 real client projects** with Playwright screenshots. Owner's wording for e&/Etisalat is
+  "framework upgrade participation", not ownership. **Back up the DB first**; delete via
+  `wp post delete --force` so meta and attachments go too.
+- **iOS "Our Process" bug**: `npx playwright install webkit` is required first — only Chromium is
+  installed, and Chromium's iPhone emulation fakes the viewport, not the engine.
+
+**Also still open:** the domain rename's `wp search-replace` + `wp rewrite flush`; the Arabic
+service-tab CTA localization bug; **rounds 3 and 4 are both uncommitted.**
+
+## (previous, 2026-07-26) — Client round 3: all 9 comments done
+
+1. **CTA hover → accent fill.** Background matches the active EN chip; label keeps the accessible
+   dark-on-accent pairing (white on `--accent` is ~2.4:1).
+2. **Service cards: gradient filter + hover motion.** Overlay recedes to 0.72, photo scales 1.06, gated
+   on `prefers-reduced-motion`. Contrast re-measured: 13.4-18.0:1 at rest, **7.8-15.9:1 hovered**.
+3. **Services grid logo** down ~25% (`clamp(165px, 19vh, 255px)`).
+4. **Styled select** — `perego-theme/assets/src/js/select.js` layers a listbox over the native control,
+   which stays in the DOM and stays what submits. Verified mouse + keyboard, EN and RTL. The sr-only
+   `services[]` carrier is deliberately skipped.
+5. **"(optional)" on optional inputs** — now server-side and translated (`(اختياري)`), replacing a CSS
+   `::after` that printed English on the Arabic form and only covered two fields.
+6. **Home Work section**: breadcrumb gone via a new `showBreadcrumb` attribute (`/work` keeps it), waves
+   pattern added.
+7. **Services page grid**: waves pattern. 8. **Journal**: waves pattern.
+9. **`/contact` → `/start-a-project`** (EN + AR), with a 301 that **preserves `?service=`**. The route is
+   now `SiteRoutes::START_PROJECT` — see DECISIONS for why a literal left behind would silently break
+   Arabic links.
+
+- **Verified:** Pest **438 (1238 assertions)**, Jest **39 suites / 193**. Seven routes 200, zero stale
+  `/contact` links in either language, no console errors. Screenshots in
+  `output/playwright/client-comments/`.
+- **Known, tracked separately:** service tab `?service=` CTAs use `home_url()` and so point at the English
+  page from Arabic service pages — pre-existing, needs a driver injected into those renderers.
+- **Next:** owner review. Then the domain rename's `wp search-replace` + `wp rewrite flush`, and T031/T032.
+
+## (previous, 2026-07-26) — Client round 2: all 5 comments done
+
+All five client comments from this round are implemented and verified on the live local site.
+
+1. **About us — wider "zoomed out" art.** ✅ `about-hooded-wide.webp`, 3200x1190 q95, 99 KB. Reframed to
+   `object-position: 62%` (same in RTL — the panels never mirror). Shipped as a new file because
+   `about-hooded.png` is also the Contact hero.
+2. **Services cards — white centred text, new photos, square heights, flat filter.** ✅ `aspect-ratio`
+   `5/6` → `1/1`, cards 2+4 share one offset, and `.service-card__overlay` is now the client's own
+   `filter.png` value (flat `#10002B` @ 70%, tokenised in theme.json). Labels re-measured at
+   **11.29-17.45:1**.
+3. **Header — CTA like the AR chip; mobile menu logo + CTA.** ✅ The header-bar CTA is now
+   pixel-identical to `.lang-toggle__btn` in both states — translucent `rgba(72,3,131,0.55)` idle with a
+   white label, `0.85` + accent-soft label on hover. The **mobile panel CTA deliberately stays the solid
+   accent button** (client's call), which is why the override is scoped to `.site-header__inner >`. The
+   panel also now renders a logo — `perego-reference.scss:154` had been hiding every `.header-cta` below
+   1024px, which is why it had no CTA at all.
+4. **Work is a home section.** ✅ `home-work` section in `front-page.html` under Clients; nav Work →
+   `/#work` (code seed **and** the saved template part, post 501). Archive route untouched, just
+   unlinked.
+5. **Work cards open the lightbox.** ✅ Cards are `<button>`s using the existing site-wide
+   `data-video`/`data-gallery`/`data-image` contract — no new component. No media ⇒ no trigger.
+6. **Services pages — new hero art.** ✅ (follow-up ask) `svc-hero-bg.webp`, 2000x900, **112 KB from a
+   2708 KB PNG**, not upscaled. Shared by the services overview AND the individual service pages, so the
+   file was replaced rather than added alongside — unlike the About case, where the other consumer was
+   the Contact hero. Old PNG deleted.
+
+- **Verified:** client Pest **427 (1221 assertions)**, Jest **39 suites / 193**. Home section matches
+  the archive page behaviour exactly (design filter → 9 cards, all `data-category="design"`; pager
+  present; lightbox opens and closes via Escape / close button / backdrop on both). Screenshots in
+  `output/playwright/client-comments/`.
+- **Note for whoever touches saved block content next:** use `$wpdb->update()`, never
+  `wp_update_post()` — the latter unslashes and destroys `"` inside JSON-string attributes. It
+  corrupted post 501 during this round; restored from backup. See DECISIONS.md.
+- **Next:** owner review of the five items, then T031 (public regression matrix) → T032. The domain
+  rename still needs its `wp search-replace` + `wp rewrite flush` (`peregoads.local` resolves).
+
+## (previous, 2026-07-26) — Client round: 2 of 5 comments done, 3 remaining
+
+The client sent five comments this round. **Comments 1 and 2 are done and verified; 3, 4 and 5 are not
+started.** Full list, so the next session does not have to reconstruct it:
+
+1. **About us — replace with the wider "zoomed out" art.** ✅ DONE. New `about-hooded-wide.jpg`
+   (2280x848, 38 KB, was a 1.9 MB PNG), shipped as a NEW file because `about-hooded.png` is also the
+   Contact hero. Reframed to `object-position: 62%` — same value in RTL, because the panels do not
+   mirror. See DECISIONS.md.
+2. **Services cards — white centred text + new images.** ✅ DONE (text earlier this session; the four
+   new photos now pre-sized to 560x680, 79-232 KB, labels re-verified at 12-17:1 contrast).
+3. **Header — "Start a project" styled like the AR/EN buttons; mobile menu needs the logo and the
+   button placed properly.** ❌ NOT STARTED.
+4. **Hide the Work page; make it a section before the footer, under Clients; the header link scrolls
+   to it and it must behave as it does on the page.** ❌ NOT STARTED.
+5. **Work items open a lightbox (image / video / mixed gallery) instead of single project pages;
+   keep the Work page design but stop redirecting to it.** ❌ NOT STARTED.
+
+Items 4 and 5 are architectural (they remove the project single-page route and move a whole page into
+the home template) — worth agreeing the approach before implementing.
+
+- **Verified:** client Pest **423 (1208 assertions)**, Jest **39 suites / 193**; About + services
+  screenshots EN/AR at 1440 in `output/playwright/client-comments/`.
+- **Also this session:** footer contact is now the single mailbox `info@peregoads.com` (+966 phone typo
+  fixed), and the local host rename `perego.local` → `peregoads.local` is **partially done** — vhost
+  updated (`ServerAlias perego.local` kept), hosts entry added, DB backed up to
+  `wp/db-backup-domain-rename-20260726-174612.sql`; **the `wp search-replace` + `wp rewrite flush` have
+  NOT been run yet** (dry run: 480 replacements).
+- **Next:** client comment 3 (header buttons), then agree the approach for 4 + 5. T031/T032 still queued
+  behind this round.
+
+## (previous, 2026-07-26) — Footer contact is one mailbox on peregoads.com; local host rename half-done
+
+- **Footer contact channels: DONE and live.** The two personal Gmail addresses are gone, replaced by
+  **`info@peregoads.com`** (chosen for the EG/SA/UAE audience — see DECISIONS.md), and the `+996`
+  phone typo is corrected to `+966` (Saudi). Footer is now one email + two phones. No data migration:
+  the footer template part is not customised in the DB, so the PHP seed *is* the live content.
+- **Same address now in outgoing email.** `PeregoEmailRenderer::CONTACT_EMAIL` was the placeholder
+  `contact@perego.com`; the two `siteUrl` fallbacks that read `https://perego.local` now read
+  `https://peregoads.com` — a fallback reaching a real recipient should name the real site.
+- **Fixture regenerated, not hand-edited.** `__fixtures__/front-footer.html` recaptured from the live
+  render; dropping one `<li>` is structural and the parity test would have caught a stale fixture.
+- **Verified:** live footer curl on `/` shows exactly the three channels; client Pest **423 (1208
+  assertions)**, Jest **39 suites / 193**.
+- **Local host rename `perego.local` → `peregoads.local`: PARTIALLY DONE.** Apache vhost already
+  updated (`ServerName peregoads.local` + `ServerAlias perego.local`); DB backed up to
+  `wp/db-backup-domain-rename-20260726-174612.sql` (gitignored). **Still to do — needs elevation:** add
+  `peregoads.local` to the hosts file, restart Apache, then `wp search-replace perego.local
+  peregoads.local` (dry run: 480 replacements), `wp rewrite flush`. The `peregoads.com → 127.0.0.1`
+  hosts entry has been commented out, so the production domain stays reachable from this machine.
+- **Deliberately NOT renamed:** 146 `perego.local` occurrences in 30 test files (Brain Monkey stubs —
+  arbitrary test doubles), 20 parity fixtures (parity ignores href/src), and 84 in `.md` files
+  (historical records). Only two lines of production code ever referenced the host.
+- **Next:** unchanged — T031 (public regression matrix) then T032 (editor E2E + all suites).
+
+## (previous, 2026-07-26) — Service card labels are white and centred (owner request)
+
+- **Home page service cards:** the label is now white (`--wp--preset--color--text`) and horizontally
+  centred over the card's bottom edge, replacing the handoff's accent pink at the inline-start edge.
+  The two-line wrap (`2D MOTION / GRAPHICS`) is preserved — the measure that produces it is kept and
+  `margin-inline: auto` centres the box, since `text-align: center` alone would centre the text inside a
+  box still pinned to the inline-start edge.
+- **Two files carry the rule; the theme copy is the one that wins.** The new deviation block in
+  `perego-theme/.../perego-wordpress-adapter.scss` is authoritative in both contexts — on the front end
+  `main.css` links *after* the inlined block styles, and in the editor canvas `add_editor_style()` scopes
+  it under `.editor-styles-wrapper` and outranks them. Editing only
+  `perego-site/src/Blocks/services-teaser/style.scss` would have changed nothing visible anywhere; it is
+  updated so the block sheet stops asserting a design that no longer ships. See DECISIONS.md 2026-07-26.
+- **Verified in a real browser:** EN 1440px, AR `/ar/` RTL, and 390px mobile — all four cards
+  `color: rgb(255,255,255)`, `text-align: center`, `offCenterPx: 0`, flush to the card bottom. Editor
+  canvas confirmed by replaying WP's selector scoping over the two compiled stylesheets. Screenshots in
+  `output/playwright/spec021-service-card-label/`. Client Jest **39 suites / 193**, ServicesTeaser Pest
+  **11 passed (37 assertions)**; markup unchanged, so the parity fixture is untouched.
+- **Next:** unchanged — T031 (public screenshot/DOM/console/overflow/a11y regression matrix) then T032
+  (editor E2E + all suites); together they gate T033/T034.
+
+## (previous, 2026-07-23) — About is editable in the Front Page canvas; Track C is next
 
 - **New `perego-theme/home-about` block replaces `wp:post-content` in `front-page.html`.** The template
   canvas showed core's "This is the Content block…" placeholder because About is the front page's own
