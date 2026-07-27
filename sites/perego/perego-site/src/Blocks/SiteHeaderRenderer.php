@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 
 use PeregoSite\Services\LanguageService;
 use PeregoSite\PostTypes\ServicePostType;
+use PeregoSite\Theme\SiteRoutes;
 
 /**
  * Server-renders the perego/site-header block: logo, primary nav (with the Services dropdown),
@@ -59,7 +60,9 @@ final class SiteHeaderRenderer
                     ['label' => __('Website Making', 'perego-site'), 'href' => '/services/website-making'],
                 ],
             ],
-            ['label' => __('Work', 'perego-site'), 'href' => '/work'],
+            // Client request 2026-07-26: Work is a home-page section under Clients, not its own page.
+            // The archive route still exists and still works — nothing links to it any more.
+            ['label' => __('Work', 'perego-site'), 'href' => '/#work'],
             ['label' => __('Journal', 'perego-site'), 'href' => '/journal'],
             ['label' => __('Clients', 'perego-site'), 'href' => '/#clients'],
             // The handoff header's Contact Us is a same-page anchor to the footer (every page's
@@ -241,7 +244,15 @@ final class SiteHeaderRenderer
         $html .= '<nav id="mainNav" class="main-nav" '
             . 'aria-label="' . esc_attr__('Primary', 'perego-site') . '" '
             . 'data-wp-on--keydown="actions.handleMenuKeydown">';
+        // Panel-only logo + CTA (client request 2026-07-26: the mobile menu needs both). Both are
+        // display:none above the nav breakpoint, and the header-bar CTA is hidden below it, so exactly
+        // one of each is ever rendered to a user or to assistive tech. The logo here is decorative —
+        // the panel already lists Home, so a second "Perego — home" link would be redundant noise.
+        $html .= '<div class="main-nav__mobile-head" aria-hidden="true">'
+            . '<img src="' . esc_url($logoUrl) . '" alt="" class="logo__img" />'
+            . '</div>';
         $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath, $this->navItems($attributes, $locale)) . '</ul>';
+        $html .= '<div class="main-nav__mobile-cta">' . $this->renderCta($attributes, $locale) . '</div>';
         $html .= '</nav>';
 
         $html .= $this->renderCta($attributes, $locale);
@@ -280,7 +291,7 @@ final class SiteHeaderRenderer
         // value, so a header saved before the picker existed resolves through exactly the old path.
         $cta = LinkTarget::fromAttributes($attributes);
 
-        return '<a class="btn btn--accent header-cta" href="' . esc_url($this->linkTarget()->href($cta, '/contact')) . '"'
+        return '<a class="btn btn--accent header-cta" href="' . esc_url($this->linkTarget()->href($cta, SiteRoutes::START_PROJECT)) . '"'
             . $this->linkTarget()->targetAttributes($cta) . '>'
             . esc_html($label) . '</a>';
     }

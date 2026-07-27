@@ -25,7 +25,7 @@ defined('ABSPATH') || exit;
 final class PeregoEmailRenderer
 {
     /** Public signature address shown in every footer (handoff: the single professional mailbox). */
-    public const CONTACT_EMAIL = 'contact@perego.com';
+    public const CONTACT_EMAIL = 'info@peregoads.com';
 
     private const TEMPLATES = [
         'contact-confirmation',
@@ -36,7 +36,7 @@ final class PeregoEmailRenderer
     ];
 
     public function __construct(
-        private readonly string $siteUrl = 'https://perego.local',
+        private readonly string $siteUrl = 'https://peregoads.com',
         private readonly string $logoUrl = '',
     ) {
     }

@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\ServiceContent;
+use PeregoSite\Theme\SiteRoutes;
 
 /**
  * Server-renders the perego-theme/service-hero block (spec 003 / M3, US3): the service single's
@@ -39,7 +40,7 @@ final class ServiceHeroRenderer
 
         $html = '<section class="svc-hero">';
         $html .= '<div class="svc-hero__bg" aria-hidden="true">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/svc-hero-bg.png') . '" alt="" />'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/svc-hero-bg.webp') . '" alt="" />'
             . '</div>';
         $html .= '<div class="container svc-hero__inner">';
         $html .= '<p class="svc-hero__eyebrow reveal">' . esc_html($eyebrow) . '</p>';
@@ -66,7 +67,7 @@ final class ServiceHeroRenderer
             $mainHref = esc_url(home_url('/services/' . $slug));
             // Pass the canonical service slug (what ProjectBriefForm's chooser is keyed on and
             // whitelists), not the localized name — so the contact form preselects this service.
-            $ctaHref = esc_url(home_url('/contact?service=' . rawurlencode($slug)));
+            $ctaHref = esc_url(add_query_arg('service', $slug, home_url(SiteRoutes::START_PROJECT)));
             $aria = $isActive ? ' aria-current="page"' : '';
             $label = ($tabLabels[$slug] ?? '') !== '' ? $tabLabels[$slug] : $content->name($slug);
 

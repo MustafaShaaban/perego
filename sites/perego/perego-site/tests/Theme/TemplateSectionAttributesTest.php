@@ -95,6 +95,15 @@ it('keys on the block name too, so the same className on another block is untouc
         ]))->toBe([]);
 });
 
+it('restores the homepage Work section anchor the header nav scrolls to', function () {
+    $attributes = (new TemplateSectionAttributes())->attributesFor([
+        'blockName' => 'core/group',
+        'attrs' => ['className' => 'home-work'],
+    ]);
+
+    expect($attributes)->toBe(['id' => 'work']);
+});
+
 it('restores the contact hero anchor', function () {
     $attributes = (new TemplateSectionAttributes())->attributesFor([
         'blockName' => 'core/group',

@@ -60,11 +60,13 @@ it('renders the handoff skip link before the header landmark', function () {
     expect($html)->toStartWith('<a class="skip-link" href="#main">Skip to content</a><header');
 });
 
+// Journal, not Work: since 2026-07-26 the Work item is the `/#work` home-section anchor, so it has no
+// page path of its own to be "current" on. Journal is the remaining plain-route nav item.
 it('marks the active nav item with aria-current', function () {
-    $html = renderHeader('/work');
+    $html = renderHeader('/journal');
 
     expect($html)->toContain('aria-current="page"')
-        ->and($html)->toMatch('/<li class="[^"]*is-active[^"]*"[^>]*><a [^>]*aria-current="page"[^>]*>Work/');
+        ->and($html)->toMatch('/<li class="[^"]*is-active[^"]*"[^>]*><a [^>]*aria-current="page"[^>]*>Journal/');
 });
 
 it('links About Us and Services to homepage anchors, never a hard-coded /about route', function () {
@@ -96,7 +98,7 @@ it('links Contact Us to the footer anchor as a bare same-page fragment on every 
         // Never localized/absolutized (a homepage URL would break the same-page anchor), never active.
         expect($html)->toMatch('/<a class="main-nav__link" href="#contact">Contact Us</')
             ->and($html)->not->toContain('href="https://perego.local/#contact"')
-            ->and($html)->not->toContain('href="https://perego.local/contact">Contact Us');
+            ->and($html)->not->toContain('href="https://perego.local/start-a-project">Contact Us');
     }
 });
 
@@ -114,8 +116,8 @@ it('uses a custom CTA label per locale when set, falling back to the default oth
     expect(renderHeader('/', [], 'en'))->toContain('>Start a Project</a>');
 });
 
-it('links the CTA to the default contact route, or a custom internal path localized through the driver', function () {
-    expect(renderHeader('/', [], 'en'))->toContain('href="https://perego.local/contact"');
+it('links the CTA to the default start-a-project route, or a custom internal path localized through the driver', function () {
+    expect(renderHeader('/', [], 'en'))->toContain('href="https://perego.local/start-a-project"');
 
     expect(renderHeader('/', ['ctaUrl' => '/quote'], 'en'))
         ->toContain('href="https://perego.local/quote"');

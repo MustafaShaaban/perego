@@ -16,9 +16,8 @@
 import { __, sprintf } from '@wordpress/i18n';
 
 export const SEED_CONTACT_CHANNELS = [
-	{ label: 'mostafa.emam3313@gmail.com', href: 'mailto:mostafa.emam3313@gmail.com' },
-	{ label: 'yehemam2@gmail.com', href: 'mailto:yehemam2@gmail.com' },
-	{ label: '+996 56 293 2759', href: 'tel:+996562932759' },
+	{ label: 'info@peregoads.com', href: 'mailto:info@peregoads.com' },
+	{ label: '+966 56 293 2759', href: 'tel:+966562932759' },
 	{ label: '+20 111 54 855 72', href: 'tel:+201115485572' },
 ];
 

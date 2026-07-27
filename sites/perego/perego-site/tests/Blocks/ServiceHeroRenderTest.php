@@ -16,6 +16,7 @@ beforeEach(function () {
     Functions\when('esc_url')->returnArg();
     Functions\when('home_url')->alias(fn (string $path = '') => 'https://perego.local' . $path);
     Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
+    Functions\when('add_query_arg')->alias(fn (string $key, string $value, string $url) => $url . '?' . $key . '=' . rawurlencode($value));
 });
 
 function renderServiceHero(string $currentSlug = 'video-editing', string $locale = 'en'): string
@@ -28,7 +29,7 @@ it('renders the eyebrow, the current service full name as the single H1, and no 
 
     expect($html)->toContain('svc-hero__eyebrow')
         ->and($html)->toContain('Our Services')
-        ->and($html)->toMatch('/<img [^>]*svc-hero-bg\.png/')
+        ->and($html)->toMatch('/<img [^>]*svc-hero-bg\.webp/')
         ->and($html)->toMatch('/<div class="container svc-hero__inner">/')
         ->and($html)->toMatch('/<h1 class="svc-hero__title reveal" data-delay="1">Video Editing &amp; Post-Production|<h1 class="svc-hero__title reveal" data-delay="1">Video Editing & Post-Production/')
         ->and(substr_count($html, '<h1'))->toBe(1);
@@ -43,8 +44,8 @@ it('renders exactly four service tabs in fixed order with main + start-project C
         ->and($html)->toContain('/services/website-making')
         // The CTA must carry the canonical service slug (what the brief-form chooser whitelists),
         // not the localized service name — otherwise ?service= preselection never matches.
-        ->and($html)->toContain('/contact?service=video-editing')
-        ->and($html)->toContain('/contact?service=website-making');
+        ->and($html)->toContain('/start-a-project?service=video-editing')
+        ->and($html)->toContain('/start-a-project?service=website-making');
 });
 
 it('marks only the current service tab active with aria-current', function () {

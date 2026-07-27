@@ -23,7 +23,7 @@ it('renders the branded shell with the handoff signature + contact address', fun
 
     expect($out['html'])->toContain('linear-gradient(120deg,#4a0d8f') // gradient header
         ->and($out['html'])->toContain('The Perego Team')
-        ->and($out['html'])->toContain('contact@perego.com')
+        ->and($out['html'])->toContain('info@peregoads.com')
         ->and($out['html'])->toContain('width="600"') // 600px shell
         ->and($out['html'])->toStartWith('<!DOCTYPE html>');
 });
@@ -114,6 +114,6 @@ it('always produces a plain-text alternative with the signature', function () {
 
     expect($out['text'])->toContain('Thank you, Sara!')
         ->and($out['text'])->toContain('The Perego Team')
-        ->and($out['text'])->toContain('contact@perego.com')
+        ->and($out['text'])->toContain('info@peregoads.com')
         ->and($out['text'])->not->toContain('<'); // no markup in the text part
 });

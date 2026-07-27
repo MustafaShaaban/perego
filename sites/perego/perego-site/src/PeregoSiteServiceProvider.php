@@ -135,9 +135,23 @@ final class PeregoSiteServiceProvider
     private function registerTemplateSectionAttributes(): void
     {
         $sections = new \PeregoSite\Theme\TemplateSectionAttributes();
+        $optional = new \PeregoSite\Forms\OptionalFieldMarker();
+        $moved = new \PeregoSite\Theme\LegacyRouteRedirect();
 
-        add_filter('render_block', static function ($html, $block) use ($sections) {
-            return $sections->apply((string) $html, is_array($block) ? $block : []);
+        // /contact -> /start-a-project (2026-07-26). Runs before the old path can 404.
+        add_action('template_redirect', static fn () => $moved->maybeRedirect());
+
+        add_filter('render_block', static function ($html, $block) use ($sections, $optional) {
+            $block = is_array($block) ? $block : [];
+            $html = $sections->apply((string) $html, $block);
+
+            // "(optional)" on non-required labels — see OptionalFieldMarker for why this is done here
+            // rather than in corex-forms, which this site must not edit.
+            if (($block['blockName'] ?? '') === \PeregoSite\Forms\OptionalFieldMarker::BLOCK_NAME) {
+                $html = $optional->mark($html);
+            }
+
+            return $html;
         }, 10, 2);
     }
 
@@ -211,7 +225,7 @@ final class PeregoSiteServiceProvider
         $logoUrl = function_exists('plugins_url')
             ? plugins_url('assets/email/logo-full.png', dirname(__DIR__) . '/perego-site.php')
             : '';
-        $siteUrl = function_exists('home_url') ? (string) home_url('/') : 'https://perego.local';
+        $siteUrl = function_exists('home_url') ? (string) home_url('/') : 'https://peregoads.com';
 
         $mailer = new \PeregoSite\Email\PeregoMailer(
             $container->make(\Corex\Mail\Mailer::class),
@@ -473,6 +487,17 @@ final class PeregoSiteServiceProvider
                 },
             ]);
 
+            register_block_type($this->blockDir('post-share'), [
+                'render_callback' => static function (): string {
+                    // Same reason as post-reading-time above: get_post() resolves the current post in
+                    // both singular and Query Loop contexts, get_queried_object() does not.
+                    $current = function_exists('get_post') ? get_post() : null;
+
+                    return (new \PeregoSite\Blocks\PostShareRenderer())
+                        ->render($current instanceof \WP_Post ? $current : null);
+                },
+            ]);
+
             register_block_type($this->blockDir('join-form'), [
                 'render_callback' => static function () use ($languageService): string {
                     return (new \PeregoSite\Blocks\JoinFormRenderer(
@@ -717,14 +742,20 @@ final class PeregoSiteServiceProvider
                     $content  = new PortfolioContent($locale);
                     $projects = (new ProjectRepository())->allForGrid($content);
 
+                    // spec 021 C11: the archive heading/intro and closing CTA are editable per locale;
+                    // an empty field falls back to the seed copy, so an unedited block is unchanged.
+                    $strings = $content->gridStrings(LocalizedAttributes::pick($attributes, $locale, [
+                        'heading', 'intro', 'ctaTitle', 'ctaBody', 'ctaButton',
+                    ]) + ['showDemoNote' => (bool) ($attributes['showDemoNote'] ?? true)]);
+
+                    if (! (bool) ($attributes['showBreadcrumb'] ?? true)) {
+                        $strings['uiHome'] = '';
+                    }
+
                     return $gridRenderer->render(
                         $projects,
                         $content->filterLabels(),
-                        // spec 021 C11: the archive heading/intro and closing CTA are editable per locale;
-                        // an empty field falls back to the seed copy, so an unedited block is unchanged.
-                        $content->gridStrings(LocalizedAttributes::pick($attributes, $locale, [
-                            'heading', 'intro', 'ctaTitle', 'ctaBody', 'ctaButton',
-                        ]) + ['showDemoNote' => (bool) ($attributes['showDemoNote'] ?? true)]),
+                        $strings,
                         // spec 021 T036: the closing CTA may name a page instead of the contact route.
                         self::resolvedLink($languageService, $attributes, 'cta'),
                     );

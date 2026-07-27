@@ -38,9 +38,9 @@ export const SEED_TABS_AR = [
 ];
 
 /** A theme image URL. `src` is visual-only (parity ignores it). */
-function themeImage( name ) {
+function themeImage( file ) {
 	const origin = typeof window !== 'undefined' && window.location ? window.location.origin : '';
-	return `${ origin }/wp-content/themes/perego-theme/assets/images/${ name }.png`;
+	return `${ origin }/wp-content/themes/perego-theme/assets/images/${ file }`;
 }
 
 /**
@@ -57,7 +57,7 @@ export function ServiceHeroSkeleton( {
 	return (
 		<section className="svc-hero">
 			<div className="svc-hero__bg" aria-hidden="true">
-				<img src={ themeImage( 'svc-hero-bg' ) } alt="" />
+				<img src={ themeImage( 'svc-hero-bg.webp' ) } alt="" />
 			</div>
 			<div className="container svc-hero__inner">
 				<p className="svc-hero__eyebrow reveal">{ eyebrow }</p>

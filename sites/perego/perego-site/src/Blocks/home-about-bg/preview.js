@@ -11,17 +11,21 @@
  * only tags, class hooks, and nesting are compared (the `src` is volatile and ignored).
  */
 
-/** A theme image URL. `src` is visual-only (parity ignores it). */
-function themeImage( name ) {
+/** A theme image URL (`file` includes the extension). `src` is visual-only (parity ignores it). */
+function themeImage( file ) {
 	const origin = typeof window !== 'undefined' && window.location ? window.location.origin : '';
-	return `${ origin }/wp-content/themes/perego-theme/assets/images/${ name }.png`;
+	return `${ origin }/wp-content/themes/perego-theme/assets/images/${ file }`;
 }
 
-/** The real, locked home-about background markup for the editor canvas. */
+/**
+ * The real, locked home-about background markup for the editor canvas. Mirrors
+ * `HomeAboutBgRenderer::render()` — see that class for why this is `about-hooded-wide.webp` and not the
+ * original `about-hooded.png` the Contact hero still uses.
+ */
 export function HomeAboutBgSkeleton() {
 	return (
 		<div className="home-about__bg" aria-hidden="true">
-			<img src={ themeImage( 'about-hooded' ) } alt="" loading="lazy" />
+			<img src={ themeImage( 'about-hooded-wide.webp' ) } alt="" loading="lazy" />
 		</div>
 	);
 }

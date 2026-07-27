@@ -19,6 +19,7 @@
 		"ctaButtonEn": { "type": "string", "default": "" },
 		"ctaButtonAr": { "type": "string", "default": "" },
 		"showDemoNote": { "type": "boolean", "default": true },
+		"showBreadcrumb": { "type": "boolean", "default": true },
 		"ctaUrl": { "type": "string", "default": "" },
 		"ctaLinkKind": { "type": "string", "default": "custom" },
 		"ctaPostType": { "type": "string", "default": "" },

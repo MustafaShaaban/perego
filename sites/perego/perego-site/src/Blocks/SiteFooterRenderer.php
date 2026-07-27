@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 use PeregoSite\Content\GlobalContent;
 use PeregoSite\Forms\QuickMessageForm;
 use PeregoSite\Services\LanguageService;
+use PeregoSite\Theme\SiteRoutes;
 
 defined('ABSPATH') || exit;
 
@@ -35,15 +36,19 @@ final class SiteFooterRenderer
     private ?LinkTarget $linkTarget = null;
 
     /**
-     * Contact channels from the approved design handoff (locale-neutral facts, not translatable
-     * prose) — the seed used when no `contactChannels` block attribute has been set.
+     * Contact channels (locale-neutral facts, not translatable prose) — the seed used when no
+     * `contactChannels` block attribute has been set. The footer template part is not customised in
+     * the database, so this seed is what the live site renders.
+     *
+     * The handoff's two personal Gmail addresses were replaced by the single professional mailbox on
+     * the client's primary domain (owner decision, 2026-07-26); `info@` is the address MENA business
+     * audiences expect. Keep this list in sync with `site-footer/preview.js`, the editor-canvas mirror.
      *
      * @var list<array{label: string, href: string}>
      */
     private const SEED_CONTACT_CHANNELS = [
-        ['label' => 'mostafa.emam3313@gmail.com', 'href' => 'mailto:mostafa.emam3313@gmail.com'],
-        ['label' => 'yehemam2@gmail.com', 'href' => 'mailto:yehemam2@gmail.com'],
-        ['label' => '+996 56 293 2759', 'href' => 'tel:+996562932759'],
+        ['label' => 'info@peregoads.com', 'href' => 'mailto:info@peregoads.com'],
+        ['label' => '+966 56 293 2759', 'href' => 'tel:+966562932759'],
         ['label' => '+20 111 54 855 72', 'href' => 'tel:+201115485572'],
     ];
 
@@ -153,7 +158,7 @@ final class SiteFooterRenderer
             // digit groups and punctuation don't reorder under the Arabic bidi algorithm.
             // Channels are mailto:/tel: in practice, which LinkTarget passes through verbatim; routing
             // them through it lets an editor point one at a real page instead (spec 021 T036).
-            $html .= '<li><a href="' . esc_url($this->linkTarget()->href($channel, '/contact')) . '"'
+            $html .= '<li><a href="' . esc_url($this->linkTarget()->href($channel, SiteRoutes::START_PROJECT)) . '"'
                 . $this->linkTarget()->targetAttributes($channel) . '><bdi>'
                 . esc_html($channel['label'] ?? '') . '</bdi></a></li>';
         }

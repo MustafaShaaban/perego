@@ -10,6 +10,8 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
+use PeregoSite\Theme\SiteRoutes;
+
 /**
  * Server-renders the perego/portfolio-grid block (spec 003 / M3): the service-filter chip row + the
  * masonry grid of project cards + a no-results message. Ported from the handoff prototype's
@@ -19,7 +21,7 @@ defined('ABSPATH') || exit;
  * `render()` takes already-resolved data (projects + the ordered filter labels) so it stays a pure,
  * unit-testable function; the block's render callback does the WP_Query and maps posts to the array.
  *
- * @phpstan-type Project array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}
+ * @phpstan-type Project array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}
  */
 final class PortfolioGridRenderer
 {
@@ -27,7 +29,7 @@ final class PortfolioGridRenderer
     private const PER_PAGE = 9;
 
     /**
-     * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}> $projects
+     * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}> $projects
      * @param array<string, string> $filterLabels ordered, keyed by slug ('all' first); values are labels
      * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string} $strings
      * @param array{link?: array<string, mixed>, target?: string} $cta the closing CTA's resolved link (spec 021 T036)
@@ -83,7 +85,7 @@ final class PortfolioGridRenderer
             return '';
         }
 
-        $href = (string) ($cta['href'] ?? '') !== '' ? (string) $cta['href'] : (string) home_url('/contact');
+        $href = (string) ($cta['href'] ?? '') !== '' ? (string) $cta['href'] : (string) home_url(SiteRoutes::START_PROJECT);
 
         $html = '<section class="page-section" aria-labelledby="pfCta" style="border-top:1px solid rgba(255,255,255,0.08);">';
         $html .= '<div class="container" style="text-align:center;max-width:820px;">';
@@ -120,7 +122,7 @@ final class PortfolioGridRenderer
     }
 
     /**
-     * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}> $projects
+     * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}> $projects
      */
     private function renderGrid(array $projects): string
     {
@@ -132,19 +134,51 @@ final class PortfolioGridRenderer
                 : '<span class="post-card__media-placeholder" data-category="' . esc_attr($project['category']) . '" aria-hidden="true"></span>';
 
             // view.js filters/paginates by reading data-category and toggling the hidden attribute.
-            $html .= '<a class="post-card reveal" href="' . esc_url($project['url']) . '" '
+            // A <button> rather than a link: client request 2026-07-26 — a card opens the project's
+            // media in the shared lightbox instead of navigating to a single page. The trigger contract
+            // (data-video / data-gallery / data-image) is the one media-lightbox/view.js already binds
+            // site-wide, and mirrors ServiceSelectedWorkRenderer::card(). One action per card.
+            /* translators: %s: project title. */
+            $openLabel = sprintf(__('Open %s', 'perego-site'), $project['title']);
+
+            $html .= '<button type="button" class="post-card reveal" ' . $this->lightboxTrigger($project) . ' '
+                . 'aria-label="' . esc_attr($openLabel) . '" '
                 . 'data-category="' . esc_attr($project['category']) . '">';
             $html .= '<div class="post-card__media">' . $media . '</div>';
             $html .= '<div class="post-card__body">';
             $html .= '<span class="post-card__cat">' . esc_html($project['categoryLabel']) . '</span>';
             $html .= '<h2 class="post-card__title" style="font-size:clamp(18px,1.6vw,22px);">' . esc_html($project['title']) . '</h2>';
             $html .= '<p class="post-card__excerpt">' . esc_html($project['excerpt']) . '</p>';
-            $html .= '</div></a>';
+            $html .= '</div></button>';
         }
 
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * The card's lightbox trigger attribute, in the same precedence the showcase cards use: a video
+     * wins, then a real multi-image gallery, then the single featured image. A project with no media at
+     * all yields no trigger — the card then does nothing on click rather than opening an empty dialog,
+     * which matters because the client noted not every project has content yet.
+     *
+     * @param array{thumbUrl: string, gallerySrcs: list<string>, videoUrl?: string} $project
+     */
+    private function lightboxTrigger(array $project): string
+    {
+        $videoUrl = (string) ($project['videoUrl'] ?? '');
+        if ($videoUrl !== '') {
+            return 'data-video="' . esc_attr($videoUrl) . '"';
+        }
+
+        if (count($project['gallerySrcs']) > 1) {
+            return 'data-gallery="' . esc_attr(implode(',', $project['gallerySrcs'])) . '"';
+        }
+
+        $image = $project['thumbUrl'] !== '' ? $project['thumbUrl'] : ($project['gallerySrcs'][0] ?? '');
+
+        return $image !== '' ? 'data-image="' . esc_attr($image) . '"' : '';
     }
 
     /**

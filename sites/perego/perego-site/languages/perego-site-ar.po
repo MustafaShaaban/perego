@@ -292,3 +292,8 @@ msgstr "بيريجو Perego"
 
 msgid "© %s Perego Creative Studio — بيريجو. All rights reserved."
 msgstr "© %s بيريجو — Perego Creative Studio. جميع الحقوق محفوظة."
+
+# Forms — the non-required field qualifier (OptionalFieldMarker, 2026-07-26). Replaces a CSS
+# ::after that printed English on the Arabic form.
+msgid "(optional)"
+msgstr "(اختياري)"

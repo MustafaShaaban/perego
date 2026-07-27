@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 
 use PeregoSite\Content\HeroContent;
 use PeregoSite\Services\LanguageService;
+use PeregoSite\Theme\SiteRoutes;
 
 /**
  * Server-renders the perego/hero-slider block (spec 002 / M2, US1): a full-bleed hero with a
@@ -69,7 +70,7 @@ final class HeroSliderRenderer
         $cta = LinkTarget::fromAttributes($attributes);
         $linkTarget = new LinkTarget($this->languageService->driver());
         $html .= '<div class="hero__cta">'
-            . '<a class="btn btn--accent" href="' . esc_url($linkTarget->href($cta, '/contact')) . '"'
+            . '<a class="btn btn--accent" href="' . esc_url($linkTarget->href($cta, SiteRoutes::START_PROJECT)) . '"'
             . $linkTarget->targetAttributes($cta) . '>'
             . wp_kses_post($hero['cta']) . '</a>'
             . '</div>';

@@ -1,0 +1,75 @@
+/**
+ * perego-theme/post-share — tokens only, logical properties (RTL-correct by default).
+ */
+
+.post-share {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin-block-start: clamp(28px, 4vw, 44px);
+	padding-block-start: clamp(20px, 3vw, 30px);
+	border-block-start: 1px solid var(--perego-glass-border);
+}
+
+.post-share__label {
+	font-weight: 700;
+	font-size: 15px;
+	color: var(--perego-muted);
+}
+
+.post-share__list {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.post-share__link {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	inline-size: 42px;
+	block-size: 42px;
+	padding: 0;
+	border: 1px solid var(--perego-glass-border);
+	border-radius: 12px;
+	background: var(--perego-lang-chip-fill);
+	color: var(--wp--preset--color--text);
+	cursor: pointer;
+	transition: background var(--perego-dur-fast) var(--perego-ease),
+		color var(--perego-dur-fast) var(--perego-ease);
+
+	svg {
+		inline-size: 18px;
+		block-size: 18px;
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: var(--wp--preset--color--accent);
+		color: var(--wp--preset--color--cta-text-on-accent);
+	}
+}
+
+/* The "Copied" confirmation sits above the button so the row never reflows when it appears. */
+.post-share__copied {
+	position: absolute;
+	inset-block-end: calc(100% + 8px);
+	inset-inline-start: 50%;
+	transform: translateX(-50%);
+	padding: 4px 10px;
+	border-radius: 8px;
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+	font-size: 12px;
+	font-weight: 700;
+	white-space: nowrap;
+}
+
+[dir="rtl"] .post-share__copied {
+	transform: translateX(50%);
+}

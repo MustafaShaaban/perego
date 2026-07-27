@@ -78,7 +78,7 @@ it('renders the Say Hello CTA linking to contact', function () {
     $html = renderHero();
 
     expect($html)->toContain('Say Hello!')
-        ->and($html)->toContain('/contact')
+        ->and($html)->toContain('/start-a-project')
         ->and($html)->toContain('class="btn btn--accent"');
 });
 

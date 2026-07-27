@@ -135,7 +135,14 @@ export function HeaderSkeleton( { navItems, logoUrl, ctaLabel, logo, cta } ) {
 					</a>
 				) }
 				<nav className="main-nav" aria-label={ __( 'Primary', 'perego-site' ) }>
+					{ /* Panel-only logo + CTA — CSS reveals these only below the nav breakpoint. */ }
+					<div className="main-nav__mobile-head" aria-hidden="true">
+						<img src={ logoUrl || defaultLogoUrl() } alt="" className="logo__img" />
+					</div>
 					<NavList items={ navItems } />
+					<div className="main-nav__mobile-cta">
+						<a className="btn btn--accent header-cta" href="#">{ ctaLabel }</a>
+					</div>
 				</nav>
 				{ cta || (
 					<a className="btn btn--accent header-cta" href="#">{ ctaLabel }</a>

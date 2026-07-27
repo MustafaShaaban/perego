@@ -133,7 +133,12 @@ final class ProjectRepository
     }
 
     /**
-     * @return array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}
+     * `gallerySrcs`/`videoUrl` carry the card's lightbox payload: client request 2026-07-26 replaced the
+     * per-project single page with a lightbox opened from the card, so the grid needs the same media the
+     * showcase cards already use (see ServiceSelectedWorkRenderer). `url` is kept — the archive route
+     * still resolves, nothing links to it any more.
+     *
+     * @return array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}
      */
     public function toGridCard(WP_Post $post, PortfolioContent $content): array
     {
@@ -161,6 +166,8 @@ final class ProjectRepository
             'excerpt' => $excerpt,
             'thumbUrl' => $thumbUrl,
             'thumbAlt' => $thumbAlt !== '' ? $thumbAlt : get_the_title($post),
+            'gallerySrcs' => array_column($this->galleryFor($post), 'src'),
+            'videoUrl' => $this->videoUrlFor($post),
         ];
     }
 

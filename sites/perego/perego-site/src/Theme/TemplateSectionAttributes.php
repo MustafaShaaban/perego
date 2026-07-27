@@ -58,6 +58,12 @@ final class TemplateSectionAttributes
             'id' => 'about',
             'aria-labelledby' => 'home-about-title',
         ],
+        // Homepage Work section (client request 2026-07-26: Work moves off its own page and becomes a
+        // section under Clients). `#work` is the header nav's in-page anchor target, matching how
+        // `#about`, `#services` and `#clients` already work.
+        'core/group home-work' => [
+            'id' => 'work',
+        ],
         // The journal index + category archive query loop (home.html, archive.html): the designed gap
         // between the archive header and the post grid.
         'core/query journal-archive__inner' => [

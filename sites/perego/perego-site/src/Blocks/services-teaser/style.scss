@@ -92,7 +92,9 @@
 .service-card {
 	position: relative;
 	display: block;
-	aspect-ratio: 5 / 6;
+	/* Square, per the client's 2026-07-26 reference (cards measured ~229x232 there). The supplied card
+	 * art and `filter.png` are both 908x908, which is the same call from the asset side. */
+	aspect-ratio: 1 / 1;
 	border-radius: var(--perego-radius-card);
 	overflow: hidden;
 	box-shadow: var(--perego-shadow-service-card);
@@ -100,12 +102,12 @@
 	transition: transform var(--perego-dur-fast) var(--perego-ease),
 		box-shadow var(--perego-dur-fast) var(--perego-ease);
 
-	&:nth-child(2) {
-		margin-block-start: clamp(40px, 7vw, 120px);
-	}
-
+	/* Cards 2 and 4 share ONE offset — in the client's reference both sit ~115px lower than their
+	 * neighbours (≈50% of the 229px card width). The handoff's two different offsets (7vw/120px and
+	 * 10vw/170px) made the row read as a descending staircase rather than an alternating pair. */
+	&:nth-child(2),
 	&:nth-child(4) {
-		margin-block-start: clamp(60px, 10vw, 170px);
+		margin-block-start: clamp(34px, 10vw, 152px);
 	}
 
 	&::after {
@@ -133,12 +135,30 @@
 	inline-size: 100%;
 	block-size: 100%;
 	object-fit: cover;
+	transition: transform var(--perego-dur-medium) var(--perego-ease);
 }
 
 .service-card__overlay {
 	position: absolute;
 	inset: 0;
-	background: var(--perego-gradient-card-overlay);
+	/* Bottom-weighted gradient on the same #10002B the client's `filter.png` uses, replacing that flat
+	 * 70% tint (client request 2026-07-26): lighter at the top so more of the photo reads, and heavier
+	 * than the flat value at the bottom so the label keeps its contrast where it actually sits. */
+	background: var(--perego-card-filter-gradient);
+	transition: opacity var(--perego-dur-medium) var(--perego-ease);
+}
+
+/* Hover extends the card's existing language (lift + accent glow) rather than adding a new one: the
+ * overlay recedes and the photo drifts in slightly. Motion only — the overlay never fully clears, so
+ * the label stays legible throughout. Gated on prefers-reduced-motion like the theme's parallax. */
+@media (prefers-reduced-motion: no-preference) {
+	.service-card:hover .service-card__overlay {
+		opacity: 0.72;
+	}
+
+	.service-card:hover img {
+		transform: scale(1.06);
+	}
 }
 
 .service-card__label {
@@ -150,17 +170,26 @@
 	font-weight: 700;
 	line-height: 1.12;
 	text-transform: uppercase;
-	text-align: start;
+	text-align: center;
 
-	/* The handoff label inherits the prototype's accent link color and hard-breaks onto two lines
-	 * (`Video<br>Editing`, `2D Motion<br>Graphics`); the accent token plus a snug balanced measure
-	 * reproduces both without markup-level line breaks, so editor-supplied labels (spec 012) keep
-	 * wrapping correctly in any language. */
-	color: var(--wp--preset--color--accent);
-	/* Border-box: 48px is the two 24px inline paddings; the 6.2em measure scales with the clamped
-	 * font-size and sits between the widest first line ("2D Motion", ~5.9em) and the shortest
-	 * one-line label ("Video Editing", ~7.4em), so every seed label breaks exactly like the handoff. */
+	/* Owner request: white rather than the handoff's inherited accent link color. Because the label
+	 * sets its own color, the card link's `:hover` accent-soft color can never reach it — the lift
+	 * and the accent glow border stay the only hover cues.
+	 *
+	 * HEADS UP: the theme's `perego-wordpress-adapter.scss` declares these same four properties and is
+	 * the copy that actually wins — on the front end `main.css` links after this inlined block style,
+	 * and in the editor canvas `add_editor_style()` scopes it under `.editor-styles-wrapper`. Editing
+	 * this rule alone changes nothing visible; change both. See sites/perego/DECISIONS.md 2026-07-26. */
+	color: var(--wp--preset--color--text);
+	/* The handoff label hard-breaks onto two lines (`Video<br>Editing`, `2D Motion<br>Graphics`); this
+	 * measure reproduces that without markup-level line breaks, so editor-supplied labels (spec 012)
+	 * keep wrapping correctly in any language. Border-box: 48px is the two 24px inline paddings; the
+	 * 6.2em scales with the clamped font-size and sits between the widest first line ("2D Motion",
+	 * ~5.9em) and the shortest one-line label ("Video Editing", ~7.4em). `margin-inline: auto` centers
+	 * the measured box itself — with `inset-inline: 0` it would otherwise resolve to the inline-start
+	 * edge and `text-align: center` would center the text inside an off-center box. */
 	max-inline-size: calc(6.2em + 48px);
+	margin-inline: auto;
 }
 
 @media (max-width: 900px) {

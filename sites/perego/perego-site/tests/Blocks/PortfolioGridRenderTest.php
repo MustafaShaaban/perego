@@ -19,12 +19,16 @@ beforeEach(function () {
     Functions\when('wp_json_encode')->alias('json_encode');
 });
 
+/**
+ * One project per lightbox trigger branch: a video, a real multi-image gallery, and an image-only card
+ * (which here has no thumb and no gallery either, so it exercises the no-media case too).
+ */
 function sampleProjects(): array
 {
     return [
-        ['title' => 'Brand Film', 'url' => '/work/brand-film', 'category' => 'video', 'categoryLabel' => 'Video Editing', 'excerpt' => 'Client: Sample · 2026', 'thumbUrl' => '', 'thumbAlt' => ''],
-        ['title' => 'Explainer Series', 'url' => '/work/explainer', 'category' => 'motion', 'categoryLabel' => '2D Motion Graphics', 'excerpt' => 'Client: Sample · 2026', 'thumbUrl' => 'https://perego.local/x.png', 'thumbAlt' => 'Explainer thumb'],
-        ['title' => 'Identity System', 'url' => '/work/identity', 'category' => 'design', 'categoryLabel' => 'Graphic Design', 'excerpt' => 'Client: Sample · 2025', 'thumbUrl' => '', 'thumbAlt' => ''],
+        ['title' => 'Brand Film', 'url' => '/work/brand-film', 'category' => 'video', 'categoryLabel' => 'Video Editing', 'excerpt' => 'Client: Sample · 2026', 'thumbUrl' => '', 'thumbAlt' => '', 'gallerySrcs' => [], 'videoUrl' => 'https://perego.local/reel.mp4'],
+        ['title' => 'Explainer Series', 'url' => '/work/explainer', 'category' => 'motion', 'categoryLabel' => '2D Motion Graphics', 'excerpt' => 'Client: Sample · 2026', 'thumbUrl' => 'https://perego.local/x.png', 'thumbAlt' => 'Explainer thumb', 'gallerySrcs' => ['https://perego.local/a.png', 'https://perego.local/b.png'], 'videoUrl' => ''],
+        ['title' => 'Identity System', 'url' => '/work/identity', 'category' => 'design', 'categoryLabel' => 'Graphic Design', 'excerpt' => 'Client: Sample · 2025', 'thumbUrl' => '', 'thumbAlt' => '', 'gallerySrcs' => [], 'videoUrl' => ''],
     ];
 }
 
@@ -51,6 +55,39 @@ it('renders one card per project with its category and excerpt', function () {
         ->and($html)->toContain('Brand Film')
         ->and($html)->toContain('data-category="video"')
         ->and($html)->toContain('Client: Sample · 2026');
+});
+
+it('opens each card in the lightbox instead of navigating to a project page', function () {
+    $html = renderGrid();
+
+    // A video wins, then a real multi-image gallery, then the single image.
+    expect($html)->toContain('data-video="https://perego.local/reel.mp4"')
+        ->and($html)->toContain('data-gallery="https://perego.local/a.png,https://perego.local/b.png"')
+        // Cards are buttons now — no card should link to a single project page.
+        ->and($html)->not->toMatch('/<a class="post-card/')
+        ->and($html)->not->toContain('/work/brand-film')
+        ->and(substr_count($html, '<button type="button" class="post-card reveal"'))->toBe(3)
+        ->and($html)->toContain('aria-label="Open Brand Film"');
+});
+
+it('gives a card with no media at all no trigger, rather than opening an empty lightbox', function () {
+    $html = renderGrid([
+        ['title' => 'No Media', 'url' => '/work/none', 'category' => 'design', 'categoryLabel' => 'Graphic Design', 'excerpt' => '', 'thumbUrl' => '', 'thumbAlt' => '', 'gallerySrcs' => [], 'videoUrl' => ''],
+    ]);
+
+    expect($html)->toContain('class="post-card reveal"')
+        ->and($html)->not->toContain('data-image')
+        ->and($html)->not->toContain('data-gallery')
+        ->and($html)->not->toContain('data-video');
+});
+
+it('falls back to the single featured image when a project has one image and no video', function () {
+    $html = renderGrid([
+        ['title' => 'One Shot', 'url' => '/work/one', 'category' => 'design', 'categoryLabel' => 'Graphic Design', 'excerpt' => '', 'thumbUrl' => 'https://perego.local/shot.png', 'thumbAlt' => 'Shot', 'gallerySrcs' => [], 'videoUrl' => ''],
+    ]);
+
+    expect($html)->toContain('data-image="https://perego.local/shot.png"')
+        ->and($html)->not->toContain('data-gallery');
 });
 
 it('exposes the per-page size on the grid and a no-results message for view.js', function () {
@@ -94,6 +131,8 @@ function manyProjects(int $count): array
             'excerpt' => 'Client: Sample · 2026',
             'thumbUrl' => '',
             'thumbAlt' => '',
+            'gallerySrcs' => [],
+            'videoUrl' => '',
         ];
     }
 
@@ -174,7 +213,7 @@ it('renders the closing "have a project in mind" CTA when cta strings are provid
     expect($html)->toContain('id="pfCta"')
         ->and($html)->toContain('Have a project in mind?')
         ->and($html)->toContain("Tell us what you're working on and we'll help you shape the plan.")
-        ->and($html)->toMatch('/<a class="btn btn--accent" href="[^"]*\/contact">Start a Project<\/a>/');
+        ->and($html)->toMatch('/<a class="btn btn--accent" href="[^"]*\/start-a-project">Start a Project<\/a>/');
 });
 
 it('omits the CTA section entirely when no cta title is provided', function () {

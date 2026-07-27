@@ -42,8 +42,9 @@ it('renders the 3-column layout: contact, quick-message entry point, careers ent
 it('renders the approved contact channels and social links', function () {
     $html = renderFooter();
 
-    expect($html)->toContain('mailto:mostafa.emam3313@gmail.com')
-        ->and($html)->toContain('tel:+996562932759')
+    expect($html)->toContain('mailto:info@peregoads.com')
+        ->and($html)->toContain('tel:+966562932759')
+        ->and($html)->toContain('tel:+201115485572')
         ->and($html)->toContain('footer-social');
 });
 
@@ -110,7 +111,7 @@ it('prefers the editor-set contactChannels/socialLinks JSON attribute over the s
     $html = renderFooter(attributes: ['contactChannels' => $channels, 'socialLinks' => $social]);
 
     expect($html)->toContain('mailto:hello@perego.com')
-        ->and($html)->not->toContain('mostafa.emam3313@gmail.com')
+        ->and($html)->not->toContain('info@peregoads.com')
         ->and($html)->toContain('https://instagram.com/perego');
 });
 
@@ -138,8 +139,8 @@ it('skips a social link whose network has no matching icon, instead of rendering
 });
 
 it('falls back to the seed contact channels/social links when the attribute is empty or invalid JSON', function () {
-    expect(renderFooter(attributes: ['contactChannels' => '']))->toContain('mostafa.emam3313@gmail.com')
-        ->and(renderFooter(attributes: ['contactChannels' => 'not-json']))->toContain('mostafa.emam3313@gmail.com')
+    expect(renderFooter(attributes: ['contactChannels' => '']))->toContain('info@peregoads.com')
+        ->and(renderFooter(attributes: ['contactChannels' => 'not-json']))->toContain('info@peregoads.com')
         ->and(renderFooter(attributes: ['socialLinks' => '[]']))->toContain('footer-social');
 });
 
