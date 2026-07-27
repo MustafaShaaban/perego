@@ -996,6 +996,7 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	--perego-glass-panel-fill: var(--wp--custom--perego--color--glass-panel-fill);
 	--perego-card-filter: var(--wp--custom--perego--color--card-filter);
 	--perego-card-filter-gradient: var(--wp--custom--perego--color--card-filter-gradient);
+	--perego-header-scrim: var(--wp--custom--perego--color--header-scrim);
 	--perego-svc-tab-fill: var(--wp--custom--perego--color--svc-tab-fill);
 	--perego-svc-tab-active-gradient: var(--wp--custom--perego--color--svc-tab-active-gradient);
 	--perego-lang-chip-fill: var(--wp--custom--perego--color--lang-chip-fill);
@@ -1362,6 +1363,29 @@ select.perego-select__native {
 .svc-tab:hover .svc-tab__cta,
 .svc-tab.is-active .svc-tab__cta {
 	color: var(--wp--preset--color--text);
+}
+
+/* ============================================================
+   Sticky header scrim — the iOS "Our Process" report (client, 2026-07-27)
+   The client saw page text reading through the sticky header while scrolling past Our Process. The
+   header's frosted backdrop is a `::before` at `z-index: -1` carrying `rgba(16,0,43,0.82)` +
+   `backdrop-filter: blur(14px)`. That leaves 18% of the page visible and relies on the blur to smear it
+   into illegibility — but `backdrop-filter` on a negative-z pseudo-element inside a stacking context is
+   exactly the case Safari has historically failed to composite. When the blur does not render, the 18%
+   comes through crisp and readable, which is what was reported.
+
+   Verified in real WebKit (`npx playwright install webkit`): the layout is byte-identical to Chromium —
+   same flex direction, gaps, step widths, icon sizes — so this was never a layout bug. Sampling the
+   header band gave a luminance spread of 251 of 255, i.e. the page behind it was fully legible.
+
+   The fix does not depend on `backdrop-filter` working: the scrim goes to 0.96, where anything behind it
+   is imperceptible on its own. The blur is kept, so where it does composite the frosted look is
+   unchanged. Deliberately not solved by removing `z-index: -1` — the reference's own comment explains
+   that the layer sits there so the header does not become a containing block for the fixed mobile
+   drawer, and undoing that would trap the drawer at the top of the document after scroll.
+   ============================================================ */
+.site-header::before {
+	background: var(--perego-header-scrim);
 }
 
 /* ============================================================
