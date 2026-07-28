@@ -28,12 +28,25 @@ function hideNative( select ) {
 	select.setAttribute( 'aria-hidden', 'true' );
 }
 
+/**
+ * How one option reads in the CLOSED trigger.
+ *
+ * An option may carry `data-trigger-label` to be named more briefly there than in the open list. The
+ * two are not always the same job: the country picker on the contact form sits in a ~96px control
+ * inside a half-width field, so its trigger reads "AE +971" while the list — which has room — reads
+ * "United Arab Emirates (+971)". Without this the trigger inherits the full name and squeezes the
+ * field beside it (client report 2026-07-28). Options that set nothing behave exactly as before.
+ */
+function optionLabel( option ) {
+	return option.dataset.triggerLabel || option.textContent;
+}
+
 /** The visible text for the trigger: the selection, or the placeholder-ish first option. */
 function triggerLabel( select ) {
 	const chosen = Array.from( select.selectedOptions );
 
 	if ( ! chosen.length ) {
-		return select.options[ 0 ] ? select.options[ 0 ].textContent : '';
+		return select.options[ 0 ] ? optionLabel( select.options[ 0 ] ) : '';
 	}
 
 	// A multi-select collapses to a count once it stops being readable as a list.
@@ -42,7 +55,7 @@ function triggerLabel( select ) {
 		return template.replace( '%d', String( chosen.length ) );
 	}
 
-	return chosen.map( ( option ) => option.textContent ).join( ', ' );
+	return chosen.map( optionLabel ).join( ', ' );
 }
 
 /**
@@ -257,7 +270,14 @@ function enhance( select ) {
 		wrap.classList.add( 'is-invalid' );
 		trigger.focus();
 	} );
-	select.addEventListener( 'change', () => wrap.classList.remove( 'is-invalid' ) );
+	// Follow the native control, whoever moved it. `choose()` syncs the trigger itself, but code
+	// outside this module can set `select.value` too — the contact form's phone field does, when the
+	// visitor types a number that already carries a country code. Setting `.value` fires no event, so
+	// that code dispatches `change`; without this listener the trigger kept showing the old country.
+	select.addEventListener( 'change', () => {
+		wrap.classList.remove( 'is-invalid' );
+		syncFromNative();
+	} );
 
 	syncFromNative();
 }

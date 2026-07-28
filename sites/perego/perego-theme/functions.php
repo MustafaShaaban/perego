@@ -29,6 +29,20 @@ add_action('wp_enqueue_scripts', static function (): void {
         'defer'     => true,
     ]);
 
+    // The strings the form toasts render themselves; the message body is whatever the form already
+    // produced. Localized here rather than through wp.i18n because this theme ships no JS translation
+    // file, so a `wp.i18n.__()` call would stay English on the Arabic pages — the same trap that left
+    // the validation messages untranslated.
+    //
+    // The domain is `perego-site`, which is what style.css declares and what has a .po/.mo. An
+    // earlier `perego-theme` here was a domain that exists nowhere, so the string could never
+    // translate however complete the catalogue was.
+    wp_localize_script('perego-theme-main', 'peregoTheme', [
+        'toastDismiss' => __('Dismiss', 'perego-site'),
+        'toastSuccessTitle' => __('Message sent', 'perego-site'),
+        'toastErrorTitle' => __('Not sent', 'perego-site'),
+    ]);
+
     // main.css declares the exact Open Sans/Cairo family-and-weight set from the locked handoff through
     // local WOFF2 assets. Keeping those faces in the theme avoids a render-blocking third-party request.
 });
