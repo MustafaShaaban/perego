@@ -111,8 +111,10 @@ export function useDataExplorer( config ) {
 
 	const detail = useCallback( async ( recordId ) => {
 		try {
-			const payload = await request( 'get', `${ config.restUrl }/${ state.sourceKey }/${ recordId }` );
-			return payload.record;
+			// `request()` already unwraps to `envelope.data`, and DataController::show() puts the
+			// record there directly — reading `.record` off it looked for a key no source emits, so
+			// opening a row produced `undefined` and the detail modal never showed anything.
+			return await request( 'get', `${ config.restUrl }/${ state.sourceKey }/${ recordId }` );
 		} catch ( error ) {
 			dispatch( { type: 'error', message: error.message } );
 			return null;

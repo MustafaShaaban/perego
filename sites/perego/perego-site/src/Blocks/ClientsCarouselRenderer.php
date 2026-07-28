@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\ClientsContent;
+use PeregoSite\Content\TranslatedMeta;
 use PeregoSite\PostTypes\ClientPostType;
 use WP_Query;
 
@@ -37,7 +38,7 @@ final class ClientsCarouselRenderer
 
     private const INDIV_MAX = 12;
 
-    /** @param array<string,string> $attributes */
+    /** @param array<string,mixed> $attributes */
     public function __construct(
         private readonly ClientsContent $content,
         private readonly string $locale = 'en',
@@ -105,13 +106,15 @@ final class ClientsCarouselRenderer
     private function corporateCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
-        $gallery = ClientPostType::sanitizeGallery(get_post_meta($client->ID, ClientPostType::META_GALLERY, true));
+        // Media is language-neutral and Polylang does not copy meta to translations, so an Arabic
+        // client reads its linked English record's gallery — otherwise the AR card renders inert.
+        $gallery = ClientPostType::sanitizeGallery(TranslatedMeta::value($client, ClientPostType::META_GALLERY));
         $galleryUrls = array_filter(array_map([$this, 'galleryItemUrl'], $gallery));
 
         if ($galleryUrls !== []) {
             $trigger = ' data-gallery="' . esc_attr(implode(',', $galleryUrls)) . '"';
         } else {
-            $logoUrl = has_post_thumbnail($client->ID) ? (string) get_the_post_thumbnail_url($client->ID, 'large') : '';
+            $logoUrl = $this->thumbnailUrl($client);
             $trigger = $logoUrl !== '' ? ' data-image="' . esc_url($logoUrl) . '"' : '';
         }
 
@@ -120,6 +123,41 @@ final class ClientsCarouselRenderer
         $html .= '</button>';
 
         return $html;
+    }
+
+    /**
+     * The post whose featured image this card should show: the client itself, or its linked English
+     * record when the translation has none of its own.
+     *
+     * Polylang gives a translation its own thumbnail slot and leaves it empty, so on this install 27
+     * of 31 Arabic clients have no featured image while their English counterparts do. Without this,
+     * the Arabic cards render with no logo at all.
+     */
+    private function thumbnailSourceId(\WP_Post $client): int
+    {
+        if (has_post_thumbnail($client->ID)) {
+            return $client->ID;
+        }
+
+        $enId = TranslatedMeta::englishId($client);
+
+        return ($enId !== 0 && has_post_thumbnail($enId)) ? $enId : 0;
+    }
+
+    /** The card logo's URL, following the English fallback; empty when neither post has one. */
+    private function thumbnailUrl(\WP_Post $client): string
+    {
+        $id = $this->thumbnailSourceId($client);
+
+        return $id === 0 ? '' : (string) get_the_post_thumbnail_url($id, 'large');
+    }
+
+    /** The card thumbnail's `<img>`, following the English fallback; empty when neither post has one. */
+    private function thumbnailHtml(\WP_Post $client): string
+    {
+        $id = $this->thumbnailSourceId($client);
+
+        return $id === 0 ? '' : (string) get_the_post_thumbnail($id, 'medium', ['loading' => 'lazy', 'alt' => '']);
     }
 
     /** @param array{type:string,id:int,url:string} $item */
@@ -144,11 +182,19 @@ final class ClientsCarouselRenderer
     private function individualCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
+        // MEDIA falls back to the linked English record, because Polylang does not copy meta to
+        // translations and a video/thumbnail is the same asset in either language. Without this the
+        // Arabic carousel rendered inert `<div>`s that looked right and did nothing when clicked.
+        $thumb = $this->thumbnailHtml($client);
+        $videoUrl = TranslatedMeta::string($client, ClientPostType::META_VIDEO_URL);
+        $videoType = ClientPostType::sanitizeVideoType(TranslatedMeta::string($client, ClientPostType::META_VIDEO_TYPE));
+        // COPY deliberately does NOT fall back. The subtitle and statistic are editorial text, not
+        // assets: inheriting them would print the English wording on an Arabic card (the live EN
+        // records carry "intertainment show"), which is the language leak this whole pass exists to
+        // remove. An untranslated card shows no subtitle — the prompt to enter Arabic copy — while
+        // still opening its video.
         $sub = (string) get_post_meta($client->ID, ClientPostType::META_SUB, true);
         $stat = (string) get_post_meta($client->ID, ClientPostType::META_STAT, true);
-        $thumb = has_post_thumbnail($client->ID) ? get_the_post_thumbnail($client->ID, 'medium', ['loading' => 'lazy', 'alt' => '']) : '';
-        $videoUrl = (string) get_post_meta($client->ID, ClientPostType::META_VIDEO_URL, true);
-        $videoType = ClientPostType::sanitizeVideoType((string) get_post_meta($client->ID, ClientPostType::META_VIDEO_TYPE, true));
         $opensLightbox = $videoUrl !== '' && $videoType !== 'external';
 
         if ($opensLightbox) {
@@ -170,7 +216,10 @@ final class ClientsCarouselRenderer
 
         $html .= '<div class="indiv-card__thumb">';
         $html .= $thumb !== '' ? $thumb : '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/client-review-crop.png') . '" alt="" loading="lazy" />';
-        if ($opensLightbox) {
+        // The play badge is an editor choice (client request 2026-07-28). It is purely decorative —
+        // `aria-hidden`, and the card is already a button — so hiding it changes how the row looks,
+        // never whether the video opens.
+        if ($opensLightbox && $this->showsPlayIcon()) {
             $html .= '<span class="play-btn" aria-hidden="true"></span>';
         }
         $html .= '</div>'; // .client-card__thumb
@@ -199,6 +248,18 @@ final class ClientsCarouselRenderer
         return $value !== '' ? $value : $this->content->get($contentKey);
     }
 
+    /**
+     * Whether the individual cards wear the play badge.
+     *
+     * Defaults to true so every page saved before the toggle existed keeps the badge it already
+     * shows — an unset attribute must mean "as it was", not "off".
+     */
+    private function showsPlayIcon(): bool
+    {
+        return ! array_key_exists('showPlayIcon', $this->attributes)
+            || (bool) $this->attributes['showPlayIcon'];
+    }
+
     private function arrowSvg(string $direction): string
     {
         $path = $direction === 'previous' ? 'M15 4 7 12l8 8' : 'M9 4l8 8-8 8';
@@ -209,9 +270,35 @@ final class ClientsCarouselRenderer
     /** @return list<\WP_Post> */
     private function query(string $type): array
     {
+        $mode = (string) ($this->attributes[$type . 'Mode'] ?? 'automatic');
+        $selectedIds = $this->positiveIds($this->attributes[$type . 'Order'] ?? []);
+        $excludedIds = $this->positiveIds($this->attributes[$type . 'ExcludeIds'] ?? []);
+        $automatic = $this->automaticClients($type);
+
+        if ($mode === 'automatic') {
+            return $this->excludeClients($automatic, $excludedIds);
+        }
+
+        $selected = $this->selectedClients($selectedIds);
+        if ($mode === 'manual') {
+            return array_slice($selected, 0, $this->maxFor($type));
+        }
+
+        $selectedIds = array_map(static fn (\WP_Post $post): int => $post->ID, $selected);
+        $remaining = array_filter(
+            $this->excludeClients($automatic, $excludedIds),
+            static fn (\WP_Post $post): bool => ! in_array($post->ID, $selectedIds, true)
+        );
+
+        return array_slice([...$selected, ...$remaining], 0, $this->maxFor($type));
+    }
+
+    /** @return list<\WP_Post> */
+    private function automaticClients(string $type): array
+    {
         $q = new WP_Query([
             'post_type' => ClientPostType::POST_TYPE,
-            'posts_per_page' => $type === 'corporate' ? self::CORP_MAX : self::INDIV_MAX,
+            'posts_per_page' => $this->maxFor($type),
             'no_found_rows' => true,
             'post_status' => 'publish',
             'ignore_sticky_posts' => true,
@@ -227,6 +314,54 @@ final class ClientsCarouselRenderer
         wp_reset_postdata();
 
         return $posts;
+    }
+
+    /** @return list<\WP_Post> */
+    private function selectedClients(array $ids): array
+    {
+        if (! function_exists('get_post')) {
+            return [];
+        }
+
+        $posts = [];
+        foreach ($ids as $id) {
+            $localizedId = function_exists('pll_get_post') ? (int) pll_get_post($id, $this->locale) : $id;
+            $post = get_post($localizedId ?: $id);
+            if ($post instanceof \WP_Post && $post->post_type === ClientPostType::POST_TYPE && $post->post_status === 'publish') {
+                $posts[] = $post;
+            }
+        }
+
+        return $posts;
+    }
+
+    /** @param list<\WP_Post> $clients @param list<int> $excludedIds @return list<\WP_Post> */
+    private function excludeClients(array $clients, array $excludedIds): array
+    {
+        if ($excludedIds === []) {
+            return $clients;
+        }
+
+        return array_values(array_filter($clients, function (\WP_Post $post) use ($excludedIds): bool {
+            $englishId = function_exists('pll_get_post') ? (int) pll_get_post($post->ID, 'en') : 0;
+
+            return array_intersect([$post->ID, $englishId], $excludedIds) === [];
+        }));
+    }
+
+    private function maxFor(string $type): int
+    {
+        return $type === 'corporate' ? self::CORP_MAX : self::INDIV_MAX;
+    }
+
+    /** @param mixed $ids @return list<int> */
+    private function positiveIds($ids): array
+    {
+        if (! is_array($ids)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(static fn ($id): int => abs((int) $id), $ids))));
     }
 
     /**

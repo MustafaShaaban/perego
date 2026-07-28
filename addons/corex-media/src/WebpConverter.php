@@ -84,6 +84,18 @@ final class WebpConverter
             return false;
         }
 
+        // `imagewebp()` throws a FATAL "Palette image not supported by webp" on an indexed-colour
+        // image — it is not a warning and not a false return, so it takes the whole request down
+        // mid-upload. Palette PNGs are exactly what an exported logo or flat-colour graphic usually
+        // is, so this is a routine upload, not an edge case. Promoting to truecolour first is what
+        // the function needs; alpha is preserved explicitly because the default for a new truecolour
+        // canvas is to flatten it, and a logo without transparency is a white box on a dark page.
+        if (! imageistruecolor($image)) {
+            imagepalettetotruecolor($image);
+        }
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+
         $ok = imagewebp($image, $output, $this->quality);
         imagedestroy($image);
 

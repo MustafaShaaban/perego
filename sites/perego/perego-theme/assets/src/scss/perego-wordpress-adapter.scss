@@ -118,57 +118,57 @@ html {
 	color: var(--wp--preset--color--error-text);
 }
 
-.corex-form__status {
-	border-radius: 10px;
-	transition: background-color var(--perego-dur-medium, 0.3s) var(--perego-ease, ease);
+/* `.corex-form__status` had a full banner treatment here — background, border, a pseudo-element
+ * tick or warning glyph. It is now the accessible live region only (clipped, see the toast section
+ * below), so those rules were unreachable and are gone rather than left to rot. The visual
+ * equivalent lives on `.perego-toast--success` / `--error`. */
+
+/* Submitting state (Corex.loading, spec 043).
+ *
+ * The site had two unrelated loading mechanisms. The handoff stylesheet spins a ring INSIDE the
+ * button (`.footer-form__submit.is-loading::after`, perego-reference.scss) — that is the designed
+ * behaviour, and the careers form uses it. The CoreX runtime instead appends a sibling
+ * `<span class="corex-spinner">` after the button and styles it with two custom properties this
+ * theme does not define; an unresolved var() inside a shorthand invalidates the WHOLE declaration,
+ * so it rendered as a 1em transparent box and the button merely looked greyed out.
+ *
+ * Rather than keep a second, differently-placed spinner, the injected sibling is dropped and the
+ * CoreX submit button gets exactly the reference treatment. One loading state across the whole site
+ * (client report 2026-07-27: "apply it on the submit button like join us form"). */
+form.corex-is-loading .corex-spinner {
+	display: none;
 }
 
-.corex-form__status.is-success,
-.corex-form__status.is-error {
-	display: flex;
-	align-items: center;
-	gap: 10px;
-	padding: 12px 16px;
-	font-size: 14px;
-	font-weight: 600;
-}
-
-.corex-form__status.is-success::before,
-.corex-form__status.is-error::before {
-	flex: none;
-	font-size: 15px;
-	line-height: 1;
-}
-
-.corex-form__status.is-success {
-	background: rgba(31, 138, 91, 0.18);
-	border: 1px solid rgba(80, 220, 150, 0.4);
-	color: var(--wp--preset--color--success-text);
-}
-
-.corex-form__status.is-success::before {
-	content: "\2713";
-}
-
-.corex-form__status.is-error {
-	background: rgba(216, 39, 91, 0.14);
-	border: 1px solid rgba(255, 107, 166, 0.4);
-	color: var(--wp--preset--color--error-text);
-}
-
-.corex-form__status.is-error::before {
-	content: "\26A0";
-}
-
-/* The button dims and its sibling .corex-spinner (Corex.loading, spec 043) spins in currentColor
- * right after it — a branded, disabled-looking loading state without touching the framework's
- * spinner-after-the-button DOM order. */
 form.corex-is-loading .corex-form__submit {
-	opacity: 0.65;
+	position: relative;
+	color: transparent;
+	cursor: wait;
+	pointer-events: none;
 }
 
-form.corex-is-loading .corex-form__submit + .corex-spinner {
-	color: var(--accent);
+form.corex-is-loading .corex-form__submit::after {
+	content: "";
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 50%;
+	inline-size: 18px;
+	block-size: 18px;
+	margin-block-start: -9px;
+	margin-inline-start: -9px;
+	border: 2px solid rgb(255 255 255 / 40%);
+	border-block-start-color: #fff;
+	border-radius: 50%;
+
+	/* Shared with the reference stylesheet's own button spinner, so the two cannot drift. */
+	animation: plSpin 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	/* Slow rather than stop: the spin is the only signal that the submission is still in flight. */
+	form.corex-is-loading .corex-form__submit::after {
+		animation-duration: 2.8s;
+	}
 }
 
 /* Keep the editable post-content wrapper transparent to the handoff's two-panel flex contract. */
@@ -229,15 +229,14 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	display: none;
 }
 
-/* The CV constraint stays programmatically associated with the native input; the reference
- * file-drop is the only visible prompt. */
+/* The CV constraint was clipped here because it repeated the file-drop's own prompt. It now states
+ * what will be *accepted* — types and size — which the drop zone does not say, and which the
+ * applicant otherwise discovered by having a file rejected after uploading it. Visible, quiet,
+ * under the control it describes. */
 .site-footer .join-form__hint {
-	position: absolute;
-	inline-size: 1px;
-	block-size: 1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
+	margin-block-start: 8px;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted, rgb(255 255 255 / 65%));
 }
 
 /* The contact page keeps CoreX's real form endpoint/schema markup, but projects the locked
@@ -249,6 +248,19 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	overflow: hidden;
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
+}
+
+/* The hero is a 50/50 grid in the reference sheet, but the two columns do not want the same room.
+ * The chooser caps its own content at 400px (`.svc-choice-list`, `.svc-choice-help`), so at 1440px
+ * it renders 400px inside a 616px column and leaves 216px doing nothing — while the form beside it
+ * is squeezing six fields into 255px halves. Shifting the ratio costs the chooser nothing visible
+ * and gives every field on the form about 35px back. Below 901px the reference collapses the grid
+ * to one column and this stops applying. */
+@media (min-width: 901px) {
+
+	.contact-hero__grid {
+		grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+	}
 }
 
 .contact-form-wrap .corex-form {
@@ -265,6 +277,17 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 
 /* The handoff grid owns vertical alignment; the FSE flow wrapper must not offset its chooser. */
 .contact-hero__grid.is-layout-flow > .contact-choose {
+	margin-block-start: 0;
+}
+
+/* Same rule one level up (spec 021 C13). Until T035 the contact-hero section carried raw markup that
+ * core's layout support latched onto instead of the section itself, so `is-layout-flow` landed on the
+ * decorative `.contact-hero__bg` (where it did nothing) rather than the section. Wrapping that markup
+ * in `wp:html` made the section a well-formed group, so the layout classes now land where they should
+ * — and core's `:where(.is-layout-flow) > * { margin-block-start: 24px }` would push the grid down.
+ * The section is a full-bleed hero whose children are absolutely positioned or the grid itself; it
+ * owns its own spacing through `.contact-hero__grid`'s padding. */
+.contact-hero.is-layout-flow > * {
 	margin-block-start: 0;
 }
 
@@ -302,6 +325,31 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	display: none;
 }
 
+/* …which also hid the field's own `.corex-form__error`, so a missing service produced a correct
+ * message nobody could see. The chooser block mirrors it into `.svc-choice-error` below the
+ * buttons — the control the visitor is actually looking at. `:empty` rather than the `hidden`
+ * attribute: an author `display` rule beats the UA `[hidden]` sheet, so `hidden` alone would not
+ * hold. Same convention as the framework error above it. */
+.svc-choice-error {
+	margin-top: 14px;
+	max-inline-size: 400px;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--wp--preset--color--error-text);
+}
+
+.svc-choice-error:empty {
+	display: none;
+}
+
+/* Colour alone would not carry this for a colour-blind visitor, and the buttons are the thing that
+ * needs answering — so the group gets a visible edge as well as the message. */
+.svc-choice-list.is-invalid {
+	padding: 10px;
+	margin: -10px;
+	border-radius: var(--r-card, 12px);
+	box-shadow: inset 0 0 0 1px var(--wp--preset--color--error-text);
+}
+
 .contact-form-wrap .corex-form__hp {
 	position: absolute;
 	inset-inline-start: -9999px;
@@ -324,14 +372,10 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	font-size: 15px;
 }
 
-/* The form schema stays CoreX-owned; these two editorial qualifiers are presentation-only
- * text from the locked contact handoff. */
-.contact-form-wrap [data-corex-field="phone"] .corex-form__label::after,
-.contact-form-wrap [data-corex-field="company"] .corex-form__label::after {
-	content: " (optional)";
-	color: var(--muted-2);
-	font-weight: 400;
-}
+/* The "(optional)" qualifier used to be a CSS `::after` hardcoded to phone + company. Removed
+ * 2026-07-26: PeregoSite\Forms\OptionalFieldMarker now emits it server-side for EVERY non-required
+ * field, which is both translatable (a CSS string is not, so the Arabic form printed English) and
+ * self-maintaining when the schema gains a field. Styling lives with `.corex-form__optional` below. */
 
 .contact-form-wrap .corex-form__input {
 	width: 100%;
@@ -364,6 +408,315 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 
 [dir="rtl"] .contact-form-wrap select.corex-form__input {
 	background-position: left 4px center;
+}
+
+/* Form outcome toasts (assets/src/js/toast.js).
+ *
+ * The framework's `.corex-form__status` line stays in the DOM as the accessible live region — a
+ * screen reader still announces exactly what it always did — but it is no longer the visual
+ * feedback, because under a long form it lands off-screen on a phone. It is hidden the accessible
+ * way (clipped, not `display:none`), or assistive technology would stop reading it too. */
+.perego-toasts {
+	position: fixed;
+	z-index: 4500;
+	inset-block-end: clamp(16px, 4vw, 32px);
+	inset-inline-end: clamp(16px, 4vw, 32px);
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	inline-size: min(380px, calc(100vw - 32px));
+	pointer-events: none;
+}
+
+/* The toast is a `.glass-panel` (perego-reference.scss), not an approximation of one. It previously
+   used a flat fill, a 14px radius and a 3px side bar, and adopted none of the design system's actual
+   glass treatment — which is why it read as generic (client report 2026-07-28). Same blur, same
+   accent hairline, same card radius, same inset glow as every other panel on the site, plus a
+   state-tinted outer glow so success and failure are distinguishable before the text is read. */
+.perego-toast {
+	position: relative;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: start;
+	gap: 14px;
+	padding: 16px 18px 18px;
+	overflow: hidden;
+	border: 1px solid var(--glass-border, rgb(216 106 243 / 45%));
+	border-radius: var(--r-card, 29px);
+	background: rgb(22 4 53 / 55%);
+	backdrop-filter: blur(10px);
+	-webkit-backdrop-filter: blur(10px);
+	color: var(--text, #fff);
+	pointer-events: auto;
+
+	/* Rises and settles: ease-OUT on the way in, ease-in on the way out (below). */
+	opacity: 0;
+	transform: translateY(10px) scale(0.96);
+	transition:
+		opacity 0.32s cubic-bezier(0.22, 1, 0.36, 1),
+		transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.perego-toast:not(.is-visible) {
+	/* Exiting is a different curve from entering — it should feel like it is being taken away. */
+	transition-timing-function: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.perego-toast.is-visible {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+}
+
+.perego-toast--success {
+	box-shadow:
+		inset 0 0 40px rgb(216 106 243 / 8%),
+		0 22px 50px rgb(0 0 0 / 45%),
+		0 0 28px rgb(127 240 182 / 14%);
+}
+
+.perego-toast--error {
+	box-shadow:
+		inset 0 0 40px rgb(216 106 243 / 8%),
+		0 22px 50px rgb(0 0 0 / 45%),
+		0 0 28px rgb(255 107 166 / 16%);
+}
+
+/* The medallion is the brand's own device — the transactional emails frame their check the same way.
+   A bare 20px glyph beside a line of text was the cheapest-looking part of the old toast. */
+.perego-toast__medallion {
+	display: grid;
+	place-items: center;
+	inline-size: 40px;
+	block-size: 40px;
+	border-radius: 50%;
+	border: 1px solid currentcolor;
+	background: currentcolor;
+}
+
+.perego-toast__medallion svg {
+	inline-size: 20px;
+	block-size: 20px;
+}
+
+.perego-toast--success .perego-toast__medallion {
+	color: rgb(127 240 182 / 16%);
+}
+
+.perego-toast--error .perego-toast__medallion {
+	color: rgb(255 107 166 / 16%);
+}
+
+/* The icon reads at full strength; only the disc behind it is tinted. */
+.perego-toast--success .perego-toast__medallion svg {
+	color: var(--wp--preset--color--success, #7ff0b6);
+}
+
+.perego-toast--error .perego-toast__medallion svg {
+	color: var(--wp--preset--color--error, #ff6ba6);
+}
+
+.perego-toast__body {
+	min-inline-size: 0;
+	padding-block-start: 2px;
+}
+
+.perego-toast__title {
+	margin: 0;
+	font-size: 15px;
+	font-weight: 700;
+	line-height: 1.35;
+}
+
+.perego-toast__message {
+	margin: 4px 0 0;
+	color: var(--muted, rgb(255 255 255 / 72%));
+	font-size: 13.5px;
+	line-height: 1.5;
+}
+
+/* 36px visible, expanded to the 44px minimum touch target by the pseudo-element — the old `×` was
+   about 20px, well under it. */
+.perego-toast__close {
+	position: relative;
+	display: grid;
+	place-items: center;
+	inline-size: 36px;
+	block-size: 36px;
+	margin: -6px -6px 0 0;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: none;
+	color: var(--muted-2, rgb(255 255 255 / 55%));
+	cursor: pointer;
+	transition: color 0.2s var(--ease, ease), background-color 0.2s var(--ease, ease);
+}
+
+[dir="rtl"] .perego-toast__close {
+	margin: -6px 0 0 -6px;
+}
+
+.perego-toast__close::after {
+	content: "";
+	position: absolute;
+	inset: -4px;
+}
+
+.perego-toast__close svg {
+	inline-size: 16px;
+	block-size: 16px;
+}
+
+.perego-toast__close:hover,
+.perego-toast__close:focus-visible {
+	background: rgb(255 255 255 / 8%);
+	color: var(--text, #fff);
+}
+
+.perego-toast__close:focus-visible {
+	outline: 2px solid var(--accent, #d86af3);
+	outline-offset: 2px;
+}
+
+/* The auto-dismiss made visible. It drains the way the language reads, and pauses with the timer
+   when the pointer or focus is inside the toast (toast.js sets `animation-play-state`). */
+.perego-toast__timer {
+	position: absolute;
+	inset-block-end: 0;
+	inset-inline: 0;
+	block-size: 2px;
+
+	/* `transform-origin` takes no logical keyword — a `inline-start` here is simply invalid and the
+	   browser falls back to the 50% default, which drains the bar outwards from its middle. It has to
+	   be the physical side, mirrored for RTL below. */
+	transform-origin: left center;
+	animation: perego-toast-drain linear forwards;
+}
+
+[dir="rtl"] .perego-toast__timer {
+	transform-origin: right center;
+}
+
+.perego-toast--success .perego-toast__timer {
+	background: var(--wp--preset--color--success, #7ff0b6);
+}
+
+.perego-toast--error .perego-toast__timer {
+	background: var(--wp--preset--color--error, #ff6ba6);
+}
+
+@keyframes perego-toast-drain {
+
+	from {
+		transform: scaleX(1);
+	}
+
+	to {
+		transform: scaleX(0);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+	.perego-toast {
+		transform: none;
+		transition-duration: 0.01ms;
+	}
+
+	.perego-toast.is-visible {
+		transform: none;
+	}
+
+	/* The bar stays a full-width state marker rather than an animation. */
+	.perego-toast__timer {
+		animation: none;
+	}
+}
+
+
+/* The off-screen technique, in one place.
+ *
+ * `.screen-reader-text` is core's utility — WordPress markup and this theme's own labels both assume
+ * it exists, and this stylesheet never defined it, so such a label rendered in full.
+ * `.corex-form__status` is the framework's form status line, kept in the DOM purely as the live
+ * region now that the visual feedback is a toast.
+ *
+ * Both are clipped rather than `display: none`, which would take them out of the accessibility tree
+ * as well as off the screen — the opposite of the point. */
+.screen-reader-text,
+.corex-form__status {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Phone: a dial-code picker in front of the number (contact-service-chooser/view.js wraps the
+ * framework's input at runtime, and tags the select so assets/src/js/select.js enhances it into the
+ * same styled listbox the budget field uses). The two controls share one underline so they read as a
+ * single field rather than two. `dir="ltr"` on the input is set server-side — a phone number reads
+ * left-to-right in Arabic too. */
+.contact-form-wrap .phone-field {
+	display: flex;
+	align-items: stretch;
+	gap: 8px;
+	border-bottom: 1.5px solid rgb(216 106 243 / 50%);
+}
+
+.contact-form-wrap .phone-field .corex-form__input {
+	border-bottom: 0;
+}
+
+/* A fixed width, not a percentage. `max-inline-size: 42%` of a 150–255px half-field left the number
+   input as little as 78px while the trigger tried to render a full country name. The trigger now
+   reads "EG +20", which needs ~96px including the caret, and the rest is the number's. */
+.contact-form-wrap .phone-field .perego-select {
+	flex: 0 0 auto;
+	inline-size: 96px;
+}
+
+.contact-form-wrap .phone-field .perego-select__trigger {
+	padding-inline: 0 18px;
+	border-block-end: 0;
+}
+
+/* The list is pinned to the trigger's width by default, which here would be 96px — every country
+   name would clip. It is absolutely positioned and nothing above it clips overflow, so let it be
+   wider than the control that opened it. */
+.contact-form-wrap .phone-field .perego-select__list {
+	inset-inline-start: 0;
+	inset-inline-end: auto;
+	inline-size: max(272px, 100%);
+}
+
+.contact-form-wrap .phone-field:focus-within {
+	border-bottom-color: var(--accent, #d86af3);
+}
+
+.contact-form-wrap .phone-field:has(.corex-form__input[aria-invalid="true"]) {
+	border-bottom-color: #ff6ba6;
+}
+
+/* Phone takes a whole row now — but it says so in `ProjectBriefForm`'s own `width`, not here, so
+ * the `:not(--half)` rule above already places it. That replaced a `max-width: 1024px` override
+ * whose comment claimed "901–1024px" while having no lower bound, so it also fired below 760px
+ * where another rule already said the same thing.
+ *
+ * What still belongs here is a floor under the number itself, so no future field change can quietly
+ * squeeze it invisible again — it would push the row rather than clip the text. */
+.contact-form-wrap .phone-field .corex-form__input[type="tel"] {
+	min-inline-size: 12rem;
+}
+
+/* The counter turns pink past the word cap. The reference stylesheet has always defined this
+ * state; nothing ever set the class, so the counter read the same over the limit as under it. */
+.contact-form-wrap [data-corex-field="message"].is-limit::after {
+	color: #ff9ad1;
 }
 
 .contact-form-wrap [data-corex-field="message"]::after {
@@ -532,6 +885,15 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 .pagination button[hidden] { display: none; }
 #portfolioEmpty[hidden] { display: none; }
 
+/* RTL arrow links — the mirror must survive hover (owner-reported on the Arabic home page's
+ * "عرض كل الخدمات"). The reference stylesheet mirrors the arrow on `[dir="rtl"] .link-arrow svg`
+ * (scaleX(-1)) but nudges it on the more specific `[dir="rtl"] .link-arrow:hover svg`, and `transform`
+ * is a single property, not a list that merges: on hover the nudge REPLACED the mirror, so the arrow
+ * snapped from pointing inline-end to pointing inline-start and slid the wrong way. Compose both, and
+ * note the nudge is +6px, not -6px: after scaleX(-1) the element's own X axis is flipped, so a positive
+ * translate advances the arrow in its own reading direction. LTR is untouched. */
+[dir="rtl"] .link-arrow:hover svg { transform: scaleX(-1) translateX(6px); }
+
 /* Perego addition, not in the reference stylesheet: the seeded demo projects always carry a real
  * (placeholder-labelled) featured image, but content types with no photo at all yet — e.g. a service
  * post surfaced in Search — have nothing to show in a .post-card__media box, and
@@ -699,6 +1061,82 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 		opacity: 0;
 		visibility: hidden;
 		pointer-events: none;
+	}
+}
+
+/* Narrow phones (client request 2026-07-27: the header is broken at 360px).
+ *
+ * Below ~1024px the bar holds three items that are all `flex: none` — logo, language chips, hamburger —
+ * and nothing sized them for a small phone. Measured at 360px: logo 149.4 + gap 20 + chips ~102 + gap 20
+ * + toggle 46 + its 16px margin = ~353px inside a 320px content box (360 minus two 20px gutters), so
+ * ~33px overflowed. It never showed as a scrollbar because `html`/`body` carry `overflow-x: clip`, which
+ * silently cropped the inline-end edge instead — and under `dir="rtl"` cropped the other edge.
+ *
+ * The reductions bring it to ~250px against 320px, which holds down to roughly a 280px viewport:
+ * the logo is the biggest win because the asset is 552x170 (3.25:1), so height drives width. Everything
+ * stays above the 24x24px WCAG 2.2 AA target-size floor (2.5.8) — the chips end up ~36px tall.
+ *
+ * The hamburger drops 46 -> 36 so it matches the chip height and the three controls read as one row;
+ * left at 46 it towered over the shrunken chips. Its margin goes too: `.container` already contributes
+ * a 20px gutter, so the extra 16px was double-counting the edge spacing it was added for.
+ *
+ * Its bars have to be re-derived rather than inherited, because they are absolutely positioned against
+ * two different origins: the middle `span` is measured from the 46px BUTTON, while `::before`/`::after`
+ * are measured from the 22px SPAN. Scaling by 36/46 and keeping the reference's deliberate rightward
+ * stagger: bar width 22 -> 18, middle at button-x 9-27 (was 12-34), top/bottom at button-x 14-32 (was
+ * 18-40), and the vertical offsets ±7 -> ±6. The `.is-open` X translations have to move with them or
+ * the two bars stop meeting when they rotate. */
+@media (max-width: 480px) {
+	.site-header__inner {
+		gap: 12px;
+		padding-block: 14px;
+	}
+
+	.logo__img {
+		height: 34px;
+	}
+
+	.lang-toggle__btn {
+		min-width: 0;
+		padding: 8px 10px;
+		font-size: 13px;
+	}
+
+	.nav-toggle {
+		margin-inline-end: 0;
+		width: 36px;
+		height: 36px;
+		border-radius: 8px;
+	}
+
+	/* Measured from the 36px button. */
+	.nav-toggle span {
+		left: 9px;
+		width: 18px;
+		top: 17px;
+	}
+
+	/* Measured from the 18px span, so `left` is the stagger, not the inset. */
+	.nav-toggle span::before,
+	.nav-toggle span::after {
+		left: 5px;
+		width: 18px;
+	}
+
+	.nav-toggle span::before {
+		top: -6px;
+	}
+
+	.nav-toggle span::after {
+		top: 6px;
+	}
+
+	.nav-toggle.is-open span::before {
+		transform: translateY(6px) rotate(45deg);
+	}
+
+	.nav-toggle.is-open span::after {
+		transform: translateY(-6px) rotate(-45deg);
 	}
 }
 
@@ -978,6 +1416,13 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 	--perego-gradient-card-overlay: var(--wp--custom--perego--gradient--card-overlay);
 	--perego-glass-fill: var(--wp--custom--perego--color--glass-fill);
 	--perego-glass-panel-fill: var(--wp--custom--perego--color--glass-panel-fill);
+	--perego-card-filter: var(--wp--custom--perego--color--card-filter);
+	--perego-card-filter-gradient: var(--wp--custom--perego--color--card-filter-gradient);
+	--perego-header-scrim: var(--wp--custom--perego--color--header-scrim);
+	--perego-svc-tab-fill: var(--wp--custom--perego--color--svc-tab-fill);
+	--perego-svc-tab-active-gradient: var(--wp--custom--perego--color--svc-tab-active-gradient);
+	--perego-lang-chip-fill: var(--wp--custom--perego--color--lang-chip-fill);
+	--perego-lang-chip-fill-hover: var(--wp--custom--perego--color--lang-chip-fill-hover);
 	--perego-glass-border: var(--wp--custom--perego--color--glass-border);
 	--perego-glass-blur: var(--wp--custom--perego--glass-blur);
 	--perego-muted: var(--wp--custom--perego--color--muted);
@@ -994,6 +1439,7 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
 
 	--perego-ease: var(--wp--custom--perego--motion--ease);
 	--perego-dur-fast: var(--wp--custom--perego--motion--dur-fast);
+	--perego-dur-medium: var(--wp--custom--perego--motion--dur-medium);
 	--perego-dur-medium: var(--wp--custom--perego--motion--dur-medium);
 	--perego-hero-slide-delay: var(--wp--custom--perego--motion--hero-slide-delay);
 
@@ -1013,6 +1459,16 @@ form.corex-is-loading .corex-form__submit + .corex-spinner {
  * the 2px `outset` border, so it renders identically to the <a>/<div> variants; the reference
  * `.indiv-card` grid (text 1fr / thumbnail 42%), gradient, and radius then apply unchanged. This
  * lived in the block's own style.scss, which the build never emits into a stylesheet. */
+/* Work cards became <button>s too (client request 2026-07-26: a card opens the project's media in the
+ * lightbox instead of navigating to a single page). Same UA-chrome reset as `.indiv-card` below, plus
+ * `text-align: start` because the card's title/excerpt are left-aligned prose, not button label text.
+ *
+ * `a.post-card` joins them for the web logo cards (client request 2026-07-27), which link to the live
+ * site instead. The reset has to cover the anchor too or the three card shapes — <button>, <a>,
+ * <article> — would not render identically. `text-decoration` is the only addition an anchor needs;
+ * `color: inherit` already stops the UA link colour. */
+button.post-card,
+a.post-card,
 button.indiv-card {
 	appearance: none;
 	-webkit-appearance: none;
@@ -1024,6 +1480,128 @@ button.indiv-card {
 	color: inherit;
 	text-align: start;
 	cursor: pointer;
+}
+
+a.post-card {
+	text-decoration: none;
+}
+
+/* The showcase shot was a <button> carrying the lightbox trigger; it is now an <a> to the live site, or
+ * a plain <div> when no URL is recorded (client request 2026-07-27). `perego-reference.scss:906` styles
+ * it as a button, so the anchor needs the same UA-chrome reset the cards get. The <div> variant drops
+ * `cursor: pointer` — it is not clickable, and a pointer cursor over inert content is a lie. */
+a.web-card__shot {
+	display: block;
+	text-decoration: none;
+	color: inherit;
+}
+
+div.web-card__shot {
+	cursor: default;
+}
+
+/* Web logo cards (client request 2026-07-27). A logo is not a photograph: cover-cropping one to the
+ * card's 16/10 box would slice the mark, so it is contained and padded inside a tinted plate instead,
+ * and the generic `.post-card:hover img { scale(1.06) }` zoom is cancelled — on a brand mark that reads
+ * as a wobble rather than a reveal. The aspect box itself is unchanged, so logo cards and screenshot
+ * cards still line up on the same grid rows. */
+.post-card--logo .post-card__media {
+	display: grid;
+	place-items: center;
+	padding: clamp(18px, 4%, 32px);
+	background: rgba(72, 3, 131, 0.35);
+}
+
+.post-card--logo .post-card__media img {
+	inline-size: auto;
+	block-size: auto;
+	max-inline-size: 100%;
+	max-block-size: 100%;
+	object-fit: contain;
+}
+
+.post-card--logo:hover .post-card__media img {
+	transform: none;
+}
+
+/* Many of the marks are dark-on-transparent, drawn for a white page. A light plate under them keeps
+   them legible on the violet card without touching the asset — and gives the whole wall one surface
+   instead of thirty different backgrounds. */
+.post-card--logo .post-card__media {
+	background: #fff;
+}
+
+/* The name plate: a site whose logo has not been supplied yet. It is a real card — same aspect box,
+   same link — carrying the site's name over its bare domain, so the row never gains a hole and never
+   falls back to a screenshot among the marks. */
+.post-card__plate,
+.web-card__shot--plate .post-card__plate {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	inline-size: 100%;
+	block-size: 100%;
+	padding: clamp(16px, 5%, 30px);
+	text-align: center;
+}
+
+.post-card__plate-name {
+	color: var(--text, #fff);
+	font-size: clamp(15px, 1.5vw, 19px);
+	font-weight: 700;
+	line-height: 1.3;
+}
+
+.post-card__plate-host {
+	color: var(--accent-soft, #e59bf7);
+	font-size: 12.5px;
+	letter-spacing: 0.06em;
+
+	/* A domain is Latin and left-to-right even on the Arabic page. */
+	direction: ltr;
+	unicode-bidi: isolate;
+}
+
+.post-card--plate .post-card__media {
+	background: var(--panel-overlay, #160435);
+}
+
+/* The contribution qualifier, in place of the excerpt. Set on e& only, where the work was a
+   framework upgrade Perego took part in rather than a site it owned. */
+.post-card__role {
+	margin-block-start: 6px;
+	color: var(--accent-soft, #e59bf7);
+	font-size: 13px;
+	font-style: italic;
+}
+
+/* The service-page showcase now leads with the same marks as the home grid, so its shot frame
+   becomes a logo plate too rather than a cropped screenshot. */
+.web-card__shot--logo,
+.web-card__shot--plate {
+	display: grid;
+	place-items: center;
+	min-block-size: 190px;
+	padding: clamp(18px, 5%, 34px);
+	background: #fff;
+}
+
+.web-card__shot--plate {
+	background: var(--panel-overlay, #160435);
+}
+
+.web-card__shot--logo img {
+	inline-size: auto;
+	block-size: auto;
+	max-inline-size: 100%;
+	max-block-size: 130px;
+	object-fit: contain;
+}
+
+.web-card__shot--logo:hover img {
+	transform: none;
 }
 
 /* ============================================================
@@ -1049,4 +1627,448 @@ button.indiv-card {
 			will-change: transform;
 		}
 	}
+}
+
+/* ============================================================
+   About background — reframe for the client's wider "zoomed out" art (2026-07-26)
+   The reference's `object-position: 28%` was tuned for the old 1600x900 about-hooded.png. The new
+   about-hooded-wide.jpg is 2280x848 (2.69:1), so under object-fit:cover that percentage pushed the
+   hooded figure behind the glass panels and clipped the Perego logo off its hoodie. 62% centres the
+   figure in the free column beside the panels with the logo fully readable — chosen by sweeping
+   28/45/55/62/70/78% against the real render at 1440px, not by arithmetic.
+
+   RTL gets the SAME value, deliberately overriding the reference's mirrored `72%`. Measured on the
+   live render: `.home-about__panels` sits at x 748-1368 in LTR and 692-1368 in RTL — the panels do not
+   mirror, so the free column is the left side in both directions and mirroring the background would
+   put the figure straight back behind the panels. Logged in sites/perego/DECISIONS.md.
+   ============================================================ */
+.home-about__bg img,
+[dir="rtl"] .home-about__bg img {
+	object-position: 62% center;
+}
+
+/* ============================================================
+   Service card label — white + centered (Perego deviation, owner request)
+   The reference leaves .service-card__label inheriting the accent link color and `text-align: start`;
+   the owner wants it white and centered over the card's bottom edge. The measure is kept, not removed,
+   because it is what breaks "2D Motion Graphics" onto two lines without a <br> in the markup — with
+   `inset-inline: 0` that measured box resolves to the inline-start edge, so `margin-inline: auto` is
+   what actually centers it. The services-teaser block's own style.scss declares the same four properties
+   at the same specificity, and THIS copy is the one that wins in both contexts: on the front end main.css
+   links after the inlined block styles, and in the editor canvas add_editor_style() scopes this sheet
+   under `.editor-styles-wrapper`, outranking them. Keep the two in sync — the block sheet becomes the live
+   value the moment anything reorders the enqueues. Logged in sites/perego/DECISIONS.md.
+   ============================================================ */
+.service-card__label {
+	color: var(--wp--preset--color--text);
+	text-align: center;
+	max-inline-size: calc(6.2em + 48px);
+	margin-inline: auto;
+}
+
+/* ============================================================
+   Header CTA sized like the AR/EN buttons (client request, 2026-07-26)
+   The reference gives the CTA `.btn` metrics — a large uppercase pill (16px/34px padding, 17px,
+   --r-btn radius) — next to `.lang-toggle__btn` chips (10px/14px padding, 15px, 10px radius). Adopting
+   the chip metrics here rather than editing `.btn` (used site-wide) or the immutable reference.
+
+   Deliberately NOT copying the toggle's white-on-accent text: white on --accent (#d86af3) measures
+   ~2.4:1 and would fail AA on the site's primary call to action. The CTA keeps the brand's accessible
+   pairing (--cta-text-on-accent) so it matches the toggle in shape and size without regressing
+   contrast. Logged in sites/perego/DECISIONS.md.
+   ============================================================ */
+.header-cta.btn {
+	padding: 10px 14px;
+	border-radius: 10px;
+	font-size: 15px;
+	letter-spacing: normal;
+	text-transform: none;
+}
+
+/* Client follow-up 2026-07-26: the header-bar CTA should read as the AR chip does — the translucent
+ * idle fill, white label, brighter on hover — not the solid accent pill. Same values as the reference's
+ * `.lang-toggle__btn` / `:not(.is-active):hover` pair. White on the translucent violet over the header's
+ * near-black bar measures ~12:1, so this is also better than the solid-accent version it replaces.
+ * The `.btn--accent` background/colour are overridden here rather than dropping the class, so the CTA
+ * keeps its shared `.btn` geometry and transition. Scoped to the header bar on purpose: the mobile
+ * panel copy stays the solid accent button (see .main-nav__mobile-cta below) at the client's request. */
+.site-header__inner > .header-cta.btn--accent {
+	background: var(--perego-lang-chip-fill);
+	color: var(--wp--preset--color--text);
+}
+
+/* Client follow-up: hover fills with the accent, matching the ACTIVE EN chip rather than the idle AR one.
+ * The label takes `--cta-text-on-accent` (the dark-on-accent pairing every other `.btn--accent` uses)
+ * instead of the EN chip's white, which measures ~2.4:1 on this fill — the request was about the
+ * background, and this keeps the primary action legible while looking the same. */
+.site-header__inner > .header-cta.btn--accent:hover,
+.site-header__inner > .header-cta.btn--accent:focus-visible {
+	background: var(--wp--preset--color--accent);
+	color: var(--wp--preset--color--cta-text-on-accent);
+	box-shadow: var(--perego-shadow-glow-accent);
+}
+
+/* ============================================================
+   Mobile menu — logo + CTA inside the slide-in panel (client request, 2026-07-26)
+   Below the nav breakpoint `.main-nav` is the fixed panel; the CTA and logo live in the header bar and
+   never appear in it. The renderer emits a panel-only logo and a second CTA (see SiteHeaderRenderer);
+   each is display:none outside its own context, so neither reaches the accessibility tree twice.
+   ============================================================ */
+.main-nav__mobile-head,
+.main-nav__mobile-cta {
+	display: none;
+}
+
+@media (max-width: 1024px) {
+	.main-nav__mobile-head {
+		display: block;
+		margin-block-end: 18px;
+		padding-block-end: 18px;
+		border-block-end: 1px solid var(--perego-glass-border);
+	}
+
+	.main-nav__mobile-head img {
+		display: block;
+		max-inline-size: 150px;
+		block-size: auto;
+	}
+
+	.main-nav__mobile-cta {
+		display: block;
+		margin-block-start: 24px;
+	}
+
+	/* `perego-reference.scss:154` hides EVERY `.header-cta` below this breakpoint — that is why the CTA
+	 * was missing from the mobile menu in the first place. Re-show just the panel copy; the header-bar
+	 * one stays hidden by that reference rule, so there is still exactly one CTA on screen. */
+	.main-nav__mobile-cta .header-cta {
+		display: inline-flex;
+		inline-size: 100%;
+	}
+}
+
+/* ============================================================
+   Service cards — square heights + the client's flat filter (2026-07-26 reference)
+   Same duplication rule as the label above: the block's style.scss carries these too, but THIS copy is
+   the one that wins in both contexts. Three deviations from the reference stylesheet:
+     - aspect-ratio 5/6 -> 1/1. The client's reference measures ~229x232 per card, and both the supplied
+       card art and filter.png are 908x908 squares.
+     - cards 2 and 4 share one offset (the reference puts both ~115px low, ≈50% of card width); the
+       handoff's 7vw/120px + 10vw/170px pair read as a staircase instead of an alternating rhythm.
+     - the overlay becomes the client's filter.png, which sampled top-to-bottom is a FLAT #10002B at 70%
+       alpha, not a gradient. Verified safe on its own: composited over the four photos it measures
+       12.27-18.80:1 behind the white label, so it does not need the old gradient stacked under it.
+   Value lives in theme.json (settings.custom.perego.color.card-filter). Logged in DECISIONS.md.
+   ============================================================ */
+.service-card {
+	aspect-ratio: 1 / 1;
+}
+
+.service-card:nth-child(2),
+.service-card:nth-child(4) {
+	margin-block-start: clamp(34px, 10vw, 152px);
+}
+
+/* Client follow-up 2026-07-26: the flat filter becomes a bottom-weighted gradient, plus hover motion.
+ * Same duplication rule as everything else in this file — the block's style.scss carries these too, but
+ * THIS copy is the one that wins in both the front end and the editor canvas. */
+.service-card__overlay {
+	background: var(--perego-card-filter-gradient);
+	transition: opacity var(--perego-dur-medium) var(--perego-ease);
+}
+
+.service-card img {
+	transition: transform var(--perego-dur-medium) var(--perego-ease);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.service-card:hover .service-card__overlay {
+		opacity: 0.72;
+	}
+
+	.service-card:hover img {
+		transform: scale(1.06);
+	}
+}
+
+/* ============================================================
+   Styled select (client request 2026-07-26: "the selectbox is not styled when it opens")
+   The OS draws a native option popup and CSS cannot reach it, so assets/src/js/select.js layers a
+   listbox over the control. The native <select> stays in the DOM and stays what submits — hidden with
+   the clip technique rather than `display: none` so it remains focusable. Everything below is logical
+   properties, so RTL mirrors without a second rule.
+   ============================================================ */
+.perego-select {
+	position: relative;
+}
+
+select.perego-select__native {
+	position: absolute;
+	inline-size: 1px;
+	block-size: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+.perego-select__trigger {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	inline-size: 100%;
+	padding-block: 10px;
+	padding-inline: 4px 24px;
+	background: transparent;
+	border: 0;
+	border-block-end: 1px solid var(--perego-glass-border);
+	color: var(--wp--preset--color--text);
+	font: inherit;
+	text-align: start;
+	cursor: pointer;
+}
+
+.perego-select__trigger::after {
+	content: "";
+	inline-size: 12px;
+	block-size: 8px;
+	flex: none;
+	background: currentcolor;
+	clip-path: polygon(0 0, 100% 0, 50% 100%);
+	color: var(--wp--preset--color--accent);
+	transition: transform var(--perego-dur-fast) var(--perego-ease);
+}
+
+.perego-select.is-open .perego-select__trigger::after {
+	transform: rotate(180deg);
+}
+
+.perego-select.is-invalid .perego-select__trigger {
+	border-block-end-color: var(--wp--preset--color--accent);
+}
+
+.perego-select__list {
+	position: absolute;
+	inset-inline: 0;
+	inset-block-start: calc(100% + 6px);
+	z-index: 20;
+	max-block-size: 260px;
+	overflow-y: auto;
+	margin: 0;
+	padding: 6px;
+	list-style: none;
+	background: var(--wp--preset--color--bg-deep);
+	border: 1px solid var(--perego-glass-border);
+	border-radius: 14px;
+	box-shadow: var(--perego-shadow-service-card);
+}
+
+.perego-select__option {
+	padding: 10px 12px;
+	border-radius: 10px;
+	color: var(--wp--preset--color--text);
+	cursor: pointer;
+}
+
+.perego-select__option.is-active {
+	background: var(--perego-lang-chip-fill);
+}
+
+.perego-select__option[aria-selected="true"] {
+	color: var(--wp--preset--color--accent);
+	font-weight: 700;
+}
+
+.perego-select__option[aria-disabled="true"] {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/* ============================================================
+   Services-page tabs — transparent cards, violet active state (client reference, 2026-07-27)
+   The reference shows the hero photograph reading THROUGH the four cards; the handoff's
+   `rgba(34,12,58,0.55)` + `blur(14px)` renders them as frosted panels that hide it. Dropped to a light
+   tint with only enough blur to keep the label legible over busy areas of the photo.
+
+   The active/hover fill becomes the deeper violet from the reference, replacing the handoff's bright
+   pink (`#e98bf7 → --accent → #c24fe0`), and the label + CTA stay WHITE — the handoff forced them to
+   `#2a0148`, which was right on pink but unreadable on violet.
+   ============================================================ */
+.svc-tab {
+	background: var(--perego-svc-tab-fill);
+	backdrop-filter: blur(4px);
+	-webkit-backdrop-filter: blur(4px);
+}
+
+.svc-tab:hover,
+.svc-tab.is-active {
+	background: var(--perego-svc-tab-active-gradient);
+}
+
+.svc-tab:hover .svc-tab__label,
+.svc-tab.is-active .svc-tab__label,
+.svc-tab:hover .svc-tab__cta,
+.svc-tab.is-active .svc-tab__cta {
+	color: var(--wp--preset--color--text);
+}
+
+/* ============================================================
+   Sticky header scrim — the iOS "Our Process" report (client, 2026-07-27)
+   The client saw page text reading through the sticky header while scrolling past Our Process. The
+   header's frosted backdrop is a `::before` at `z-index: -1` carrying `rgba(16,0,43,0.82)` +
+   `backdrop-filter: blur(14px)`. That leaves 18% of the page visible and relies on the blur to smear it
+   into illegibility — but `backdrop-filter` on a negative-z pseudo-element inside a stacking context is
+   exactly the case Safari has historically failed to composite. When the blur does not render, the 18%
+   comes through crisp and readable, which is what was reported.
+
+   Verified in real WebKit (`npx playwright install webkit`): the layout is byte-identical to Chromium —
+   same flex direction, gaps, step widths, icon sizes — so this was never a layout bug. Sampling the
+   header band gave a luminance spread of 251 of 255, i.e. the page behind it was fully legible.
+
+   The fix does not depend on `backdrop-filter` working: the scrim goes to 0.96, where anything behind it
+   is imperceptible on its own. The blur is kept, so where it does composite the frosted look is
+   unchanged. Deliberately not solved by removing `z-index: -1` — the reference's own comment explains
+   that the layer sits there so the header does not become a containing block for the fixed mobile
+   drawer, and undoing that would trap the drawer at the top of the document after scroll.
+   ============================================================ */
+.site-header::before {
+	background: var(--perego-header-scrim);
+}
+
+/* ============================================================
+   Client round 4 typography/layout notes (2026-07-27)
+   ============================================================ */
+
+/* Journal cards: cap the title at 2 lines and the excerpt at 3 so every card in a row is the same
+ * height. Clamped in CSS rather than truncated in PHP — the full title stays in the DOM for search
+ * engines and screen readers, and nothing is lost if the grid ever becomes single-column. The
+ * min-block-size reserves the second title line so a one-line title does not pull its card short. */
+.blog-grid .post-card__title {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+	min-block-size: calc(2 * 1.25em);
+}
+
+.blog-grid .post-card__excerpt {
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+/* The grid rows themselves must stretch, or a short card floats instead of matching its neighbours. */
+.blog-grid {
+	align-items: stretch;
+}
+
+.blog-grid .post-card {
+	block-size: 100%;
+}
+
+/* The About panels were justified (`perego-reference.scss:319`). Justified text in a narrow measure opens
+ * rivers of white space, and it is worse in Arabic where the renderer stretches kashida. Ragged-right. */
+.glass-panel p {
+	text-align: start;
+}
+
+/* About type down 10% (client request 2026-07-27). Scoped to `.home-about` rather than edited at the
+ * token, because `--fs-h2` and especially `--fs-lead` are shared: `--fs-lead` also sizes the hero text,
+ * the section subtitles, the service banner, `.whatwedo` and `.section-lead`, none of which the client
+ * asked to change. The `.home-about` prefix also outranks `perego-reference.scss:318-319` and keeps the
+ * change off the unused `.split-panels .panel-title`.
+ *
+ * Every term of each clamp is scaled, so the reduction holds at all viewports rather than only where the
+ * preferred value is active: --fs-h2 clamp(28px, 3vw, 40px) and --fs-lead clamp(16px, 1.35vw, 21px). */
+.home-about .panel-title {
+	font-size: clamp(25.2px, 2.7vw, 36px);
+}
+
+.home-about .glass-panel p {
+	font-size: clamp(14.4px, 1.215vw, 18.9px);
+}
+
+/* Individual client card titles were clamp(18px, 1.5vw, 22px) — large enough that a two-word name filled
+ * the card. Down a step; the card's own measure is unchanged. */
+.indiv-card__title {
+	font-size: clamp(15px, 1.15vw, 18px);
+}
+
+/* Home services cards: start the row after the heading column and shrink the cards, per the client's
+ * reference (cards ~229px there against our 302px, occupying roughly the right two-thirds). Desktop only —
+ * the ≤900px and ≤560px rules in the block stylesheet already collapse the grid and must keep winning. */
+@media (min-width: 901px) {
+	.service-cards {
+		inline-size: min(100%, 980px);
+		margin-inline-start: auto;
+	}
+}
+
+/* "(optional)" marker on non-required labels (client request 2026-07-26). Added server-side by
+ * PeregoSite\Forms\OptionalFieldMarker so the string is translatable; this only makes it read as
+ * secondary next to the label it qualifies. */
+.corex-form__optional {
+	color: var(--perego-muted-2);
+	font-size: 0.85em;
+	font-weight: 400;
+	letter-spacing: 0.01em;
+}
+
+/* ============================================================
+   Wavy pattern on three more sections (client request 2026-07-26)
+   `.wavy-bg` is the existing treatment from the services teaser and clients carousel. Each host has to
+   become the positioning context and clip the absolutely-positioned layer, and its content has to sit
+   above it, exactly as `.services-teaser` and `.services-teaser__inner` already do.
+
+   There are two pattern assets, not one (client request 2026-07-27). `wave-ribbon.png` is a single
+   diagonal ribbon that only reads well clipped to an edge, so it is confined to `.home-work` (clipped
+   below) and the Journal. Everything else uses `wavy-corners.png`, corner-anchored waves around an empty
+   centre, which is what an ambient full-section background needs. The `.wavy-bg` treatment itself is
+   shared; only the image behind it differs, chosen per section in the templates and PHP renderers.
+
+   `.home-work` and the service-page `.portfolio` both nest a `.page-section` that carries its own
+   background in places, so the pattern goes behind (`z-index: 0`) and the container above (`z-index: 1`)
+   rather than relying on source order.
+   ============================================================ */
+.home-work,
+.journal-archive,
+.portfolio.page-section {
+	position: relative;
+	overflow: hidden;
+}
+
+/* Our Work keeps only the BOTTOM of the ribbon (client request 2026-07-27) so it reads as a continuation
+ * of the Clients section above it rather than restating the pattern at its own top edge. The layer is
+ * clipped to the lower part of the section and the artwork anchored to its bottom. This clip is why
+ * `.home-work` is one of the two surfaces that keep `wave-ribbon.png`: unclipped, that art draws a band
+ * straight through the middle of a section. */
+.home-work .wavy-bg {
+	inset-block-start: auto;
+	block-size: 55%;
+}
+
+.home-work .wavy-bg img {
+	object-position: bottom;
+}
+
+.home-work > .container,
+.home-work .page-section,
+.journal-archive > .container,
+.portfolio.page-section > .container {
+	position: relative;
+	z-index: 1;
+}
+
+/* ============================================================
+   Services-page work grid — smaller brand logo (client request 2026-07-26)
+   The reference sizes `.work-brand__logo` at clamp(220px, 26vh, 340px); it reads as oversized against
+   the neighbouring cards. Down ~25%. It is rotate(-90deg) inside a fixed grid cell, so the vh term
+   matters as much as the px bounds — verified at 1440 and 1024.
+   ============================================================ */
+.work-brand .work-brand__logo {
+	width: clamp(165px, 19vh, 255px);
 }

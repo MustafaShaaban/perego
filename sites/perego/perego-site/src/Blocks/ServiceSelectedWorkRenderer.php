@@ -43,7 +43,12 @@ final class ServiceSelectedWorkRenderer
             return '';
         }
 
+        // Client request 2026-07-26: the same wavy pattern the services teaser and clients carousel
+        // already use, so the grid sits on the brand background rather than flat colour.
         return '<section class="portfolio page-section">'
+            . '<div class="wavy-bg" aria-hidden="true">'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" />'
+            . '</div>'
             . '<div class="container">'
             . $masonry
             . '</div>'

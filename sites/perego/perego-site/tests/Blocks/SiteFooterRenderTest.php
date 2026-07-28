@@ -42,8 +42,9 @@ it('renders the 3-column layout: contact, quick-message entry point, careers ent
 it('renders the approved contact channels and social links', function () {
     $html = renderFooter();
 
-    expect($html)->toContain('mailto:mostafa.emam3313@gmail.com')
-        ->and($html)->toContain('tel:+996562932759')
+    expect($html)->toContain('mailto:info@peregoads.com')
+        ->and($html)->toContain('tel:+966562932759')
+        ->and($html)->toContain('tel:+201115485572')
         ->and($html)->toContain('footer-social');
 });
 
@@ -53,6 +54,41 @@ it('renders the handoff bottom bar: full studio copyright, Journal, and the lega
     expect($html)->toContain((string) gmdate('Y'))
         ->and($html)->toContain('Perego Creative Studio — بيريجو. All rights reserved.')
         ->and($html)->toContain('/journal')
+        ->and($html)->toContain('/terms')
+        ->and($html)->toContain('/privacy');
+});
+
+it('uses an editor-set bottom-bar copyright, replacing the {year} token with the current year', function () {
+    $html = renderFooter(false, ['copyrightEn' => '© {year} My Studio']);
+
+    expect($html)->toContain('© ' . gmdate('Y') . ' My Studio')
+        ->and($html)->not->toContain('Perego Creative Studio — بيريجو');
+});
+
+it('uses the Arabic bottom-bar copyright on the ar locale', function () {
+    $html = renderFooter(false, ['copyrightEn' => 'EN line', 'copyrightAr' => 'حقوق {year}'], 'ar');
+
+    expect($html)->toContain('حقوق ' . gmdate('Y'))
+        ->and($html)->not->toContain('EN line');
+});
+
+it('renders editor-set legal links, replacing the default Journal/Terms/Privacy set', function () {
+    $links = (string) json_encode([
+        ['label' => 'Sitemap', 'href' => '/sitemap'],
+        ['label' => 'Partner', 'href' => 'https://example.com'],
+    ]);
+    $html = renderFooter(false, ['legalLinksEn' => $links]);
+
+    expect($html)->toContain('>Sitemap</a>')
+        ->and($html)->toContain('/sitemap')
+        ->and($html)->toContain('https://example.com')
+        ->and($html)->not->toContain('Privacy Policy');
+});
+
+it('keeps the default legal links when no legalLinks attribute is set', function () {
+    $html = renderFooter(false, ['copyrightEn' => 'anything']);
+
+    expect($html)->toContain('/journal')
         ->and($html)->toContain('/terms')
         ->and($html)->toContain('/privacy');
 });
@@ -75,7 +111,7 @@ it('prefers the editor-set contactChannels/socialLinks JSON attribute over the s
     $html = renderFooter(attributes: ['contactChannels' => $channels, 'socialLinks' => $social]);
 
     expect($html)->toContain('mailto:hello@perego.com')
-        ->and($html)->not->toContain('mostafa.emam3313@gmail.com')
+        ->and($html)->not->toContain('info@peregoads.com')
         ->and($html)->toContain('https://instagram.com/perego');
 });
 
@@ -103,8 +139,8 @@ it('skips a social link whose network has no matching icon, instead of rendering
 });
 
 it('falls back to the seed contact channels/social links when the attribute is empty or invalid JSON', function () {
-    expect(renderFooter(attributes: ['contactChannels' => '']))->toContain('mostafa.emam3313@gmail.com')
-        ->and(renderFooter(attributes: ['contactChannels' => 'not-json']))->toContain('mostafa.emam3313@gmail.com')
+    expect(renderFooter(attributes: ['contactChannels' => '']))->toContain('info@peregoads.com')
+        ->and(renderFooter(attributes: ['contactChannels' => 'not-json']))->toContain('info@peregoads.com')
         ->and(renderFooter(attributes: ['socialLinks' => '[]']))->toContain('footer-social');
 });
 

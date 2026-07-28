@@ -15,13 +15,19 @@ use PeregoSite\Forms\ProjectBriefForm;
 use PeregoSite\Forms\QuickMessageForm;
 
 /**
- * On a Perego form submission, sends the submitter their branded confirmation (spec Phase 7/8):
- * the footer quick-message → contact-confirmation, the Start-a-Project brief → project-brief-
- * confirmation. Rendered in the visitor's current language and delivered through PeregoMailer.
+ * On a Perego form submission, sends both branded emails (spec Phase 7/8): the submitter's
+ * confirmation — footer quick-message → contact-confirmation, Start-a-Project brief →
+ * project-brief-confirmation — and the team's notification, rendered in the visitor's current
+ * language and delivered through PeregoMailer.
  *
- * The submitter is never a recipient of the engine's own SendEmailListener (which notifies the
- * admin inbox), so this adds the user-facing email without duplicating the internal one. Unknown
- * form slugs and missing emails are ignored — non-fatal on the submission path.
+ * The team notification is sent here rather than left to the engine's own SendEmailListener. That
+ * listener builds a `label: value` plain-text body (NotificationDispatcher::plainTextBody) which
+ * WpMailDriver then delivers with `Content-Type: text/html`, so every line collapses into one
+ * unformatted run — the "notifications arrive with no template" report of 2026-07-27. Routing it
+ * through the branded `admin-notification` template fixes the design AND gives the team a real
+ * `Reply-To` pointing at the submitter, which the engine path never set.
+ *
+ * Unknown form slugs and missing emails are ignored — non-fatal on the submission path.
  */
 final class PeregoFormMailListener
 {
@@ -33,8 +39,10 @@ final class PeregoFormMailListener
         'not-sure' => 'Not sure yet',
     ];
 
-    public function __construct(private readonly PeregoMailer $mailer)
-    {
+    public function __construct(
+        private readonly PeregoMailer $mailer,
+        private readonly TeamRecipient $recipient,
+    ) {
     }
 
     public function __invoke(FormSubmittedEvent $event): void
@@ -47,12 +55,14 @@ final class PeregoFormMailListener
 
         $locale = $this->currentLocale();
 
+        // No Reply-To on the confirmations: they go TO the submitter, so passing their own address
+        // made "Reply" answer themselves. PeregoMailer substitutes the no-reply mailbox.
         match ($event->formSlug) {
             QuickMessageForm::SLUG => $this->mailer->send('contact-confirmation', $locale, $email, [
                 'name' => (string) ($values['name'] ?? ''),
                 'email' => $email,
                 'message' => (string) ($values['message'] ?? ''),
-            ], $email),
+            ]),
             ProjectBriefForm::SLUG => $this->mailer->send('project-brief-confirmation', $locale, $email, [
                 'name' => (string) ($values['name'] ?? ''),
                 'email' => $email,
@@ -62,9 +72,64 @@ final class PeregoFormMailListener
                 'budget' => $this->budgetLabel((string) ($values['budget'] ?? '')),
                 'subject' => (string) ($values['subject'] ?? ''),
                 'message' => (string) ($values['message'] ?? ''),
-            ], $email),
+            ]),
             default => null,
         };
+
+        $this->notifyTeam($event->formSlug, $locale, $email, $values);
+    }
+
+    /**
+     * The branded internal notification — the one email that keeps `Reply-To` = the submitter, so the
+     * team can answer a client by hitting Reply. Recipient comes from {@see TeamRecipient}.
+     *
+     * @param array<string, mixed> $values
+     */
+    private function notifyTeam(string $formSlug, string $locale, string $email, array $values): void
+    {
+        $formName = match ($formSlug) {
+            QuickMessageForm::SLUG => 'Contact',
+            ProjectBriefForm::SLUG => 'Project brief',
+            default => '',
+        };
+
+        $recipient = $this->recipient->address();
+        if ($formName === '' || $recipient === '') {
+            return;
+        }
+
+        $this->mailer->send('admin-notification', $locale, $recipient, [
+            'form_name' => $formName,
+            'submitted_at' => (string) current_time('mysql'),
+            'reply_email' => $email,
+            'fields_html' => PeregoEmailRenderer::fieldRows($this->teamFields($formSlug, $email, $values)),
+        ], $email);
+    }
+
+    /**
+     * @param array<string, mixed> $values
+     * @return array<string, string>
+     */
+    private function teamFields(string $formSlug, string $email, array $values): array
+    {
+        $optional = static fn (string $v): string => $v !== '' ? $v : '—';
+
+        $fields = [
+            'Name' => $optional((string) ($values['name'] ?? '')),
+            'Email' => $email,
+        ];
+
+        if ($formSlug === ProjectBriefForm::SLUG) {
+            $fields['Phone'] = $optional((string) ($values['phone'] ?? ''));
+            $fields['Company'] = $optional((string) ($values['company'] ?? ''));
+            $fields['Service(s)'] = $optional($this->formatServices($values['services'] ?? ''));
+            $fields['Budget'] = $optional($this->budgetLabel((string) ($values['budget'] ?? '')));
+            $fields['Subject'] = $optional((string) ($values['subject'] ?? ''));
+        }
+
+        $fields['Message'] = $optional((string) ($values['message'] ?? ''));
+
+        return $fields;
     }
 
     /** Human-readable service list from the multi-select's slugs (array or comma string). */

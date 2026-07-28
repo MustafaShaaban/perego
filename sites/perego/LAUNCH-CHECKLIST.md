@@ -65,6 +65,21 @@ wp eval 'require "sites/perego/perego-site/scripts/<script>.php";' --path=wp
   sitemap (verified live; DECISIONS #18). Remaining owner action is optional: delete or repurpose the
   fixture at launch, after which that guard is a harmless no-op and can be removed.
 
+## 5. Run on every environment after deploy (database + cache, neither travels in git)
+
+- **Header "Contact Us" anchor.** The saved `header` template part stores the nav, so a code fix cannot
+  reach it. Run once per environment; it is idempotent and reports 0 on a second run:
+  ```bash
+  wp eval 'require "sites/perego/perego-site/scripts/migrate-header-contact-anchor.php";' --path=wp
+  ```
+- **Unpublish the eight Arabic demo clients** (`…تجريبي`) if that environment still has them — the local
+  change was database-only.
+- **Rebuild the CSS, then bump the theme version.** `assets/css/main.css` is gitignored, so the deploy
+  must run `npm run styles` (or `npm run build`) in `perego-theme/` — without it no CSS fix ships at
+  all. It is then enqueued as `?ver=<theme version>` (`perego-theme/style.css`, currently `0.1.0`), so
+  a returning visitor keeps the cached file until that version changes. Both apply to the RTL arrow fix
+  and the editor-canvas rules.
+
 ## Not blocking launch (verified done)
 
 - All 16 route templates design-complete vs the handoff; forms functional/validated/spam-trapped/styled.

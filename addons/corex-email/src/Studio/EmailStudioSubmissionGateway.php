@@ -11,6 +11,7 @@ namespace Corex\Email\Studio;
 defined('ABSPATH') || exit;
 
 use Corex\Email\Message\EmailMessage;
+use Corex\Email\Template\Layout;
 use Corex\Mail\MailResult;
 use Corex\Mail\SubmissionEmailGateway;
 use Corex\Support\Config\ConfigInterface;
@@ -27,13 +28,25 @@ final readonly class EmailStudioSubmissionGateway implements SubmissionEmailGate
         private EmailStudioService $studio,
         private EmailTemplateService $templates,
         private ConfigInterface $config,
+        private ?Layout $layout = null,
     ) {
     }
 
+    /**
+     * A manual reply from the Submissions inbox.
+     *
+     * The operator's message is wrapped in the brand layout — the same shell `resend()` below applies and
+     * that every templated email already gets. It used to ship the raw textarea HTML as the entire body,
+     * so a reply arrived as unstyled text on the client's default background while every other email from
+     * the site was branded. `replyTo` also stayed hard-coded null; the configured reply-to now applies,
+     * exactly as it does for any other message.
+     */
     public function reply(string $recipient, string $subject, string $htmlBody): MailResult
     {
+        $body = $this->layout?->wrap($subject, $htmlBody) ?? $htmlBody;
+
         return $this->studio->send(
-            new EmailMessage([$recipient], [], [], null, $subject, $htmlBody),
+            new EmailMessage([$recipient], [], [], null, $subject, $body),
             $this->deliveryContext(),
         );
     }

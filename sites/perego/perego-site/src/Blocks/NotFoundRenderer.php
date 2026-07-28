@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\GlobalContent;
+use PeregoSite\Theme\SiteRoutes;
 
 /**
  * Server-renders the perego-theme/not-found block (M4): the 404 composition — a large "404" code,
@@ -39,7 +40,7 @@ final class NotFoundRenderer
         $html .= '<h1 class="error-title">' . esc_html($c['title']) . '</h1>';
         $html .= '<p class="error-text">' . esc_html($c['text']) . '</p><div class="error-actions">';
         $html .= '<a class="btn btn--accent" href="' . esc_url(home_url('/')) . '">' . esc_html($c['backHome']) . '</a>';
-        $html .= '<a class="btn btn--dark" href="' . esc_url(home_url('/contact')) . '">' . esc_html($c['contact']) . '</a></div></div></main>';
+        $html .= '<a class="btn btn--dark" href="' . esc_url(home_url(SiteRoutes::START_PROJECT)) . '">' . esc_html($c['contact']) . '</a></div></div></main>';
 
         return $html;
     }

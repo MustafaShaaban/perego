@@ -67,6 +67,9 @@ it('registers the homepage services-teaser presentation meta (label, image id, a
         ServicePostType::META_TEASER_LABEL,
         ServicePostType::META_TEASER_IMAGE_ID,
         ServicePostType::META_TEASER_ALT,
+        ServicePostType::META_PORTFOLIO_MODE,
+        ServicePostType::META_PORTFOLIO_PROJECT_IDS,
+        ServicePostType::META_PORTFOLIO_EXCLUDE_IDS,
     ]);
 
     expect($meta[ServicePostType::META_TEASER_LABEL]['sanitize_callback'])->toBe('sanitize_text_field')
@@ -75,4 +78,20 @@ it('registers the homepage services-teaser presentation meta (label, image id, a
         ->and($meta[ServicePostType::META_TEASER_IMAGE_ID]['sanitize_callback'])->toBe('absint')
         ->and($meta[ServicePostType::META_TEASER_ALT]['sanitize_callback'])->toBe('sanitize_text_field')
         ->and($meta[ServicePostType::META_TEASER_ALT]['auth_callback'])->toBe([ServicePostType::class, 'authEdit']);
+});
+
+it('registers the Service portfolio source, ordered Project IDs, and exclusions as REST-safe metadata', function () {
+    $meta = (new ServicePostType())->metaArgs();
+
+    expect($meta[ServicePostType::META_PORTFOLIO_MODE]['default'])->toBe('automatic')
+        ->and($meta[ServicePostType::META_PORTFOLIO_MODE]['sanitize_callback'])->toBe([ServicePostType::class, 'sanitizePortfolioMode'])
+        ->and($meta[ServicePostType::META_PORTFOLIO_PROJECT_IDS]['type'])->toBe('array')
+        ->and($meta[ServicePostType::META_PORTFOLIO_PROJECT_IDS]['sanitize_callback'])->toBe([ServicePostType::class, 'sanitizeIntList'])
+        ->and($meta[ServicePostType::META_PORTFOLIO_EXCLUDE_IDS]['show_in_rest'])->toBeArray();
+});
+
+it('normalizes invalid Service portfolio modes and Project ID lists', function () {
+    expect(ServicePostType::sanitizePortfolioMode('hybrid'))->toBe('hybrid')
+        ->and(ServicePostType::sanitizePortfolioMode('unexpected'))->toBe('automatic')
+        ->and(ServicePostType::sanitizeIntList([7, '7', -3, 0, 'bad', 9]))->toBe([7, 3, 9]);
 });

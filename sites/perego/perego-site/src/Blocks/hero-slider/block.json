@@ -24,7 +24,13 @@
 		"slide2TextAr": { "type": "string", "default": "" },
 		"slide3TitleAr": { "type": "string", "default": "" },
 		"slide3TextAr": { "type": "string", "default": "" },
-		"ctaAr": { "type": "string", "default": "" }
+		"ctaAr": { "type": "string", "default": "" },
+		"slides": { "type": "array", "default": [] },
+		"ctaUrl": { "type": "string", "default": "" },
+		"ctaLinkKind": { "type": "string", "default": "custom" },
+		"ctaPostType": { "type": "string", "default": "" },
+		"ctaPostId": { "type": "number", "default": 0 },
+		"ctaOpenInNewTab": { "type": "boolean", "default": false }
 	},
 	"supports": {
 		"html": false

@@ -1,1 +1,38 @@
-/* Editor-only styles intentionally remain empty until each recovered block has a verified canvas mapping. */
+/*
+ * Editor-only styles. Every rule here is scoped to a block's `useBlockProps` wrapper class
+ * (`.perego-*__editor`), which exists only inside the block-editor canvas, so this file is inert on the
+ * front end even though it compiles into `main.css`. Same approach as the `home-about-bg` editor rule
+ * (DECISIONS 2026-07-22), kept here rather than per block because the two blocks below share one cause
+ * and one of them ships no stylesheet of its own.
+ */
+
+/*
+ * Full-screen overlays must not swallow the canvas.
+ *
+ * The preloader (front-page.html) and the site-wide media dialog (parts/footer.html) both render their
+ * REAL markup in `edit()` per spec 021 C15, and that markup is `position: fixed; inset: 0` — the
+ * preloader at perego-reference.scss `.preloader`, the dialog at the shared `_lightbox-chrome.scss`
+ * `.lightbox`. On the front end each is hidden until its view script shows it; the previews deliberately
+ * omit that lifecycle (a canvas must never run hide-on-load, or the preview would vanish). Inside the
+ * canvas iframe a fixed element anchors to the iframe viewport, so each one covered the whole Front Page
+ * template and nothing else could be selected — deleting the preloader merely revealed the dialog behind
+ * it. Un-fix both into ordinary sized boxes so they preview as selectable tiles in the flow.
+ */
+.perego-preloader__editor .preloader,
+.perego-media-lightbox__editor .lightbox {
+	position: relative;
+	inset: auto;
+	z-index: auto;
+	/* The adapter pins the live preloader to `block-size: 100dvh` (so a logged-in user sees no strip
+	   of page above it). Un-fixing alone would leave a full-viewport-tall tile in the canvas — no
+	   longer covering the template, but still a screenful of scrolling between blocks. */
+	block-size: auto;
+}
+
+.perego-preloader__editor .preloader {
+	min-block-size: clamp(320px, 45vh, 520px);
+}
+
+.perego-media-lightbox__editor .lightbox {
+	min-block-size: clamp(280px, 40vh, 460px);
+}

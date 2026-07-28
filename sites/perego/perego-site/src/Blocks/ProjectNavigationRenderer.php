@@ -19,7 +19,11 @@ final class ProjectNavigationRenderer
     ) {
     }
 
-    public function render(?WP_Post $project, string $surface = 'all'): string
+    /**
+     * @param array{href?: string, target?: string} $cta the closing CTA's resolved link (spec 021 T036);
+     *        empty keeps the contact route this section always used
+     */
+    public function render(?WP_Post $project, string $surface = 'all', array $cta = []): string
     {
         if (! $project instanceof WP_Post) {
             return '';
@@ -33,11 +37,11 @@ final class ProjectNavigationRenderer
         }
 
         if ($surface === 'related') {
-            return $this->related($related, $labels);
+            return $this->related($related, $labels, $cta);
         }
 
         return $this->adjacent($adjacent['previous'], $adjacent['next'], $labels)
-            . $this->related($related, $labels);
+            . $this->related($related, $labels, $cta);
     }
 
     /** @param array<string, mixed> $labels */
@@ -54,12 +58,18 @@ final class ProjectNavigationRenderer
         return $html . '</nav>';
     }
 
-    /** @param list<WP_Post> $related @param array<string, mixed> $labels */
-    private function related(array $related, array $labels): string
+    /**
+     * @param list<WP_Post> $related
+     * @param array<string, mixed> $labels
+     * @param array{href?: string, target?: string} $cta
+     */
+    private function related(array $related, array $labels, array $cta = []): string
     {
         if ($related === []) {
             return '';
         }
+
+        $href = (string) ($cta['href'] ?? '') !== '' ? (string) $cta['href'] : (string) home_url('/contact/');
 
         $html = '<h2 class="section-title" style="text-align:center;margin-bottom:clamp(24px,3vw,38px);">'
             . esc_html((string) $labels['relatedTitle']) . '</h2><div class="blog-grid">';
@@ -67,7 +77,8 @@ final class ProjectNavigationRenderer
             $html .= $this->card($item);
         }
         $html .= '</div><div style="text-align:center;margin-top:clamp(28px,4vw,44px);"><a class="btn btn--accent" href="'
-            . esc_url(home_url('/contact/')) . '">' . esc_html((string) $labels['ctaButton']) . '</a></div>';
+            . esc_url($href) . '"' . (string) ($cta['target'] ?? '') . '>'
+            . esc_html((string) $labels['ctaButton']) . '</a></div>';
 
         return $html;
     }

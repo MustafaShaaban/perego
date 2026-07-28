@@ -45,6 +45,26 @@ function makeForm( schema ) {
 
 const EMAIL_REQUIRED = [ { name: 'email', required: true, rules: [ { rule: 'required' }, { rule: 'email' } ] } ];
 
+/** A form whose only field carries the rule under test, with the same wrapper contract. */
+function makeFieldForm( name, rules, control = `<input name="${ name }" />`, formAttrs = '' ) {
+	document.body.innerHTML = `
+		<form class="corex-form"
+			data-corex-endpoint="/wp-json/corex/v1/forms/contact"
+			data-corex-nonce="abc123"
+			data-corex-success="Thanks!"
+			data-corex-error="Please check the form."
+			data-corex-schema='${ JSON.stringify( [ { name, required: false, rules } ] ) }'
+			${ formAttrs }>
+			<div data-corex-field="${ name }">${ control }<span class="corex-form__error"></span></div>
+			<div class="corex-form__status"></div>
+			<button type="submit">Send</button>
+		</form>`;
+	return document.querySelector( '.corex-form' );
+}
+
+const errorText = ( form ) => form.querySelector( '.corex-form__error' ).textContent;
+const submitForm = ( form ) => form.dispatchEvent( new Event( 'submit', { cancelable: true, bubbles: true } ) );
+
 beforeEach( () => {
 	document.body.innerHTML = '';
 	loadRuntimeWithFetch();
@@ -167,6 +187,48 @@ describe( 'Corex.forms.bind', () => {
 		expect( form.querySelector( '[data-corex-field="email"] .corex-form__error' ).textContent ).not.toBe( '' );
 	} );
 
+	it( 'sends every option a multiple select has selected, not just the first', async () => {
+		mockFetch( { ok: true, message: '', data: {} } );
+		const form = makeForm( EMAIL_REQUIRED );
+		form.querySelector( 'input[name="email"]' ).value = 'a@b.com';
+		// `select.value` reports only the FIRST selected option, so reading it dropped every
+		// extra pick: a visitor choosing three services had one stored and one emailed.
+		form.insertAdjacentHTML(
+			'beforeend',
+			`<select name="services[]" multiple>
+				<option value="video-editing" selected></option>
+				<option value="graphic-design"></option>
+				<option value="motion-graphics" selected></option>
+			</select>`
+		);
+		window.Corex.forms.bind( form );
+
+		form.dispatchEvent( new Event( 'submit', { cancelable: true, bubbles: true } ) );
+		await flush();
+
+		const body = JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body );
+		// The `[]` suffix is stripped, and the unselected option stays out.
+		expect( body.services ).toEqual( [ 'video-editing', 'motion-graphics' ] );
+	} );
+
+	it( 'sends an empty list when a multiple select has nothing selected', async () => {
+		mockFetch( { ok: true, message: '', data: {} } );
+		const form = makeForm( EMAIL_REQUIRED );
+		form.querySelector( 'input[name="email"]' ).value = 'a@b.com';
+		form.insertAdjacentHTML(
+			'beforeend',
+			'<select name="services[]" multiple><option value="video-editing"></option></select>'
+		);
+		window.Corex.forms.bind( form );
+
+		form.dispatchEvent( new Event( 'submit', { cancelable: true, bubbles: true } ) );
+		await flush();
+
+		// An empty list — not '' and not the first option — is what the `required` rule and the
+		// server's list sanitizer both expect to see for "nothing chosen".
+		expect( JSON.parse( global.fetch.mock.calls[ 0 ][ 1 ].body ).services ).toEqual( [] );
+	} );
+
 	it( 'is idempotent — binding twice does not double-submit', async () => {
 		mockFetch( { ok: true, message: '', data: {} } );
 		const form = makeForm( EMAIL_REQUIRED );
@@ -178,6 +240,160 @@ describe( 'Corex.forms.bind', () => {
 		await flush();
 
 		expect( global.fetch ).toHaveBeenCalledTimes( 1 );
+	} );
+} );
+
+describe( 'live re-validation', () => {
+	it( 'clears a field error as soon as the visitor fixes it, without resubmitting', async () => {
+		mockFetch( { ok: true, message: '', data: {} } );
+		const form = makeForm( EMAIL_REQUIRED );
+		const input = form.querySelector( 'input[name="email"]' );
+		window.Corex.forms.bind( form );
+
+		submitForm( form );
+		await flush();
+		expect( errorText( form ) ).not.toBe( '' );
+
+		// The error used to survive until the next submit, so a visitor who had corrected the field
+		// had no way to know it (client report 2026-07-27).
+		input.value = 'a@b.com';
+		input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		expect( errorText( form ) ).toBe( '' );
+		expect( input.getAttribute( 'aria-invalid' ) ).toBeNull();
+	} );
+
+	it( 'stays quiet while an untouched field is being typed into', () => {
+		const form = makeForm( EMAIL_REQUIRED );
+		const input = form.querySelector( 'input[name="email"]' );
+		window.Corex.forms.bind( form );
+
+		// Nagging someone on their first keystroke is worse than saying nothing.
+		input.value = 'a';
+		input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		expect( errorText( form ) ).toBe( '' );
+	} );
+
+	it( 'validates on blur even for a field that has never failed', () => {
+		const form = makeForm( EMAIL_REQUIRED );
+		const input = form.querySelector( 'input[name="email"]' );
+		window.Corex.forms.bind( form );
+
+		input.value = 'not-an-email';
+		input.dispatchEvent( new Event( 'blur', { bubbles: false } ) );
+
+		expect( errorText( form ) ).toBe( 'Enter a valid email address.' );
+	} );
+
+	it( 'only re-validates the field being edited, leaving its neighbours alone', async () => {
+		mockFetch( { ok: false, message: 'x', errors: { email: 'required', name: 'required' } }, { ok: false, status: 422 } );
+		document.body.innerHTML = `
+			<form class="corex-form" data-corex-endpoint="/e" data-corex-nonce="n"
+				data-corex-error="Please check the form."
+				data-corex-schema='${ JSON.stringify( [
+		{ name: 'name', required: true, rules: [ { rule: 'required' } ] },
+		{ name: 'email', required: true, rules: [ { rule: 'required' } ] },
+	] ) }'>
+				<div data-corex-field="name"><input name="name" /><span class="corex-form__error"></span></div>
+				<div data-corex-field="email"><input name="email" /><span class="corex-form__error"></span></div>
+				<div class="corex-form__status"></div><button type="submit">Send</button>
+			</form>`;
+		const form = document.querySelector( '.corex-form' );
+		window.Corex.forms.bind( form );
+
+		submitForm( form );
+		await flush();
+
+		const nameError = form.querySelector( '[data-corex-field="name"] .corex-form__error' );
+		const emailError = form.querySelector( '[data-corex-field="email"] .corex-form__error' );
+		expect( nameError.textContent ).not.toBe( '' );
+		expect( emailError.textContent ).not.toBe( '' );
+
+		const nameInput = form.querySelector( 'input[name="name"]' );
+		nameInput.value = 'Mustafa';
+		nameInput.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		// Re-running the whole form's validation here would have blanked the email error too.
+		expect( nameError.textContent ).toBe( '' );
+		expect( emailError.textContent ).not.toBe( '' );
+	} );
+} );
+
+describe( 'validation rules the client used to skip', () => {
+	it( 'enforces the word cap and names it, instead of a round-trip and a generic message', () => {
+		const form = makeFieldForm( 'message', [ { rule: 'max_words', params: [ '5' ] } ], '<textarea name="message"></textarea>' );
+		form.querySelector( 'textarea' ).value = 'one two three four five six';
+		window.Corex.forms.bind( form );
+
+		// `max_words` was missing from the client rule table, so the cap was server-only and the
+		// 422 came back labelled "Please check this field."
+		submitForm( form );
+
+		expect( global.fetch ).not.toHaveBeenCalled();
+		expect( errorText( form ) ).toBe( 'This message is too long.' );
+	} );
+
+	it( 'accepts a message at exactly the word cap', () => {
+		const form = makeFieldForm( 'message', [ { rule: 'max_words', params: [ '5' ] } ], '<textarea name="message"></textarea>' );
+		form.querySelector( 'textarea' ).value = '  one two   three four five  ';
+		window.Corex.forms.bind( form );
+
+		// Boundary: at the limit passes, over it fails; surrounding and repeated whitespace is not
+		// a word. An empty value is the `required` rule's business, not this one's.
+		submitForm( form );
+
+		expect( errorText( form ) ).toBe( '' );
+	} );
+
+	it.each( [
+		[ '+20 101 699 9700', '' ],
+		[ '+201016999700', '' ],
+		[ '+971-4-123-4567', '' ],
+		[ '01016999700', 'Enter a phone number including its country code.' ],
+		[ '+0123456789', 'Enter a phone number including its country code.' ],
+		[ '+12345', 'Enter a phone number including its country code.' ],
+		[ 'call me', 'Enter a phone number including its country code.' ],
+	] )( 'validates the phone number %s', ( value, expected ) => {
+		const form = makeFieldForm( 'phone', [ { rule: 'phone' } ], '<input name="phone" type="tel" />' );
+		form.querySelector( 'input' ).value = value;
+		window.Corex.forms.bind( form );
+
+		submitForm( form );
+
+		expect( errorText( form ) ).toBe( expected );
+	} );
+} );
+
+describe( 'localized validation messages', () => {
+	it( 'prefers the messages the server supplied over its own English table', () => {
+		const messages = JSON.stringify( { required: 'هذا الحقل مطلوب.' } );
+		const form = makeFieldForm( 'name', [ { rule: 'required' } ], '<input name="name" />', `data-corex-messages='${ messages }'` );
+		window.Corex.forms.bind( form );
+
+		// The built-in table goes through wp.i18n, which needs a JS translation file this site does
+		// not ship — so without this seam an Arabic page showed English errors.
+		submitForm( form );
+
+		expect( errorText( form ) ).toBe( 'هذا الحقل مطلوب.' );
+	} );
+
+	it( 'falls back to its own message for a rule the server did not name', () => {
+		const form = makeFieldForm( 'name', [ { rule: 'required' } ], '<input name="name" />', `data-corex-messages='{"email":"…"}'` );
+		window.Corex.forms.bind( form );
+
+		submitForm( form );
+
+		expect( errorText( form ) ).toBe( 'This field is required.' );
+	} );
+
+	it( 'ignores a malformed messages attribute rather than breaking the form', () => {
+		const form = makeFieldForm( 'name', [ { rule: 'required' } ], '<input name="name" />', 'data-corex-messages="not json"' );
+		window.Corex.forms.bind( form );
+
+		submitForm( form );
+
+		expect( errorText( form ) ).toBe( 'This field is required.' );
 	} );
 } );
 

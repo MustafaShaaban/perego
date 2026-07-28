@@ -37,7 +37,7 @@ it('renders the 404 code, the title as the single H1, body, and two actions', fu
         ->and($html)->toContain('class="error-page__inner" id="main" tabindex="-1"')
         ->and($html)->toContain('alt="Perego بيريجو"')
         ->and($html)->toMatch('/href="[^"]*\/"/')
-        ->and($html)->toMatch('/href="[^"]*\/contact"/')
+        ->and($html)->toMatch('/href="[^"]*\/start-a-project"/')
         ->and($html)->toContain('Back to Home');
 });
 

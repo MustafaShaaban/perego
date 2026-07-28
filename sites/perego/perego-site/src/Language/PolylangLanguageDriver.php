@@ -81,7 +81,7 @@ final class PolylangLanguageDriver implements LanguageDriver
             return (string) pll_home_url($locale) . $fragment;
         }
 
-        $translated = $this->translatedEntityUrl($base, $locale);
+        $translated = $this->translatedEntityUrl($base);
 
         return ($translated ?? $this->languagePrefixedUrl($base, $locale)) . $fragment;
     }
@@ -90,7 +90,7 @@ final class PolylangLanguageDriver implements LanguageDriver
      * The translation permalink for the page/CPT-single/blog-index a path points at, or null when the
      * path is not an entity (e.g. a CPT archive).
      */
-    private function translatedEntityUrl(string $base, string $locale): ?string
+    private function translatedEntityUrl(string $base): ?string
     {
         $postId = (int) url_to_postid((string) home_url($base));
 
@@ -109,10 +109,26 @@ final class PolylangLanguageDriver implements LanguageDriver
             return null;
         }
 
-        $translatedId = (int) (pll_get_post($postId, $locale) ?: $postId);
+        $url = $this->localizedPermalink($postId);
+
+        return $url === '' ? null : $url;
+    }
+
+    /**
+     * The chosen record's translation for the current locale, falling back to the record itself when
+     * Polylang has no translation linked for that language (a half-translated site still links
+     * somewhere real rather than nowhere).
+     */
+    public function localizedPermalink(int $postId): string
+    {
+        if ($postId <= 0) {
+            return '';
+        }
+
+        $translatedId = (int) (pll_get_post($postId, $this->currentLocale()) ?: $postId);
         $url = get_permalink($translatedId);
 
-        return $url === false ? null : $url;
+        return is_string($url) ? $url : '';
     }
 
     /**

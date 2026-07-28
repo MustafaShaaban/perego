@@ -4,7 +4,9 @@
 	"private": true,
 	"description": "Application code for the Perego website (Corex client site).",
 	"scripts": {
-		"build": "wp-scripts build --experimental-modules --webpack-src-dir=src/Blocks --output-path=build/Blocks",
+		"build": "npm run build:blocks && npm run build:panels",
+		"build:blocks": "wp-scripts build --experimental-modules --webpack-src-dir=src/Blocks --output-path=build/Blocks",
+		"build:panels": "wp-scripts build --webpack-src-dir=src/EditorPanels --output-path=build/EditorPanels",
 		"start": "wp-scripts start --experimental-modules --webpack-src-dir=src/Blocks --output-path=build/Blocks",
 		"test:js": "wp-scripts test-unit-js --config=jest.config.js"
 	}

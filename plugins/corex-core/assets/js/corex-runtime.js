@@ -302,7 +302,36 @@
 			}
 			return isNumericValue( value ) ? null : 'numeric';
 		},
+		url: function ( value ) {
+			if ( isEmpty( value ) ) {
+				return null;
+			}
+			return /^https?:\/\/\S+\.\S+/i.test( String( value ).trim() ) ? null : 'url';
+		},
+		// E.164: a leading + and 8-15 digits. Mirrors Corex\Forms\Validation\Rules\Phone.
+		phone: function ( value ) {
+			if ( isEmpty( value ) ) {
+				return null;
+			}
+			var digits = String( value ).replace( /[\s()\-.]/g, '' );
+			return /^\+[1-9]\d{7,14}$/.test( digits ) ? null : 'phone';
+		},
+		// Mirrors PeregoSite\Forms\Rules\MaxWords. Absent from this table, the rule was skipped
+		// entirely client-side: a 500-word message submitted, round-tripped, and came back a 422
+		// labelled "Please check this field." — with no hint that the problem was word count.
+		max_words: function ( value, params ) {
+			if ( isEmpty( value ) ) {
+				return null;
+			}
+			var limit = parseInt( ( params && params[ 0 ] ) || '0', 10 );
+			return countWords( value ) > limit ? 'max_words' : null;
+		},
 	};
+
+	function countWords( value ) {
+		var words = String( value ).trim().split( /\s+/ );
+		return words.length === 1 && words[ 0 ] === '' ? 0 : words.length;
+	}
 
 	function validateField( field, value ) {
 		var rules = field.rules || [];
@@ -335,7 +364,28 @@
 		return errors;
 	}
 
-	function messageFor( key ) {
+	/**
+	 * Per-rule messages the SERVER supplied, via data-corex-messages.
+	 *
+	 * The fallbacks below go through wp.i18n, which needs a JS translation file per text domain.
+	 * Shipping one is optional and easily forgotten — on a site that has none, every validation
+	 * message stays English no matter what locale the page is in, which is what an Arabic visitor
+	 * saw. The renderer emits the same strings through PHP `__()` instead, where the site's own
+	 * .mo (or a `gettext` filter) already translates them, so the message follows the page.
+	 */
+	function messagesOf( form ) {
+		try {
+			return JSON.parse( form.dataset.corexMessages || '{}' ) || {};
+		} catch ( e ) {
+			return {};
+		}
+	}
+
+	function messageFor( key, form ) {
+		var supplied = form ? messagesOf( form )[ key ] : null;
+		if ( supplied ) {
+			return supplied;
+		}
 		switch ( key ) {
 			case 'required':
 				return t( 'This field is required.' );
@@ -343,6 +393,12 @@
 				return t( 'Enter a valid email address.' );
 			case 'numeric':
 				return t( 'Enter a number.' );
+			case 'url':
+				return t( 'Enter a valid link.' );
+			case 'phone':
+				return t( 'Enter a phone number including its country code.' );
+			case 'max_words':
+				return t( 'This message is too long.' );
 			case 'max':
 				return t( 'This value is too long.' );
 			case 'min':
@@ -386,6 +442,18 @@
 				}
 				return;
 			}
+			// A multiple <select> reports only its FIRST selected option through .value, so the
+			// line below silently dropped every extra pick — a visitor choosing three services
+			// had one stored and one emailed. Read the whole selection instead.
+			if ( el.multiple ) {
+				data[ name ] = Array.prototype.map.call(
+					el.selectedOptions,
+					function ( option ) {
+						return option.value;
+					}
+				);
+				return;
+			}
 			data[ name ] = el.value;
 		} );
 		return data;
@@ -414,7 +482,7 @@
 			var message = wrapper.querySelector( '.corex-form__error' );
 			var control = wrapper.querySelector( 'input, textarea, select' );
 			if ( message ) {
-				message.textContent = messageFor( errors[ name ] );
+				message.textContent = messageFor( errors[ name ], form );
 			}
 			if ( control ) {
 				control.setAttribute( 'aria-invalid', 'true' );
@@ -502,6 +570,69 @@
 		submit( form );
 	}
 
+	/**
+	 * Clear or update ONE field's error, without touching the rest of the form.
+	 *
+	 * `clearErrors`/`showErrors` operate on the whole form, which is right on submit and wrong
+	 * while typing — re-running them would blank a neighbour's error the moment you edited this
+	 * field. This re-validates the single field against its own schema entry.
+	 */
+	function revalidateField( form, control ) {
+		var name = ( control.name || '' ).replace( /\[\]$/, '' );
+		var field = schemaOf( form ).filter( function ( entry ) {
+			return entry.name === name;
+		} )[ 0 ];
+		var wrapper = fieldWrapper( form, name );
+		if ( ! field || ! wrapper ) {
+			return;
+		}
+
+		var error = validateField( field, collect( form )[ name ] );
+		var message = wrapper.querySelector( '.corex-form__error' );
+		if ( message ) {
+			message.textContent = error ? messageFor( error, form ) : '';
+		}
+		if ( error ) {
+			control.setAttribute( 'aria-invalid', 'true' );
+		} else {
+			control.removeAttribute( 'aria-invalid' );
+		}
+	}
+
+	/**
+	 * Live re-validation, on the touched-field rule.
+	 *
+	 * Validation used to run on submit and only on submit, so an error stayed on screen while the
+	 * visitor fixed it and could only be cleared by submitting again — they had no way to know they
+	 * had corrected it. Re-validating on `blur` always, and on every keystroke only once a field is
+	 * already marked invalid, gives immediate confirmation without nagging someone part-way through
+	 * typing their first character.
+	 */
+	function bindLiveValidation( form ) {
+		var handle = function ( event, whenTouchedOnly ) {
+			var control = event.target;
+			if ( ! control || ! control.name || ! form.contains( control ) ) {
+				return;
+			}
+			if ( whenTouchedOnly && control.getAttribute( 'aria-invalid' ) !== 'true' ) {
+				return;
+			}
+			revalidateField( form, control );
+		};
+
+		// `blur` and `focusout`: blur does not bubble, so the capture phase is what makes one
+		// listener on the form cover every control, including any added later.
+		form.addEventListener( 'blur', function ( event ) {
+			handle( event, false );
+		}, true );
+		form.addEventListener( 'input', function ( event ) {
+			handle( event, true );
+		} );
+		form.addEventListener( 'change', function ( event ) {
+			handle( event, true );
+		} );
+	}
+
 	var forms = {
 		bind: function ( form ) {
 			if ( ! form || form.dataset.corexBound === '1' ) {
@@ -511,6 +642,7 @@
 			form.addEventListener( 'submit', function ( event ) {
 				onSubmit( form, event );
 			} );
+			bindLiveValidation( form );
 		},
 		validate: validate,
 	};

@@ -1,0 +1,14 @@
+{
+	"$schema": "https://schemas.wp.org/trunk/block.json",
+	"apiVersion": 3,
+	"name": "perego-theme/post-share",
+	"title": "Perego Post Share",
+	"category": "theme",
+	"icon": "share",
+	"description": "The single-post share row: X, LinkedIn, Facebook, WhatsApp, and copy-link. Plain share URLs — no third-party script.",
+	"textdomain": "perego-site",
+	"editorScript": "file:./index.js",
+	"viewScriptModule": "file:./view.js",
+	"style": "file:./style-index.css",
+	"supports": { "html": false }
+}

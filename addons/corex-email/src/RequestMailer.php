@@ -55,6 +55,10 @@ final class RequestMailer implements AttemptingMailer
             $builder->replyTo($request->replyTo);
         }
 
+        if ($request->from !== null && $request->from !== '') {
+            $builder->from($request->from);
+        }
+
         $result = $builder->send();
 
         return new MailResult(

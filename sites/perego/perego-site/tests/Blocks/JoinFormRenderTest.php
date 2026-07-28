@@ -46,7 +46,17 @@ it('wires the secure endpoint, a nonce, the size cap, and the localized state me
         ->and($html)->toContain('data-max-bytes="10485760"')
         ->and($html)->toContain('data-messages=')
         ->and($html)->toContain('wrong_type')
-        ->and($html)->toContain('too_large');
+        ->and($html)->toContain('too_large')
+        ->and($html)->toContain('portfolio_invalid');
+});
+
+it('states what the CV upload will accept, rather than repeating the drop zone prompt', function () {
+    $html = renderJoin();
+
+    // The applicant used to meet the 10 MB cap only by breaching it: both the drop zone and this
+    // hint said "Upload your CV here", and the theme clipped the hint anyway.
+    expect($html)->toContain('<p class="join-form__hint" id="jf-cv-hint">PDF, DOC or DOCX · up to 10 MB</p>')
+        ->and($html)->toContain('aria-describedby="jf-cv-hint jf-cv-error"');
 });
 
 it('exposes an aria-live status region for the upload lifecycle', function () {

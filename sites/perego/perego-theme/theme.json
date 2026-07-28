@@ -72,7 +72,14 @@
 					"muted-2": "rgba(255,255,255,0.55)",
 					"glass-border": "rgba(216,106,243,0.45)",
 					"glass-fill": "rgba(72,3,131,0.28)",
-					"glass-panel-fill": "rgba(22,4,53,0.55)"
+					"glass-panel-fill": "rgba(22,4,53,0.55)",
+					"card-filter": "rgba(16,0,43,0.7)",
+					"card-filter-gradient": "linear-gradient(180deg, rgba(16,0,43,0.28) 0%, rgba(16,0,43,0.52) 42%, rgba(16,0,43,0.88) 100%)",
+					"svc-tab-active-gradient": "linear-gradient(158deg, rgba(140,54,205,0.92) 0%, rgba(108,30,174,0.94) 55%, rgba(74,17,124,0.96) 100%)",
+					"header-scrim": "rgba(16,0,43,0.96)",
+					"svc-tab-fill": "rgba(34,12,58,0.20)",
+					"lang-chip-fill": "rgba(72,3,131,0.55)",
+					"lang-chip-fill-hover": "rgba(72,3,131,0.85)"
 				},
 				"gradient": {
 					"bg": "linear-gradient(160deg, #10002b 0%, #12012e 14%, #1a0339 30%, #26074a 46%, #370d63 62%, #4e1483 78%, #691da9 92%, #6c1eae 100%)",

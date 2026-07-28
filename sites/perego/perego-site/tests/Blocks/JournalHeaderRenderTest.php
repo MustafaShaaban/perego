@@ -39,3 +39,33 @@ it('localizes the journal header into Arabic', function () {
 
     expect($html)->toContain('مدونة بيريجو');
 });
+
+/*
+ * spec 021 C12 — the journal-header block's editable title/lead. Overrides are already locale-resolved
+ * by LocalizedAttributes; the Content class owns the seed-vs-override rule.
+ */
+
+it('renders the seed heading and lead when the block passes no overrides', function () {
+    $seed = (new JournalHeaderRenderer(new GlobalContent('en')))->render();
+
+    expect($seed)->toContain('The Perego Journal')
+        ->and($seed)->toBe((new JournalHeaderRenderer(new GlobalContent('en'), []))->render());
+});
+
+it('applies a non-empty title/lead override', function () {
+    $html = (new JournalHeaderRenderer(new GlobalContent('en'), [
+        'title' => 'Studio Notes',
+        'lead' => 'Short dispatches.',
+    ]))->render();
+
+    expect($html)->toContain('Studio Notes')
+        ->and($html)->toContain('Short dispatches.')
+        ->and($html)->not->toContain('The Perego Journal');
+});
+
+it('treats an empty or whitespace override as "use the seed", never as a blank heading', function () {
+    $html = (new JournalHeaderRenderer(new GlobalContent('en'), ['title' => '', 'lead' => '   ']))->render();
+
+    expect($html)->toContain('The Perego Journal')
+        ->and($html)->toContain('Notes on video, motion, design and the web');
+});

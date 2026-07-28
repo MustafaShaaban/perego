@@ -256,33 +256,41 @@ final class FormsServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register each form's listeners on the shared provider once (deduplicated),
-     * so a submission's FormSubmittedEvent reaches the store + email listeners.
+     * Run the submitted form's own listeners, so `Form::listeners()` means what it says.
+     *
+     * This used to iterate every registered form at boot and register each distinct listener id once on
+     * the shared event, deduplicated across ALL forms. The dedupe made the list global rather than
+     * per-form: as soon as any one form declared a listener, that listener ran for every submission on
+     * the site. A form that overrode `listeners()` to drop, say, the email listener still got it — and a
+     * site that replaced the notification with its own then sent two emails per submission.
+     *
+     * One listener now resolves the form by slug at event time and runs only that form's list. An
+     * unknown slug (a DB flow rather than a registered Form) matches nothing and is left alone.
+     *
+     * Registration stays lazy for the same reason as before: a listener drags in its whole mail
+     * dependency graph, including the optional Email Studio router, and building that at boot would load
+     * the mail stack's translations before `init`. Listeners are singletons, so each still builds once.
      */
     private function registerListeners(): void
     {
-        $provider = $this->container->make(ListenerProvider::class);
-        $registered = [];
+        $container = $this->container;
 
-        foreach ($this->container->make(FormRegistry::class)->all() as $form) {
-            foreach ($form->listeners() as $listenerId) {
-                if (isset($registered[$listenerId])) {
-                    continue;
+        $this->container->make(ListenerProvider::class)->listen(
+            FormSubmittedEvent::class,
+            static function (object $event) use ($container): void {
+                if (! $event instanceof FormSubmittedEvent) {
+                    return;
                 }
 
-                $registered[$listenerId] = true;
-                // Register lazily: the listener (and its whole mail dependency graph, including the
-                // optional Email Studio router) is built only when a submission fires the event —
-                // at request time, after `init` — never eagerly at boot, which would load the mail
-                // stack's translations too early. Listeners are singletons, so this builds once.
-                $container = $this->container;
-                $provider->listen(
-                    FormSubmittedEvent::class,
-                    static function (object $event) use ($container, $listenerId): void {
-                        ($container->make($listenerId))($event);
-                    },
-                );
-            }
-        }
+                $form = $container->make(FormRegistry::class)->find($event->formSlug);
+                if ($form === null) {
+                    return;
+                }
+
+                foreach (array_unique($form->listeners()) as $listenerId) {
+                    ($container->make($listenerId))($event);
+                }
+            },
+        );
     }
 }

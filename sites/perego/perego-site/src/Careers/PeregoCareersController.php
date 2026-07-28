@@ -10,7 +10,10 @@ namespace PeregoSite\Careers;
 
 defined('ABSPATH') || exit;
 
+use PeregoSite\Email\MailBaseUrl;
+use PeregoSite\Email\PeregoEmailRenderer;
 use PeregoSite\Email\PeregoMailer;
+use PeregoSite\Email\TeamRecipient;
 use WP_REST_Request;
 use WP_REST_Response;
 
@@ -26,6 +29,12 @@ use WP_REST_Response;
  */
 final class PeregoCareersController
 {
+    /** The slug applications are filed under in the CoreX Submissions inbox. */
+    public const SUBMISSION_SLUG = 'perego-careers';
+
+    /** The label that slug shows as, in the inbox filter and the notification subject. */
+    public const FORM_NAME = 'Careers application';
+
     /** mime => allowed extensions (matches the CoreX Careers CV policy). */
     private const CV_TYPES = [
         'application/pdf' => ['pdf'],
@@ -38,8 +47,10 @@ final class PeregoCareersController
     private const RATE_LIMIT = 5;         // submissions
     private const RATE_WINDOW = 600;      // per 10 minutes, per IP
 
-    public function __construct(private readonly PeregoMailer $mailer)
-    {
+    public function __construct(
+        private readonly PeregoMailer $mailer,
+        private readonly TeamRecipient $recipient,
+    ) {
     }
 
     public function register(): void
@@ -93,8 +104,9 @@ final class PeregoCareersController
 
         // 6) Record the application (best-effort) + notify.
         $this->record($name, $email, $portfolio, $attachmentId);
+        $this->recordSubmission($name, $email, $portfolio, $filename, $attachmentId);
         $this->touchRateLimit();
-        $this->notify($name, $email, $portfolio, $filename);
+        $this->notify($name, $email, $portfolio, $filename, $attachmentId);
 
         return new WP_REST_Response(['ok' => true], 200);
     }
@@ -200,42 +212,127 @@ final class PeregoCareersController
         }
     }
 
-    private function notify(string $name, string $email, string $portfolio, string $filename): void
+    /**
+     * Mirror the application into the CoreX Submissions inbox.
+     *
+     * Careers is a bespoke REST endpoint rather than a `FormRegistry` form, so nothing on the submit
+     * path ever wrote a `corex_submission` — applications existed only in `corex_applications`, and
+     * the client looked for them next to Contact and Start-a-Project and found nothing (report
+     * 2026-07-27). Writing one here puts them where every other form's submissions already are, while
+     * {@see \Corex\Careers\Application\ApplicationStore} keeps the recruiting record (status, CV id).
+     *
+     * The record carries the CV's **URL**, not just its filename. A filename is not a document: the
+     * attachment id lived only in `corex_applications`, so an operator looking at the submission had
+     * no way to reach the actual file from the screen they were on (client report 2026-07-27, "I
+     * still can't view the attachment from the submission page"). The inbox renders an http(s) value
+     * as a link, so storing the URL is all that is needed on this side.
+     *
+     * Best-effort, like {@see self::record()}: the applicant's mail is the primary record, and a
+     * storage failure must not fail an accepted application.
+     */
+    private function recordSubmission(string $name, string $email, string $portfolio, string $filename, int $attachmentId): void
+    {
+        if (! class_exists(\Corex\Boot::class)) {
+            return;
+        }
+
+        try {
+            $container = \Corex\Boot::app()->container();
+            if (! $container->has(\Corex\Forms\Submission\SubmissionStore::class)) {
+                return;
+            }
+
+            $values = [
+                'name' => $name,
+                'email' => $email,
+                'portfolio' => $portfolio,
+                'cv' => $filename,
+            ];
+
+            $cvUrl = $this->cvUrl($attachmentId);
+            if ($cvUrl !== '') {
+                $values['cv_url'] = $cvUrl;
+            }
+
+            $container->make(\Corex\Forms\Submission\SubmissionStore::class)->save(self::SUBMISSION_SLUG, $values);
+        } catch (\Throwable) {
+            // See above: never fail an accepted application on a storage error.
+        }
+    }
+
+    private function notify(string $name, string $email, string $portfolio, string $filename, int $attachmentId): void
     {
         $locale = str_starts_with((string) get_locale(), 'ar') ? 'ar' : 'en';
 
+        // No Reply-To: this goes to the applicant, who should not be replying to themselves.
         $this->mailer->send('join-confirmation', $locale, $email, [
             'name' => $name,
             'portfolio' => $portfolio,
             'cv_filename' => $filename,
-        ], $email);
+        ]);
 
-        $hr = (string) (get_option('admin_email'));
-        if ($hr !== '') {
-            $this->mailer->send('admin-notification', $locale, $hr, [
-                'form_name' => 'Careers application',
-                'submitted_at' => (string) current_time('mysql'),
-                'reply_email' => $email,
-                'fields_html' => $this->fieldsHtml([
-                    'Name' => $name,
-                    'Email' => $email,
-                    'Portfolio' => $portfolio !== '' ? $portfolio : '—',
-                    'CV' => $filename,
-                ]),
-            ]);
+        // The configured forms recipient, not `admin_email`. This endpoint used to read the WordPress
+        // option directly, which on this install is still the default `admin@example.com` — so every
+        // application (and its CV link) was delivered to a mailbox nobody owns, while the contact and
+        // brief forms arrived normally. Client report 2026-07-27.
+        $hr = $this->recipient->address();
+        if ($hr === '') {
+            return;
         }
+
+        // The CV cannot ride along as an attachment — the mail stack has no attachments field at all
+        // (MailRequest/EmailMessage carry none and WpMailDriver calls wp_mail with four arguments), so
+        // HR got a bare filename and no way to reach the file. A link is also the better answer for a
+        // CV: personal data stays out of mail servers and inbox backups.
+        $cv = $attachmentId > 0 && $this->cvUrl($attachmentId) !== ''
+            ? ['text' => $filename, 'url' => $this->cvUrl($attachmentId)]
+            : $filename;
+
+        $fields = [
+            'Name' => $name,
+            'Email' => $email,
+            'Portfolio' => $portfolio !== '' ? $portfolio : '—',
+            'CV' => $cv,
+        ];
+
+        $manage = $this->adminUrl($attachmentId);
+        if ($manage !== '') {
+            $fields['In admin'] = ['text' => 'Open in WordPress', 'url' => $manage];
+        }
+
+        // The applicant's address as a real Reply-To, so HR can just hit Reply. It was previously only
+        // rendered as the template's mailto: button.
+        $this->mailer->send('admin-notification', $locale, $hr, [
+            'form_name' => self::FORM_NAME,
+            'submitted_at' => (string) current_time('mysql'),
+            'reply_email' => $email,
+            'fields_html' => PeregoEmailRenderer::fieldRows($fields),
+        ], $email);
     }
 
-    /** @param array<string,string> $fields Pre-rendered, escaped <tr> rows for the admin email. */
-    private function fieldsHtml(array $fields): string
+    /** The stored CV's URL, rebased onto the public mail host so the link resolves from an inbox. */
+    private function cvUrl(int $attachmentId): string
     {
-        $rows = '';
-        foreach ($fields as $label => $value) {
-            $rows .= '<tr><td style="padding:4px 0;color:rgba(255,255,255,0.6);width:120px;">' . esc_html($label)
-                . '</td><td style="padding:4px 0;">' . esc_html($value) . '</td></tr>';
+        $url = (string) wp_get_attachment_url($attachmentId);
+
+        return $url === '' ? '' : MailBaseUrl::rebase($url);
+    }
+
+    /**
+     * The wp-admin edit screen for the stored CV.
+     *
+     * Built from `admin_url()` rather than `get_edit_post_link()`, which returns null unless the
+     * CURRENT user can edit the post. This runs on an anonymous public submission, so there is no
+     * current user and that helper can only ever return null here — the row would never have appeared.
+     * Emitting the URL is safe: wp-admin still authenticates whoever follows it.
+     */
+    private function adminUrl(int $attachmentId): string
+    {
+        if ($attachmentId <= 0) {
+            return '';
         }
 
-        return $rows;
+        return MailBaseUrl::rebase(admin_url('post.php?post=' . $attachmentId . '&action=edit'));
     }
 
     private function openApplicationJobId(): int

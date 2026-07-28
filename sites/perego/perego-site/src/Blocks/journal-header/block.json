@@ -9,5 +9,13 @@
 	"textdomain": "perego-site",
 	"editorScript": "file:./index.js",
 	"style": "file:./style-index.css",
-	"supports": { "html": false }
+	"supports": {
+		"html": false
+	},
+	"attributes": {
+		"titleEn": { "type": "string", "default": "" },
+		"titleAr": { "type": "string", "default": "" },
+		"leadEn": { "type": "string", "default": "" },
+		"leadAr": { "type": "string", "default": "" }
+	}
 }

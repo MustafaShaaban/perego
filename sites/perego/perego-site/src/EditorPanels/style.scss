@@ -1,0 +1,43 @@
+/**
+ * Styles for the Perego post-type sidebar panels (spec 021 Phase 4).
+ *
+ * The document sidebar renders OUTSIDE the editor canvas iframe, so `add_editor_style()` never
+ * reaches it — the same reason the block Inspector has its own sheet. Kept deliberately small: the
+ * controls are core components, so only the gallery grid and field rhythm need rules.
+ */
+
+.perego-panel {
+	.components-base-control + .components-base-control,
+	.components-base-control + .perego-editor-media-field,
+	.perego-editor-media-field + .components-base-control {
+		margin-block-start: 16px;
+	}
+
+	.perego-editor-help {
+		margin-block: 8px 0;
+		color: var(--wp--preset--color--contrast-2, #757575);
+		font-size: 12px;
+	}
+}
+
+.perego-panel-gallery__grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 8px;
+	margin: 0 0 12px;
+	padding: 0;
+	list-style: none;
+
+	li {
+		margin: 0;
+		text-align: center;
+	}
+
+	img {
+		display: block;
+		inline-size: 100%;
+		block-size: 64px;
+		object-fit: cover;
+		border-radius: 2px;
+	}
+}

@@ -12,6 +12,7 @@ defined('ABSPATH') || exit;
 
 use PeregoSite\Content\HeroContent;
 use PeregoSite\Services\LanguageService;
+use PeregoSite\Theme\SiteRoutes;
 
 /**
  * Server-renders the perego/hero-slider block (spec 002 / M2, US1): a full-bleed hero with a
@@ -65,8 +66,12 @@ final class HeroSliderRenderer
             . 'data-wp-on--pointerup="actions.pointerUp">';
         $html .= '<div class="hero__content hero-enter">';
         $html .= $this->renderSlides($slides);
+        // spec 021 T036: the CTA may name a page instead of the default contact route.
+        $cta = LinkTarget::fromAttributes($attributes);
+        $linkTarget = new LinkTarget($this->languageService->driver());
         $html .= '<div class="hero__cta">'
-            . '<a class="btn btn--accent" href="' . esc_url($this->languageService->driver()->localizedUrl('/contact')) . '">'
+            . '<a class="btn btn--accent" href="' . esc_url($linkTarget->href($cta, SiteRoutes::START_PROJECT)) . '"'
+            . $linkTarget->targetAttributes($cta) . '>'
             . wp_kses_post($hero['cta']) . '</a>'
             . '</div>';
         $html .= '</div>'; // .hero__content

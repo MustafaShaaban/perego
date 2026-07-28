@@ -46,6 +46,7 @@ final class JoinFormRenderer
             'success' => $t['success'],
             'name_required' => $t['nameRequired'],
             'email_invalid' => $t['emailInvalid'],
+            'portfolio_invalid' => $t['portfolioInvalid'],
             'cv_required' => $t['cvRequired'],
             'form_has_errors' => $t['formHasErrors'],
             'wrong_type' => $t['wrong_type'],
@@ -72,7 +73,10 @@ final class JoinFormRenderer
         $html .= '<label class="file-drop" for="jf-cv"><span class="file-drop__text">' . esc_html($t['cvHint']) . '</span>';
         $html .= '<span class="file-drop__filename" aria-live="polite"></span>';
         $html .= '<input type="file" id="jf-cv" name="cv" accept=".pdf,.doc,.docx" required aria-describedby="jf-cv-hint jf-cv-error" /></label>';
-        $html .= '<p class="join-form__hint" id="jf-cv-hint">' . esc_html($t['cvHint']) . '</p>';
+        // The drop zone above already says "upload your CV here"; repeating it taught nobody the
+        // rule that actually rejects a file. This states the constraint instead, and the theme now
+        // shows it — the applicant used to discover the 10 MB cap only by breaching it.
+        $html .= '<p class="join-form__hint" id="jf-cv-hint">' . esc_html($t['cvConstraint']) . '</p>';
         $html .= '<span class="corex-form__error" id="jf-cv-error" role="alert"></span>';
         $html .= '</div>';
 

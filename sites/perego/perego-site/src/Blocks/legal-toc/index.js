@@ -1,13 +1,28 @@
 /**
- * Perego legal-toc block — editor registration. Server-rendered (save returns null); the front-end
- * aside (review note + last-updated + heading-derived TOC) comes from LegalTocRenderer.
+ * Perego legal-toc block — editor registration (spec 021 C15; DECISIONS 2026-07-22). The canvas renders the
+ * REAL markup (`LegalTocSkeleton` in preview.js), styled by the theme's `main.css` via
+ * `add_editor_style`, replacing an `edit()` that returned a bare sentence.
+ *
+ * **Locked** preview with no controls — see preview.js for what derives each part.
+ * Server-rendered (save returns null).
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { __ } from '@wordpress/i18n';
+import { useBlockProps } from '@wordpress/block-editor';
+import { LegalTocSkeleton } from './preview';
 import metadata from './block.json';
 import './style.scss';
 
-registerBlockType( metadata.name, {
-	edit: () => __( 'Legal TOC (generated from the page headings). Rendered by LegalTocRenderer.', 'perego-site' ),
-	save: () => null,
-} );
+function Edit() {
+	return (
+		<div { ...useBlockProps( { className: 'perego-legal-toc__editor' } ) }
+			onClick={ ( event ) => {
+				if ( event.target.closest( 'a, button' ) ) {
+					event.preventDefault();
+				}
+			} }>
+			<LegalTocSkeleton />
+		</div>
+	);
+}
+
+registerBlockType( metadata.name, { edit: Edit, save: () => null } );

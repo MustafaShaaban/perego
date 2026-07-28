@@ -99,4 +99,19 @@ final class FallbackLanguageDriver implements LanguageDriver
     {
         return (string) home_url($path);
     }
+
+    /**
+     * With no translation plugin there is one record per piece of content, so the current locale's
+     * permalink is simply the record's permalink.
+     */
+    public function localizedPermalink(int $postId): string
+    {
+        if ($postId <= 0) {
+            return '';
+        }
+
+        $url = get_permalink($postId);
+
+        return is_string($url) ? $url : '';
+    }
 }

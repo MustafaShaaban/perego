@@ -55,6 +55,7 @@ final class MailService
             $message->subject,
             $message->body,
             $message->headers,
+            $message->from,
         );
 
         if ($clean->to === []) {

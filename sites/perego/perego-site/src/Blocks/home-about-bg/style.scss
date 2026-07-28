@@ -56,3 +56,16 @@
 		);
 	}
 }
+
+/**
+ * Editor-only. The live-canvas background is `position: absolute`, so on its own (this block has no
+ * in-flow content — the About text is the adjacent native post-content) it collapses the block to zero
+ * height and makes it invisible / unselectable in the editor. Give the wrapper a relative, sized box so
+ * the real background renders as a visible, selectable preview tile. `.perego-home-about-bg__editor` is
+ * the editor `useBlockProps` wrapper and never appears on the front end, so this rule is inert there.
+ */
+.perego-home-about-bg__editor {
+	position: relative;
+	min-block-size: clamp(200px, 32vh, 380px);
+	overflow: hidden;
+}

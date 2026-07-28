@@ -18,7 +18,7 @@ it('renders the background image div locale-independently', function () {
     $html = (new HomeAboutBgRenderer())->render();
 
     expect($html)->toContain('home-about__bg')
-        ->and($html)->toMatch('/<img [^>]*about-hooded\.png/')
+        ->and($html)->toMatch('/<img [^>]*about-hooded-wide\.webp/')
         ->and($html)->toContain('aria-hidden="true"');
 });
 

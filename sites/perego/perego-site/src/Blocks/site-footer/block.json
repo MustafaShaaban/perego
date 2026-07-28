@@ -15,7 +15,11 @@
 		"contactChannels": { "type": "string", "default": "" },
 		"socialLinks": { "type": "string", "default": "" },
 		"blurbEn": { "type": "string", "default": "" },
-		"blurbAr": { "type": "string", "default": "" }
+		"blurbAr": { "type": "string", "default": "" },
+		"copyrightEn": { "type": "string", "default": "" },
+		"copyrightAr": { "type": "string", "default": "" },
+		"legalLinksEn": { "type": "string", "default": "" },
+		"legalLinksAr": { "type": "string", "default": "" }
 	},
 	"editorScript": "file:./index.js",
 	"viewScriptModule": "file:./view.js",

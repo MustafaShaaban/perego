@@ -90,7 +90,7 @@ final class SubmitController
      *
      * @param array<string,FieldSchema> $schema
      *
-     * @return array<string,string> key => WP sanitizer function name
+     * @return array<string,callable|string> key => sanitizer (callable or WP function name)
      */
     private function sanitizeShape(array $schema): array
     {
@@ -100,11 +100,21 @@ final class SubmitController
             $shape[$name] = match ($field->type) {
                 'email'    => 'sanitize_email',
                 'textarea' => 'sanitize_textarea_field',
+                // Multi-value fields arrive as arrays, and `sanitize_text_field` returns '' for an
+                // array — so a multi-select submitted through this controller was blanked entirely.
+                // Same arms the flow controller already uses; the two paths must agree.
+                'multi-select', 'checkbox-group' => $this->sanitizeList(...),
                 default    => 'sanitize_text_field',
             };
         }
 
         return $shape;
+    }
+
+    /** @return list<string> */
+    private function sanitizeList(mixed $value): array
+    {
+        return array_values(array_map('sanitize_text_field', is_array($value) ? $value : []));
     }
 
     /**

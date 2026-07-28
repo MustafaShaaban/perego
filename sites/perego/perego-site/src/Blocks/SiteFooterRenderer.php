@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 use PeregoSite\Content\GlobalContent;
 use PeregoSite\Forms\QuickMessageForm;
 use PeregoSite\Services\LanguageService;
+use PeregoSite\Theme\SiteRoutes;
 
 defined('ABSPATH') || exit;
 
@@ -32,16 +33,22 @@ defined('ABSPATH') || exit;
  */
 final class SiteFooterRenderer
 {
+    private ?LinkTarget $linkTarget = null;
+
     /**
-     * Contact channels from the approved design handoff (locale-neutral facts, not translatable
-     * prose) — the seed used when no `contactChannels` block attribute has been set.
+     * Contact channels (locale-neutral facts, not translatable prose) — the seed used when no
+     * `contactChannels` block attribute has been set. The footer template part is not customised in
+     * the database, so this seed is what the live site renders.
+     *
+     * The handoff's two personal Gmail addresses were replaced by the single professional mailbox on
+     * the client's primary domain (owner decision, 2026-07-26); `info@` is the address MENA business
+     * audiences expect. Keep this list in sync with `site-footer/preview.js`, the editor-canvas mirror.
      *
      * @var list<array{label: string, href: string}>
      */
     private const SEED_CONTACT_CHANNELS = [
-        ['label' => 'mostafa.emam3313@gmail.com', 'href' => 'mailto:mostafa.emam3313@gmail.com'],
-        ['label' => 'yehemam2@gmail.com', 'href' => 'mailto:yehemam2@gmail.com'],
-        ['label' => '+996 56 293 2759', 'href' => 'tel:+996562932759'],
+        ['label' => 'info@peregoads.com', 'href' => 'mailto:info@peregoads.com'],
+        ['label' => '+966 56 293 2759', 'href' => 'tel:+966562932759'],
         ['label' => '+20 111 54 855 72', 'href' => 'tel:+201115485572'],
     ];
 
@@ -92,7 +99,7 @@ final class SiteFooterRenderer
         $html .= $this->renderCareersColumn();
 
         $html .= '</div>';
-        $html .= $this->renderBottomBar();
+        $html .= $this->renderBottomBar($attributes);
         $html .= '</footer>';
 
         return $html;
@@ -149,7 +156,11 @@ final class SiteFooterRenderer
         foreach ($channels as $channel) {
             // bdi isolates the LTR email/phone text from the surrounding RTL paragraph direction so
             // digit groups and punctuation don't reorder under the Arabic bidi algorithm.
-            $html .= '<li><a href="' . esc_url($channel['href'] ?? '') . '"><bdi>' . esc_html($channel['label'] ?? '') . '</bdi></a></li>';
+            // Channels are mailto:/tel: in practice, which LinkTarget passes through verbatim; routing
+            // them through it lets an editor point one at a real page instead (spec 021 T036).
+            $html .= '<li><a href="' . esc_url($this->linkTarget()->href($channel, SiteRoutes::START_PROJECT)) . '"'
+                . $this->linkTarget()->targetAttributes($channel) . '><bdi>'
+                . esc_html($channel['label'] ?? '') . '</bdi></a></li>';
         }
 
         $html .= '</ul>';
@@ -271,24 +282,67 @@ final class SiteFooterRenderer
         return do_blocks('<!-- wp:perego-theme/join-form /-->');
     }
 
-    private function renderBottomBar(): string
+    /**
+     * The bottom bar (spec 020 D1; editor-dynamic spec 021 C2). Both the copyright line and the legal
+     * links are editor-set per locale, falling back to the exact prior output so existing pages are
+     * unchanged. A `{year}` token in the copyright is replaced with the current year at render.
+     *
+     * @param array<string,string> $attributes
+     */
+    private function renderBottomBar(array $attributes): string
     {
-        $copyright = sprintf(
-            /* translators: %s: current year. */
-            __('© %s Perego Creative Studio — بيريجو. All rights reserved.', 'perego-site'),
-            gmdate('Y')
-        );
+        $suffix = $this->languageService->driver()->currentLocale() === 'ar' ? 'Ar' : 'En';
 
-        // The exact handoff bottom bar (spec 020 D1): the full studio copyright line — the bilingual
-        // brand name is part of the fixed identity, not translatable prose — and the Journal link
-        // ahead of the two legal links.
-        return '<div class="container site-footer__bottom">'
-            . '<p>' . esc_html($copyright) . '</p>'
-            . '<nav class="footer-legal" aria-label="' . esc_attr__('Legal', 'perego-site') . '">'
-            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/journal')) . '">' . esc_html__('Journal', 'perego-site') . '</a>'
-            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/terms')) . '">' . esc_html__('Terms & Conditions', 'perego-site') . '</a>'
-            . '<a href="' . esc_url($this->languageService->driver()->localizedUrl('/privacy')) . '">' . esc_html__('Privacy Policy', 'perego-site') . '</a>'
-            . '</nav>'
-            . '</div>';
+        $copyright = trim((string) ($attributes['copyright' . $suffix] ?? ''));
+        $copyright = $copyright !== ''
+            ? str_replace('{year}', gmdate('Y'), $copyright)
+            : sprintf(
+                /* translators: %s: current year. */
+                __('© %s Perego Creative Studio — بيريجو. All rights reserved.', 'perego-site'),
+                gmdate('Y')
+            );
+
+        $links = $this->jsonAttribute($attributes, 'legalLinks' . $suffix, $this->seedLegalLinks());
+
+        $html = '<div class="container site-footer__bottom">';
+        $html .= '<p>' . esc_html($copyright) . '</p>';
+        $html .= '<nav class="footer-legal" aria-label="' . esc_attr__('Legal', 'perego-site') . '">';
+        foreach ($links as $link) {
+            $label = (string) ($link['label'] ?? '');
+            if ($label === '') {
+                continue;
+            }
+            $html .= '<a href="' . esc_url($this->linkTarget()->href($link, '/')) . '"'
+                . $this->linkTarget()->targetAttributes($link) . '>' . esc_html($label) . '</a>';
+        }
+        $html .= '</nav>';
+        $html .= '</div>';
+
+        return $html;
+    }
+
+    /**
+     * The default bottom-bar legal links (localized labels + routes) — used when no `legalLinks*`
+     * attribute is set, so the bar renders exactly as before: Journal ahead of the two legal links.
+     *
+     * @return list<array{label: string, href: string}>
+     */
+    private function seedLegalLinks(): array
+    {
+        return [
+            ['label' => __('Journal', 'perego-site'), 'href' => '/journal'],
+            ['label' => __('Terms & Conditions', 'perego-site'), 'href' => '/terms'],
+            ['label' => __('Privacy Policy', 'perego-site'), 'href' => '/privacy'],
+        ];
+    }
+
+    /**
+     * The shared link resolver, built from this renderer's language driver (spec 021 T036). Replaces
+     * this class's own copy of the localize-internal-paths rule, which is now one implementation shared
+     * with the header.
+     */
+    private function linkTarget(): LinkTarget
+    {
+        return $this->linkTarget ??= new LinkTarget($this->languageService->driver());
     }
 }

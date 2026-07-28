@@ -77,7 +77,7 @@ final class FieldRenderer
         };
 
         return sprintf(
-            '<input id="%1$s" name="%2$s" type="%3$s" class="%4$s" aria-describedby="%5$s"%6$s%7$s%8$s%9$s />',
+            '<input id="%1$s" name="%2$s" type="%3$s" class="%4$s" aria-describedby="%5$s"%6$s%7$s%8$s%9$s%10$s />',
             esc_attr($id),
             esc_attr($field->name),
             esc_attr($type),
@@ -87,7 +87,26 @@ final class FieldRenderer
             $this->placeholderAttr($field),
             $this->valueAttr($field),
             $this->extraAttrs($field),
+            $this->inputModeAttrs($field->type),
         );
+    }
+
+    /**
+     * Input-mode hints a bare `type` does not carry.
+     *
+     * `dir="ltr"` on a phone is not cosmetic: a number is read left to right in every locale, so on
+     * the Arabic (RTL) page an unmarked `tel` input puts the `+` on the wrong end and reorders the
+     * groups as the visitor types. The keypad and autofill hints are the other half — a `tel` type
+     * alone gets neither on several mobile browsers.
+     */
+    private function inputModeAttrs(string $type): string
+    {
+        return match ($type) {
+            'phone' => ' inputmode="tel" autocomplete="tel" dir="ltr"',
+            'email' => ' inputmode="email" autocomplete="email"',
+            'url' => ' inputmode="url" dir="ltr"',
+            default => '',
+        };
     }
 
     private function textarea(string $id, FieldSchema $field): string

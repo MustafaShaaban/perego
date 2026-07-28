@@ -48,13 +48,32 @@ it('mirrors the handoff contact fields in order', function () {
     ]);
 });
 
+it('pairs the rows so the composite phone control gets a row and nothing is left stranded', function () {
+    Functions\when('get_posts')->justReturn([]);
+
+    $width = array_map(static fn (array $field): string => $field['width'] ?? 'full', briefFields());
+
+    // Phone is the only field holding two controls — a country picker and a number — so it is the
+    // only one a half-width slot cannot fit (the placeholder clipped at every desktop width).
+    // Giving it a row leaves five halves, and a free-text subject line is the better of them to
+    // promote rather than orphan beside a gap.
+    expect($width)->toBe([
+        'name' => 'half', 'email' => 'half',
+        'phone' => 'full',
+        'company' => 'half', 'budget' => 'half',
+        'subject' => 'full', 'message' => 'full', 'services' => 'full',
+    ]);
+});
+
 it('keeps the handoff validation limits on every field', function () {
     Functions\when('get_posts')->justReturn([]);
     $fields = briefFields();
 
     expect($fields['name']['rules'])->toBe(['required', 'min:2', 'max:80'])
         ->and($fields['email']['rules'])->toBe(['required', 'email', 'max:120'])
-        ->and($fields['phone']['rules'])->toBe(['max:24'])
+        // E.164, not a character count: `max:24` accepted "01016999700", a number nobody outside
+        // Egypt can dial, which for a studio serving EG/SA/AE defeats the point of asking.
+        ->and($fields['phone']['rules'])->toBe(['phone'])
         ->and($fields['subject']['rules'])->toBe(['required', 'min:3', 'max:120'])
         ->and($fields['message']['rules'])->toBe(['required', 'min:10', 'max_words:200'])
         ->and($fields['message']['attrs'])->toBe(['data-max-words' => '200'])

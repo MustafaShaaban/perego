@@ -178,20 +178,36 @@ final class PortfolioContent
     }
 
     /**
+     * The Work-archive copy, with the portfolio-grid block's editable overrides applied (spec 021 C11).
+     *
+     * Every key falls back to this class's seed copy, so an unedited block renders exactly what it always
+     * did. Only a non-empty override wins: clearing a field in the editor restores the seed rather than
+     * blanking the page. `demoNote` is the one exception — it is a launch placeholder ("Example projects
+     * shown below…"), so it takes an explicit `showDemoNote` boolean and an empty string genuinely removes
+     * it. `groupLabel`, `noResults`, and `uiHome` stay seed-only: they are interface strings, not editorial
+     * copy, and belong to the translation catalogue.
+     *
+     * @param array{heading?: string, intro?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string, showDemoNote?: bool} $overrides
      * @return array{groupLabel: string, noResults: string, heading: string, intro: string, demoNote: string, uiHome: string, ctaTitle: string, ctaBody: string, ctaButton: string}
      */
-    public function gridStrings(): array
+    public function gridStrings(array $overrides = []): array
     {
+        $pick = function (string $key, string $seedKey) use ($overrides): string {
+            $value = $overrides[$key] ?? null;
+
+            return is_string($value) && trim($value) !== '' ? $value : self::COPY[$this->locale][$seedKey];
+        };
+
         return [
             'groupLabel' => self::COPY[$this->locale]['groupLabel'],
             'noResults' => self::COPY[$this->locale]['noResults'],
-            'heading' => self::COPY[$this->locale]['h1'],
-            'intro' => self::COPY[$this->locale]['intro'],
-            'demoNote' => self::COPY[$this->locale]['demoNote'],
+            'heading' => $pick('heading', 'h1'),
+            'intro' => $pick('intro', 'intro'),
+            'demoNote' => ($overrides['showDemoNote'] ?? true) ? self::COPY[$this->locale]['demoNote'] : '',
             'uiHome' => $this->uiHome(),
-            'ctaTitle' => self::COPY[$this->locale]['ctaTitle'],
-            'ctaBody' => self::COPY[$this->locale]['ctaBody'],
-            'ctaButton' => self::COPY[$this->locale]['ctaButton'],
+            'ctaTitle' => $pick('ctaTitle', 'ctaTitle'),
+            'ctaBody' => $pick('ctaBody', 'ctaBody'),
+            'ctaButton' => $pick('ctaButton', 'ctaButton'),
         ];
     }
 

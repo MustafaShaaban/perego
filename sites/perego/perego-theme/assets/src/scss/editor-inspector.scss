@@ -1,0 +1,123 @@
+/**
+ * Perego block Inspector design system (spec 021).
+ *
+ * Styles the shared `.perego-editor-*` primitives (perego-site: LanguagePair, LinkControl,
+ * LabeledRepeater, RecordPicker, MediaField, RepeaterControls). The Inspector sidebar renders OUTSIDE the
+ * editor canvas iframe, so the theme's `add_editor_style('main.css')` never reaches it — this sheet is
+ * compiled to `assets/css/editor-inspector.css` and enqueued separately via `enqueue_block_editor_assets`
+ * (functions.php). Values here are WordPress editor-chrome UI tones (neutral grays), NOT the public
+ * theme.json design tokens — this is admin chrome, not front-end output.
+ */
+
+$perego-editor-border: #e0e0e0;
+$perego-editor-muted: #757575;
+$perego-editor-surface: #fff;
+$perego-editor-surface-alt: #f6f7f7;
+
+.perego-editor-help {
+	margin: 4px 0 0;
+	color: $perego-editor-muted;
+	font-size: 12px;
+	font-style: italic;
+}
+
+/* Bilingual paired inputs -------------------------------------------------- */
+.perego-editor-langpair {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	& + & {
+		margin-block-start: 16px;
+	}
+
+	&__label {
+		margin: 0;
+		font-weight: 600;
+	}
+}
+
+/* A single label + URL link row ------------------------------------------- */
+.perego-editor-linkcontrol {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* Card-styled editable lists ---------------------------------------------- */
+.perego-editor-repeater {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+
+	&__item {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px;
+		border: 1px solid $perego-editor-border;
+		border-radius: 4px;
+		background: $perego-editor-surface;
+	}
+
+	&__actions {
+		flex-wrap: wrap;
+		padding-block-start: 4px;
+		border-block-start: 1px solid $perego-editor-surface-alt;
+	}
+
+	&__add {
+		align-self: flex-start;
+	}
+}
+
+/* Record picker (choose by title, no raw IDs) ----------------------------- */
+.perego-editor-picker {
+	display: flex;
+	flex-direction: column;
+
+	&__heading {
+		margin: 12px 0 4px;
+		font-weight: 600;
+	}
+
+	&__row {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		padding: 6px 0;
+		border-block-end: 1px solid $perego-editor-surface-alt;
+	}
+
+	&__title {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__actions {
+		display: inline-flex;
+		flex: none;
+		gap: 2px;
+	}
+}
+
+/* Media field -------------------------------------------------------------- */
+.perego-editor-media-field {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&__label {
+		margin: 0;
+		font-weight: 600;
+	}
+
+	img {
+		max-inline-size: 100%;
+		height: auto;
+		border: 1px solid $perego-editor-border;
+		border-radius: 4px;
+	}
+}

@@ -112,3 +112,47 @@ it('prefers the editor-set En/Ar heading/seeAll block attribute over the seed, p
         ->and($htmlEn)->toContain('See All Services')
         ->and($htmlAr)->toContain('كيف يمكننا المساعدة')->not->toContain('خدمات يمكننا مساعدتك بها');
 });
+
+it('uses the manually ordered Service selection when the composer is set to manual', function () {
+    $service = new WP_Post();
+    $service->ID = 51;
+    $service->post_type = \PeregoSite\PostTypes\ServicePostType::POST_TYPE;
+    $service->post_status = 'publish';
+
+    Functions\when('get_post')->alias(fn (int $id) => $id === 51 ? $service : null);
+    Functions\when('get_post_meta')->alias(function (int $id, string $key) {
+        return match ($key) {
+            \PeregoSite\PostTypes\ServicePostType::META_SERVICE_SLUG => 'website-making',
+            \PeregoSite\PostTypes\ServicePostType::META_TEASER_LABEL => 'Web experiences',
+            default => '',
+        };
+    });
+
+    $html = renderServicesTeaser('en', [
+        'servicesMode' => 'manual',
+        'serviceOrder' => [51],
+    ]);
+
+    expect(substr_count($html, 'class="service-card reveal"'))->toBe(1)
+        ->and($html)->toContain('Web experiences')
+        ->and($html)->toContain('/services/website-making')
+        ->and($html)->not->toContain('/services/video-editing');
+});
+
+it('places manual Services before the automatic cards in hybrid mode', function () {
+    $service = new WP_Post();
+    $service->ID = 51;
+    $service->post_type = \PeregoSite\PostTypes\ServicePostType::POST_TYPE;
+    $service->post_status = 'publish';
+
+    Functions\when('get_post')->alias(fn (int $id) => $id === 51 ? $service : null);
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key) => $key === \PeregoSite\PostTypes\ServicePostType::META_SERVICE_SLUG ? 'website-making' : '');
+
+    $html = renderServicesTeaser('en', [
+        'servicesMode' => 'hybrid',
+        'serviceOrder' => [51],
+    ]);
+
+    expect(strpos($html, '/services/website-making'))->toBeLessThan(strpos($html, '/services/video-editing'))
+        ->and(substr_count($html, '/services/website-making'))->toBe(1);
+});

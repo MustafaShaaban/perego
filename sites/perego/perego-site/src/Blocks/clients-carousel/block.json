@@ -18,7 +18,14 @@
 		"corporateHeadingAr": { "type": "string", "default": "" },
 		"corporateSubtitleAr": { "type": "string", "default": "" },
 		"individualHeadingAr": { "type": "string", "default": "" },
-		"individualSubtitleAr": { "type": "string", "default": "" }
+		"individualSubtitleAr": { "type": "string", "default": "" },
+		"corporateMode": { "type": "string", "default": "automatic" },
+		"corporateOrder": { "type": "array", "default": [] },
+		"corporateExcludeIds": { "type": "array", "default": [] },
+		"individualMode": { "type": "string", "default": "automatic" },
+		"individualOrder": { "type": "array", "default": [] },
+		"individualExcludeIds": { "type": "array", "default": [] },
+		"showPlayIcon": { "type": "boolean", "default": true }
 	},
 	"supports": { "html": false }
 }

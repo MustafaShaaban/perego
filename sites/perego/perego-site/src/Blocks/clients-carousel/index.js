@@ -1,68 +1,129 @@
 /**
- * Perego clients-carousel block — editor registration. The four section headings
- * (corporate/individual title + subtitle) are RichText-editable directly in the canvas (spec 020
- * round 4). This block instance lives in the shared `front-page.html` FSE template (not per-language
- * post content), so — matching `footer-careers`' already-proven pattern for the same problem — each
- * heading is edited as an En/Ar pair in one view; `ClientsCarouselRenderer` picks the current-locale
- * variant at render time. The client cards themselves stay a CPT-driven preview note, since they come
- * from many Client posts, not this one block instance (see DECISIONS.md).
+ * Perego clients-carousel block — editor registration (spec 021 C6 / T015; DECISIONS 2026-07-22).
+ *
+ * The client cards are DYNAMIC — a projection of many published `perego_client` posts (with their own
+ * logos), not content this one block instance owns — so per the static-vs-dynamic rule the canvas keeps a
+ * `ServerSideRender` preview of the real carousel rather than a hand-rebuilt skeleton. What changes for
+ * spec 021 is the editing surface: the four section headings (corporate/individual title + subtitle, En/Ar)
+ * and the automatic/manual/hybrid client composer now live in the Inspector on the shared `../../Editor`
+ * primitives (`PanelSection`, `LanguagePair`, `RecordPicker`) — the SSR preview updates live as they change.
+ * Server-rendered (save returns null); the scroll-snap track + arrows are wired by view.js.
  */
 import { registerBlockType } from '@wordpress/blocks';
-import { useBlockProps, RichText } from '@wordpress/block-editor';
+import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
+import { SelectControl, TextareaControl, ToggleControl } from '@wordpress/components';
+import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
+import ServerSideRender from '@wordpress/server-side-render';
+import { LanguagePair } from '../../Editor/LanguagePair';
+import { PanelSection } from '../../Editor/PanelSection';
+import { RecordPicker } from '../../Editor/RecordPicker';
 import metadata from './block.json';
 import './style.scss';
 
-const SEED_EN = {
-	corporateHeadingEn: 'Corporate Clients',
-	corporateSubtitleEn: "Organizations and companies we've collaborated with on professional projects.",
-	individualHeadingEn: 'Individual Clients',
-	individualSubtitleEn: "Professionals and individuals we've worked with.",
+const SEED = {
+	corporate: {
+		headingEn: 'Corporate Clients',
+		subtitleEn: "Organizations and companies we've collaborated with on professional projects.",
+		headingAr: 'عملاء الشركات',
+		subtitleAr: 'مؤسسات وشركات تعاونّا معها في مشاريع احترافية.',
+	},
+	individual: {
+		headingEn: 'Individual Clients',
+		subtitleEn: "Professionals and individuals we've worked with.",
+		headingAr: 'عملاء أفراد',
+		subtitleAr: 'محترفون وأفراد عملنا معهم.',
+	},
 };
 
-const SEED_AR = {
-	corporateHeadingAr: 'عملاء الشركات',
-	corporateSubtitleAr: 'مؤسسات وشركات تعاونّا معها في مشاريع احترافية.',
-	individualHeadingAr: 'عملاء أفراد',
-	individualSubtitleAr: 'محترفون وأفراد عملنا معهم.',
-};
+const clientLabel = ( client ) => client.title?.rendered || __( 'Untitled Client', 'perego-site' );
 
-function LangGroup( { dir, seed, attributes, setAttributes, headingKey, subtitleKey, note } ) {
+function ClientComposer( { type, title, clients, attributes, setAttributes } ) {
+	const seed = SEED[ type ];
+	const mode = attributes[ `${ type }Mode` ] || 'automatic';
+	const order = attributes[ `${ type }Order` ] || [];
+	const excluded = attributes[ `${ type }ExcludeIds` ] || [];
+	const emptyLabel = __( 'No published clients are available for this client type yet.', 'perego-site' );
+
 	return (
-		<fieldset className="perego-clients-carousel__lang" dir={ dir }>
-			<RichText tagName="h2" className="section-title"
-				value={ attributes[ headingKey ] || seed[ headingKey ] }
-				onChange={ ( value ) => setAttributes( { [ headingKey ]: value } ) }
-				placeholder={ seed[ headingKey ] } />
-			<RichText tagName="p" className="section-subtitle"
-				value={ attributes[ subtitleKey ] || seed[ subtitleKey ] }
-				onChange={ ( value ) => setAttributes( { [ subtitleKey ]: value } ) }
-				placeholder={ seed[ subtitleKey ] } />
-			{ note && <p className="perego-clients-carousel__note">{ note }</p> }
-		</fieldset>
+		<PanelSection title={ title }>
+			<LanguagePair label={ __( 'Heading', 'perego-site' ) }
+				en={ attributes[ `${ type }HeadingEn` ] } ar={ attributes[ `${ type }HeadingAr` ] }
+				onChangeEn={ ( value ) => setAttributes( { [ `${ type }HeadingEn` ]: value } ) }
+				onChangeAr={ ( value ) => setAttributes( { [ `${ type }HeadingAr` ]: value } ) }
+				placeholderEn={ seed.headingEn } placeholderAr={ seed.headingAr } />
+			<LanguagePair label={ __( 'Subtitle', 'perego-site' ) } Control={ TextareaControl }
+				en={ attributes[ `${ type }SubtitleEn` ] } ar={ attributes[ `${ type }SubtitleAr` ] }
+				onChangeEn={ ( value ) => setAttributes( { [ `${ type }SubtitleEn` ]: value } ) }
+				onChangeAr={ ( value ) => setAttributes( { [ `${ type }SubtitleAr` ]: value } ) }
+				placeholderEn={ seed.subtitleEn } placeholderAr={ seed.subtitleAr } />
+			<SelectControl __nextHasNoMarginBottom label={ __( 'Card source', 'perego-site' ) } value={ mode }
+				options={ [
+					{ label: __( 'Automatic (all published clients)', 'perego-site' ), value: 'automatic' },
+					{ label: __( 'Manual (selected clients only)', 'perego-site' ), value: 'manual' },
+					{ label: __( 'Hybrid (selected first, then automatic)', 'perego-site' ), value: 'hybrid' },
+				] }
+				onChange={ ( value ) => setAttributes( { [ `${ type }Mode` ]: value } ) } />
+			{ mode !== 'automatic' && (
+				<RecordPicker mode="manual" records={ clients } order={ order } getLabel={ clientLabel }
+					selectedHeading={ __( 'Shown clients (in order)', 'perego-site' ) }
+					addHeading={ __( 'Add a client', 'perego-site' ) }
+					noneSelectedLabel={ __( 'No clients selected yet.', 'perego-site' ) }
+					emptyLabel={ emptyLabel }
+					onChangeOrder={ ( value ) => setAttributes( { [ `${ type }Order` ]: value } ) } />
+			) }
+			{ mode !== 'manual' && (
+				<RecordPicker mode="automatic" records={ clients } excluded={ excluded } getLabel={ clientLabel }
+					emptyLabel={ emptyLabel }
+					onChangeExcluded={ ( value ) => setAttributes( { [ `${ type }ExcludeIds` ]: value } ) } />
+			) }
+			<p className="perego-editor-help">
+				{ __( 'Each client’s tile and logo are edited on that Client’s own screen (Clients in the admin menu).', 'perego-site' ) }
+			</p>
+		</PanelSection>
 	);
 }
 
 function Edit( { attributes, setAttributes } ) {
 	const blockProps = useBlockProps( { className: 'perego-clients-carousel__editor' } );
-	const cardsNote = __( 'Client tiles/cards are managed on each Client’s own edit screen (Clients in the admin menu).', 'perego-site' );
+	const clients = useSelect(
+		( select ) => select( 'core' ).getEntityRecords( 'postType', 'perego_client', { per_page: 100, status: 'publish' } ) || [],
+		[]
+	);
+	const clientTypes = useSelect(
+		( select ) => select( 'core' ).getEntityRecords( 'taxonomy', 'perego_client_type', { per_page: 100 } ) || [],
+		[]
+	);
+	const clientsForType = ( type ) => {
+		const term = clientTypes.find( ( candidate ) => candidate.slug === type || candidate.slug?.startsWith( `${ type }-` ) );
+		return term ? clients.filter( ( client ) => client.perego_client_type?.includes( term.id ) ) : [];
+	};
 
 	return (
 		<div { ...blockProps }>
-			<fieldset className="perego-clients-carousel__lang-group">
-				<legend>{ __( 'English', 'perego-site' ) }</legend>
-				<LangGroup dir="ltr" seed={ SEED_EN } attributes={ attributes } setAttributes={ setAttributes }
-					headingKey="corporateHeadingEn" subtitleKey="corporateSubtitleEn" />
-				<LangGroup dir="ltr" seed={ SEED_EN } attributes={ attributes } setAttributes={ setAttributes }
-					headingKey="individualHeadingEn" subtitleKey="individualSubtitleEn" note={ cardsNote } />
-			</fieldset>
-			<fieldset className="perego-clients-carousel__lang-group">
-				<legend>{ __( 'Arabic', 'perego-site' ) }</legend>
-				<LangGroup dir="rtl" seed={ SEED_AR } attributes={ attributes } setAttributes={ setAttributes }
-					headingKey="corporateHeadingAr" subtitleKey="corporateSubtitleAr" />
-				<LangGroup dir="rtl" seed={ SEED_AR } attributes={ attributes } setAttributes={ setAttributes }
-					headingKey="individualHeadingAr" subtitleKey="individualSubtitleAr" note={ cardsNote } />
-			</fieldset>
+			<InspectorControls>
+				<ClientComposer type="corporate" title={ __( 'Corporate clients', 'perego-site' ) }
+					clients={ clientsForType( 'corporate' ) } attributes={ attributes } setAttributes={ setAttributes } />
+				<ClientComposer type="individual" title={ __( 'Individual clients', 'perego-site' ) }
+					clients={ clientsForType( 'individual' ) } attributes={ attributes } setAttributes={ setAttributes } />
+				<PanelSection title={ __( 'Display', 'perego-site' ) }>
+					<ToggleControl
+						__nextHasNoMarginBottom
+						label={ __( 'Show the play badge', 'perego-site' ) }
+						help={ __( 'The ▶ badge on individual client cards that open a video. Decorative only — the card still opens its video either way.', 'perego-site' ) }
+						checked={ attributes.showPlayIcon !== false }
+						onChange={ ( showPlayIcon ) => setAttributes( { showPlayIcon } ) }
+					/>
+				</PanelSection>
+			</InspectorControls>
+			<div className="perego-clients-carousel__preview" onClick={ ( event ) => {
+				// Neutralize the SSR preview's real links/buttons so a click never navigates the editor away.
+				if ( event.target.closest( 'a, button' ) ) {
+					event.preventDefault();
+				}
+			} }>
+				<ServerSideRender block={ metadata.name } attributes={ attributes } />
+			</div>
 		</div>
 	);
 }

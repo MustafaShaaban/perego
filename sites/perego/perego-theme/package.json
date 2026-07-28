@@ -4,7 +4,7 @@
 	"private": true,
 	"description": "Frontend assets for the Perego theme (Corex client site).",
 	"scripts": {
-		"styles": "sass assets/src/scss/main.scss assets/css/main.css --style=compressed --no-source-map",
+		"styles": "sass assets/src/scss/main.scss:assets/css/main.css assets/src/scss/editor-inspector.scss:assets/css/editor-inspector.css --style=compressed --no-source-map",
 		"scripts": "wp-scripts build assets/src/js/main.js --output-path=assets/js",
 		"images": "node scripts/optimize-images.mjs",
 		"build": "npm run styles && npm run scripts && npm run images",

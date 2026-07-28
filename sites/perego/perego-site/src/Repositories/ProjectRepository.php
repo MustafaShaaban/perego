@@ -11,6 +11,7 @@ namespace PeregoSite\Repositories;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\PortfolioContent;
+use PeregoSite\Content\TranslatedMeta;
 use PeregoSite\PostTypes\ProjectPostType;
 use WP_Post;
 use WP_Query;
@@ -116,13 +117,17 @@ final class ProjectRepository
      */
     public function allForGrid(PortfolioContent $content): array
     {
+        // `menu_order` first, then date. The client supplied the website portfolio in a deliberate
+        // order — their strongest work leads — and date DESC was really "whatever order the importer
+        // happened to run in". Anything never given an explicit position keeps `menu_order` 0 and so
+        // sorts ahead; that is why the tie-break is still date, and why the ordered set was numbered
+        // from 1 rather than 0 (scripts/import-portfolio-logos.php).
         $query = new WP_Query([
             'post_type' => ProjectPostType::POST_TYPE,
             'post_status' => 'publish',
             'posts_per_page' => 120,
             'no_found_rows' => true,
-            'orderby' => 'date',
-            'order' => 'DESC',
+            'orderby' => ['menu_order' => 'ASC', 'date' => 'DESC'],
         ]);
 
         return array_map(
@@ -132,7 +137,20 @@ final class ProjectRepository
     }
 
     /**
-     * @return array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}
+     * `gallerySrcs`/`videoUrl` carry the card's lightbox payload: client request 2026-07-26 replaced the
+     * per-project single page with a lightbox opened from the card, so the grid needs the same media the
+     * showcase cards already use (see ServiceSelectedWorkRenderer). `url` is kept — the archive route
+     * still resolves, nothing links to it any more.
+     *
+     * `logoUrl`/`siteUrl` carry the web-card variant: client request 2026-07-27 replaced the cropped
+     * screenshot on web-category cards with the client's logo, and the card links out to the live site
+     * instead of opening the lightbox. Both are empty for every other category.
+     *
+     * `role` is the optional contribution qualifier. It exists because one project — e& / Etisalat UAE —
+     * was a framework upgrade Perego took part in rather than a site it owned, and a portfolio has to
+     * say so. Any project can carry one; only that card sets it today.
+     *
+     * @return array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
      */
     public function toGridCard(WP_Post $post, PortfolioContent $content): array
     {
@@ -152,6 +170,10 @@ final class ProjectRepository
         $thumbUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'large') : '';
         $thumbAlt = $thumbId ? (string) get_post_meta($thumbId, '_wp_attachment_image_alt', true) : '';
 
+        $logoId  = $this->logoId($post);
+        $logoUrl = $logoId ? (string) wp_get_attachment_image_url($logoId, 'large') : '';
+        $logoAlt = $logoId ? (string) get_post_meta($logoId, '_wp_attachment_image_alt', true) : '';
+
         return [
             'title' => get_the_title($post),
             'url' => (string) get_permalink($post),
@@ -160,7 +182,34 @@ final class ProjectRepository
             'excerpt' => $excerpt,
             'thumbUrl' => $thumbUrl,
             'thumbAlt' => $thumbAlt !== '' ? $thumbAlt : get_the_title($post),
+            'gallerySrcs' => array_column($this->galleryFor($post), 'src'),
+            'videoUrl' => $this->videoUrlFor($post),
+            'logoUrl' => $logoUrl,
+            'logoAlt' => $logoAlt !== '' ? $logoAlt : get_the_title($post),
+            'siteUrl' => $this->metaWithEnFallback($post, ProjectPostType::META_SITE_URL),
+            'role' => $this->metaWithEnFallback($post, ProjectPostType::META_ROLE),
         ];
+    }
+
+    /**
+     * The project's logo attachment id, falling back to its linked EN translation's (AR projects carry
+     * no media of their own — see enTranslationId()).
+     *
+     * Deliberately NOT routed through metaWithEnFallback(): that helper treats only `''` as empty, but
+     * this key is registered as an integer defaulting to `0`, so an unset AR value arrives as the
+     * non-empty string `"0"` and the English fallback would never fire. Same shape as the featured-image
+     * fallback in toGridCard() above.
+     */
+    private function logoId(WP_Post $post): int
+    {
+        $logoId = (int) get_post_meta($post->ID, ProjectPostType::META_LOGO, true);
+        if ($logoId !== 0) {
+            return $logoId;
+        }
+
+        $enId = $this->enTranslationId($post);
+
+        return $enId === 0 ? 0 : (int) get_post_meta($enId, ProjectPostType::META_LOGO, true);
     }
 
     /**
@@ -178,12 +227,20 @@ final class ProjectRepository
         $shotUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'large') : '';
         $fullUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'full') : '';
 
+        $logoId = $this->logoId($post);
+        $logoUrl = $logoId ? (string) wp_get_attachment_image_url($logoId, 'large') : '';
+        $logoAlt = $logoId ? (string) get_post_meta($logoId, '_wp_attachment_image_alt', true) : '';
+
         return [
             'title' => get_the_title($post),
             'shotUrl' => $shotUrl,
             'fullUrl' => $fullUrl !== '' ? $fullUrl : $shotUrl,
             'siteType' => ProjectPostType::sanitizeSiteType($this->metaWithEnFallback($post, ProjectPostType::META_SITE_TYPE)),
             'siteUrl' => $this->metaWithEnFallback($post, ProjectPostType::META_SITE_URL),
+            // The showcase leads with the brand mark now, same as the home grid; the screenshot is
+            // only the fallback for a project that has one and no logo yet.
+            'logoUrl' => $logoUrl,
+            'logoAlt' => $logoAlt,
         ];
     }
 
@@ -196,17 +253,16 @@ final class ProjectRepository
         return $this->metaWithEnFallback($post, ProjectPostType::META_VIDEO_URL);
     }
 
-    /** A post's own meta value, falling back to its linked EN translation's value when empty. */
+    /**
+     * A post's own meta value, falling back to its linked EN translation's value when empty.
+     *
+     * Delegates to the shared {@see TranslatedMeta}: this rule was private here until the Arabic
+     * clients carousel turned out to need the identical fallback (its cards rendered inert because
+     * Polylang does not copy meta to translations). One implementation, two callers.
+     */
     private function metaWithEnFallback(WP_Post $post, string $key): string
     {
-        $value = (string) get_post_meta($post->ID, $key, true);
-        if ($value !== '') {
-            return $value;
-        }
-
-        $enId = $this->enTranslationId($post);
-
-        return $enId === 0 ? '' : (string) get_post_meta($enId, $key, true);
+        return TranslatedMeta::string($post, $key);
     }
 
     /**
@@ -216,13 +272,7 @@ final class ProjectRepository
      */
     private function enTranslationId(WP_Post $post): int
     {
-        if (! function_exists('pll_get_post')) {
-            return 0;
-        }
-
-        $enId = (int) pll_get_post($post->ID, 'en');
-
-        return ($enId === 0 || $enId === $post->ID) ? 0 : $enId;
+        return TranslatedMeta::englishId($post);
     }
 
     /**

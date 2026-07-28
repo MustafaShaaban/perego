@@ -33,6 +33,7 @@ final class MessageBuilder
     /** @var list<string> */
     private array $bcc = [];
     private ?string $replyTo = null;
+    private ?string $from = null;
     private ?string $subject = null;
     private ?string $body = null;
     private ?string $templateName = null;
@@ -95,6 +96,14 @@ final class MessageBuilder
         return $this;
     }
 
+    /** Send this message from a specific mailbox instead of the configured one. */
+    public function from(string $address): self
+    {
+        $this->from = $address;
+
+        return $this;
+    }
+
     public function subject(string $subject): self
     {
         $this->subject = $subject;
@@ -153,6 +162,6 @@ final class MessageBuilder
     {
         $to = $this->resolver->resolve($this->recipients, new MailContext($this->context))['valid'];
 
-        return new EmailMessage($to, $this->cc, $this->bcc, $this->replyTo, $subject, $body);
+        return new EmailMessage($to, $this->cc, $this->bcc, $this->replyTo, $subject, $body, [], $this->from);
     }
 }

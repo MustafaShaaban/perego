@@ -11,6 +11,8 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Services\LanguageService;
+use PeregoSite\PostTypes\ServicePostType;
+use PeregoSite\Theme\SiteRoutes;
 
 /**
  * Server-renders the perego/site-header block: logo, primary nav (with the Services dropdown),
@@ -29,6 +31,8 @@ use PeregoSite\Services\LanguageService;
  */
 final class SiteHeaderRenderer
 {
+    private ?LinkTarget $linkTarget = null;
+
     public function __construct(private readonly LanguageService $languageService)
     {
     }
@@ -56,7 +60,9 @@ final class SiteHeaderRenderer
                     ['label' => __('Website Making', 'perego-site'), 'href' => '/services/website-making'],
                 ],
             ],
-            ['label' => __('Work', 'perego-site'), 'href' => '/work'],
+            // Client request 2026-07-26: Work is a home-page section under Clients, not its own page.
+            // The archive route still exists and still works — nothing links to it any more.
+            ['label' => __('Work', 'perego-site'), 'href' => '/#work'],
             ['label' => __('Journal', 'perego-site'), 'href' => '/journal'],
             ['label' => __('Clients', 'perego-site'), 'href' => '/#clients'],
             // The handoff header's Contact Us is a same-page anchor to the footer (every page's
@@ -77,13 +83,137 @@ final class SiteHeaderRenderer
     {
         $suffix = $locale === 'ar' ? 'Ar' : 'En';
         $raw = (string) ($attributes['navItems' . $suffix] ?? '');
-        if ($raw === '') {
-            return $this->seedNavItems();
+        $decoded = $raw !== '' ? json_decode($raw, true) : null;
+        $items = is_array($decoded) && $decoded !== [] ? $decoded : $this->seedNavItems();
+
+        return $this->applyServicesMenu($items, $attributes, $locale);
+    }
+
+    /**
+     * Replaces only the Services dropdown when the editor opts into a Service-post-backed menu.
+     * Manual mode with no selected records deliberately retains the proven legacy dropdown.
+     *
+     * @param list<array{label:string,href:string,children?:list<array{label:string,href:string}>}> $items
+     * @param array<string,mixed> $attributes
+     * @return list<array{label:string,href:string,children?:list<array{label:string,href:string}>}>
+     */
+    private function applyServicesMenu(array $items, array $attributes, string $locale): array
+    {
+        $mode = (string) ($attributes['servicesMenuMode'] ?? 'manual');
+        if (! in_array($mode, ['automatic', 'manual'], true)) {
+            return $items;
         }
 
-        $decoded = json_decode($raw, true);
+        $configuredIds = $this->positiveIds($attributes['servicesMenuOrder'] ?? []);
+        $excludedIds = $this->positiveIds($attributes['servicesMenuExcludeIds'] ?? []);
+        if ($mode === 'manual' && $configuredIds === []) {
+            return $items;
+        }
 
-        return is_array($decoded) && $decoded !== [] ? $decoded : $this->seedNavItems();
+        $services = $mode === 'automatic'
+            ? $this->publishedServices($locale)
+            : $this->selectedServices($configuredIds, $locale);
+        $services = array_values(array_filter(
+            $services,
+            static fn (array $service): bool => array_intersect($service['ids'], $excludedIds) === []
+        ));
+        if ($services === []) {
+            return $items;
+        }
+
+        foreach ($items as $index => $item) {
+            if (($item['href'] ?? '') !== '/#services') {
+                continue;
+            }
+            $items[$index]['children'] = array_map(
+                static fn (array $service): array => ['label' => $service['label'], 'href' => $service['href'], 'absoluteUrl' => $service['absoluteUrl']],
+                $services
+            );
+            break;
+        }
+
+        return $items;
+    }
+
+    /** @param mixed $ids @return list<int> */
+    private function positiveIds($ids): array
+    {
+        if (! is_array($ids)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(static fn ($id): int => abs((int) $id), $ids))));
+    }
+
+    /** @return list<array{sourceId:int,ids:list<int>,label:string,href:string,absoluteUrl:string}> */
+    private function publishedServices(string $locale): array
+    {
+        if (! function_exists('get_posts')) {
+            return [];
+        }
+
+        $posts = get_posts([
+            'post_type' => ServicePostType::POST_TYPE,
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'orderby' => ['menu_order' => 'ASC', 'title' => 'ASC'],
+            'suppress_filters' => false,
+            'lang' => $locale,
+        ]);
+
+        return $this->servicesFromPosts(is_array($posts) ? $posts : []);
+    }
+
+    /** @param list<int> $ids @return list<array{sourceId:int,ids:list<int>,label:string,href:string,absoluteUrl:string}> */
+    private function selectedServices(array $ids, string $locale): array
+    {
+        if (! function_exists('get_post')) {
+            return [];
+        }
+
+        $posts = [];
+        $sourceIdsByPostId = [];
+        foreach ($ids as $sourceId) {
+            $localizedId = function_exists('pll_get_post') ? (int) pll_get_post($sourceId, $locale) : $sourceId;
+            $post = get_post($localizedId ?: $sourceId);
+            if ($post instanceof \WP_Post && $post->post_type === ServicePostType::POST_TYPE && $post->post_status === 'publish') {
+                $posts[] = $post;
+                $sourceIdsByPostId[$post->ID] = $sourceId;
+            }
+        }
+
+        return $this->servicesFromPosts($posts, $sourceIdsByPostId);
+    }
+
+    /**
+     * @param list<\WP_Post> $posts
+     * @param array<int,int> $sourceIdsByPostId
+     * @return list<array{sourceId:int,ids:list<int>,label:string,href:string,absoluteUrl:string}>
+     */
+    private function servicesFromPosts(array $posts, array $sourceIdsByPostId = []): array
+    {
+        $services = [];
+        foreach ($posts as $post) {
+            if (! $post instanceof \WP_Post) {
+                continue;
+            }
+            $absoluteUrl = function_exists('get_permalink') ? (string) get_permalink($post) : '';
+            if ($absoluteUrl === '') {
+                continue;
+            }
+            $path = (string) parse_url($absoluteUrl, PHP_URL_PATH);
+            $englishId = function_exists('pll_get_post') ? (int) pll_get_post($post->ID, 'en') : 0;
+            $sourceId = $sourceIdsByPostId[$post->ID] ?? $post->ID;
+            $services[] = [
+                'sourceId' => $sourceId,
+                'ids' => array_values(array_unique(array_filter([$post->ID, $englishId, $sourceId]))),
+                'label' => (string) get_the_title($post),
+                'href' => $path !== '' ? $path : '/',
+                'absoluteUrl' => $absoluteUrl,
+            ];
+        }
+
+        return $services;
     }
 
     /** @param array<string,string> $attributes */
@@ -114,11 +244,18 @@ final class SiteHeaderRenderer
         $html .= '<nav id="mainNav" class="main-nav" '
             . 'aria-label="' . esc_attr__('Primary', 'perego-site') . '" '
             . 'data-wp-on--keydown="actions.handleMenuKeydown">';
+        // Panel-only logo + CTA (client request 2026-07-26: the mobile menu needs both). Both are
+        // display:none above the nav breakpoint, and the header-bar CTA is hidden below it, so exactly
+        // one of each is ever rendered to a user or to assistive tech. The logo here is decorative —
+        // the panel already lists Home, so a second "Perego — home" link would be redundant noise.
+        $html .= '<div class="main-nav__mobile-head" aria-hidden="true">'
+            . '<img src="' . esc_url($logoUrl) . '" alt="" class="logo__img" />'
+            . '</div>';
         $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath, $this->navItems($attributes, $locale)) . '</ul>';
+        $html .= '<div class="main-nav__mobile-cta">' . $this->renderCta($attributes, $locale) . '</div>';
         $html .= '</nav>';
 
-        $html .= '<a class="btn btn--accent header-cta" href="' . esc_url($driver->localizedUrl('/contact')) . '">'
-            . esc_html__('Start a Project', 'perego-site') . '</a>';
+        $html .= $this->renderCta($attributes, $locale);
 
         $html .= $this->renderLanguageToggle($driver->currentLocale());
 
@@ -135,6 +272,39 @@ final class SiteHeaderRenderer
         return $html;
     }
 
+    /**
+     * The "Start a Project" CTA. Label is an editor-set En/Ar pair (bilingual text), defaulting to the
+     * handoff wording; the target is a single editor-set path shared by both locales, defaulting to the
+     * contact route. An empty label/URL keeps the exact prior output, so unedited headers are unchanged.
+     *
+     * @param array<string,mixed> $attributes
+     */
+    private function renderCta(array $attributes, string $locale): string
+    {
+        $suffix = $locale === 'ar' ? 'Ar' : 'En';
+        $label = trim((string) ($attributes['ctaLabel' . $suffix] ?? ''));
+        if ($label === '') {
+            $label = __('Start a Project', 'perego-site');
+        }
+
+        // spec 021 T036: the CTA may now name a page instead of a URL. `ctaUrl` stays the custom-URL
+        // value, so a header saved before the picker existed resolves through exactly the old path.
+        $cta = LinkTarget::fromAttributes($attributes);
+
+        return '<a class="btn btn--accent header-cta" href="' . esc_url($this->linkTarget()->href($cta, SiteRoutes::START_PROJECT)) . '"'
+            . $this->linkTarget()->targetAttributes($cta) . '>'
+            . esc_html($label) . '</a>';
+    }
+
+    /**
+     * The shared link resolver, built from this renderer's language driver. Held lazily because the
+     * driver is resolved per request and a renderer may render several links.
+     */
+    private function linkTarget(): LinkTarget
+    {
+        return $this->linkTarget ??= new LinkTarget($this->languageService->driver());
+    }
+
     /** @param list<array{label: string, href: string, children?: list<array{label: string, href: string}>}> $items */
     private function renderNavItems(string $currentPath, array $items): string
     {
@@ -148,10 +318,12 @@ final class SiteHeaderRenderer
             $ariaCurrent = $isActive ? ' aria-current="page"' : '';
             // A pure fragment ("#contact") is a same-page anchor and language-neutral — localizing
             // it would turn it into an absolute homepage URL and break the anchor on every subpage.
-            $url = str_starts_with($item['href'], '#') ? $item['href'] : $driver->localizedUrl($item['href']);
+            // Anything else goes through LinkTarget, which also resolves a picked page (spec 021 T036).
+            $url = $this->linkTarget()->href($item, $item['href'] ?? '/');
+            $newTab = $this->linkTarget()->targetAttributes($item);
 
             $html .= '<li' . ($classes !== '' ? ' class="' . esc_attr($classes) . '"' : '') . ($hasChildren ? ' data-wp-interactive="perego/site-header"' : '') . '>';
-            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url($url) . '"' . $ariaCurrent
+            $html .= '<a class="main-nav__link' . ($isActive ? ' is-active' : '') . '" href="' . esc_url($url) . '"' . $ariaCurrent . $newTab
                 . ($hasChildren ? ' aria-haspopup="true" aria-expanded="false" data-wp-on--click="actions.toggleMobileDropdown"' : '') . '>'
                 . esc_html($item['label'])
                 . ($hasChildren ? ' <svg class="nav-caret" width="12" height="8" viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '')
@@ -160,7 +332,11 @@ final class SiteHeaderRenderer
             if ($hasChildren) {
                 $html .= '<ul class="dropdown">';
                 foreach ($item['children'] as $child) {
-                    $html .= '<li><a href="' . esc_url($driver->localizedUrl($child['href'])) . '">'
+                    // A Services-menu child resolved from a real Service post already carries its
+                    // absolute URL; anything else is an editor-configured link.
+                    $childUrl = (string) ($child['absoluteUrl'] ?? '');
+                    $childUrl = $childUrl !== '' ? $childUrl : $this->linkTarget()->href($child, $child['href'] ?? '/');
+                    $html .= '<li><a href="' . esc_url($childUrl) . '"' . $this->linkTarget()->targetAttributes($child) . '>'
                         . esc_html($child['label']) . '</a></li>';
                 }
                 $html .= '</ul>';

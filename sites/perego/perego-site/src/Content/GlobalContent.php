@@ -95,12 +95,16 @@ final class GlobalContent
                 'portfolioPlaceholder' => 'Put your Portfolio/website link',
                 'cv' => 'CV',
                 'cvHint' => 'Upload your CV here',
+                // The drop zone says what to do; this says what will be accepted. Stating the
+                // limit up front is cheaper for the applicant than a rejection after the upload.
+                'cvConstraint' => 'PDF, DOC or DOCX · up to 10 MB',
                 'submit' => 'Apply now',
                 'uploading' => 'Uploading your CV…',
                 'submitting' => 'Sending your application…',
                 'success' => 'Thanks! Your application is in — we\'ll be in touch if there\'s a fit.',
                 'nameRequired' => 'Please enter your name.',
                 'emailInvalid' => 'Please enter a valid email address.',
+                'portfolioInvalid' => 'Please enter a full link, starting with https://',
                 'cvRequired' => 'Please attach your CV.',
                 'formHasErrors' => 'Please fix the highlighted fields and try again.',
                 'wrong_type' => 'Please attach a PDF, DOC or DOCX file.',
@@ -184,12 +188,14 @@ final class GlobalContent
                 'portfolioPlaceholder' => 'أدخل رابط ملف أعمالك أو موقعك',
                 'cv' => 'السيرة الذاتية',
                 'cvHint' => 'ارفع سيرتك الذاتية هنا',
+                'cvConstraint' => 'PDF أو DOC أو DOCX · حتى 10 ميجابايت',
                 'submit' => 'قدّم الآن',
                 'uploading' => 'جارٍ رفع سيرتك الذاتية…',
                 'submitting' => 'جارٍ إرسال طلبك…',
                 'success' => 'شكرًا! تم استلام طلبك — سنتواصل معك إن كان هناك تناسب.',
                 'nameRequired' => 'يرجى إدخال اسمك.',
                 'emailInvalid' => 'يرجى إدخال بريد إلكتروني صحيح.',
+                'portfolioInvalid' => 'يرجى إدخال رابط كامل يبدأ بـ https://',
                 'cvRequired' => 'يرجى إرفاق سيرتك الذاتية.',
                 'formHasErrors' => 'يرجى تصحيح الحقول المظللة والمحاولة مرة أخرى.',
                 'wrong_type' => 'يرجى إرفاق ملف PDF أو DOC أو DOCX.',
@@ -206,9 +212,30 @@ final class GlobalContent
     ];
 
     /** @return array<string, string> */
-    public function journal(): array
+    /**
+     * The journal-archive copy, with the journal-header block's editable overrides applied
+     * (spec 021 C12, same seam as `PortfolioContent::gridStrings()`).
+     *
+     * Only a non-empty override wins, so clearing a field in the editor restores the seed rather than
+     * blanking the page, and an unedited block renders exactly what it always did. `minRead` stays
+     * seed-only — it is a `sprintf` format string belonging to the translation catalogue, not editorial
+     * copy, and an editor who dropped its `%d` would break every reading estimate on the site.
+     *
+     * @param array{h1?: string, lead?: string} $overrides
+     * @return array<string, string>
+     */
+    public function journal(array $overrides = []): array
     {
-        return self::COPY[$this->locale]['journal'];
+        $copy = self::COPY[$this->locale]['journal'];
+
+        foreach (['h1', 'lead'] as $key) {
+            $value = $overrides[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                $copy[$key] = $value;
+            }
+        }
+
+        return $copy;
     }
 
     /** The localized "Home" breadcrumb root label (handoff `ui.breadcrumbHome`). */

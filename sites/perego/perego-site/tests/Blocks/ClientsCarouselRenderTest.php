@@ -355,3 +355,101 @@ it('queries the Arabic-language taxonomy term, not the English one, on the Arabi
     expect(substr_count($html, 'class="corp-card"'))->toBe(1)
         ->and(substr_count($html, 'class="indiv-card"'))->toBe(1);
 });
+
+it('uses the manually ordered corporate client selection when requested', function () {
+    $client = perego_client_post(91);
+    $client->post_type = ClientPostType::POST_TYPE;
+    $client->post_status = 'publish';
+
+    Functions\when('get_post')->alias(fn (int $id) => $id === 91 ? $client : null);
+    Functions\when('get_the_title')->alias(fn (WP_Post $post) => $post->ID === 91 ? 'Chosen client' : '');
+
+    $html = renderClients('en', [
+        'corporateMode' => 'manual',
+        'corporateOrder' => [91],
+        'individualMode' => 'manual',
+        'individualOrder' => [],
+    ]);
+
+    expect(substr_count($html, 'class="corp-card"'))->toBe(1)
+        ->and($html)->toContain('aria-label="Chosen client"')
+        ->and(substr_count($html, 'class="indiv-card"'))->toBe(0);
+});
+
+/*
+ * Polylang does not copy post meta to translations, so an Arabic client post has its own EMPTY meta
+ * while the English record holds the real values. The renderer used to read the translated post
+ * directly, so on the live Arabic homepage all three real client cards rendered as inert
+ * `<div class="indiv-card">` — they looked correct and did nothing when clicked, while the identical
+ * English cards were `<button data-video>` lightbox triggers. These pin the English fallback.
+ */
+
+it('resolves an Arabic client video from its linked English record, so the AR card opens the lightbox', function () {
+    // Client 21 is the AR post (no meta of its own); 210 is its linked English translation.
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 21 && $locale === 'en' ? 210 : 0);
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key) => match (true) {
+        $id === 210 && $key === ClientPostType::META_VIDEO_URL => 'https://www.youtube.com/embed/from-english',
+        // Editorial copy on the English record — must NOT be inherited (see the next test).
+        $id === 210 && $key === ClientPostType::META_SUB => 'English subtitle',
+        default => '',
+    });
+
+    $html = renderClients();
+
+    expect($html)->toContain('<button type="button" class="indiv-card" data-video="https://www.youtube.com/embed/from-english"')
+        // The exact defect: no inert div is left behind for a client whose EN record has a video.
+        ->and($html)->not->toContain('<div class="indiv-card" role="listitem">');
+});
+
+it('does NOT inherit the English subtitle or statistic — media crosses languages, editorial copy does not', function () {
+    // The first cut of this fix pulled sub/stat through the same fallback, which printed the English
+    // wording ("intertainment show", live on the EN records) onto Arabic cards — the very language
+    // leak this pass removes. An untranslated card shows no subtitle and still opens its video.
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 21 && $locale === 'en' ? 210 : 0);
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key) => match (true) {
+        $id === 210 && $key === ClientPostType::META_VIDEO_URL => 'https://www.youtube.com/embed/from-english',
+        $id === 210 && $key === ClientPostType::META_SUB => 'intertainment show',
+        $id === 210 && $key === ClientPostType::META_STAT => '<strong>+1M</strong> views',
+        default => '',
+    });
+
+    $html = renderClients();
+
+    expect($html)->toContain('data-video="https://www.youtube.com/embed/from-english"')
+        ->and($html)->not->toContain('intertainment show')
+        ->and($html)->not->toContain('+1M');
+});
+
+it('prefers the translated post own meta over the English record when it has its own', function () {
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 21 && $locale === 'en' ? 210 : 0);
+    Functions\when('get_post_meta')->alias(fn (int $id, string $key) => match (true) {
+        $id === 21 && $key === ClientPostType::META_VIDEO_URL => 'https://www.youtube.com/embed/arabic-own',
+        $id === 210 && $key === ClientPostType::META_VIDEO_URL => 'https://www.youtube.com/embed/from-english',
+        default => '',
+    });
+
+    $html = renderClients();
+
+    expect($html)->toContain('embed/arabic-own')
+        ->and($html)->not->toContain('embed/from-english');
+});
+
+it('falls back to the English featured image when a translated client has none', function () {
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 21 && $locale === 'en' ? 210 : 0);
+    Functions\when('has_post_thumbnail')->alias(fn (int $id) => $id === 210);
+    Functions\when('get_the_post_thumbnail')->alias(
+        fn (int $id) => $id === 210 ? '<img src="https://perego.local/uploads/en-logo.png" alt="" />' : ''
+    );
+
+    expect(renderClients())->toContain('en-logo.png');
+});
+
+it('stays inert when neither the translation nor its English record has a video', function () {
+    Functions\when('pll_get_post')->alias(fn (int $id, string $locale) => $id === 21 && $locale === 'en' ? 210 : 0);
+    Functions\when('get_post_meta')->justReturn('');
+
+    $html = renderClients();
+
+    expect($html)->toContain('<div class="indiv-card"')
+        ->and($html)->not->toContain('data-video=');
+});

@@ -12,12 +12,14 @@ defined('ABSPATH') || exit;
 
 use PeregoSite\Blocks\HeroSliderRenderer;
 use PeregoSite\Blocks\HomeAboutBgRenderer;
+use PeregoSite\Blocks\HomeAboutRenderer;
 use PeregoSite\Blocks\PortfolioGridRenderer;
 use PeregoSite\Blocks\PostBreadcrumbRenderer;
 use PeregoSite\Blocks\PostReadingTimeRenderer;
 use PeregoSite\Blocks\ClientsCarouselRenderer;
 use PeregoSite\Blocks\ContactServiceChooserRenderer;
 use PeregoSite\Blocks\JournalHeaderRenderer;
+use PeregoSite\Blocks\LocalizedAttributes;
 use PeregoSite\Blocks\LegalTocRenderer;
 use PeregoSite\Blocks\MediaLightboxRenderer;
 use PeregoSite\Blocks\NotFoundRenderer;
@@ -37,12 +39,14 @@ use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\GlobalContent;
 use PeregoSite\Content\PortfolioContent;
 use PeregoSite\Content\ServiceContent;
+use PeregoSite\Content\ServicePortfolioSelection;
 use PeregoSite\PostTypes\ClientPostType;
 use PeregoSite\PostTypes\ProjectPostType;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Repositories\ProjectRepository;
 use PeregoSite\Seo\StructuredData;
 use PeregoSite\Services\LanguageService;
+use WP_Block;
 
 /**
  * The Perego site service provider — the composition root where the site's pieces are wired:
@@ -62,6 +66,13 @@ final class PeregoSiteServiceProvider
             cookie: $_COOKIE,
             requestUri: $_SERVER['REQUEST_URI'] ?? '/',
         );
+
+        // Must be register(), not boot(): corex-config resolves its DataRegistry during ITS boot (the
+        // Overview renderer pulls it in), and that singleton reads ManagedTables once, at build time. A
+        // table registered in our boot() — let alone on `init` — arrives after the registry is sealed and
+        // never reaches the Data screen. Every provider registers before any provider boots, so this is
+        // the last moment that still counts.
+        self::registerApplicationsTable();
     }
 
     public function boot(): void
@@ -76,19 +87,79 @@ final class PeregoSiteServiceProvider
         $this->registerContactServiceChooser();
         $this->registerForms();
 
+        $this->registerTemplateSectionAttributes();
+
         (new StructuredData())->register();
         (new \PeregoSite\Seo\PeregoAgentReadiness())->register();
         (new \PeregoSite\Seo\PeregoMeta($this->languageService->driver()->currentLocale()))->register();
         (new \PeregoSite\Seo\PlaceholderPageIndexing())->register();
 
-        // spec 010 T009: editor controls for the structured Project/Service/Client metadata (admin only).
-        // spec 014 T002: the Project gallery wp.media picker (deferred from 010).
-        // spec 020 round 2: the Client gallery/video wp.media picker (mirrors the Project gallery).
+        // spec 021 Phase 4 (T019/T022): the structured Project/Service/Client metadata is edited in
+        // typed, grouped panels in the block editor's document sidebar. These replace the four classic
+        // meta boxes this used to register (PostMetaBoxes, ProjectGalleryMetaBox, ClientMediaMetaBox,
+        // ServicePortfolioMetaBox) — every field is `show_in_rest` post meta, so the panels need no
+        // nonce and no save handler, and no meta key changed. The Client gallery/video repeater keeps
+        // its dedicated box for now: its value is a list of typed objects, not a flat ID list, and it
+        // is the one surface the shared primitives do not yet cover.
         if (is_admin()) {
-            (new \PeregoSite\Admin\PostMetaBoxes())->register();
-            (new \PeregoSite\Admin\ProjectGalleryMetaBox())->register();
+            (new \PeregoSite\Admin\FieldPanels())->register();
+            (new \PeregoSite\Admin\PostListColumns())->register();
             (new \PeregoSite\Admin\ClientMediaMetaBox())->register();
         }
+    }
+
+    /**
+     * Resolve one of a block's prefixed link attributes to `{href, target}` for a renderer that takes
+     * already-resolved data (spec 021 T036). Renderers that hold their own LanguageService build their
+     * own `LinkTarget`; these pure ones are handed the result instead, so they stay unit-testable.
+     *
+     * `hrefIfSet` (not `href`) so an unconfigured link yields an empty href and the renderer keeps its
+     * own default route untouched — see that method for why the difference is not cosmetic.
+     *
+     * @param array<string, mixed> $attributes the block's attributes
+     * @return array{href: string, target: string}
+     */
+    private static function resolvedLink(
+        LanguageService $languageService,
+        array $attributes,
+        string $prefix
+    ): array {
+        $target = new \PeregoSite\Blocks\LinkTarget($languageService->driver());
+        $link = \PeregoSite\Blocks\LinkTarget::fromAttributes($attributes, $prefix);
+
+        return [
+            'href' => $target->hrefIfSet($link),
+            'target' => $target->targetAttributes($link),
+        ];
+    }
+
+    /**
+     * spec 021 T035: put back the structural attributes the theme templates need but `core/group`'s
+     * `save()` cannot generate, so the templates hold exactly what the block editor regenerates and
+     * stop rendering as "unexpected or invalid content". See TemplateSectionAttributes for the full
+     * rationale. Front-end only — the editor canvas has no need for them.
+     */
+    private function registerTemplateSectionAttributes(): void
+    {
+        $sections = new \PeregoSite\Theme\TemplateSectionAttributes();
+        $optional = new \PeregoSite\Forms\OptionalFieldMarker();
+        $moved = new \PeregoSite\Theme\LegacyRouteRedirect();
+
+        // /contact -> /start-a-project (2026-07-26). Runs before the old path can 404.
+        add_action('template_redirect', static fn () => $moved->maybeRedirect());
+
+        add_filter('render_block', static function ($html, $block) use ($sections, $optional) {
+            $block = is_array($block) ? $block : [];
+            $html = $sections->apply((string) $html, $block);
+
+            // "(optional)" on non-required labels — see OptionalFieldMarker for why this is done here
+            // rather than in corex-forms, which this site must not edit.
+            if (($block['blockName'] ?? '') === \PeregoSite\Forms\OptionalFieldMarker::BLOCK_NAME) {
+                $html = $optional->mark($html);
+            }
+
+            return $html;
+        }, 10, 2);
     }
 
     /**
@@ -138,11 +209,64 @@ final class PeregoSiteServiceProvider
                     $options[] = ['id' => 0, 'name' => $form->label(), 'slug' => $form->slug];
                 }
 
+                // Careers is a REST endpoint, not a registered Form, so it is not in the loop above —
+                // but it does write submissions (PeregoCareersController::recordSubmission), and a
+                // submission the filter cannot name is a submission nobody finds.
+                // The label is a literal, not the FORM_NAME constant: `wp i18n make-pot` extracts by
+                // parsing the source, so a constant argument yields no POT entry and no translation.
+                $options[] = [
+                    'id' => 0,
+                    'name' => __('Careers application', 'perego-site'),
+                    'slug' => \PeregoSite\Careers\PeregoCareersController::SUBMISSION_SLUG,
+                ];
+
                 return $options;
             });
 
             self::registerFormEmail($container);
         }, 20);
+    }
+
+    /**
+     * Surface job applications in CoreX → Data (client request 2026-07-27: "where can I find it in the
+     * admin?").
+     *
+     * The careers add-on creates `corex_applications` with the Migrator but never marks it managed, so
+     * the Data screen — which lists only registered ManagedTables — had no idea it existed, and there is
+     * no other admin surface for applications anywhere (spec 014 defers a recruiter screen; spec 017
+     * defers the applications DataView). Registering it here is the framework's own opt-in API and needs
+     * no framework edit.
+     *
+     * `cv_attachment` is the stored attachment id. It renders as a bare integer until the Data screen
+     * learns to render attachment columns as download links — tracked as a CoreX framework fix; until
+     * then the careers notification email carries the working download link.
+     */
+    private static function registerApplicationsTable(): void
+    {
+        if (! class_exists(\Corex\Boot::class)) {
+            return;
+        }
+
+        $container = \Corex\Boot::app()->container();
+        if (! $container->has(\Corex\Database\Schema\ManagedTables::class)) {
+            return;
+        }
+
+        $container->make(\Corex\Database\Schema\ManagedTables::class)->register(
+            new \Corex\Database\Schema\ManagedTable(
+                'applications',
+                'Applications',
+                [
+                    ['id' => 'name', 'label' => 'Name'],
+                    ['id' => 'email', 'label' => 'Email'],
+                    ['id' => 'cover_letter', 'label' => 'Portfolio'],
+                    ['id' => 'cv_attachment', 'label' => 'CV'],
+                    ['id' => 'status', 'label' => 'Status'],
+                    ['id' => 'created_at', 'label' => 'Received'],
+                ],
+                'perego-site',
+            ),
+        );
     }
 
     /**
@@ -158,30 +282,78 @@ final class PeregoSiteServiceProvider
             return;
         }
 
+        // Both the logo and every CTA are rebased onto the public mail base URL: an inbox cannot resolve
+        // the host this request happened to arrive on. See MailBaseUrl for why the site *option* rather
+        // than home_url() is the floor.
         $logoUrl = function_exists('plugins_url')
-            ? plugins_url('assets/email/logo-full.png', dirname(__DIR__) . '/perego-site.php')
+            ? \PeregoSite\Email\MailBaseUrl::rebase(
+                plugins_url('assets/email/logo-full.png', dirname(__DIR__) . '/perego-site.php')
+            )
             : '';
-        $siteUrl = function_exists('home_url') ? (string) home_url('/') : 'https://perego.local';
+        $siteUrl = \PeregoSite\Email\MailBaseUrl::resolve();
 
         $mailer = new \PeregoSite\Email\PeregoMailer(
             $container->make(\Corex\Mail\Mailer::class),
-            new \PeregoSite\Email\PeregoEmailRenderer(rtrim($siteUrl, '/'), $logoUrl),
+            new \PeregoSite\Email\PeregoEmailRenderer($siteUrl, $logoUrl),
+        );
+
+        // Where internal mail lands: `forms.email.recipient` when configured, else the site admin. One
+        // resolver shared by the forms listener and the careers endpoint, so the two cannot drift.
+        $recipient = new \PeregoSite\Email\TeamRecipient(
+            $container->has(\Corex\Support\Config\ConfigInterface::class)
+                ? $container->make(\Corex\Support\Config\ConfigInterface::class)
+                : null,
         );
 
         $container->make(\Corex\Events\ListenerProvider::class)->listen(
             \Corex\Forms\Submission\FormSubmittedEvent::class,
-            new \PeregoSite\Email\PeregoFormMailListener($mailer),
+            new \PeregoSite\Email\PeregoFormMailListener($mailer, $recipient),
         );
 
         // Branded comment-moderation email (replaces WordPress's plain native notifications).
         (new \PeregoSite\Email\PeregoCommentNotifier($mailer))->register();
 
+        self::registerReplyGateway($container, $mailer);
+
         // The "Join us" / CV submission endpoint (secure upload → store → branded emails).
-        add_action('rest_api_init', static function () use ($mailer): void {
-            (new \PeregoSite\Careers\PeregoCareersController($mailer))->register();
+        add_action('rest_api_init', static function () use ($mailer, $recipient): void {
+            (new \PeregoSite\Careers\PeregoCareersController($mailer, $recipient))->register();
             // Secure AJAX comment submission (nonce + honeypot + rate limit + WP moderation).
             (new \PeregoSite\Comments\PeregoCommentController())->register();
         });
+    }
+
+    /**
+     * Re-point the Submissions-inbox reply at Perego's own branded template.
+     *
+     * `SubmissionEmailGateway` is the framework's documented seam for this: corex-config binds an
+     * unavailable stub, corex-email overrides it with the Email Studio gateway, and a site may override
+     * it in turn — which is client-site composition, not a framework edit. Re-binding drops the cached
+     * singleton, and nothing resolves this seam until an admin opens the inbox, so replacing it here on
+     * `init` is in time.
+     *
+     * The decorator keeps the engine's gateway for `resend()`/`log()`; it is depended on by its concrete
+     * class rather than by the interface, because asking the container for the interface inside its own
+     * factory would resolve straight back into this closure.
+     */
+    private static function registerReplyGateway(
+        \Corex\Container\ContainerInterface $container,
+        \PeregoSite\Email\PeregoMailer $mailer,
+    ): void {
+        if (! interface_exists(\Corex\Mail\SubmissionEmailGateway::class)) {
+            return;
+        }
+
+        $container->singleton(
+            \Corex\Mail\SubmissionEmailGateway::class,
+            static function (\Corex\Container\ContainerInterface $c) use ($mailer): \Corex\Mail\SubmissionEmailGateway {
+                $inner = class_exists(\Corex\Email\Studio\EmailStudioSubmissionGateway::class)
+                    ? $c->make(\Corex\Email\Studio\EmailStudioSubmissionGateway::class)
+                    : new \Corex\Mail\UnavailableSubmissionEmailGateway();
+
+                return new \PeregoSite\Email\PeregoSubmissionEmailGateway($inner, $mailer);
+            },
+        );
     }
 
     /**
@@ -292,9 +464,14 @@ final class PeregoSiteServiceProvider
             ]);
 
             register_block_type($this->blockDir('journal-header'), [
-                'render_callback' => static function () use ($languageService): string {
+                'render_callback' => static function (array $attributes) use ($languageService): string {
+                    $locale = $languageService->driver()->currentLocale();
+
+                    // spec 021 C12: the archive title/lead are editable per locale; an empty field
+                    // falls back to the seed copy, so an unedited block is unchanged.
                     return (new JournalHeaderRenderer(
-                        new GlobalContent($languageService->driver()->currentLocale())
+                        new GlobalContent($locale),
+                        LocalizedAttributes::pick($attributes, $locale, ['title', 'lead']),
                     ))->render();
                 },
             ]);
@@ -418,6 +595,17 @@ final class PeregoSiteServiceProvider
                 },
             ]);
 
+            register_block_type($this->blockDir('post-share'), [
+                'render_callback' => static function (): string {
+                    // Same reason as post-reading-time above: get_post() resolves the current post in
+                    // both singular and Query Loop contexts, get_queried_object() does not.
+                    $current = function_exists('get_post') ? get_post() : null;
+
+                    return (new \PeregoSite\Blocks\PostShareRenderer())
+                        ->render($current instanceof \WP_Post ? $current : null);
+                },
+            ]);
+
             register_block_type($this->blockDir('join-form'), [
                 'render_callback' => static function () use ($languageService): string {
                     return (new \PeregoSite\Blocks\JoinFormRenderer(
@@ -489,6 +677,7 @@ final class PeregoSiteServiceProvider
                     $locale  = $languageService->driver()->currentLocale();
                     $content = new ServiceContent($locale);
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    $servicePost = $queried instanceof \WP_Post ? $queried : get_post();
 
                     // Resolve the canonical service slug from meta, not post_name: a translated
                     // (e.g. Arabic) service post carries a Polylang-de-duplicated slug like
@@ -496,14 +685,14 @@ final class PeregoSiteServiceProvider
                     // "video-editing" the ServiceContent map + tab routes are keyed on.
                     $currentSlug  = '';
                     $currentTitle = '';
-                    if ($queried instanceof \WP_Post) {
-                        $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
-                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                    if ($servicePost instanceof \WP_Post) {
+                        $meta = get_post_meta($servicePost->ID, '_perego_service_slug', true);
+                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $servicePost->post_name;
                         // spec 013: the H1 is the Service post's own title (edit it natively); the tab
                         // labels come from each Service's editable teaser label — both seed-fallback.
                         // Use the raw post_title (not get_the_title) so the renderer's single esc_html
                         // matches the old ServiceContent path byte-for-byte (no double entity-encoding).
-                        $currentTitle = (string) $queried->post_title;
+                        $currentTitle = (string) $servicePost->post_title;
                     }
 
                     $tabLabels = (new \PeregoSite\Content\ServiceCatalog())->labelsBySlug($locale);
@@ -524,11 +713,34 @@ final class PeregoSiteServiceProvider
                     ];
 
                     $queried = function_exists('get_queried_object') ? get_queried_object() : null;
+                    $servicePost = $queried instanceof \WP_Post ? $queried : get_post();
                     $currentSlug = '';
-                    if ($queried instanceof \WP_Post) {
-                        $meta = get_post_meta($queried->ID, '_perego_service_slug', true);
-                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $queried->post_name;
+                    if ($servicePost instanceof \WP_Post) {
+                        $meta = get_post_meta($servicePost->ID, '_perego_service_slug', true);
+                        $currentSlug = is_string($meta) && $meta !== '' ? $meta : $servicePost->post_name;
                     }
+
+                    // The Service editor owns the optional portfolio projection. Translation
+                    // records may inherit the English source until they receive their own selection.
+                    $portfolioMeta = static function (string $key) use ($servicePost) {
+                        if (! $servicePost instanceof \WP_Post) {
+                            return '';
+                        }
+
+                        $value = get_post_meta($servicePost->ID, $key, true);
+                        if ($value !== '' && $value !== []) {
+                            return $value;
+                        }
+                        if (! function_exists('pll_get_post')) {
+                            return $value;
+                        }
+                        $englishId = (int) pll_get_post($servicePost->ID, 'en');
+
+                        return $englishId > 0 && $englishId !== $servicePost->ID ? get_post_meta($englishId, $key, true) : $value;
+                    };
+                    $portfolioMode = ServicePostType::sanitizePortfolioMode($portfolioMeta(ServicePostType::META_PORTFOLIO_MODE));
+                    $portfolioIds = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_PROJECT_IDS));
+                    $portfolioExclusions = ServicePostType::sanitizeIntList($portfolioMeta(ServicePostType::META_PORTFOLIO_EXCLUDE_IDS));
                     $category = $serviceToCategory[$currentSlug] ?? '';
                     if ($category === '') {
                         return '';
@@ -552,12 +764,16 @@ final class PeregoSiteServiceProvider
 
                     $projects = new ProjectRepository();
 
-                    // 15 designed mosaic placements + up to 8 "Load more" overflow tiles (handoff
-                    // service-*.html masonry parity).
+                    // The website service shows the full logo wall; every other service shows a
+                    // short, curated set. The client asked for "minimum 5 and not more than 6" there
+                    // — a service page is a pitch, not an archive, and 23 tiles behind a "Load more"
+                    // button buried the work it was meant to lead with.
+                    $workCap = $currentSlug === 'website-making' ? 23 : 6;
+
                     $posts = (new \WP_Query([
                         'post_type' => ProjectPostType::POST_TYPE,
                         'post_status' => 'publish',
-                        'posts_per_page' => 23,
+                        'posts_per_page' => $workCap,
                         'no_found_rows' => true,
                         'orderby' => 'date',
                         'order' => 'DESC',
@@ -567,6 +783,22 @@ final class PeregoSiteServiceProvider
                             'terms' => $termId,
                         ]],
                     ]))->posts;
+
+                    $selectedPosts = [];
+                    if ($portfolioMode !== 'automatic' && function_exists('get_post')) {
+                        foreach ($portfolioIds as $projectId) {
+                            $localizedId = function_exists('pll_get_post') ? (int) pll_get_post($projectId, $locale) : $projectId;
+                            $project = get_post($localizedId ?: $projectId);
+                            if ($project instanceof \WP_Post && $project->post_type === ProjectPostType::POST_TYPE && $project->post_status === 'publish') {
+                                $selectedPosts[] = $project;
+                            }
+                        }
+                    }
+                    $posts = array_slice(
+                        (new ServicePortfolioSelection())->resolve($posts, $selectedPosts, $portfolioMode, $portfolioExclusions),
+                        0,
+                        $workCap,
+                    );
 
                     $content = new ServiceContent($locale);
 
@@ -617,14 +849,27 @@ final class PeregoSiteServiceProvider
             $languageService = $this->languageService;
 
             register_block_type($this->blockDir('portfolio-grid'), [
-                'render_callback' => static function () use ($gridRenderer, $languageService): string {
-                    $content  = new PortfolioContent($languageService->driver()->currentLocale());
+                'render_callback' => static function (array $attributes) use ($gridRenderer, $languageService): string {
+                    $locale   = $languageService->driver()->currentLocale();
+                    $content  = new PortfolioContent($locale);
                     $projects = (new ProjectRepository())->allForGrid($content);
+
+                    // spec 021 C11: the archive heading/intro and closing CTA are editable per locale;
+                    // an empty field falls back to the seed copy, so an unedited block is unchanged.
+                    $strings = $content->gridStrings(LocalizedAttributes::pick($attributes, $locale, [
+                        'heading', 'intro', 'ctaTitle', 'ctaBody', 'ctaButton',
+                    ]) + ['showDemoNote' => (bool) ($attributes['showDemoNote'] ?? true)]);
+
+                    if (! (bool) ($attributes['showBreadcrumb'] ?? true)) {
+                        $strings['uiHome'] = '';
+                    }
 
                     return $gridRenderer->render(
                         $projects,
                         $content->filterLabels(),
-                        $content->gridStrings(),
+                        $strings,
+                        // spec 021 T036: the closing CTA may name a page instead of the contact route.
+                        self::resolvedLink($languageService, $attributes, 'cta'),
                     );
                 },
             ]);
@@ -663,7 +908,11 @@ final class PeregoSiteServiceProvider
                     return (new ProjectNavigationRenderer(
                         new ProjectRepository(),
                         new PortfolioContent($languageService->driver()->currentLocale()),
-                    ))->render($queried instanceof \WP_Post ? $queried : null, (string) ($attributes['surface'] ?? 'all'));
+                    ))->render(
+                        $queried instanceof \WP_Post ? $queried : null,
+                        (string) ($attributes['surface'] ?? 'all'),
+                        self::resolvedLink($languageService, $attributes, 'cta'),
+                    );
                 },
             ]);
         });
@@ -741,6 +990,14 @@ final class PeregoSiteServiceProvider
             $aboutBgRenderer = new HomeAboutBgRenderer();
             register_block_type($this->blockDir('home-about-bg'), [
                 'render_callback' => static fn (): string => $aboutBgRenderer->render(),
+            ]);
+
+            // Takes the third argument for its `postId`/`postType` context — that is what tells the
+            // block which language's front page to render (see HomeAboutRenderer).
+            $aboutRenderer = new HomeAboutRenderer();
+            register_block_type($this->blockDir('home-about'), [
+                'render_callback' => static fn (array $attributes, string $content, WP_Block $block): string
+                    => $aboutRenderer->render($block),
             ]);
         });
     }

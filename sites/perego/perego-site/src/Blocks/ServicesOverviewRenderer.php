@@ -11,6 +11,7 @@ namespace PeregoSite\Blocks;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\ServiceContent;
+use PeregoSite\Theme\SiteRoutes;
 
 /**
  * Server-renders the perego-theme/services-overview block (spec 003 / M3, US3; restructured spec 004
@@ -60,7 +61,7 @@ final class ServicesOverviewRenderer
     {
         $html = '<section class="svc-hero" aria-labelledby="services-overview-title">';
         $html .= '<div class="svc-hero__bg" aria-hidden="true">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/svc-hero-bg.png') . '" alt="" />'
+            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/svc-hero-bg.webp') . '" alt="" />'
             . '</div>';
         $html .= '<div class="svc-hero__inner">';
         $html .= '<h1 class="svc-hero__title" id="services-overview-title">' . esc_html($o['h1']) . '</h1>';
@@ -71,7 +72,7 @@ final class ServicesOverviewRenderer
             // The contact chooser whitelists the canonical service *slug*, not the localized name —
             // pass the slug so ?service= preselects (matches the service-single hero's CTA).
             // add_query_arg url-encodes the value, so hand it the raw slug (no pre-encoding).
-            $ctaHref = esc_url(add_query_arg('service', $slug, home_url('/contact')));
+            $ctaHref = esc_url(add_query_arg('service', $slug, home_url(SiteRoutes::START_PROJECT)));
             $label = ($tabLabels[$slug] ?? '') !== '' ? $tabLabels[$slug] : $content->name($slug);
             $html .= '<div class="svc-tab">';
             $html .= '<a class="svc-tab__main" href="' . $href . '"><span class="svc-tab__label">'
@@ -192,7 +193,7 @@ final class ServicesOverviewRenderer
         $html .= '<div class="services-overview__cta-inner">';
         $html .= '<h2 class="wp-block-heading">' . esc_html($o['ctaTitle']) . '</h2>';
         $html .= '<p>' . esc_html($o['ctaBody']) . '</p>';
-        $html .= '<a class="perego-btn perego-btn--accent" href="' . esc_url(home_url('/contact')) . '">'
+        $html .= '<a class="perego-btn perego-btn--accent" href="' . esc_url(home_url(SiteRoutes::START_PROJECT)) . '">'
             . esc_html($o['ctaButton']) . '</a>';
         $html .= '</div>';
         $html .= '</section>';

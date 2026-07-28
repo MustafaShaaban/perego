@@ -1,5 +1,1408 @@
 # Perego — Decision Log
 
+## 2026-07-28 — CoreX v0.37.0 assessed and deliberately deferred
+
+Upstream published v0.36.0 and v0.37.0 (`b486ff5` → `77524df`, 341 files). Assessed before
+installing, per the standing rule that a framework update must not silently undo a client fix.
+
+**Decision: stay on v0.35.1 until PR #37 lands.** Not because the update is unsafe — it is not —
+but because taking 341 framework files into an open client PR makes that PR unreviewable, and the
+reconciliation below is a piece of work in its own right that deserves its own branch.
+
+The assessment is recorded in full because it is expensive to re-derive and it is exactly what the
+eventual merge needs.
+
+### Five of our patches are superseded — drop ours, take theirs
+
+Upstream's Spec 080 (#147) and #146 fixed these independently, and in each case their version is
+better than the patch we were carrying:
+
+| Ours | Upstream | Why theirs wins |
+|---|---|---|
+| `WebpConverter` palette fix | #146, **issue #142 now closed** | Adds a precondition check and refuses to call the encoder unless the image is truecolour by then — and says honestly that the alpha calls are not what fixes the fatal |
+| `FormsServiceProvider` listener routing | Spec 080 | Same approach, resolving the form by `$event->formSlug` |
+| `DataRegistry::defer()` | `registerDeferred()` | Same design, **different name** — our `ConfigServiceProvider` call site must be adapted |
+| `EmailStudioSubmissionGateway` layout wrap | Spec 080 | Also adds `replyToAddress()`, which is the half our #138 comment reported as still missing |
+| `RecordDetail` `entriesFor()` | `recordRows.js` | Three passes, record-as-authority, plus an undeclared-field pass so a source growing a field cannot silently regress |
+
+### Eleven of our fixes have no upstream equivalent — they must be re-applied
+
+Verified line by line against `upstream/main`, not assumed. All of #148 and #150 are untouched:
+`collect()` still ends `data[name] = el.value`; `RULES` still holds only required/email/max/min/
+numeric; `messageFor()` still goes through `wp.i18n`; no `novalidate` on either form renderer; no
+`Phone` rule in `Validation/Rules/`; no `inputmode`/`dir` from `FieldRenderer`; no `from` on
+`MailRequest`; the spinner still puts unfallback'd theme tokens inside shorthands.
+
+### The one new upstream defect, reported
+
+Spec 080's `recordRows.js` fixes the *shape* half of #149 — but `useDataExplorer.detail()` still
+returns `payload.record` off a payload that **is** the record, so `recordRows` receives `undefined`.
+The modal now renders the new empty state, *"This record has no readable fields."*, which reads as
+a true statement about the record rather than a bug. The fix made the failure more plausible. Filed
+as a comment on #149 with the `return payload;` one-liner and a note that `recordRows.test.js`
+passes precisely because it bypasses the broken layer.
+
+### The merge shape, for whoever does it
+
+20 files conflict, 24 hunks. Almost all of it is `plugins/corex-core/assets/js/corex-runtime.js`,
+which upstream rewrote to ES6 and reformatted for ESLint (203+/109−) — so the conflicts there are
+**textual, not semantic**: our features and their reformatting touch the same lines while disagreeing
+about nothing. Re-apply ours on top of their file rather than trying to merge hunk by hunk.
+
+## 2026-07-28 — Round 10: the join form's missing wire, and phone as a first-class control
+
+### The join form went silent for the same reason the services field did
+
+Round 7 moved the visual feedback channel to the toast and clipped `.corex-form__status` to a
+screen-reader-only live region. The join form's status paragraph carries that class — deliberately,
+so it would inherit the framework's styling rather than a hand-matched copy. But the join form is
+not a CoreX form: it is a bespoke renderer posting to `perego/v1/careers/apply`, it never dispatched
+`corex:form:success`/`corex:form:error`, and `initClientValidationToasts()` gates on a `corex-form`
+class it does not have.
+
+So a successful application wrote its confirmation into a clipped node and did nothing else. Since
+round 7, submitting that form has produced no visible feedback at all.
+
+Worth naming the pattern, because it has now happened twice: **borrowing a framework class buys its
+styling and its assumptions.** `.corex-form__status` stopped being a banner and became a live region,
+and every borrower silently inherited that. The fix is one `dispatchEvent` inside the existing
+`setStatus()`, so a future state cannot be added without announcing itself.
+
+### Not migrating the join form onto `Corex\Forms\Form`
+
+It would grant the toast, the shared rule table and the styled select for free. It is blocked on the
+framework having no file field type or `$_FILES` handling — item 6 of corex#138 — while
+`PeregoCareersController` does finfo sniffing, private attachment storage and rate limiting the
+Forms engine does not provide. Revisit when that lands; until then the bespoke path stays, wired to
+the same events.
+
+### The CV hint said the wrong thing, so hiding it was the wrong fix
+
+The hint and the drop zone both read "Upload your CV here", so the hint was clipped as a duplicate.
+The duplication was the bug: nothing told the applicant what would be *accepted*, and they met the
+10 MB cap by breaching it after the upload. It now states types and size, and is visible.
+
+### Phone: a composite control in a slot sized for a simple one
+
+Every other field on the brief holds one input. Phone holds two — a country picker and a number —
+and at a 255px half that left the input ~151px for a ~190px placeholder. It clipped at every desktop
+width and was worst around 1100–1250px, where the half drops to ~180px but the old ≤1024px escape
+had not fired.
+
+Three things, in order of how much they mattered:
+
+- **The field takes a row**, declared in `ProjectBriefForm`'s own `width` rather than as a CSS
+  override, so the framework's existing `:not(--half)` rule places it and a special-case selector
+  disappears. That also retired a `max-width: 1024px` rule whose comment claimed "901–1024px" while
+  having no lower bound — it duplicated the 760px rule underneath it.
+- **The hero grid tilts toward the form**, 1.15fr / 0.85fr above 900px. The chooser column caps its
+  own content at 400px, so at 1440px it was rendering 400px inside a 616px column while the form
+  beside it squeezed six fields into 255px halves. The ratio costs the chooser nothing visible.
+- **`subject` goes full-width**, because promoting phone left five halves and one would have been
+  stranded beside a gap. A free-text line is the right one of the five to promote.
+
+### The placeholder is a format, and the format follows the country
+
+"Best number to reach you" repeated the visible label. A phone hint's job is the *shape* — which is
+also the E.164 form the validator wants — so it now shows one, and rewrites itself when the picker
+changes: a Saudi visitor should not be shown an Emirati number.
+
+Examples are published for the Gulf and the Arab region only. Elsewhere the field keeps its
+translated sentence. Inventing plausible-looking formats for sixty more countries is how wrong ones
+ship, and a wrong format teaches worse than no format.
+
+### Detecting the country from the timezone, not from an IP service
+
+`Intl.DateTimeFormat().resolvedOptions().timeZone` is the one country signal a browser gives away
+for free: no network call, no geolocation prompt, no third party, and already correct on any device
+that set its own clock. An IP lookup would have meant a request per visitor to somebody else's
+service, which Principle VI rules out anyway.
+
+`navigator.language` is the fallback rather than the primary because it so often is not a location:
+someone in Dubai on an English laptop reports `en-US`. Anything unrecognised returns nothing rather
+than a guess, and the default takes over — one click to correct, against a wrong code silently
+attached to a real phone number.
+
+The zone map lives in `CountryCodes` beside the list it refers to, with a test asserting every value
+is a country the picker actually offers. It caught a stray `BD` on the first run.
+
+### The default is the Emirates now, not Egypt
+
+The studio is in Cairo; the segment it sells to is the UAE and Saudi Arabia (owner decision). A
+fallback should favour the audience, so `DEFAULT_ISO` is `AE` and the list leads AE · SA · EG.
+
+## 2026-07-28 — Round 9: a missing service says so, and the framework debt is filed
+
+### The error was correct, written, and invisible — three silencers stacked
+
+Submitting the brief with no service picked did nothing at all. Nothing was broken in any one
+layer; the failure lived in how three correct decisions composed.
+
+The runtime validated the field and produced `{ services: 'required' }`. It wrote the message into
+`.corex-form__error` inside `[data-corex-field="services"]` — and the contact page hides that whole
+wrapper with `* { display: none }`, because the chooser buttons are its visible replacement. It then
+called `focus()` on the hidden `<select>`, which a `display:none` element silently ignores, so the
+page did not even scroll. And the status line has been screen-reader-only since round 7 handed the
+visual job to the toast — which listens for `corex:form:error`, an event the runtime emits on its
+server-rejection path but *not* on its client-side one.
+
+So: a correct message in an invisible node, no focus, no banner, and no request. Every other field
+behaved, because only the `services` wrapper carries that display rule.
+
+### Watching `aria-invalid`, not hooking `submit`
+
+The chooser block already bridges the decorative buttons and the real `<select>`, so it is the right
+owner for the message too. It observes `aria-invalid` on the select rather than binding `submit`,
+because the runtime sets that attribute on **both** its error paths — one observer covers client and
+server rejection, and no validation logic is duplicated site-side.
+
+The wording is ours only for `required`, recognised by nothing being selected. "This field is
+required." names no field, and this control has no visible label of its own — the buttons took it.
+Any other rule keeps the framework's message rather than risk showing a confidently wrong one.
+
+Focus moves to the first service button only when nothing earlier in the form is also invalid.
+Otherwise the visitor would be thrown past the empty name and email they still have to fix — the
+framework's own focus choice is right in that case, and this defers to it.
+
+The live region hides on `:empty` rather than carrying `hidden`. An author `display` rule beats the
+UA `[hidden]` sheet; this project has been bitten by that before.
+
+### The toast gap was general, so it was fixed generally
+
+No Perego form showed a banner when client-side validation stopped a submit — not just this one.
+Rather than add a second toast entry point, `main.js` re-dispatches the framework's own
+`corex:form:error` on a form left with an invalid field, and the existing relay does the rest.
+Capture phase plus a next-tick read makes it independent of listener registration order.
+
+Fixing it in the runtime instead — emitting the event on the client branch, where the asymmetry
+actually lives — is the better repair, but that is framework work. It is filed upstream rather than
+patched here.
+
+### Framework changes on a client-site branch: a deliberate, recorded deviation
+
+The Role Gate says Client Site Mode does not edit Corex. Rounds 5–8 broke that rule for 26 files,
+because several client-visible defects had no site-side fix: a `<select multiple>` collapsing to one
+stored value, validation messages that could not be translated at all, a media upload that fatals on
+a palette PNG. The changes are generic — no Perego coupling in any of them — and they are committed
+here separately per module, then reported upstream as their own issues so the framework can adopt
+them rather than the fork carrying them forever.
+
+Two were already filed: [#138](https://github.com/MustafaShaaban/corex/issues/138) (per-form
+listeners, data sources sealed at boot, reply layout) and
+[#142](https://github.com/MustafaShaaban/corex/issues/142) (the WebP fatal). The rest went up as
+three module-scoped issues, so each can be triaged and closed on its own rather than as a lump:
+
+- [#148](https://github.com/MustafaShaaban/corex/issues/148) — **corex-forms + runtime.** Eight
+  items: multi-value data loss, no `novalidate` on the form renderers, the `wp.i18n` translation
+  trap, the missing `phone` rule and client rule arms, no live re-validation, no
+  `inputmode`/`autocomplete`/`dir`, the `corex:form:error` asymmetry that caused this round's bug,
+  and `.corex-spinner` depending on theme tokens it does not own.
+- [#149](https://github.com/MustafaShaaban/corex/issues/149) — **corex-config admin.** The Data
+  detail modal (two bugs, so it has never shown a value for any source) and URL linkification in
+  admin cells.
+- [#150](https://github.com/MustafaShaaban/corex/issues/150) — **corex-email.** The per-message
+  `from`, with the multi-mailbox routing rationale.
+
+Plus a comment on #138 correcting item 3: the reply layout is fixed, but `reply()` still passes
+`replyTo: null` and nothing downstream fills it, so that half is still open.
+
+## 2026-07-28 — Round 8: the phone picker joins the theme's select, and the toast gets the real glass
+
+### The picker was unstyled because of a class name, not a missing feature
+
+The theme already owns a styled select — `initCustomSelects()` in `assets/src/js/select.js`, which is
+why "Estimated budget" opens a proper listbox. It scans for `select.corex-form__input`. The injected
+country picker carried `phone-field__code` only, so it was skipped and stayed a raw OS dropdown.
+
+Adding the class is the whole fix; nothing needed exporting or re-running. Timing was never the
+problem — the block's `viewScriptModule` executes before `main.js`'s `DOMContentLoaded` handler, so
+the select is already in the DOM when the enhancer sweeps.
+
+Two things the enhancer needs that a runtime-built control does not get for free:
+
+- **A real `<label for>`.** It names its trigger from `labelIdFor()` and does **not** copy
+  `aria-label`, so a bare aria-label would have shipped a visible control with no accessible name.
+- **A `change` listener that re-syncs.** The enhancer synced its trigger only from its own `choose()`.
+  Setting `select.value` from outside fires nothing, so when a visitor typed a number that already
+  carried a country code, the trigger kept showing the old country. It now follows the native control
+  whoever moved it, and the picker dispatches `change` (guarded against re-entry) after a programmatic
+  set. That is the correct general behaviour, not a phone-specific patch.
+
+### One option, two labels
+
+`triggerLabel()` used `option.textContent`, so the closed control inherited "United Arab Emirates
+(+971)". A half-width field on this form is **150–255px**; with `max-inline-size: 42%` the picker took
+64–107px and left the number input as little as 78px. That is the reported tightness.
+
+Options may now carry `data-trigger-label` — short in the trigger, full in the list. Written into the
+theme's select rather than special-cased here, because "the trigger has less room than the list" is a
+general problem any long-optioned select has. `CountryCodes::options()` supplies both; `short` stays
+Latin in Arabic, since an ISO code and a dial code are what you read off a SIM.
+
+The picker is now a **fixed 96px**, not a percentage, and the list is allowed to be wider than the
+control that opened it (`max(272px, 100%)`) — otherwise every country name clipped. Between 901 and
+1024px the contact hero is still two-up and a half field is only ~153–190px, so the phone field takes
+the full row there; below 900px the hero collapses on its own.
+
+### The toast was cheap because it ignored the design system, not because it lacked ideas
+
+The system already defines the surface: `.glass-panel` in `perego-reference.scss` —
+`rgba(22,4,53,0.55)`, `backdrop-filter: blur(10px)`, an accent hairline, `var(--r-card)`, and an inset
+accent glow. The toast used a flat `--panel-overlay` fill, a 14px radius and a 3px side bar, and
+adopted none of it. The redesign is mostly *adoption*, not invention.
+
+What is new is anatomy: a 40px tinted medallion around the icon — the device the transactional emails
+already use for their check, so it is the brand's own — a title/message hierarchy instead of one loose
+line, and a timer bar that drains over the dismiss window so a message never simply vanishes
+mid-sentence. It pauses with the timer on hover and focus.
+
+Two rules were being broken outright. The close control was a `×` **text glyph** at roughly 20px —
+under the 44px minimum touch target, and a glyph never optically centres against an icon set; it is
+now a drawn SVG at 36px with the hit area expanded to 44. And entering and exiting shared one easing
+curve; entering is `ease-out` and exiting `ease-in`, which is what makes a thing feel placed rather
+than thrown.
+
+**`transform-origin` takes no logical keyword.** `inline-start` is invalid and silently falls back to
+the 50% default, so the timer drained outward from its middle. It is the physical side, mirrored under
+`[dir="rtl"]` — verified in the browser at 0px and 378px respectively.
+
+### A text domain that did not exist
+
+Last round's toast string used `__('Dismiss', 'perego-theme')`. The theme declares
+`Text Domain: perego-site` and ships no `perego-theme` catalogue at all, so that string could never
+translate however complete the translations were. Fixed, with the new titles added to
+`perego-site-ar.po`/`.mo` (95 translated messages) — the same class of trap as the `wp.i18n` one in
+round 7, and worth watching for: a wrong domain fails silently and looks like a missing translation.
+
+## 2026-07-28 — Client round 7: email colour, form UX, the logo wall
+
+### Email colour is an Outlook problem, so the fix is structural rather than aesthetic
+
+Two rules explain the whole report. Outlook renders with the Word engine, which **drops `rgba()`
+outright** and **does not inherit `color` from a `<table>` into a `<td>`**. The shell used `rgba()` for
+eleven text colours and five backgrounds and let value cells inherit their white — so the text fell back
+to the client default (black) while the dark card behind it disappeared.
+
+Nothing was "made darker". Every colour is now the flat hex the `rgba()` resolved to **on the surface it
+sits on**, so the rendering is unchanged wherever the old CSS worked. The invariant, stated once at the
+top of the renderer: anything that shows text states its own `color`, anything that provides contrast
+also carries a `bgcolor` attribute. Two consequences worth naming: the header's gradient now has a solid
+`background-color` **before** the `background-image`, because declared through the `background` shorthand
+a gradient-blind client got no background at all — white brand mark on white; and the CTA's near-black
+label sits on a `bgcolor` cell, because clients routinely drop `background` from an inline-block anchor.
+
+### The mail base URL was a pin, not a bug
+
+`perego_mail_base_url` was set to `https://peregoads.com` in the database, which is step 2 of
+`MailBaseUrl::resolve()` and outranks `siteurl`. That is what the option is *for* — previewing
+production URLs from a local install — but left set it makes every email link to a host that does not
+serve the file. Deleted. The constant and option stay, now documented as deliberate pins; production
+needs no configuration because there `siteurl` already is the real domain.
+
+### No JS library for the phone field, by constitution
+
+Principle VI is unambiguous: *"MUST NOT load any global CSS/JS library. Ever."* That settles
+intl-tel-input regardless of its UX. The picker is a `<select>` styled by the site's own rules, sharing
+one underline with the number input, and — the part that matters — it carries **no `name`**. The tel
+input stays the single named field, so the runtime's `collect()` is untouched and what gets submitted,
+validated and dialled is one E.164 string.
+
+`max:24` was replaced by a `phone` rule, not supplemented. A character cap accepted `01016999700`; for a
+studio serving Egypt, Saudi and the UAE the country code is the part of a phone number that matters.
+
+### Client-side messages come from PHP, because `wp.i18n` needs a file nobody ships
+
+The runtime translated its messages through `wp.i18n.__(…, 'corex')`, which requires a per-domain **JS**
+translation file to be built and shipped. None exists, so every validation message was English on the
+Arabic pages no matter what. The renderer now emits the same strings in a `data-corex-messages`
+attribute, built with PHP `__()` — where the site's existing `gettext_corex` filter already translates
+them, with nothing new to build. The runtime's own table survives only as the fallback.
+
+Related: the server rejected with the raw literal `'Validation failed.'`, and the runtime **prefers**
+`envelope.message` over the translated `data-corex-error` — so the banner was English even when the
+attribute was not. Those three reasons are translatable now.
+
+### Live validation re-validates one field, not the form
+
+`clearErrors`/`showErrors` operate on the whole form, which is right on submit and wrong while typing —
+re-running them would blank a neighbour's error the moment you edited this field. The new path validates
+the single edited field against its own schema entry. It fires on `blur` always, and on input only once
+a field is already marked invalid: nagging someone on their first keystroke is worse than saying nothing.
+
+### The wall stays a wall of marks
+
+A web card used to fall back to its screenshot when no logo was set. With 24 of 29 logos in place that
+would have put five photographs among the brand marks, which reads as a mistake rather than as missing
+content. Every web card is a logo card now; without an image it renders a typographic name plate — same
+aspect box, same outbound link, obviously awaiting an asset. **No logo is better than a wrong one** is
+also why `og:image` was removed from the fetcher's candidate list after it returned a stock photograph
+of a gold bar for Bullion Trading Center.
+
+Ranking beats collecting: taking the first logo-shaped image on a page picked a **sponsor's** logo for
+Our Forum and a near-invisible watermark for NAMA. Candidates are scored so a filename matching the
+site's own name wins, with two explicit per-site overrides where that still loses. Naming two URLs is
+more honest than tuning a heuristic until it appears to work.
+
+Order comes from `menu_order` 1–29 rather than date DESC, which was really "whatever order the importer
+ran in". e&'s qualifier reuses the **existing** `_perego_role` meta — no new field — so any project can
+be annotated from the admin later.
+
+### Framework edits this round
+
+Four, all additive: the `phone` rule and the message-table attribute (corex-forms), URL linkification in
+the admin plus the two Data-explorer detail bugs (corex-config), live re-validation and two rules in the
+runtime (corex-core), and a genuine crash fix in corex-media — `imagewebp()` **fatals** on a palette
+image, and an exported logo is usually exactly that, so it took down an upload mid-request. Continues the
+authorization recorded for [corex#138](https://github.com/MustafaShaaban/corex/issues/138).
+
+## 2026-07-27 — Client round 6: mail identity, careers routing, multi-value fields
+
+### Three mailboxes, chosen by template, not by caller
+
+FluentSMTP routes on the From address — each configured address is a separate authenticated
+connection — so the sender is not cosmetic. The framework had no way to express it: `MailRequest`
+carried no `from`, and `WpMailDriver` read one global `mail.from.address`.
+
+The split is by *who is expected to reply*, which is the only distinction that changes behaviour for
+a reader:
+
+| Mailbox | Carries | Why |
+|---|---|---|
+| `info@` | Visitor confirmations | A person who just wrote to us may answer the confirmation. It has to be monitored. |
+| `noreply@` | Team notifications, comment alerts | Machine-generated. The address itself says nobody reads replies. |
+| `contact@` | A reply typed in the Submissions inbox | A person wrote it, so the client's answer must reach a person. |
+
+**The decision lives in `PeregoMailbox`, keyed by template name, not at the call sites.** There is one
+mail policy for the site, so one place knows it; a call site that had to pass a sender would eventually
+pass the wrong one.
+
+### `Reply-To: noreply@` everywhere — except the one email where it would cost something
+
+The owner asked for no-reply on all mail. Applied literally that removes the team's ability to answer a
+client by hitting Reply on a notification, which is the standard CRM behaviour and the thing the previous
+round deliberately added. The exception is therefore **the internal notification only**: it keeps the
+submitter.
+
+What the request was actually reacting to is fixed in full — confirmations carried the *visitor's own*
+address as `Reply-To`, so replying to a confirmation replied to yourself. A blank reply-to now resolves to
+`noreply@` rather than `null`, because `null` falls through to whatever the global mail config holds, and
+that is a policy this site does not control.
+
+### Careers mail was never a mail bug
+
+The endpoint read `get_option('admin_email')` — still the WordPress default `admin@example.com` on this
+install — while the forms listener read the configured `forms.email.recipient`. Two paths, two answers,
+and applications went to a mailbox nobody owns. The CV download link reported missing had been
+implemented the round before; it was simply never seen. **One `TeamRecipient` now serves both**, which is
+the actual fix: any future sender that resolves its own recipient will drift again.
+
+**Applications are mirrored into the Submissions inbox as well as `corex_applications`.** Careers is a
+bespoke REST endpoint (CoreX Forms still has no file-field type), so nothing wrote a `corex_submission`
+and the client looked for applications where every other form's submissions live and found nothing.
+Duplication is the honest trade here: the inbox row is the *submission*, the table row is the
+*recruiting record* (status, CV attachment id), and they answer different questions.
+
+**The "In admin" link is built from `admin_url()`, not `get_edit_post_link()`.** The latter returns null
+unless the *current* user can edit the post; on an anonymous public submission there is no current user,
+so that row could never have rendered. Emitting the URL directly is safe — wp-admin still authenticates
+whoever follows it.
+
+### Multi-select: the browser was the bug, but both ends needed fixing
+
+`collect()` read `select.value`, which for `<select multiple>` reports **only the first selected
+option**. Confirmed against stored submission 650: three services picked, `motion-graphics` stored.
+
+The client fix alone would have made it worse. `SubmitController::sanitizeShape()` had no `multi-select`
+arm, and `sanitize_text_field()` returns `''` for an array — so sending a real list would have blanked
+the field entirely. **The two changes only make sense together**, and the server arm is copied verbatim
+from `FlowSubmissionController`, which already had it right; the two submit paths must not hold two
+opinions about the same field type.
+
+Display was a third, separate decision: a *list* of scalars renders as `a, b`, while keyed and nested
+data keeps its JSON. Joining `['source' => 'newsletter']` would print `newsletter` and throw away the
+half of the value that says what it is.
+
+### The invisible spinner was a token problem, not a CSS-authoring problem
+
+`.corex-spinner` sets `border: var(--wp--custom--focus--width) solid currentcolor` and
+`animation: corex-spin var(--wp--custom--motion--duration--slow) linear infinite`. This theme defines
+neither custom property, and **an unresolved `var()` inside a shorthand invalidates the entire
+declaration at computed-value time** — not just the one component. The result was an element with no
+border-style and no animation: a 1em transparent box. The theme had even styled its colour, which is why
+it looked deliberate.
+
+Restated in real values in the adapter rather than adding the two tokens to `theme.json`, because those
+names are the framework's vocabulary, not this theme's, and adopting them would tie the palette to
+another project's naming. The careers form reuses `.footer-form__submit.is-loading`, which the reference
+stylesheet already spins — a second spinner would have been a second answer to a solved problem.
+
+### Framework edits, continued authorization
+
+Five fixes could not be made from `sites/perego/`: the `from` field, the multi-select collapse, and the
+list rendering all live in `plugins/` and `addons/`. This continues the authorization recorded for
+[corex#138](https://github.com/MustafaShaaban/corex/issues/138) in the previous round; every change is
+additive and backward compatible (`from` defaults to null, the sanitize arm mirrors an existing one).
+
+The one thing deliberately **not** done as a framework edit: the branded inbox reply. `SubmissionEmailGateway`
+is the framework's documented seam for exactly this, so Perego binds its own decorator and keeps
+`resend()`/`log()` delegated to the engine that owns those records.
+
+## 2026-07-27 — Client round 4, phase 3: legal content and the share row
+
+### The legal documents converted to real blocks, not a pasted blob
+
+All four documents (Privacy + Terms, EN + AR) use semantic Word styles — `Title`, `LegalDate`,
+`Heading1` ×25, `Heading2` ×20, `ListBullet` ×60 — so the conversion is a style lookup, not heuristics on
+bold and font size. EN and AR produced **identical block counts** (121 and 120), which is the useful
+signal that the translations are structurally parallel and neither lost a section.
+
+**The emitted markup has to match what core's `save()` would produce**, or the editor flags the page
+"Block contains unexpected or invalid content" — a defect this project has hit twice. Shapes were
+verified against this install (WP 7.0.2) before writing: headings carry `class="wp-block-heading"`, lists
+are `<ul class="wp-block-list">` wrapping `core/list-item`. After loading, every page was re-parsed with
+`parse_blocks()` and each block name checked against the registry, rather than trusting the write.
+
+**Headings carry `anchor` attributes (`s1`…`sN`), which paid off unplanned:** the theme's existing
+`initLegalToc()` builds its "On this page" panel from heading ids, so the sidebar TOC populated itself in
+both languages with no extra work.
+
+**The document's own "Last updated" line is dropped on purpose.** `legal.html` already renders that from
+the curated `_perego_legal_updated` meta via `LegalUpdatedRenderer`; keeping the paragraph printed the
+date twice. The meta is set to the document date instead, which is the mechanism that was designed for it.
+
+### Share row: plain URLs, no third-party script
+
+Each network endpoint is a documented GET URL, so the row costs nothing at page load and cannot track a
+reader before they choose to share. That also keeps it inside the "no frameworks" rule with no exception
+needed. The four networks are real anchors — shareable, middle-clickable, keyboard-reachable — not
+buttons wired to `window.open`.
+
+**Copy-link is the one control that genuinely needs script**, and it needs a fallback: the site runs on
+`http://` locally, where `navigator.clipboard` is **undefined** because it requires a secure context.
+Verified in the browser (`isSecureContext: false`, `navigator.clipboard: false`) — without the
+`execCommand` path the button would silently do nothing on any non-HTTPS environment.
+
+### Journal cards clamped in CSS, not truncated in PHP
+
+Title at 2 lines, excerpt at 3, with the row stretched and a reserved second title line. The full text
+stays in the DOM for search engines and screen readers, and nothing is lost if the grid ever goes
+single-column. Measured: every row now reports one height across its three cards.
+
+## 2026-07-27 — Client round 4, phases 1-2: transparent service tabs and layout corrections
+
+**The services-page tabs are now genuinely transparent.** The handoff had `rgba(34,12,58,0.55)` plus
+`backdrop-filter: blur(14px)` — frosted panels that hid the hero photograph the client wanted showing
+through. Now a 0.20 tint with `blur(4px)`: enough to keep the label legible over busy areas, little
+enough that the photo reads. The active/hover fill moved from the handoff's bright pink
+(`#e98bf7 → --accent → #c24fe0`) to the reference's deeper violet, and the label + CTA stay **white** —
+the handoff forced `#2a0148`, which was correct on pink and unreadable on violet.
+
+**Contrast measured over the actual photograph**, which is the real risk once a card stops being opaque:
+6.93 / 15.44 / 14.07 / 15.14 : 1 at rest, and 6.81-7.03:1 hovered. The weakest case is the active card
+over the subject's face, still comfortably past AA.
+
+**Home services cards** start after the heading column and shrank to 223px (the client's reference
+measures ~229). Implemented as `inline-size: min(100%, 980px); margin-inline-start: auto` inside a
+`min-width: 901px` query, so the block stylesheet's ≤900px and ≤560px rules keep winning. **The logical
+property mirrors correctly for free**: measured on the live site, the row sits at x=388 in LTR and x=72
+in RTL — the heading column swaps sides, which is what `margin-inline-start` is for.
+
+**Our Work keeps only its bottom waves.** The layer is clipped to the lower 55% of the section with the
+artwork anchored to its bottom, rather than cropping the image — cropping would have flattened the corner
+curves. It now reads as a continuation of the Clients section above it instead of restating the pattern.
+
+**About panels are no longer justified.** Justified text in a narrow measure opens rivers of white space,
+and it is worse in Arabic, where the renderer stretches kashida to fill the line.
+
+### Correction to a previous report: the `/start-a-project` slug did change
+
+The client reported the page "still using contact slug". It is not: the DB has `post_name =
+start-a-project` / `start-a-project-2`, both permalinks resolve, and `/contact` 301s with its query
+string. A full-database search found `contact` only in 13 `corex_email_log` rows — historical
+form-submission log titles, unrelated to routing. Most likely a cached 301 in the browser.
+
+## 2026-07-26 — Client round 3: two framework-adjacent fixes, and a URL rename
+
+### `/contact` → `/start-a-project`, and why the route is now a constant
+
+The page has been titled "Start a Project" all along; only its URL still said `contact`, for a page the
+site has no other name for (the header's "Contact Us" is an anchor to the footer, not a page).
+
+`PolylangLanguageDriver::translatedEntityUrl()` resolves a path with `url_to_postid( home_url( $path ) )`
+and returns that page's *translation* permalink. **A path literal therefore only works while it matches
+the English page's real permalink** — the moment the slug changed, any leftover `'/contact'` would stop
+resolving, the driver would fall through to `languagePrefixedUrl()`, and the Arabic site would link to a
+`/ar/contact` that does not exist. The failure is silent: the page renders, one language's link 404s.
+
+So the route has exactly one definition, `PeregoSite\Theme\SiteRoutes::START_PROJECT`, and the eight
+literals across the renderers now reference it. `LegacyRouteRedirect` 301s the old paths **preserving the
+query string** — every service page links `?service=<slug>`, which is what preselects the service, so
+dropping it would turn a working deep link into a blank form.
+
+Slugs were changed with `wp post update --post_name=…`, which touches only that column. Not
+`wp_update_post()` — that unslashes `post_content` and destroyed a template part's JSON attributes
+earlier the same day.
+
+### The "(optional)" marker moved from CSS to the server
+
+There was already a `::after { content: " (optional)" }` hardcoded to phone + company. It printed
+**English on the Arabic form** — CSS strings cannot go through the translation catalogue — and only
+covered two fields by name. `PeregoSite\Forms\OptionalFieldMarker` now appends a translated span to every
+label that carries no `corex-form__required`, on core's `render_block` hook.
+
+Client-side rather than in `corex-forms` because that renderer is framework code this site must not edit
+and it exposes no label filter. A regex is used rather than `WP_HTML_Tag_Processor` because the processor
+can rewrite attributes but cannot insert a child node; the input is one known renderer's output and the
+pattern is pinned to its class contract, so anything unrecognised is left untouched. Six Pest cases,
+including idempotency — `render_block` can run more than once.
+
+### The select is enhanced, not replaced
+
+`corex-forms` deliberately kept a native `<select>` and says why in its own stylesheet: the accessible
+`CorexSelect` lives in the admin bundle, and shipping it would put React on a public form and make the
+control JS-dependent. That reasoning holds, so `assets/src/js/select.js` layers a listbox over the native
+control instead of replacing it — the `<select>` stays in the DOM, stays what submits, and is hidden with
+the clip technique rather than `display: none` so it remains focusable.
+
+**Only rendered selects are enhanced.** The contact form's `services[]` is a sr-only data carrier for the
+visual `contact-service-chooser` block; enhancing it would have built a second picker nobody can reach.
+`getClientRects().length` is the guard.
+
+No library, per the owner's steer: the site has no UI dependencies and the native control had to survive
+regardless, so a library would have added weight without removing the fallback requirement.
+
+### Cards: the flat filter becomes a gradient
+
+The client's `filter.png` value (flat `#10002B` at 70%) becomes a bottom-weighted gradient, with the
+overlay receding to 0.72 and the photo scaling 1.06 on hover, gated behind
+`prefers-reduced-motion: no-preference`. Contrast was re-measured from rendered pixels in both states —
+15.62/13.39/16.40/18.04 at rest, 10.01/**7.78**/12.53/15.90 hovered — so the lightest card still clears AA
+with room while hovered, which is the state the gradient weakens.
+
+### Known, left alone: service tab CTAs are not localized
+
+`ServiceHeroRenderer` and `ServicesOverviewRenderer` build `?service=` links with `home_url()`, which is
+not language-aware, so an Arabic service page's "Start your project" button points at the English page.
+This is **pre-existing** (the line was `home_url('/contact?service=…')` before the rename) and fixing it
+needs a language driver plumbed into renderers that currently take none — out of scope for a URL rename.
+Tracked separately.
+
+## 2026-07-26 — Client round part 2: image encoding, the card filter, and Work as a home section
+
+### The About image was pixelated because of how I encoded it, not because of the source
+
+Two compounding mistakes, both measurable, both worth not repeating:
+
+- **Downscaled below the rendered size.** I wrote 2280px wide, but `object-fit: cover` on this section
+  renders the image **~3098px wide at a 1440 viewport and ~3180px at 1920** — the section is taller
+  than the viewport, so height drives the scale, not width. My first estimate (~2420px) assumed a
+  900px-tall box and was wrong. **Measure the rendered size; do not derive it from the viewport.**
+- **JPEG q82 with 4:2:0 chroma**, which is the worst case for dark smooth gradients.
+
+Now 3200x1190 WebP q95, 99 KB (from a 1.9 MB PNG). Upscaled from the 2850px source with Lanczos on
+purpose: the browser would magnify it anyway, and doing it once at encode time beats the browser's
+per-paint scaling. Verified `naturalWidth >= renderedWidth` at both viewports.
+
+**`npm run images` cannot be used for assets like this** and the renderer says so: the script does not
+resize, and it recompresses at its own fixed quality — passing a carefully encoded file through it
+silently undoes the encoding. That is the trap that produced the banding.
+
+### The service-card "filter" was an asset, not a guess
+
+`filter.png` (908x908, the same size as the card art, so it is a whole-card overlay) sampled top to
+bottom is **flat `#10002B` at 70% alpha** — it does not vary. It is not a gradient. Compositing it over
+the four supplied photos and measuring the label band gives **12.27-18.80:1**, so it carries legibility
+alone and replaces the handoff's bottom-gradient outright rather than stacking with it. Value lives in
+`theme.json` (`settings.custom.perego.color.card-filter`). Cards also went `5/6` → **`1/1`** and cards
+2 and 4 now share one offset, both measured off the client's reference (~229x232 per card, both offsets
+~115px). The supplied art being square is the same call from the asset side.
+
+### Work: keep the routes, just stop linking to them
+
+The client's wording — *"keep the current design of the work page as it but we will not redirect to
+it"* — is the constraint. So `archive-perego_project.html` and `single-perego_project.html` still
+resolve; nothing links to them. The grid moved into `front-page.html` as a `home-work` section, the
+header nav's Work item became the `/#work` anchor, and the cards became `<button>`s carrying the
+`data-video` / `data-gallery` / `data-image` trigger that `media-lightbox/view.js` already binds
+site-wide. **No new lightbox was written** — this reuses the component and mirrors
+`ServiceSelectedWorkRenderer::card()`, including its precedence (video, then a real multi-image
+gallery, then the single image). A project with no media gets no trigger at all, so a card never opens
+an empty dialog — the client noted the content is not there for every project yet.
+
+Verified the home section behaves identically to the archive page: same filter result (design → 9
+cards, all `data-category="design"`), same pager, and the lightbox opens and closes via Escape, the
+close button, and the backdrop on both.
+
+### `wp_update_post()` destroys block attributes that contain JSON strings
+
+Updating the saved header nav with `wp_update_post()` **corrupted post 501**: it runs `wp_unslash()` on
+the content, which stripped the backslash from all 180 `\u0022` sequences the block serializer uses to
+escape quotes inside JSON-string attributes, leaving unparseable `u0022`. Restored from the pre-change
+backup and redone with **`$wpdb->update()`, which does not unslash**, then verified by `parse_blocks()`
++ `json_decode()` rather than by eyeballing the content.
+
+Two further traps found while recovering: `wp db import` with a **backslash path** silently mangles the
+filename inside its `SOURCE` statement and still reports `Success:` — use forward slashes and verify the
+data. And `wp db export`/`import` need `mysqldump`/`mysql` on PATH (`C:\wamp64\bin\mysql\mysql8.3.0\bin`).
+**Take the backup before touching content, and prove a restore by re-reading the data, not by exit code.**
+
+### Services hero: new art, and why the shared file was replaced this time
+
+The client's `services-hero-bg.png` replaces `svc-hero-bg.png` on **both** the services overview and the
+individual service pages, because both consumers are the same services hero — unlike the About case,
+where the other consumer was a different page type (Contact) and a new filename was required. Same
+question asked both times ("who else references this asset?"); different answer, different action.
+
+Shipped as `svc-hero-bg.webp` at native 2000x900, **112 KB against the old 2708 KB PNG**. Verified not
+upscaled: `object-fit: cover` scales it 0.92 at a 1440 viewport. The old PNG is deleted rather than left
+as a 2.7 MB orphan. `object-position: center top` needed no change — the new art centres its subject.
+
+The services-overview fixture could not be recaptured from a live render: `perego_service` is registered
+with `has_archive => false`, so `/services/` 404s and that block has no route of its own. Its fixture was
+updated by substitution instead, which is safe here because parity ignores `src` — noted so nobody
+assumes the fixture is stale.
+
+### Header CTA matches the AR/EN chips, but keeps its own text colour
+
+The CTA adopts `.lang-toggle__btn` metrics (10px/14px padding, 10px radius, 15px) — verified identical
+at 43px tall. Also found while doing this: `perego-reference.scss:154` hides *every* `.header-cta` below
+1024px, which is why the mobile menu had no CTA at all — the panel copy re-shows only itself.
+
+**Follow-up the same day: the header-bar CTA now matches the AR chip completely**, not just in shape —
+the translucent idle fill, white label, and the brighter hover, measured pixel-identical to
+`.lang-toggle__btn` in both states. The hover label colour has to be stated explicitly
+(`--accent-soft`): the AR chip inherits it from the reference's `a:hover`, but on the CTA
+`.btn--accent:hover` would otherwise win with its dark-on-accent value.
+
+This also retires the contrast concern the first pass carried. The earlier version kept a solid accent
+fill and therefore needed `--cta-text-on-accent`, because white on `--accent` (#d86af3) measures ~2.4:1
+and would have failed AA on the site's primary action. On the translucent violet the label is white at
+~12:1, so matching the chip is now the *more* accessible option, not a trade against it.
+
+**The mobile panel CTA deliberately stays the solid accent button** (client's call). That is why the
+override is scoped `.site-header__inner > .header-cta` rather than to `.header-cta` generally — the two
+copies now diverge on purpose, and the scoping is what keeps them apart.
+
+## 2026-07-26 — Client round: new About art and new service-card photos
+
+Two of the five client comments from this round. Both are asset swaps, but neither was a drop-in.
+
+**About background — the reference's `object-position` was tuned to the old art, so the swap reframed
+the section.** The client supplied a wider "zoomed out" hooded-figure image (2850x1060, 2.69:1) to
+replace `about-hooded.png` (1600x900). Under the reference's `object-position: 28% center` the new
+crop pushed the figure behind the glass panels and clipped the Perego logo off its hoodie. Swept
+28/45/55/62/70/78% against the real 1440px render: **62%** centres the figure in the free column with
+the logo readable (70% clips the logo off the left edge).
+
+- **RTL gets the same 62%, overriding the reference's mirrored `72%`.** Measured on the live render:
+  `.home-about__panels` is at x 748-1368 in LTR and **692-1368 in RTL** — the panels never mirror, so
+  the free column is the left side in both directions. Mirroring the background would put the figure
+  straight back behind the panels. The reference's LTR/RTL pair was compensating for the old art.
+- **Shipped as a new file, `about-hooded-wide.jpg`, not an overwrite.** `about-hooded.png` is also the
+  Contact page hero (`page-contact.html`); overwriting it would have silently restyled Contact, which
+  the client did not ask for. General rule: check who else references an asset before replacing it.
+- 1.9 MB PNG → **38 KB JPEG** at 2280x848.
+
+**Service card photos — the theme's optimize script does not resize, so raw drop-in was a regression.**
+The four supplied images are 908x909 squares; passing them straight through `npm run images` produced
+**1.3-1.7 MB PNGs each** against the ~350 KB art they replace — ~5 MB added to the homepage. Pre-sized
+to the shipped 560x680 convention (the card is `aspect-ratio: 5/6` with `object-fit: cover`, so the
+browser would crop the sides anyway) they land at **79-232 KB**. The squares' baked rounded corners are
+harmless: the card already applies `border-radius` + `overflow: hidden`.
+
+**The white labels still pass on the new photos, including the two light ones.** Two of the new images
+are much brighter than the art they replace, so the labels were re-checked against sampled render
+pixels rather than by eye: 12.09:1 (2D Motion), 14.43:1, 15.78:1, 17.17:1 — all well past WCAG AA. The
+handoff overlay gradient is what carries it; it was left unchanged, since the client asked only for new
+images. An eyeball read of the screenshot suggested the light cards had lost contrast; measuring
+disproved it.
+
+## 2026-07-26 — Footer contact: one professional mailbox on the new primary domain
+
+The footer shipped two personal Gmail addresses (`mostafa.emam3313@gmail.com`, `yehemam2@gmail.com`) on
+every page. The client has settled on **`peregoads.com`** as the primary domain (they also hold
+`perego.info`, unused for now), so the pair is replaced by a single mailbox: **`info@peregoads.com`**.
+
+**Why `info@` and not `contact@` or `hello@`.** The owner asked for the best fit for an Egypt / Saudi /
+UAE audience rather than naming one. In those markets `info@` is the conventional, expected general
+business address; `hello@` reads as informal Western-startup style, and `contact@` is understood but less
+standard. The code constant stays named `CONTACT_EMAIL` — it names the role, not the local-part.
+
+**The `+996` phone was a typo and is fixed to `+966`.** +996 is Kyrgyzstan; Saudi Arabia is +966, and the
+second number is +20 (Egypt). It had been live on the site. Footer is now one email + two phones.
+
+**No data migration was needed, because the seed *is* the live content.** The footer template part is not
+customised in the database (`wp post list --post_type=wp_template_part` returns only `header`), so no
+`contactChannels` block attribute exists and `SiteFooterRenderer::SEED_CONTACT_CHANNELS` renders directly.
+Editing the seed changed the site. Worth remembering the general shape: for these hybrid blocks, "is the
+template part customised?" decides whether a content change is a code edit or a content migration.
+
+**Three places had to move together, and the parity test is what enforces it:**
+
+- `SiteFooterRenderer::SEED_CONTACT_CHANNELS` — the source of truth, PHP.
+- `site-footer/preview.js` `SEED_CONTACT_CHANNELS` — the editor-canvas mirror.
+- `__fixtures__/front-footer.html` — regenerated from the live render, not hand-edited. Dropping one
+  `<li>` is a *structural* change, and `normalizeMarkup` compares the children array, so a stale fixture
+  fails the parity test. That is the guard working as designed.
+
+`PeregoEmailRenderer::CONTACT_EMAIL` was `contact@perego.com` — a placeholder on a domain we do not own,
+appearing in the signature of every outgoing email. It now matches the footer. Its two constructor/provider
+`siteUrl` fallbacks pointed at `https://perego.local`; they now point at `https://peregoads.com`, because a
+fallback that reaches a real recipient should name the real site, not a dev host.
+
+## 2026-07-26 — Service card label: white and centred, and why two stylesheets carry one rule
+
+Owner request: the home page service card labels should be **white and horizontally centred over the bottom
+of the card**, instead of the handoff's accent pink pinned to the inline-start edge.
+
+**The measure is kept, not removed.** `max-inline-size: calc(6.2em + 48px)` is what breaks `2D Motion
+Graphics` onto two lines without a `<br>` in the markup — the handoff's line breaks reproduced in CSS so
+editor-supplied labels (spec 012) keep wrapping in any language. Centring the *text* alone would have left
+those two lines inside a box still stuck at the inline-start edge, because the label is absolutely positioned
+with `inset-inline: 0` and a max width. `margin-inline: auto` is what actually centres the box; `text-align:
+center` then centres each line within it. Both are needed — verified in a real browser at 1440px, 390px, and
+on `/ar/`: `offCenterPx: 0` on all four cards in every case.
+
+**No hover rule is needed.** The card is an `<a>`, so the label previously inherited
+`a:hover { color: var(--accent-soft) }` from `perego-reference.scss`. Because the label now sets its own
+`color`, that inherited hover value can no longer reach it — the label stays white in every state and the
+lift plus accent glow border remain the only hover cues. This was the owner's choice between the two.
+
+**The same four declarations live in two files, and the theme copy is the one that does the work.**
+`.service-card__label` is declared by both the theme's `main.css` and the services-teaser block's
+`style-index.css`, at identical `(0,1,0)` specificity. The theme sheet wins in **both** contexts, for two
+different reasons — worth separating, because only one of them is about specificity:
+
+- **Front end — load order.** The block stylesheets are inlined in `<head>` (services-teaser at line 61 of
+  the rendered home page); `main.css` links after them, at line 112. Equal specificity, so the later sheet
+  wins.
+- **Editor canvas — specificity.** `functions.php` passes `main.css` through `add_editor_style()`, which
+  scopes every selector under `.editor-styles-wrapper`. That makes the theme rule `(0,2,0)` against the block
+  sheet's `(0,1,0)`, so it wins regardless of order.
+
+`perego-reference.scss` is the immutable handoff sheet, so the theme-side change goes in
+`perego-wordpress-adapter.scss`, the client-owned layer that loads after it inside `main.css`. Confirmed live
+on the front end and by replaying the editor's own scoping over the two compiled stylesheets.
+
+**So editing only the block's `style.scss` would have changed nothing visible, in either context** — not
+just in the editor. The block sheet is updated anyway, and must be: leaving it asserting
+`color: accent; text-align: start` would leave the block's own stylesheet describing a design that no longer
+ships, and it would become the live value the moment anything reorders the enqueues.
+
+The general rule this leaves behind: **when a class is declared by both a block stylesheet and the theme
+stylesheet, find out which one is actually winning before editing either — then change the winner, and keep
+the other in sync.** Do not assume the block's own stylesheet governs its own markup; here it does not.
+
+## 2026-07-23 — About panels: a block that owns the editing surface, not the content
+
+The Front Page template canvas showed core's *"This is the Content block…"* placeholder where the About
+panels belong, and nothing there could be edited. Not our bug: About is the front page's own
+`post_content`, and `render_block_core_post_content()` returns an empty string unless
+`$block->context['postId']` is set — a template being edited has no post. Spec 004 T012 put the copy in
+the page deliberately, and each language keeps its own page, which is how Polylang works.
+
+**Decision: a real `perego-theme/home-about` block whose content stays in the pages.** The block replaces
+`wp:post-content` in `front-page.html` and provides the editing surface; the pages keep the text.
+
+- **Front end delegates to core instead of imitating it.** The renderer builds a real
+  `core/post-content` `WP_Block` with the same context and returns its render. The wrapper classes
+  (`entry-content wp-block-post-content has-global-padding is-layout-constrained …`) are not literals in
+  core — `get_block_wrapper_attributes()` computes them from the block's registered layout support — so
+  hand-writing them would drift the first time core changed one. Output is **byte-identical**: a
+  curl-diff of `/` and `/ar/` against the pre-change capture shows **zero changed lines**.
+- **Language needs no code.** `block.json` declares `usesContext: ["postId","postType"]` and
+  `render_block()` seeds that from the global post, so `/` renders page 42 and `/ar/` page 97 — the
+  Arabic panels keep coming from the Arabic page, with no Arabic attribute anywhere.
+- **The editor binds to an entity.** `edit()` uses `useEntityBlockEditor` + controlled inner blocks —
+  the same mechanism core's post-content block uses in the page editor — so the canvas holds the page's
+  real `glass-panel` blocks, styled by `main.css`, natively editable. Edits mark the page dirty, so the
+  Site Editor lists it beside the template on save.
+- **Which page it binds to follows the context.** On a page screen it is the page being edited (so the
+  Arabic page's editor shows Arabic); only the template screen, which has no post, falls back to
+  `page_on_front`. Without that branch the Arabic page's editor would have shown English panels while
+  the site rendered Arabic.
+
+**Why not attributes, which is the shape of every other section block.** Moving the copy into En/Ar
+attributes would have reversed spec 004 T012, taken Arabic copy out of the Arabic page, and — the part
+that would have bitten later — left the pages' own content unrendered, so anything typed into the Home
+page afterwards would silently never appear. The owner chose "a block like the others" *and* "leave the
+Arabic copy in the Arabic page"; those two are only compatible this way.
+
+**The general rule this establishes:** when a section's content legitimately lives outside the template,
+the block owns the *editing surface* and delegates rendering to whatever core block already owns the
+*content*. Reach for attributes only when the content has nowhere else to live.
+
+## 2026-07-23 — Owner report: uneditable Front Page, RTL arrow, header Contact link
+
+Four causes behind three symptoms; none of them shared a fix.
+
+**1. A live-canvas preview must not be a fixed, full-viewport overlay.** The `preloader` and
+`media-lightbox` previews render their real markup (spec 021 C15) and that markup is
+`position: fixed; inset: 0`. On the front end each stays hidden until its view script shows it, and the
+previews deliberately omit that lifecycle — so in the canvas iframe each anchored to the iframe viewport
+and covered the whole Front Page template. Deleting the preloader just revealed the dialog behind it.
+Fixed with editor-only CSS in `perego-editor.scss` (until now an empty placeholder, which is exactly
+what it was reserved for): un-fix both into bounded, selectable tiles. `block-size: auto` is part of the
+fix — the adapter pins the live preloader to `100dvh`, so un-fixing alone left a screenful-tall tile.
+
+**The rule worth keeping: any block whose skeleton is fixed or absolutely-positioned chrome needs an
+editor-only box.** That is now the second instance, after `home-about-bg` (2026-07-22) collapsed to zero
+height for the mirror-image reason. Check it whenever a locked preview is added.
+
+**2. `orderby: menu_order` and `per_page: -1` are not valid REST arguments.** `services-teaser`'s editor
+asked for both, so `/wp/v2/perego_service` answered **400 `rest_invalid_param`** and the Services picker
+was silently empty. `site-header/index.js` already carried the correct query *and a comment explaining
+this exact constraint* — the knowledge existed and the second caller did not reuse it. Now mirrored,
+comment included.
+
+**3. The header's Contact link: a JS seed drifted from the PHP seed, and a Site Editor save made the
+drift permanent.** `SiteHeaderRenderer::seedNavItems()` has always seeded `#contact` (every page's
+footer carries `id="contact"`; the Contact page is reached through the "Start a Project" CTAs), and that
+is what the handoff specifies — *"Contact Us `#contact` (footer anchor on home; on inner pages resolves
+to the footer `#contact`)"*, `docs/pages/_global-partials.md` in the V2 handoff, with the same decision
+recorded here on 2026-07-16 ("Header 'Contact Us' is the bare `#contact` fragment"). But the
+editor-side `SEED_EN`/`SEED_AR` in `site-header/preview.js` said `/contact`. The seed only applies while
+the block has no stored attributes — and the first Site Editor save wrote the JS seed into the `header`
+template part, in both languages. From then on the stored value was the site's real nav.
+
+Two fixes, because a code fix alone changes nothing on a site that has already saved:
+`preview.js` now matches the PHP seed, and `scripts/migrate-header-contact-anchor.php` rewrites the
+saved attribute. **The seed docblock used to say hrefs were "volatile / parity-ignored"** — true of the
+parity test, false of the site, and that is what let the drift through. Corrected.
+
+**⚠️ `wp_update_post()` unslashes what you give it.** The first run of the migration ate every backslash
+in the block comment's `"` escapes; the stored JSON stopped parsing and the renderer fell back to
+the PHP seed — which reads as the whole nav reverting (order *and* Arabic labels), not as a corrupted
+attribute. Restored from the pre-migration backup and re-ran with `wp_slash()`. **Any script that
+rewrites `post_content` through `wp_update_post()` must wrap it in `wp_slash()`**, and the tell-tale
+symptom of forgetting is stored data that silently degrades to its default.
+
+**4. Canvas fonts were blocked by CORS.** `add_editor_style()` inlines `main.css` into an `about:srcdoc`
+iframe whose origin is `null`, and font fetches are always CORS-mode, so the editor rendered in fallback
+faces. A scoped `.htaccess` in `assets/fonts/` sets `Access-Control-Allow-Origin` for font files only,
+guarded by `<IfModule mod_headers.c>` so a host without the module keeps today's behaviour. Verified
+serving `Access-Control-Allow-Origin: *` locally. The front end is same-origin and was never affected.
+
+**Public output is unchanged apart from the intended link.** A curl-diff of `/` and `/ar/` against the
+pre-change capture shows exactly one changed line per language: the Contact href. The RTL arrow fix
+below is CSS-only.
+
+**⚠️ Deploy note: `main.css` is enqueued as `?ver=0.1.0`, the theme version**, so a CSS-only fix does
+not reach a returning visitor's cache until that version is bumped. Both CSS fixes here are affected.
+
+## 2026-07-23 — The RTL arrow flipped on hover because `transform` is one property, not a list
+
+The Arabic home page's "عرض كل الخدمات" arrow snapped from pointing inline-end to pointing inline-start
+the moment it was hovered. The reference stylesheet mirrors the arrow on `[dir="rtl"] .link-arrow svg`
+(`scaleX(-1)`) but nudges it on the more specific `[dir="rtl"] .link-arrow:hover svg`
+(`translateX(-6px)`). `transform` does not merge across rules — the more specific declaration replaces
+the whole value — so hovering discarded the mirror.
+
+Fixed in `perego-wordpress-adapter.scss`, the client-owned layer that loads after the immutable
+reference sheet (the same route as the spec-020 `[hidden]` overrides):
+`[dir="rtl"] .link-arrow:hover svg { transform: scaleX(-1) translateX(6px); }`.
+
+**The sign is deliberate: `+6px`, not `-6px`.** After `scaleX(-1)` the element's own X axis is flipped,
+so a positive translate advances the arrow in its own reading direction. Verified in a real browser —
+hovered computed transform is `matrix(-1, 0, 0, 1, -6, 0)` (mirror kept, 6px leftward) with the link in
+its accent-soft hover colour; LTR is unchanged at `matrix(1, 0, 0, 1, 6, 0)`.
+
+**Verification gotcha worth remembering:** the first two Playwright runs reported no nudge at all,
+because the first-visit preloader was still covering the page and `:hover` never landed on the link.
+`el.matches(':hover')` is the check that exposes it — a transform reading alone looks like a CSS bug.
+
+**Noted, not changed:** `services-teaser/style.scss` defines a `.perego-link-arrow` twin of this
+primitive that **no renderer emits** (the markup uses the reference's `.link-arrow`). Its RTL variant is
+built by rtlcss, which negates `translateX(6px)` to `-6px` on top of the authored `scaleX(-1)` — the
+same double-flip, dormant only because the class is unused. Left alone as dead CSS rather than fixed
+blind; worth deleting or adopting deliberately.
+
+## 2026-07-23 — The AR/EN "old design" gap was a meta-translation bug, not a design divergence
+
+The owner reported the Arabic site being "in an old design". **It is not.** Every EN/AR page pair —
+home, contact, terms, privacy, journal, all four services, work, search — is **structurally identical**,
+loads the **same `main.css`**, and AR correctly sets `dir="rtl"`. There is no second design and no
+layout fork. Three real defects were hiding behind that impression.
+
+**1. The clients carousel did not open the lightbox on Arabic.** The owner's actual words —
+*"the clients section in the home page doesn't open lightbox as the english"* — were exactly right.
+EN rendered `<button class="indiv-card" data-video="…">`; AR rendered inert
+`<div class="indiv-card">`. **Root cause: Polylang does not copy post meta to translations.** The
+Arabic client posts have no `_perego_client_video_url` of their own, so `ClientsCarouselRenderer` —
+which read `get_post_meta($client->ID, …)` directly — took its no-video branch. The cards looked
+correct and did nothing when clicked. Same for featured images: 27 of 31 Arabic clients have none while
+their English counterparts do.
+
+**The fix reuses what already existed.** `ProjectRepository` had solved this privately for Projects
+(*"AR projects carry no featured image of their own; reuse the linked EN post's"*). That logic is now
+`PeregoSite\Content\TranslatedMeta`, used by both — one implementation instead of each surface
+rediscovering the bug. Clients read video URL, video type, gallery, subtitle, statistic and featured
+image through it.
+
+**2. Eight Arabic-only demo client records.** Titled `عميل مؤسسي تجريبي` / `منشئ محتوى تجريبي` —
+literally *demo corporate client* / *demo content creator*, with no English counterparts, which is why
+AR showed 7 individual cards to EN's 3. Moved to **draft**, not deleted — reversible. Clients were the
+only content type with a gap; projects (77/77), services (4/4), posts (9/9) and pages (5/5) were
+already 1:1. Published clients are now **23 EN / 23 AR**.
+
+**⚠️ This is a database change and does not travel in git.** It applies to the local dev DB only;
+production needs the same eight records unpublished separately.
+
+**3. A stale Arabic catalogue.** `perego-site-ar.mo` was dated Jul 16 and its POT was older still, so
+every string added since rendered in English on Arabic pages. Regenerating the POT found **389 strings**
+where the committed one had 172. Of the 52 visitor-facing strings, **20 had no Arabic** — the clients
+carousel labels, the contact chooser's help text and group label, the portfolio pager, the gallery
+labels, "Skip to content" and "Language". All 20 translated and verified **in the rendered AR pages**,
+not in the `.po`. The ~90 admin/editor strings remain English by the owner's explicit choice, and are
+the obvious next i18n pass.
+
+**Ordering mattered:** unpublishing the demo clients first would have left the Arabic carousel with
+three inert cards and **no working lightbox at all**, since the four that did work were the demo ones.
+The renderer fix landed first.
+
+**Where the fallback stops, and why — the T031 matrix caught this.** The first cut routed the card
+*subtitle* and *statistic* through the same English fallback. The regression matrix then flagged
+`intertainment show` rendering on the Arabic homepage: the three English client records carry that
+subtitle (misspelled, incidentally — *entertainment*), no Arabic record has one, so the fallback was
+printing English editorial copy onto Arabic cards — **the exact language leak this pass exists to
+remove.** The rule is now explicit: **media crosses languages, editorial copy does not.** Video URL,
+video type, gallery and featured image fall back; subtitle and statistic do not. An untranslated card
+shows no subtitle — which is the prompt to enter Arabic copy — and still opens its video. Pinned by a
+test that fails if either value is ever inherited again.
+
+**Verified:** EN output **byte-identical** on every route (the fix is AR-only by construction); AR and
+EN now both render 3 individual lightbox buttons and 20 corporate cards, with no English leak on AR;
+the EN/AR structural matrix is identical across all seven page pairs; Pest **418** (+5 regression tests
+pinning the fallback rule in both directions), Jest **193**, build clean.
+
+**Content notes for the owner** (not code): the English client subtitle reads `intertainment show` —
+a misspelling of *entertainment*; and the three individual client records have no Arabic subtitle or
+statistic, so those Arabic cards render without them until the copy is entered.
+
+## 2026-07-23 — CoreX updated to upstream/main; our issue #114 fix adopted, our implementation dropped
+
+Framework moved **v0.34.0 → upstream/main**: 116 commits, 240 files (124 added, 116 modified,
+**0 removed, 0 renamed** — additive, so nothing Perego calls disappeared). Landed on
+`chore/corex-v0.35.0-update` → **PR #38** into `feature/001-global-foundation`, mirroring how v0.34.0
+landed as PR #35.
+
+**Merged `main`, not the `v0.35.0` tag — deliberately.** The fix for the issue we raised upstream
+(CoreX **#114**, `corex_submission_filter_options`) landed on `main` **five commits after** the tag,
+via their PR #123. Merging the tag would have brought 111 commits and *not* the one thing the owner
+asked to confirm.
+
+**Our implementation of #114 is deleted in favour of upstream's.** We had built the same feature
+locally (`76fcdf3`) while the issue was open. Upstream's is a strict superset — same filter name, same
+`{id,name,slug}` contract, same `id => 0` "match by `corex_form_slug`" convention, same `slug:` prefix,
+same meta clause, plus a `SLUG_PREFIX` constant, a `normalize()` pass and a name sort. Carrying a fork
+edit on top of an upstreamed feature guarantees the same conflict at v0.36.0, so the fork edit goes.
+
+**⚠️ The finding worth remembering: two of the five feature files auto-merged *without* a conflict, and
+were wrong.** `WpSubmissionsReader` came out with the `corex_form_slug` meta clause **twice** — our
+`elseif` branch and upstream's `if` branch, both present. Git reported a clean auto-merge. A clean
+auto-merge of the same feature implemented twice is not a correct merge; all five files were taken from
+upstream wholesale instead. **When both sides implemented the same thing, do not trust auto-merge —
+check every file the feature touched, not just the ones git flagged.**
+
+**Their fix fits us, and that is proven, not assumed.** Our contract test
+`tests/Unit/Submissions/SubmissionInboxQueryTest` — written against *our* implementation, describing
+what we specified in the issue — survived the merge untouched and passes **4/4 against upstream's
+code**. Kept for exactly that reason.
+
+**Verification:** CoreX unit 1407 passed / 49 failed vs **1266 / 29 before** — all 20 new failures are
+Patchwork `DefinedTooEarly` harness errors in three new upstream test files, the same environmental
+failure already hitting 29 pre-existing tests; zero assertion failures. Perego Pest 268, Jest 76, build
+clean. Every public route byte-identical in EN and AR except the `corex-runtime.js` cache-busting
+`?ver`, which moved because that file genuinely changed. A real contact-form submission through the
+merged pipeline returns `ok:true` and stores `corex_form_slug` with an empty `corex_flow_id` — the
+exact code-registered case #114 was about.
+
+**The upstream remote stayed fetch-only throughout**; its push URL is still the
+`DISABLED_DO_NOT_PUSH_TO_COREX` placeholder, verified before and after.
+
+## 2026-07-22 — Spec 021 Phase 4: ACF-grade fields as sidebar panels, built natively
+
+Owner ask: post types and custom fields "must feel like the ACF experience and organized well".
+
+**Built natively, not on ACF — and that costs nothing here.** ACF 6.8.6 *is* active on this install,
+but with **zero field groups**: `wp post list --post_type=acf-field-group` is empty and nothing under
+`sites/perego/` references `Corex\Fields\FieldResolver`; every renderer calls `get_post_meta()`
+directly. So ACF is installed and entirely unused, while registering three CPTs and admin menus. The
+constitution's "no optional plugin as a hard dependency" rule therefore costs nothing to keep.
+**Flagged for the owner: the plugin looks removable.**
+
+**Sidebar panels, not upgraded meta boxes.** All the meta is already `show_in_rest`, so panels read and
+write through `useEntityProp` — no nonce, no save handler, no page reload. Four classic meta boxes
+(each with its own nonce, save loop and inline JS) collapse into one declarative schema plus one
+`match` on `field.type`, mirroring the framework's own `FieldSections` → `SettingsForm::control()`
+pattern. The gallery and portfolio pickers reuse `MediaField` and `RecordPicker` — the same controls
+editors already know from the blocks.
+
+**What the raw inputs became:** the Service card image was an **attachment ID typed into a text box** →
+a media picker with a thumbnail. Site type was free text where only five values resolve → a select.
+The canonical service key was free `sanitize_key` text → a select. The Client statistic still asks for
+inline `<strong>`, but now says so in help text under the field instead of inside the label.
+
+**The safeguard that matters: a select never silently rewrites a stored value.** Several of these were
+free text, so a post can hold something the enum does not list. `EnumControl` always includes the
+current value, marked as non-standard, and only replaces it when the editor actively picks something
+else.
+
+**A real mistake this caught.** The schema first offered the `ProjectPostType::CATEGORIES` keys
+(`video|motion|design|web`) for `_perego_service_slug` — **and the test asserted against the same wrong
+source**, so both agreed and passed. The live meta on all eight Service posts actually holds the
+*route* slug (`video-editing|motion-graphics|…`), which is what `ServiceContent::SLUG_KEY`, the service
+tabs and the contact pre-selection key on. Two vocabularies for the same four services. The test now
+reads `ServiceContent::SLUG_KEY` — the authority the renderers use — plus a second test asserting the
+two vocabularies are *not* the same, so the mix-up cannot silently return. Found by rendering the
+column against a real post, not by reading code.
+
+**The old meta boxes are unregistered but retained, deliberately.** `PostMetaBoxes`,
+`ProjectGalleryMetaBox` and `ServicePortfolioMetaBox` (and their passing tests) stay on disk with a
+SUPERSEDED note. The panels could not be verified in a live editor — wp-admin needs a login the agent
+cannot perform — and deleting a working, tested UI in favour of an unverified replacement is the
+irreversible half of that trade. Delete them once the owner confirms the panels work.
+`ClientMediaMetaBox` stays **registered**: the client gallery is a list of typed objects
+(`{type, id, url}`), not a flat ID list, and it is the one surface the shared primitives do not cover.
+
+## 2026-07-22 — Spec 021 C13: fixing an invalid block moved core's layout classes, and that was visible
+
+The contact-hero group in `page-contact.html` carried two things `core/group`'s `save()` cannot
+regenerate: a raw `id="contactChoose"` and an **unwrapped `<div class="contact-hero__bg">`** child. The
+`id` moved to `TemplateSectionAttributes`; the raw div is now wrapped in `wp:html`, which core
+round-trips verbatim.
+
+**That second fix had a consequence the HTML diff alone did not explain.** Before it, core's layout
+support was latching onto the raw div, so `is-layout-flow wp-block-group-is-layout-flow` sat on
+`.contact-hero__bg` — a `position:absolute` decorative wrapper containing one `<img>`, where core's
+`:where(.is-layout-flow) > * { margin-block-start: 24px }` did nothing at all. Once the section became
+a well-formed group, the classes landed where they belong: **on the section**. Whose children are the
+bg div, the `sr-only` h1, and `.contact-hero__grid` — and the grid sets no margin of its own, so it
+would have gained **24px of top margin and pushed the whole contact form down**.
+
+Nothing in the test suite could have caught this: it is a CSS cascade outcome, not markup, and the
+markup diff looked like the usual attribute-order noise. It was found by reading what the moved classes
+actually select, against the theme's own compiled rules.
+
+**Fix:** one neutralizing rule, `.contact-hero.is-layout-flow > * { margin-block-start: 0 }`, mirroring
+the `.contact-hero__grid.is-layout-flow > .contact-choose` rule the stylesheet already carried for the
+identical reason one level deeper. Specificity `(0,2,1)` beats core's `(0,1,0)`, so it wins regardless
+of load order. The section is a full-bleed hero that owns its spacing through the grid's padding.
+
+**The rule this adds to the T035 playbook:** when a template fix changes a block's *structure* (not just
+its attributes), check where core's layout classes end up afterwards, and what they select. Attribute
+order is noise; a relocated `is-layout-flow` is not.
+
+## 2026-07-22 — Spec 021 T036: the link picker, and why an unconfigured link must resolve to nothing
+
+Owner ask: every editable link should let you **pick a page** instead of typing a URL — custom vs
+dynamic, post type, then the record — plus an *open in a new tab* toggle.
+
+**Storage is additive, so nothing migrates.** The plain `href` (and `ctaUrl`, `seeAllUrl`, …) stays the
+custom-URL value; `linkKind`/`postType`/`postId`/`openInNewTab` join it as siblings. A link saved before
+the picker has no `linkKind`, which `LinkTarget` reads as `custom` — the exact path it already took. No
+deprecation, no attribute rewrite, no invalid blocks. Keeping `href` populated also gives dynamic mode a
+real fallback for when a picked record is later unpublished.
+
+**Scope: CTA, nav and editorial links only.** Breadcrumbs, the logo, and the Home/Our Work/Journal route
+links stay derived. A mis-set breadcrumb silently breaks navigation and there is no reason to point
+"Home" anywhere but home. Social links also keep their existing control: they are external by
+definition, the renderer already forces `target="_blank" rel="noopener"`, and their real control is the
+network→icon mapping.
+
+**One rule, one implementation.** `SiteHeaderRenderer::ctaHref()` and `SiteFooterRenderer::legalHref()`
+were the same twenty lines twice; both are gone, replaced by `PeregoSite\Blocks\LinkTarget`. The header
+and footer suites (28 + 13) pass unchanged, which is the proof that custom-URL behaviour did not move.
+
+**The finding worth keeping: `hrefIfSet()` vs `href()`.** Routing the portfolio CTA through `href()`
+changed the live `/work/` page — `http://perego.local/contact` became `http://perego.local/contact/`.
+Cause: the pure renderers own a default route as a literal `home_url('/contact')`, and resolving that
+same route through the language driver returns the page's canonical permalink, which carries a trailing
+slash. So "resolve the link, falling back to the default route" is **not** behaviour-preserving for a
+block nobody has edited. `hrefIfSet()` answers with an empty string when a link is unconfigured, and the
+renderer keeps its own literal default. The two shapes are now explicit:
+
+- a renderer holding a `LanguageService` builds its own `LinkTarget` and calls `href($link, $fallback)`;
+- a pure renderer is handed `{href, target}` resolved with `hrefIfSet()`, and an empty href means
+  "unconfigured — use your own default".
+
+Only a curl-diff caught this; every test was green and `git diff --name-only` showed only expected
+files. Same lesson as C9/C10, from a completely different direction.
+
+## 2026-07-22 — Spec 021 C9/C10: adding an editor script resurrected dead CSS; the CSS went, not the fix
+
+`project-navigation` was the worst case in the whole spec-021 sweep: it had **no editor script at all**, so the
+block editor could not register it and the single-project template showed "Your site doesn't include support for
+this block" — a step below the bare-sentence blocks. Adding `editorScript` to its `block.json` fixed that and
+immediately produced an **unexpected front-end diff**: a `<style id="perego-theme-project-navigation-style-inline-css">`
+block appeared on every project single.
+
+Cause: `block.json` declared `"style": "file:./style-index.css"`, but webpack only emits a block's assets when
+that block has a JS entry. With no `index.js`, `style.scss` was never compiled, the declared file never existed,
+and WordPress silently skipped the enqueue. Giving the block an editor script made webpack compile the stylesheet
+for the first time, and the previously-dead declaration started resolving.
+
+The stylesheet itself is dead: every selector in it is `.project-followup*`, and a repo-wide search finds those
+class names in **no** renderer, template, or fixture — `ProjectNavigationRenderer` emits `.pagination`,
+`.section-title`, `.blog-grid`, and `.post-card` with inline styles. So the CSS is a leftover of an earlier design
+that has been unreachable since the renderer was rewritten.
+
+**Deleted `style.scss` and the `style` declaration** rather than shipping newly-live dead CSS or renaming its
+selectors to match (which would have changed the approved design under cover of an editor-only slice). The project
+single is byte-identical again — verified by curl-diff, 0 differing lines.
+
+**The general lesson for the remaining batches:** a block that has never had a JS entry may also have never had
+its declared assets built. Curl-diff the route after adding `editorScript`, don't assume "editor-only change ⇒
+front end frozen". `git diff --name-only` would not have caught this one.
+
+Also of note: `npm run lint:js` fails across the whole block tree on prettier formatting and
+`jsx-a11y/anchor-is-valid` (preview skeletons legitimately use `href="#"`), including blocks shipped in C1–C8.
+C9/C10 match the surrounding style rather than introducing a second one; the lint gate is a separate cleanup.
+
+## 2026-07-22 — Spec 021 T035: templates keep `core/group`; attributes core cannot express go back on `render_block`
+
+The owner reported the homepage About section rendering as **"Block contains unexpected or invalid content"** in
+FSE. It is a **template defect, not a block defect** — `home-about-bg` (fixed the same day) was fine. The section
+wrapper in `front-page.html` was a `core/group` whose saved HTML hard-coded two attributes `core/group`'s `save()`
+can never regenerate:
+
+```html
+<!-- wp:group {"tagName":"section","className":"home-about","layout":{"type":"default"}} -->
+<section class="wp-block-group home-about" id="about" aria-labelledby="home-about-title">
+```
+
+Gutenberg regenerates `save()`, compares attribute sets, sees two it cannot account for, and invalidates the
+block. Six other templates carry the same class of defect (T035).
+
+**Rejected: replace the wrapper with a custom Perego block.** It would have been declaratively clean and
+byte-exact — but core adds `is-layout-flow wp-block-group-is-layout-flow` and the `theme.json` layout/spacing
+rules to group blocks at **render** time, via the layout support. A custom block drops all of that silently.
+Measured on the live page: the rendered class list really is
+`wp-block-group home-about is-layout-flow wp-block-group-is-layout-flow`, none of which is in the template.
+
+**Chosen: the template carries exactly what `save()` produces; `PeregoSite\Theme\TemplateSectionAttributes`
+puts the rest back on `render_block`.** Core `core/group` behaviour is untouched, the editor can validate the
+template, and the public a11y contract survives. `WP_HTML_Tag_Processor::set_attribute()` does the writing — no
+regex, no string splicing.
+
+**The trade, stated plainly: DOM-identical, not byte-identical.** `WP_HTML_Tag_Processor` writes a restored
+attribute *in front of* the tag's existing ones, so `id`/`aria-labelledby` now precede `class` instead of
+following it. Verified by curl-diffing the full EN and AR homepages before and after: **exactly one line differs
+in each, and only in attribute order** — same three attributes, same values, same render-time layout classes.
+Attribute order is meaningless in HTML; nothing in CSS, JS, or the accessibility tree can observe it. This is the
+first deliberate departure from the "byte-identical" standard C1–C8 held to, and future T035 fixes inherit it, so
+each one is verified the same way rather than by `git diff --name-only` alone.
+
+Prefer, in order: a native expression core reproduces exactly (`anchor` for a plain `id`, `style.spacing` for a
+margin) → `wp:html` for genuinely raw markup → this class, for what core cannot express at all
+(`aria-labelledby`, `tabindex`).
+
+**Known follow-up, not fixed here:** `seed-home-about.php` gives the `home-about-title` anchor to the EN page's
+first heading only, so on the Arabic front page `aria-labelledby="home-about-title"` points at nothing. That is
+pre-existing baseline behaviour; it belongs to the AR a11y pass, not to a fix whose whole point is changing
+nothing visible.
+
+## 2026-07-22 — Spec 021 C7/C8 + scope correction: the remaining gap is bare-sentence blocks, not SSR
+
+Extending the live-canvas standard past the homepage surfaced a **scope correction worth recording**, found by
+auditing every block's `edit()` rather than assuming the roadmap:
+
+- **The `ServerSideRender` problem is essentially solved.** Only two blocks still import it: `clients-carousel`
+  (kept deliberately — dynamic, C6) and `service-selected-work` (= T028, gated on the content model). Six blocks
+  are converted (header, footer, hero-slider, services-teaser, home-about-bg, service-hero, project-hero).
+- **T026 "What We Do" and T027 "Process" need no code.** Verified against the live `/services/video-editing/`
+  markup: both sections are composed from **native core blocks** with Perego classNames inside each Service
+  post's `wp:post-content` — no custom block, no SSR, no custom `edit()`. Editors already get direct visual
+  editing, native image/layout controls, drag-reorder for process steps, and native icon media selection. The
+  spec-021 problem simply does not exist there (same as the homepage About section, T014). Marked done with a
+  note rather than inventing a block to "convert".
+- **The real remaining gap is different and worse than SSR:** ~18 blocks render a *bare sentence* in `edit()`
+  (e.g. project-hero returned the string "Project hero — breadcrumb, category, title (H1), and meta. Rendered
+  by ProjectHeroRenderer"). That shows the editor nothing at all — it is the placeholder-only state the owner
+  directive rejects. These are the "next pages" work, converted in page order.
+- **C7 `service-hero` / C8 `project-hero` are LOCKED previews.** Neither block has attributes — their content
+  is the queried Service/Project post plus a seed — so they render real markup with **no controls**, and the
+  canvas mirrors the post being edited when there is one (`getCurrentPostType()` guard, every lookup falling
+  back to the seed/placeholder so the shared template still previews correctly). C8's parity test caught a real
+  drift immediately: `get_the_post_thumbnail(…, 'large')` emits `attachment-large size-large wp-post-image`,
+  not just `wp-post-image` — the harness paying for itself.
+
+## 2026-07-22 — Spec 021 C6: Clients carousel stays SSR (dynamic), composer + headings on shared primitives
+
+The Clients carousel is the homepage's one **dynamic** block: its cards are a projection of many published
+`perego_client` posts (each with its own logo/video), not content this single block instance owns. Per the
+static-vs-dynamic rule (DECISIONS 2026-07-21), it therefore **keeps its `ServerSideRender` canvas preview** —
+it is deliberately NOT converted to a real-markup skeleton, and has no parity test. What spec 021 changes is
+the editing surface, brought in line with C4's services-teaser treatment:
+
+- **Headings move to the Inspector.** The four section headings (corporate/individual title + subtitle, En/Ar)
+  were in-canvas RichText fieldsets sitting above the SSR — a duplicate of what the SSR already renders. They
+  are now `LanguagePair` controls in the Inspector; the SSR preview shows the real headings and updates live as
+  they change. (In-canvas RichText isn't feasible for a dynamic block whose content lives inside the SSR.)
+- **The composer moves to `RecordPicker`.** The bespoke `PanelBody`/`SelectControl`/`CheckboxControl` UI is
+  replaced per client type by a `manual` picker (ordered chosen list + add) and an `automatic` picker
+  (per-item show/hide), driven by the unchanged `{type}Mode`/`{type}Order`/`{type}ExcludeIds` attributes. The
+  PHP renderer is untouched, so the front end is byte-identical (ClientsCarousel Pest 24/24).
+- **Card media stays the Client's own concern.** Each client's tile/logo is edited on that Client's screen; a
+  help note says so. The C6 slice owns the block's composition + headings, not per-client media.
+
+## 2026-07-22 — Spec 021 C5: Home About background live-canvas (locked chrome, no controls)
+
+The `home-about-bg` block `edit()` renders real markup (`HomeAboutBgSkeleton`) instead of `<ServerSideRender>`,
+applying the C1–C4 static-layout standard. The block is **purely decorative chrome** — a full-bleed background
+image with no locale dependency and no editable content — so T014's "direct visual About editing with locked
+structural wrappers" is satisfied by the composition, not by this block: the About section's editorial content
+is the adjacent native `wp:post-content` (which the editor already edits directly), and this block stays locked
+with zero controls. Its only change is dropping the SSR iframe for the real `div.home-about__bg > img`, pinned
+by a parity test. No attribute/renderer change, so the front end is byte-identical (HomeAboutBg Pest 2/2).
+
+## 2026-07-22 — Spec 021 C4: Services teaser live-canvas (composer on `RecordPicker`, cards as a seed preview)
+
+The homepage Services teaser `edit()` now renders real markup (`ServicesTeaserSkeleton` in
+`services-teaser/preview.js`) instead of `<ServerSideRender>`, applying the C1–C3 static-layout standard and
+folding the block's existing automatic/manual/hybrid composer onto the shared Inspector design system.
+
+- **In-canvas head text nests inside the real elements.** The heading and the "See All" label are edited
+  with `RichText tagName="span"` nested inside the real `h2.services-teaser__title` and
+  `a.link-arrow.services-teaser__link` — not as whole-element replacements. This keeps the arrow `svg` and the
+  `aria-labelledby` target id (`#servicesTeaserTitle`) that a whole-element `RichText` would drop, and because
+  parity renders the skeleton with plain defaults (no override nodes), the nested spans are edit-time-only and
+  never affect the test.
+- **The composer moves to `RecordPicker`.** The old bespoke `PanelBody` + `SelectControl` + `CheckboxControl`
+  UI is replaced by the shared primitive: a `manual` picker (ordered chosen list + add) for the
+  selected-first set and an `automatic` picker (per-item show/hide) for exclusions, driven by the existing
+  `servicesMode` / `serviceOrder` / `serviceExcludeIds` attributes. The PHP `cards()` composition is unchanged,
+  so the front end is byte-identical — proven by the unchanged ServicesTeaser Pest suite (11/11).
+- **Service cards render from the seed, as a design preview.** The four cards are a projection of the
+  `perego_service` CPT (label/image overlaid from each Service's teaser meta), and which cards appear on the
+  live site follows the composer. Resolving that live selection's images inside editor JS would need a bespoke
+  data layer, so the canvas shows the four **seed** cards as a faithful representation of the card design; the
+  Inspector composer + a help note own the live behaviour. The parity test validates the card markup; the CPT
+  overlay stays the renderer's job. Revisit if owner review wants the live selection mirrored in the canvas.
+
+## 2026-07-22 — Spec 021 C3: Hero live-canvas (slide switcher via the real dots, structured `slides` array)
+
+The homepage Hero `edit()` now renders real markup (`HeroSkeleton` in `hero-slider/preview.js`) instead of
+`<ServerSideRender>`, applying the C1/C2 static-layout standard to a **multi-slide** block. Decisions specific
+to the Hero:
+
+- **The real dots are the slide switcher.** The front-end hero shows one slide at a time (non-active slides
+  carry `hidden`); the editor reuses exactly that — the currently-selected slide is visible and editable, the
+  `.hero__dots` buttons switch which slide is composed. This replaces the old ad-hoc "Slide 1/2/3" button
+  tablist + stacked `SlideFields`. Because parity ignores attributes (including `hidden`), the skeleton
+  rendered with the default `activeIndex` (0) still matches the captured fixture.
+- **First slide stays the `h1`, always.** `slideTitleTag(index)` returns `h1` for index 0 and `p` for the
+  rest, mirroring the renderer's pre-hydration rule, so there is exactly one `h1` in the DOM regardless of
+  which slide is selected. The shared `.hero__title` class makes every slide look identical, so editing a
+  later (`p`) slide in place is still WYSIWYG.
+- **Structured `slides` array replaces the legacy per-slide attributes.** Slides persist as one
+  `slides` array of `{ titleEn, textEn, titleAr, textAr }` (spec 021 structured repeater); `normalizeSlides`
+  upgrades the legacy `slide{n}…{En,Ar}` attributes on read so entered copy isn't lost. `HeroContent::resolve()`
+  already reads that array first (`composedSlides`), so the PHP renderer is untouched and unedited pages stay
+  byte-identical — proven by the unchanged Hero Pest suite (11/11).
+- **Editing surface:** in-canvas `RichText` for the selected slide's English headline + supporting text and
+  the CTA; the Inspector holds each slide's Arabic copy, the Arabic CTA, and slide management (add / duplicate
+  / reorder / remove via `RepeaterControls`), on the shared `../../Editor` primitives. Canvas shows English;
+  Arabic is edited in the Inspector — same rule as C1/C2.
+- **Parity:** `parity.test.js` pins the whole `.hero` section (prism, slides, CTA, dots, status) against
+  `__fixtures__/front-hero.html` (a live capture from `/`) and detects drift (an extra slide). Third block on
+  the harness.
+
+## 2026-07-21 — Spec 021: unified block-Inspector design system + full end-user control (program)
+
+Owner review of C1/C2 raised two cross-cutting requirements for **every** block: the settings/options UI is
+unpolished and inconsistently built, and content the end user should control is hardcoded. Direction agreed:
+keep the public design frozen; change only the block back-end (attributes + renderer plumbing) and the editing
+experience, incrementally per component.
+
+- **One Inspector design system.** A small set of shared primitives in `perego-site/src/Editor/`
+  (`PanelSection`, `LanguagePair`, `LinkControl`, `LabeledRepeater`, `RecordPicker`, plus the existing
+  `MediaField`/`RepeaterControls`) replaces ad-hoc, inline-styled controls. They are styled by
+  `perego-theme/assets/src/scss/editor-inspector.scss` → `editor-inspector.css`, enqueued **once** via
+  `enqueue_block_editor_assets` — the Inspector sidebar renders outside the canvas iframe, so
+  `add_editor_style('main.css')` never reaches it. `partitionRecords` lives in the component-free
+  `collection.js` so its selection semantics are unit-tested (the `@wordpress/components` render path is not
+  testable under this Jest setup).
+- **Full dynamic control.** Every hardcoded user-facing detail becomes an editable attribute (EN/AR when
+  localized) with the current value as the fallback default, so no migration is needed and unedited pages are
+  byte-identical. First applied to the **footer bottom bar**: `copyrightEn`/`copyrightAr` (a `{year}` token is
+  replaced at render) and `legalLinksEn`/`legalLinksAr` (a label+URL repeater). `SiteFooterRenderer::renderBottomBar`
+  reads them, falling back to the exact prior copyright + Journal/Terms/Privacy links; `legalHref()` localizes
+  internal paths and keeps external/anchor URLs verbatim (mirrors the header CTA rule). The bar's tags/classes
+  (`p`, `nav.footer-legal > a`) are unchanged, so the footer parity test stays green.
+- **Editing surface.** In-canvas for text/media in the real markup (CTA, blurb, copyright); Inspector for
+  structured lists (nav, channels, social, legal links, record pickers). The canvas shows the English variant;
+  the Arabic variant is edited in the Inspector.
+- **Rollout** is one block at a time (header + footer done in this PR); dynamic/query blocks keep
+  `ServerSideRender` + a styled placeholder and gain `RecordPicker` rather than a real-markup canvas.
+
+## 2026-07-21 — Spec 021 C2: Footer live-canvas is a hybrid (real static surfaces + placeholder form columns)
+
+The footer `edit()` now renders real markup (`FooterSkeleton` in `site-footer/preview.js`) instead of
+`<ServerSideRender>`, following C1's pattern — but the footer is a HYBRID block, so the treatment differs
+from the header by design:
+
+- **Static surfaces render real markup:** the contact column (logo, "Contact us", contact-channel list,
+  blurb, social row) and the bottom bar (copyright + legal nav). These match the `SiteFooterRenderer`
+  output and are pinned by `parity.test.js`, which asserts `.footer-contact` and `.site-footer__bottom`
+  structurally equal a captured PHP fixture (`__fixtures__/front-footer.html`).
+- **Dynamic form columns become labelled locked placeholders.** The quick-message and careers columns are
+  rendered on the front end via `do_blocks()` (embedding `corex/form`, `footer-careers`, `join-form`) —
+  they can't be replicated in editor JS and are dynamic per the static-vs-dynamic rule, so the canvas shows
+  a labelled placeholder ("… shown on the live site") inside each `footer-col`. They are excluded from parity.
+- **Content editing:** the English blurb is edited in-canvas (`RichText` at its real `p.footer-blurb`
+  position); the Arabic blurb moves to an Inspector `TextareaControl`; contact channels, social links, and
+  the flat variant stay in the Inspector (unchanged). The canvas shows the English footer.
+- **Social-icon glyphs** are mirrored from `SiteFooterRenderer::SOCIAL_ICON_PATHS` into `preview.js` for
+  visual fidelity — the same way the block already mirrored the seed channels/links. Parity ignores the
+  glyph `d`, so this presentational copy can never break the test.
+- **Front end frozen:** no PHP/renderer change — `SiteFooterRenderer` and its 9 Pest tests are untouched,
+  so public output is byte-identical; this slice is editor-only.
+
+## 2026-07-21 — Spec 021 C1: Header is the first true live-canvas block (real markup, not ServerSideRender)
+
+The header `edit()` no longer renders a `<ServerSideRender>` iframe; it renders the REAL front-end header
+markup (`HeaderSkeleton` in `site-header/preview.js`) — the same `.site-header__inner` tag/class skeleton
+that `SiteHeaderRenderer::render()` emits — styled by the theme's `main.css`, which is loaded into the
+editor canvas via `add_editor_style` (commit `76562fb`). This is the DECISIONS 2026-07-21 static-layout
+standard applied for the first time, and it establishes the pattern for the remaining static blocks.
+
+- **One skeleton, no drift.** `HeaderSkeleton` is pure (no editor-store components). `edit()` renders it
+  with two structurally identical override nodes — a `MediaUpload`-triggering logo anchor and a
+  `RichText` (`tagName="a"`) CTA — so in-canvas editing is added without changing the markup. The parity
+  test (`parity.test.js`) renders the same component with plain defaults and asserts its `.site-header__inner`
+  skeleton equals a captured PHP fixture (`__fixtures__/front-header.html`), so editor↔PHP drift fails CI.
+- **Route-neutral fixture.** The fixture is the live header from `/contact/`, where no top-level nav item is
+  active — matching the stateless editor preview (the lone `is-active`/`aria-current` is the lang-toggle's
+  current-language marker, which the preview renders identically).
+- **In-canvas vs Inspector.** CTA text and the logo are edited directly in the canvas. Bilingual nav (EN/AR
+  pairs + dropdowns), the Services-dropdown source, sticky, and the CTA link stay in the Inspector — the
+  canvas shows the **English** nav as its live surface; a single locale can't represent both nav languages
+  at once. The lang-toggle and hamburger are rendered statically for visual fidelity (front-end-only
+  behaviour, excluded from the parity comparison per the harness's per-block-omission allowance).
+- **Front end frozen.** No PHP/renderer change — `SiteHeaderRenderer` and its 28 Pest tests are untouched,
+  so public output is byte-identical; this slice is editor-only.
+
+## 2026-07-21 — Spec 021: Service owns its Selected Work choices
+
+The `service-selected-work` block is shared by Service templates, so its project list cannot be saved on the
+block instance without applying the same selection to every Service. Portfolio mode, ordered Project IDs, and
+automatic exclusions therefore live on each `perego_service` record. Empty legacy metadata means automatic
+category results, preserving existing service pages. Language-neutral portfolio choices fall back to the linked
+English Service record when a translated record has no local values.
+
+## 2026-07-20 — Spec 021: Services dropdown is opt-in dynamic, not an implicit visual migration
+
+The Header keeps its established Services links while `servicesMenuMode` is `manual` with no selected
+records. This protects the frozen public baseline and lets existing template-part instances render exactly as
+before. Editors can explicitly select `automatic` to show published Service posts, or choose manual Service
+records and arrange their order; automatic mode permits exclusions.
+
+Saved Service IDs are resolved through `pll_get_post()` for the current locale, and the renderer uses the
+localized post permalink directly. That avoids guessing translated custom-post slugs and keeps a shared FSE
+template part language-safe. The renderer also considers both the selected and translated IDs for exclusion,
+so an editor can configure the menu from either language.
+
 ## 2026-07-23 — Correction: the 49 Pest failures were ours, not "environmental"
 
 Through the v0.35.0 and v0.35.1 merges I reported the CoreX unit suite's 49 failures as an
@@ -1281,3 +2684,145 @@ items/contact channels/social links aren't language-specific data (a phone numbe
 translate), so — unlike the En/Ar text pairs above — these are single (non-bilingual) attributes shared
 across both locales, consistent with how they were previously hardcoded PHP consts shared by both
 languages.
+
+## 2026-07-21 — Spec 021: editor previews move from `ServerSideRender` iframes to live-canvas `edit()`
+markup guarded by parity tests (refines framework Decision #43); structured repeaters replace JSON-string
+attributes (reverses the round-4 note above, at the owner's explicit request)
+
+**Live-canvas editing, not an SSR iframe + sidebar — the owner asked for "the Bricks experience."** Framework
+Decision #43 mandated that every dynamic block preview its PHP `render_callback` via `<ServerSideRender>` —
+"one renderer, never a duplicated JS implementation." That gave an accurate but **non-interactive** preview:
+the canvas is a server-rendered iframe, and all editing happens in the right-hand Inspector (even the round-4
+RichText fields live in the sidebar, not on the design). The owner's directive this session — *"forget the
+current implementation, I want the Bricks/Elementor experience, editable in the canvas"* — makes that model
+the defect to remove. **Decision:** for **static-layout blocks** (header, footer, hero, services-teaser,
+home-about, service-hero, and the What-We-Do / Process sections), `edit()` now renders the **real component
+markup** using the **same compiled SCSS** the front-end loads (imported via `block.json` `style`/`editorStyle`),
+so the canvas is pixel-identical to production; editable text is `RichText` **placed in that markup**, media is
+`MediaPlaceholder`/`MediaReplaceFlow` **in place**, and the Inspector keeps only non-content settings (link
+targets, toggles, source mode). `<ServerSideRender>` is retained **only** for **dynamic/query blocks** whose
+content has no fixed value at edit time (clients-carousel, portfolio-grid, related/search), and even those get
+an on-brand styled placeholder rather than a bare box.
+
+**PHP stays the single front-end renderer; a parity test is what makes that safe.** The real risk this
+introduces is exactly what #43 was avoiding — editor markup and PHP output drifting apart. So this decision is
+only valid **with** its guard: each static block ships a **markup-parity test** (a Jest snapshot of the
+editor-rendered structure checked against a fixture of the PHP `render_callback` output). The front-end render
+path is unchanged and remains authoritative; `edit()` is a faithful editor-only projection of it, and the
+parity test fails the build if the two structures diverge. This is a **refinement of #43, not a repudiation**:
+#43's "one source of truth = the server renderer" still holds for what ships to visitors; we add an
+editor-only view of that same structure, tied to it by a test rather than by an iframe.
+
+**Structured repeaters replace JSON-string attributes — this reverses the round-4 note above, on the owner's
+call.** The round-4 entry deliberately stored nav items / contact channels / social links as a single
+JSON-`string` attribute and left a note telling future audits not to "fix" it back. An in-canvas repeater
+(add / reorder / remove items directly on the design) is materially cleaner to build and reason about over
+typed array/object attributes with a REST schema than over a hand-parsed JSON blob, and the owner explicitly
+approved "structured attribute arrays … never JSON strings" for this work. **Decision:** migrate these to
+structured attributes as each block is rebuilt, with an **idempotent read-time upgrade** — the PHP renderer and
+`edit()` accept the legacy JSON-string value and normalize it to the structured shape, so no saved content is
+lost and unedited blocks render unchanged until touched. The En/Ar-pair rule (round 4) and the "one instance
+in a shared template needs both languages as attributes" rule are unaffected and still apply.
+
+**Reusable editor toolkit so all 15 components are consistent.** The existing shared `perego-site/src/Editor/`
+directory (already holding `MediaField`, `RepeaterControls`, `collection`) is **extended** — not replaced — with
+the in-canvas primitives the live model needs (`EditableText`, `EditableMedia`, `RecordPicker`, `LinkControl`,
+`LanguagePair`) consumed by every rebuilt block, so "start clean" does not mean fifteen bespoke editors. The new
+primitives and the parity-test harness are built once, before the first component (Header) lands.
+
+**Rule of thumb going forward:** a block whose content is fixed at edit time renders its real markup in
+`edit()` (live-canvas, parity-tested); a block whose content is a runtime query keeps `<ServerSideRender>` with
+a styled placeholder. New repeaters use structured attributes; legacy JSON-string values are upgraded at read
+time, never dropped.
+
+## 2026-07-27 — Client round 5: two pattern assets, and a logo field rather than reusing the featured image
+
+**The wave pattern is now two files, not one.** `caca726` swapped `wavy-corners.png` in place with the
+client's `pattern@4x` source. Because six surfaces reference that one filename, changing the bytes changed
+the art everywhere — which is how the ribbon ended up drawing a band through the middle of the Services
+teaser and the Clients carousel. Inspection settled that these are **different artwork, not two
+resolutions of one image**: `Asset 4@4x` is 5761x3241 (1.777, matching the pre-`caca726` 1800x1013 build)
+and draws waves anchored in the corners around an empty centre; `pattern@4x` is 7797x4192 (1.860, matching
+the 3200x1720 build) and draws one diagonal ribbon.
+
+**Decision:** name each asset after its art and choose per section. `wave-ribbon.png` keeps the ribbon and
+is confined to the two places that clip it — home Work (`block-size: 55%`, anchored bottom) and the Journal.
+`wavy-corners.png` is rebuilt from `Asset 4@4x` for everything else. Rebuilt rather than restored from git
+so the corner art gets the same treatment the ribbon got: 3200px wide, palette PNG, **637 KB with all 42
+alpha levels intact** — smaller than the 930 KB it shipped at before, at nearly double the resolution.
+The `caca726` reasoning still holds: sparse line work on transparency indexes far better than it compresses.
+
+*Consequence to remember:* replacing a shared image asset in place is a silent global restyle. If two
+sections need different art, they need different filenames — the filename is the interface.
+
+**Website projects get their own logo field; the featured image stays the screenshot.** The client asked
+for logos instead of screenshots on the home Work grid. The obvious cheap route — upload the logo *as* the
+featured image — was rejected: `WebShowcaseRenderer` builds the Website-Making showcase's browser-chrome
+cards from that same featured image and **drops any card whose image is missing**, so overwriting it would
+have traded one surface for another. Two images are genuinely needed, so `_perego_logo_id` is registered
+alongside the existing showcase meta and surfaced through the `media` field type the panel schema already
+had. Web cards fall back to the old screenshot card when no logo is set, so the change is invisible until
+content arrives rather than leaving 27 blank cards.
+
+**`metaWithEnFallback()` is not safe for integer meta.** It treats only `''` as empty, but a key registered
+with `'default' => 0` returns the *non-empty* string `"0"` when unset, so the Arabic-translation fallback
+would never fire. `ProjectRepository::logoId()` therefore mirrors the featured-image fallback shape instead.
+The same trap applies to any future non-string meta — `TranslatedMeta::value()` exists for exactly this
+reason and is what the gallery key uses.
+
+**Neither surface opens a lightbox for a website any more.** On a card already wearing browser chrome, a
+bigger picture of the site is not the useful destination; the site is. Both the home logo card and the
+showcase shot became `<a target="_blank" rel="noopener">`, and both degrade to non-focusable markup
+(`<article>` / `<div>`) when no URL is recorded — a control that does nothing on click should not take
+focus. This retired the `preview` copy string in both locales.
+
+## 2026-07-27 — Email: a stable mail base URL, branded team notifications, and three framework fixes
+
+**Email URLs are resolved from the site *option*, never the request.** The logo and every CTA were built
+with `plugins_url()`/`home_url()`, which resolve against the running site URL — so delivered mail carried
+`http://perego.local/...`. `MailBaseUrl` resolves `PEREGO_MAIL_BASE_URL` → `perego_mail_base_url` option →
+`get_option('siteurl')`, and `rebase()` swaps only the origin of a URL WordPress already built (so a
+subdirectory install or a moved `wp-content` still works).
+
+The deliberate part is reading the **option** rather than calling `home_url()`. `wp/wp-config.php` rewrites
+`WP_HOME`/`WP_SITEURL` to the ngrok host whenever a request arrives through a tunnel; `home_url()` honours
+those constants, so mail sent during a tunnelled request would embed a hostname that dies with the tunnel.
+The option is the site's stable identity, so production needs no configuration at all. `resolve()` never
+returns `''` — an empty base renders CTA links as `/work`, which no mail client can follow.
+
+*Consequence to remember:* an email is read elsewhere, later, by someone not on this network. Any URL in
+one must come from durable configuration, never from the request that happened to send it.
+
+**The team notification is Perego's, not the engine's.** CoreX's `SendEmailListener` builds a
+`label: value` plain-text body, and `WpMailDriver` delivers every message as `text/html` — so the
+notification arrived as one unformatted run, with no `Reply-To`. Both Perego forms now drop that listener
+via `Form::listeners()` and `PeregoFormMailListener` sends the branded `admin-notification` template
+instead, with `Reply-To` = the submitter. The recipient still comes from the engine's own
+`forms.email.recipient` config key, so one setting governs both paths rather than two drifting apart.
+
+**The CV travels as a link, not an attachment.** The mail stack has no attachments field anywhere —
+`MailRequest`, `EmailMessage` and `MessageBuilder` carry none, and `WpMailDriver` calls `wp_mail()` with
+four arguments. Adding one is upstream work. A link is also the better answer on its own merits: a CV is
+personal data, and a link keeps it out of mail servers, forwarded threads and inbox backups. The stored
+attachment is already private and its id is already on the application row, so nothing new is persisted.
+
+**Three fixes had to be made in the framework, because no client-side change could reach them.** Recorded
+here because they explain client behaviour; the canonical record is [corex#138](https://github.com/MustafaShaaban/corex/issues/138).
+
+1. *`Form::listeners()` was global.* `FormsServiceProvider::registerListeners()` deduplicated listener ids
+   across **all** forms, so the engine mailer ran for every submission whatever a form declared. Overriding
+   `listeners()` could not remove anything — the team was getting two emails and Perego could not stop it.
+   Now one listener resolves the form by slug at event time and runs only its list.
+2. *Data sources were sealed at boot.* `DataRegistry` looped `ManagedTables` into sources inside its
+   singleton factory, which corex-config resolves during its own boot. Applications registered later never
+   appeared, and no ordering could win: the framework boots before the apps extending it. Added
+   `DataRegistry::defer()` so the snapshot happens on first read. Perego registers its table in
+   `register()`, not `boot()` — every provider registers before any provider boots, and that is the last
+   moment that still counts.
+3. *Submission reply skipped the layout.* `EmailStudioSubmissionGateway::reply()` sent the operator's raw
+   textarea HTML as the whole body while `resend()`, directly below it, rendered through the layout.
+
+**Deliberately left to upstream:** attachment support in the mail stack, a `file` field type in CoreX
+Forms, attachment rendering in the Data/Submissions cells, the unreachable `Layout` logo branch, and
+`corex-careers` discarding the CV on its own route. Until the Data cell renderer lands, the CV column shows
+the bare attachment id — which is why the notification email carries the working download link.

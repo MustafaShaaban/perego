@@ -48,14 +48,14 @@ it('renders exactly one H1 (the services archive title)', function () {
 it('renders the hero background image and four service tabs linking to the singles', function () {
     $html = renderServicesOverview();
 
-    expect($html)->toMatch('/<img [^>]*svc-hero-bg\.png/')
+    expect($html)->toMatch('/<img [^>]*svc-hero-bg\.webp/')
         ->and(substr_count($html, 'class="svc-tab"'))->toBe(4)
         ->and($html)->toContain('/services/video-editing')
         ->and($html)->toContain('/services/website-making')
         // The CTA must carry the canonical service *slug* (what the contact chooser whitelists),
         // not the localized name — otherwise ?service= preselection never matches.
-        ->and($html)->toContain('/contact?service=video-editing')
-        ->and($html)->toContain('/contact?service=website-making')
+        ->and($html)->toContain('/start-a-project?service=video-editing')
+        ->and($html)->toContain('/start-a-project?service=website-making')
         ->and($html)->not->toMatch('/contact\?service=Video(%20| )Editing/');
 });
 
@@ -80,7 +80,7 @@ it('renders the what-we-do intro with its media image, process, and closing CTA'
         ->and($html)->toMatch('/<img [^>]*ui-video-editing\.png/')
         ->and($html)->toContain('class="process"')
         ->and($html)->toContain('Have a project in mind?')
-        ->and($html)->toMatch('/href="[^"]*\/contact"/');
+        ->and($html)->toMatch('/href="[^"]*\/start-a-project"/');
 });
 
 it('renders the four-step process as designed icon cards with arrows, not a plain list', function () {
