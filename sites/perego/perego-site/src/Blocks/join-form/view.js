@@ -28,10 +28,20 @@ const init = () => {
 		const fields = {
 			name: { input: form.querySelector( '#jf-name' ), error: form.querySelector( '#jf-name-error' ) },
 			email: { input: form.querySelector( '#jf-email' ), error: form.querySelector( '#jf-email-error' ) },
+			portfolio: { input: form.querySelector( '#jf-portfolio' ), error: form.querySelector( '#jf-portfolio-error' ) },
 			cv: { input: form.querySelector( '#jf-cv' ), error: form.querySelector( '#jf-cv-error' ) },
 		};
 		const cvFilename = form.querySelector( '.file-drop__filename' );
 
+		/**
+		 * Write the status line, then announce the outcome the way the framework's forms do.
+		 *
+		 * The status paragraph carries `corex-form__status`, which the theme clips to a
+		 * screen-reader-only live region — since round 7 the visual channel is the toast, and the
+		 * toast listens for these two events. This form validates and submits itself, so nothing
+		 * else was ever going to emit them: a successful application wrote its message into a
+		 * clipped node and looked, to a sighted visitor, like nothing had happened at all.
+		 */
 		const setStatus = ( key, tone ) => {
 			if ( ! status ) {
 				return;
@@ -40,6 +50,8 @@ const init = () => {
 			status.classList.remove( 'is-success', 'is-error' );
 			if ( tone === 'success' || tone === 'error' ) {
 				status.classList.add( 'is-' + tone );
+				// The relay reads the status text, so it has to be written before this fires.
+				form.dispatchEvent( new CustomEvent( 'corex:form:' + tone, { bubbles: true } ) );
 			}
 		};
 
@@ -62,6 +74,13 @@ const init = () => {
 		// a file — same rule, same message, one place.
 		const validateName = () => ( fields.name.input.value.trim() ? '' : 'name_required' );
 		const validateEmail = () => ( isEmail( fields.email.input.value ) ? '' : 'email_invalid' );
+		// Optional, so empty passes — emptiness would be `required`'s job if this field had it.
+		// A portfolio link is the whole point of the field, though: a typo means the reviewer
+		// cannot see the work, and the server would only have rejected it after the CV upload.
+		const validatePortfolio = () => {
+			const value = fields.portfolio.input?.value.trim() ?? '';
+			return value === '' || isUrl( value ) ? '' : 'portfolio_invalid';
+		};
 		const validateCv = ( file ) => {
 			if ( ! file ) return 'cv_required';
 			const ext = file.name.split( '.' ).pop().toLowerCase();
@@ -74,27 +93,36 @@ const init = () => {
 			const errorKeys = {};
 			const nameError = validateName();
 			const emailError = validateEmail();
+			const portfolioError = validatePortfolio();
 			const cvError = validateCv( file );
 			if ( nameError ) errorKeys.name = nameError;
 			if ( emailError ) errorKeys.email = emailError;
+			if ( portfolioError ) errorKeys.portfolio = portfolioError;
 			if ( cvError ) errorKeys.cv = cvError;
 			return errorKeys;
 		};
 
 		// Live re-validation: once a field is touched, clear (or update) its own error as the user
-		// fixes it — never wait for the next submit to notice the field is valid now.
-		fields.name.input.addEventListener( 'blur', () => setFieldError( fields.name, messages[ validateName() ] ) );
-		fields.name.input.addEventListener( 'input', () => {
-			if ( fields.name.input.getAttribute( 'aria-invalid' ) === 'true' ) {
-				setFieldError( fields.name, messages[ validateName() ] );
+		// fixes it — never wait for the next submit to notice the field is valid now. On blur
+		// always; on keystroke only once the field is already flagged, because nagging someone on
+		// their first character is worse than saying nothing.
+		const bindLiveValidation = ( field, validator ) => {
+			// A field the markup did not render must not take the whole form's binding down with it.
+			if ( ! field.input ) {
+				return;
 			}
-		} );
-		fields.email.input.addEventListener( 'blur', () => setFieldError( fields.email, messages[ validateEmail() ] ) );
-		fields.email.input.addEventListener( 'input', () => {
-			if ( fields.email.input.getAttribute( 'aria-invalid' ) === 'true' ) {
-				setFieldError( fields.email, messages[ validateEmail() ] );
-			}
-		} );
+			const apply = () => setFieldError( field, messages[ validator() ] );
+			field.input.addEventListener( 'blur', apply );
+			field.input.addEventListener( 'input', () => {
+				if ( field.input.getAttribute( 'aria-invalid' ) === 'true' ) {
+					apply();
+				}
+			} );
+		};
+
+		bindLiveValidation( fields.name, validateName );
+		bindLiveValidation( fields.email, validateEmail );
+		bindLiveValidation( fields.portfolio, validatePortfolio );
 		const cvDrop = fields.cv.input.closest( '.file-drop' );
 		fields.cv.input.addEventListener( 'change', () => {
 			const file = fields.cv.input.files && fields.cv.input.files[ 0 ];
@@ -180,6 +208,17 @@ function lock( submit, busy ) {
 
 function isEmail( value ) {
 	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test( value.trim() );
+}
+
+// http/https only, and via the URL parser rather than a regex — an applicant pasting
+// "linkedin.com/in/name" has given something the reviewer cannot click, and a `javascript:` or
+// `data:` string must not be treated as a link anywhere downstream.
+function isUrl( value ) {
+	try {
+		return [ 'http:', 'https:' ].includes( new URL( value ).protocol );
+	} catch ( e ) {
+		return false;
+	}
 }
 
 function parseMessages( raw ) {

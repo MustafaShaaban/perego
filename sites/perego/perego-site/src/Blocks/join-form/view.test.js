@@ -16,6 +16,7 @@ const MESSAGES = {
 	success: 'Thanks!',
 	name_required: 'Please enter your name.',
 	email_invalid: 'Please enter a valid email address.',
+	portfolio_invalid: 'Please enter a full link, starting with https://',
 	cv_required: 'Please attach your CV.',
 	form_has_errors: 'Please fix the highlighted fields and try again.',
 	wrong_type: 'PDF/DOC/DOCX only.',
@@ -30,6 +31,7 @@ function setupForm() {
 		'data-max-bytes="5242880" data-messages=\'' + JSON.stringify( MESSAGES ) + '\'>' +
 		'<input id="jf-name" /><span id="jf-name-error"></span>' +
 		'<input id="jf-email" /><span id="jf-email-error"></span>' +
+		'<input id="jf-portfolio" type="url" /><span id="jf-portfolio-error"></span>' +
 		'<label class="file-drop"><span class="file-drop__text">Upload your CV here</span>' +
 		'<span class="file-drop__filename" aria-live="polite"></span>' +
 		'<input id="jf-cv" type="file" /></label><span id="jf-cv-error"></span>' +
@@ -97,6 +99,90 @@ test( 'flags an empty name and an invalid email with their own distinct messages
 	expect( fieldError( 'jf-name' ) ).not.toBe( fieldError( 'jf-email' ) ); // distinct, not the same sentence
 	expect( fieldError( 'jf-cv' ) ).toBe( '' );
 	expect( global.fetch ).not.toHaveBeenCalled();
+} );
+
+// Since round 7 the status paragraph is a screen-reader-only live region and the toast is the
+// visual channel — so without these events a successful application looked, to a sighted visitor,
+// exactly like a click that did nothing.
+test( 'announces success with the event the theme toast listens for', async () => {
+	const form = setupForm();
+	const heard = jest.fn();
+	document.addEventListener( 'corex:form:success', heard );
+	fill( form, { file: pdf() } );
+	global.fetch.mockResolvedValue( { ok: true, json: async () => ( { ok: true } ) } );
+
+	await submit( form );
+
+	expect( heard ).toHaveBeenCalledTimes( 1 );
+	// The relay reads the status text, so it must already be written when the event fires.
+	expect( status() ).toBe( MESSAGES.success );
+	document.removeEventListener( 'corex:form:success', heard );
+} );
+
+test.each( [
+	[ 'client-side validation', async ( form ) => {
+		fill( form, {} ); // no CV
+		await submit( form );
+	} ],
+	[ 'a mapped server rejection', async ( form ) => {
+		fill( form, { file: pdf() } );
+		global.fetch.mockResolvedValue( { ok: false, json: async () => ( { ok: false, error: 'rate_limit' } ) } );
+		await submit( form );
+	} ],
+	[ 'a network failure', async ( form ) => {
+		fill( form, { file: pdf() } );
+		global.fetch.mockRejectedValue( new Error( 'offline' ) );
+		await submit( form );
+	} ],
+] )( 'announces an error toast after %s', async ( _label, act ) => {
+	const form = setupForm();
+	const heard = jest.fn();
+	document.addEventListener( 'corex:form:error', heard );
+
+	await act( form );
+
+	expect( heard ).toHaveBeenCalledTimes( 1 );
+	expect( statusTone() ).toBe( 'error' );
+	document.removeEventListener( 'corex:form:error', heard );
+} );
+
+test( 'stays silent while the upload is still in flight', async () => {
+	const form = setupForm();
+	const heard = jest.fn();
+	document.addEventListener( 'corex:form:success', heard );
+	document.addEventListener( 'corex:form:error', heard );
+	fill( form, { file: pdf( { size: 900 * 1024 } ) } );
+	// A promise that never settles: the form is left in its busy state.
+	global.fetch.mockReturnValue( new Promise( () => {} ) );
+
+	await submit( form );
+
+	expect( status() ).toBe( MESSAGES.uploading );
+	expect( heard ).not.toHaveBeenCalled();
+	document.removeEventListener( 'corex:form:success', heard );
+	document.removeEventListener( 'corex:form:error', heard );
+} );
+
+test( 'rejects a portfolio link that is not a full http(s) URL, and accepts an empty one', async () => {
+	const form = setupForm();
+	fill( form, { file: pdf() } );
+	form.querySelector( '#jf-portfolio' ).value = 'linkedin.com/in/sara';
+
+	await submit( form );
+
+	expect( fieldError( 'jf-portfolio' ) ).toBe( MESSAGES.portfolio_invalid );
+	expect( global.fetch ).not.toHaveBeenCalled();
+
+	// A `javascript:` string parses as a URL but is not a link anyone should follow.
+	form.querySelector( '#jf-portfolio' ).value = 'javascript:alert(1)';
+	form.querySelector( '#jf-portfolio' ).dispatchEvent( new Event( 'input', { bubbles: true } ) );
+	expect( fieldError( 'jf-portfolio' ) ).toBe( MESSAGES.portfolio_invalid );
+
+	// Optional: blank is fine, and a real link clears the error live.
+	form.querySelector( '#jf-portfolio' ).value = 'https://sara.example';
+	form.querySelector( '#jf-portfolio' ).dispatchEvent( new Event( 'input', { bubbles: true } ) );
+	expect( fieldError( 'jf-portfolio' ) ).toBe( '' );
+	expect( isInvalid( 'jf-portfolio' ) ).toBe( 'false' );
 } );
 
 test( 'clears the name error live as soon as a valid name is typed, without touching other fields', async () => {
