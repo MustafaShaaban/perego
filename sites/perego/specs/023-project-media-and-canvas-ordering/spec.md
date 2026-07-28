@@ -2,7 +2,7 @@
 
 **Branch:** `feature/023-project-media-and-canvas-ordering` (off `feature/022-project-presentation-fixes`)
 **Mode:** Client Site Mode
-**Status:** Code complete (2026-07-28). **One acceptance item outstanding** — see Verification.
+**Status:** Complete (2026-07-28), including real-editor verification.
 **Depends on:** 021 (`Editor/parity.js`, `collection.js`, the EditorPanels sidebar), 022 (`page-attributes`).
 
 ## Goal
@@ -123,25 +123,34 @@ could be retired. **A separate pass, not this one.**
 - [x] `verify-a11y` **0 serious/critical**. `verify-visual` 72 checks / 10 failures, all pre-existing
       (4 × the home page's two `<h1>`s, 6 × routes with no content).
 
-### Outstanding — needs a human at a keyboard
+### Real-editor verification — `scripts/verify-editor-sorting.mjs`
 
-**The drag has not been exercised in a real block editor.** Automated verification of wp-admin was not
-possible here: `siteurl` is `http://peregoads.com` while the dev host is `perego.local`, so a forged
-admin session cannot be validated for admin requests, and taking a password to use the login form is
-not something this agent does. Everything below the editor — markup parity, ordering arithmetic, crop
-resolution, the PHP read path, the rendered output — is covered; what is unproven is that pointer
-events survive the editor's own drag handling inside the canvas iframe.
+```
+node sites/perego/perego-site/scripts/verify-editor-sorting.mjs
+```
 
-Please check, on the Front Page template and on a Service post:
+Drives the actual Site Editor. Auth is a session minted through WP-CLI, so no password is handled and
+nothing is typed into a login form. **`--url` is load-bearing**: `COOKIEHASH` is `md5()` of the
+*resolved* site URL, and this install defines `WP_SITEURL` per host — so a cookie minted without it is
+named `wordpress_logged_in_<md5 of the DB option>` while the browser sends
+`<md5 of the constant>`, and WordPress simply never sees it. That mismatch is what made this look
+unverifiable at first.
 
-1. Select the block, then drag a card. It should move, and the block itself should not.
-2. The Move earlier / Move later buttons on each card should do the same thing.
-3. On a Service post, dragging tile 5 to position 3 should visibly change its crop.
-4. Save, reload the front end, confirm the order matches.
-5. Confirm `/work`'s order is independent of home's, and the Arabic Service post's independent of the
-   English one.
+All six checks pass: the grid renders as a live canvas (7 cards), every card offers the non-drag Move
+controls, the Move later button reorders, a pointer drag lands the card at the drop position, the
+editor does not hijack the gesture into moving the block, and there are no page errors. The harness
+deletes the `wp_template` override its save creates, so the theme file stays authoritative.
 
-If the drag does not take, the likely cause is the editor claiming the gesture; `useCanvasSort` already
-guards against that four ways (`draggable={false}`, `preventDefault` on `dragstart`, `stopPropagation`
-+ pointer capture on `pointerdown`, and `touch-action: none`), and the next lever is arming the sort
-only from an explicit drag handle rather than from the whole card.
+Verified separately, by hand, in the same session:
+
+- The saved order is what the front end renders, and the featured shortlist is still 7 cards.
+- On the Video Editing Service post, moving tile 3 to position 1 moved it from slot `m3` to `m1` and
+  **re-drew it from a different crop** — `261-tall.webp` → `261-hero.webp` — with the on-tile note
+  changing from "tall crop" to "hero crop". That is the whole design claim, demonstrated.
+
+**It caught a real bug that no unit test could.** The Move earlier / Move later buttons live inside the
+card, so their `pointerdown` bubbled to the sort handler — whose `preventDefault()`, the thing that
+stops a native drag ever starting, also suppressed the button's own `click`. Dragging worked; the
+single-pointer alternative WCAG 2.2 **2.5.7** requires silently did not. jsdom dispatches `click`
+directly and never reproduces it. `useCanvasSort` now ignores `pointerdown` originating inside
+`.perego-sortable__controls`, and the harness is committed as the standing guard.

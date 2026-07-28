@@ -30,20 +30,28 @@ index → slot → shape → crop, and the tile says which crop it borrowed when
   real browser · front end byte-identical both languages (7 / 33 cards, 3 / 1 / 0 / 22 tiles) ·
   `verify-a11y` **0 serious/critical** · `verify-visual` 10 failures, all pre-existing.
 
-### ⚠ Outstanding — one manual check
+**Verified in the real editor**, via the new `scripts/verify-editor-sorting.mjs` (auth is a WP-CLI-minted
+session; no password is handled). Six checks pass: live canvas renders, the non-drag Move controls work,
+a pointer drag lands the card at the drop position, the editor does not hijack the gesture, no page
+errors. Confirmed by hand alongside it: the saved order is what the front end renders, and moving tile 3
+to position 1 on a Service post moved it `m3` → `m1` and **re-drew it from a different crop**
+(`261-tall.webp` → `261-hero.webp`, note "tall crop" → "hero crop").
 
-**The drag has not been exercised in a real block editor.** `siteurl` is `peregoads.com` while the dev
-host is `perego.local`, so an admin session cannot be forged for wp-admin, and the agent does not take
-passwords. Everything below the editor is covered by tests; what is unproven is that pointer events
-survive the editor's own drag handling inside the canvas iframe. Steps are written out at the end of
-`specs/023-project-media-and-canvas-ordering/spec.md`. If the drag does not take, the next lever is
-arming the sort from an explicit drag handle rather than the whole card.
+**The harness earned its keep immediately.** The Move earlier / Move later buttons sit inside the card,
+so their `pointerdown` bubbled to the sort handler whose `preventDefault()` also suppressed the button's
+`click` — dragging worked, the WCAG 2.5.7 single-pointer alternative silently did not, and jsdom cannot
+reproduce it. Fixed and guarded.
+
+> **Gotcha worth keeping:** `COOKIEHASH` is `md5()` of the *resolved* site URL, and this install defines
+> `WP_SITEURL` per host — so WP-CLI **must** be given `--url=http://perego.local` when minting an admin
+> cookie, or the cookie is named for `peregoads.com` and the browser's is never read. Also:
+> `peregoads.com` resolves to Cloudflare and is the **live public site**; all local work uses
+> `perego.local` against `DB_NAME=perego` on `localhost`.
 
 ### Next
 
-1. **Run the manual editor check above.** Everything else in 023 is done.
-2. **Then** the CoreX v0.37.0 reconciliation, on its own branch, per the deferral in `DECISIONS.md`.
-3. **Content, not code:** Graphic Design has no published projects and Motion has one, so the home
+1. **CoreX v0.37.0 reconciliation**, on its own branch, per the deferral in `DECISIONS.md`.
+2. **Content, not code:** Graphic Design has no published projects and Motion has one, so the home
    Design chip and the Graphic Design service page are empty.
 
 ## Round 13: the home page leads with a shortlist

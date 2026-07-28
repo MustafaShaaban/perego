@@ -86,6 +86,16 @@ export function useCanvasSort( {
 			return;
 		}
 
+		// The Move earlier / Move later buttons live INSIDE the card, so their pointerdown bubbles to
+		// this handler — and the `preventDefault()` below (which is what stops a native drag ever
+		// starting) also suppresses the button's own `click`. The buttons are the single-pointer
+		// alternative WCAG 2.2 2.5.7 requires, so silently swallowing them would leave dragging as the
+		// only way to reorder. Found by driving the real editor; jsdom dispatches click directly and
+		// never reproduces it.
+		if ( event.target?.closest?.( '.perego-sortable__controls' ) ) {
+			return;
+		}
+
 		// preventDefault stops a native drag ever initiating; stopPropagation keeps the editor's own
 		// block drag from claiming the gesture.
 		event.preventDefault();

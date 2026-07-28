@@ -69,11 +69,27 @@ redundant and `ServicePortfolioSelection` could retire — **a separate pass, no
 - **Verified:** Pest **582** (2005 assertions) · Jest **46 suites / 299** · 15 parity assertions across
   the two blocks · PDF/zoom/full-screen exercised in a real browser · front end byte-identical on both
   languages before and after · `verify-a11y` **0 serious/critical**.
-- **Outstanding, and honestly so:** the drag has **not** been exercised in a real block editor. `siteurl`
-  is `peregoads.com` while the dev host is `perego.local`, so an admin session cannot be forged for
-  wp-admin, and taking a password to use the login form is out of scope for the agent. Everything below
-  the editor is covered; what is unproven is that pointer events survive the editor's own drag handling
-  inside the canvas iframe. The manual check is written out in the spec.
+**The real editor was driven, and it found a bug the unit tests could not.** The Move earlier / Move
+later buttons sit inside the card, so their `pointerdown` bubbled to the sort handler — whose
+`preventDefault()`, the thing that stops a native drag ever starting, also suppressed the button's own
+`click`. Dragging worked; the single-pointer alternative 2.5.7 requires silently did not, and jsdom
+cannot reproduce it because it dispatches `click` directly. `useCanvasSort` now ignores `pointerdown`
+originating inside `.perego-sortable__controls`, and `scripts/verify-editor-sorting.mjs` is committed
+as the standing guard.
+
+**Why this looked unverifiable at first, recorded so the next person does not repeat the hour.**
+`COOKIEHASH` is `md5()` of the *resolved* site URL. This install defines `WP_SITEURL` per host in
+`wp-config.php`, so a web request at `perego.local` looks for `wordpress_logged_in_8ef2db83…` while
+WP-CLI without `--url` mints `…0dc7955e…` from the raw `siteurl` option (`http://peregoads.com`). The
+cookie was valid and WordPress never looked at it. `wp eval --url=http://perego.local` is the whole
+fix. Note also that **`peregoads.com` resolves to Cloudflare — it is the live public site**; all
+verification here ran against the local WAMP install (`DB_NAME=perego`, `DB_HOST=localhost`).
+
+- **Real-editor result:** live canvas renders (7 cards) · non-drag Move controls present and working ·
+  pointer drag lands the card at the drop position · the editor does not hijack the gesture · no page
+  errors · saved order is what the front end renders · on a Service post, moving tile 3 to position 1
+  moved it `m3` → `m1` and re-drew it `261-tall.webp` → `261-hero.webp`, the on-tile note changing
+  "tall crop" → "hero crop".
 
 ## 2026-07-28 — The home page leads with a shortlist, and crops are offered only where they render
 
