@@ -29,7 +29,7 @@ final class WpMailDriver implements MailDriver
     {
         $headers = ['Content-Type: text/html; charset=UTF-8'];
 
-        $from = $this->fromHeader();
+        $from = $this->fromHeader($message->from);
         if ($from !== '') {
             $headers[] = 'From: ' . $from;
         }
@@ -52,10 +52,15 @@ final class WpMailDriver implements MailDriver
         return wp_mail($message->to, $message->subject, $message->body, $headers);
     }
 
-    private function fromHeader(): string
+    /**
+     * The message's own sender wins over the configured one, so a site can send from more than one
+     * mailbox. The display name stays configured either way — it is the brand, not the mailbox.
+     */
+    private function fromHeader(?string $messageFrom): string
     {
         $name    = sanitize_text_field((string) $this->config->get('mail.from.name', ''));
-        $address = sanitize_email((string) $this->config->get('mail.from.address', ''));
+        $address = sanitize_email((string) ($messageFrom ?? ''))
+            ?: sanitize_email((string) $this->config->get('mail.from.address', ''));
 
         if ($address === '') {
             return '';

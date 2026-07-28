@@ -202,7 +202,19 @@ final class MailServiceProvider extends ServiceProvider
             static fn (ContainerInterface $c): RoutedMailer => $c->make(EmailRouteService::class),
         );
         $this->container->singleton(EmailStudioRepositories::class);
-        $this->container->singleton(EmailStudioSubmissionGateway::class);
+        // Built explicitly rather than autowired so the brand Layout is definitely supplied: the
+        // constructor accepts it as an optional nullable, and a manual reply falls back to an unwrapped
+        // body when it is missing.
+        $this->container->singleton(
+            EmailStudioSubmissionGateway::class,
+            static fn (ContainerInterface $c): EmailStudioSubmissionGateway => new EmailStudioSubmissionGateway(
+                $c->make(EmailStudioRepositories::class),
+                $c->make(EmailStudioService::class),
+                $c->make(EmailTemplateService::class),
+                $c->make(ConfigInterface::class),
+                $c->make(Layout::class),
+            ),
+        );
         $this->container->singleton(
             SubmissionEmailGateway::class,
             static fn (ContainerInterface $c): EmailStudioSubmissionGateway => $c->make(EmailStudioSubmissionGateway::class),

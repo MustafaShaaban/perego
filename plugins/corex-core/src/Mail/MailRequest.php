@@ -33,6 +33,16 @@ final class MailRequest
     public readonly ?string $parentAttemptId;
 
     /**
+     * The sender address for this one message, overriding the configured `mail.from.address`.
+     *
+     * A site may legitimately send from more than one mailbox — a visitor confirmation from a
+     * monitored address, an internal alert from a no-reply one — and SMTP relays commonly route on
+     * the From address. A single global setting cannot express that. Null keeps the configured
+     * identity, so every existing caller is unaffected.
+     */
+    public readonly ?string $from;
+
+    /**
      * @param list<string>        $to
      * @param array<string,mixed> $context merge data for $templateName
      */
@@ -45,6 +55,7 @@ final class MailRequest
         ?string $replyTo = null,
         ?string $requestId = null,
         ?string $parentAttemptId = null,
+        ?string $from = null,
     ) {
         $this->to              = $to;
         $this->templateName    = $templateName;
@@ -54,6 +65,7 @@ final class MailRequest
         $this->replyTo         = $replyTo;
         $this->requestId       = $requestId ?? \Corex\Support\Uuid::v4();
         $this->parentAttemptId = $parentAttemptId;
+        $this->from            = $from;
 
         foreach ([$this->requestId, $this->parentAttemptId] as $id) {
             if ($id !== null && preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i', $id) !== 1) {

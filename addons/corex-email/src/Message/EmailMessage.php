@@ -20,6 +20,7 @@ final class EmailMessage
      * @param list<string>         $cc
      * @param list<string>         $bcc
      * @param array<string,string> $headers
+     * @param string|null          $from sender address for this message; null uses the configured identity
      */
     public function __construct(
         public readonly array $to,
@@ -29,6 +30,7 @@ final class EmailMessage
         public readonly string $subject,
         public readonly string $body,
         public readonly array $headers = [],
+        public readonly ?string $from = null,
     ) {
     }
 }
