@@ -341,7 +341,11 @@ button { font-family: inherit; cursor: pointer; }
 .corp-track::-webkit-scrollbar { display: none; }
 .corp-card {
   scroll-snap-align: start; cursor: pointer;
-  appearance: none; -webkit-appearance: none; padding: 0; margin: 0; font: inherit; color: inherit; width: 100%;
+  appearance: none; -webkit-appearance: none; margin: 0; font: inherit; color: inherit; width: 100%;
+  /* Breathing room around the artwork, declared once and reused by the logo's insets below. */
+  --corp-pad-block: 5px; --corp-pad-inline: 15px;
+  padding-block: var(--corp-pad-block); padding-inline: var(--corp-pad-inline);
+  position: relative; overflow: hidden;
   aspect-ratio: 3 / 2; border-radius: 16px;
   background: linear-gradient(150deg, #6a17b8 0%, #4a0d8f 48%, #2e0556 100%);
   display: grid; place-items: center; border: 1px solid rgba(216,106,243,0.22);
@@ -352,6 +356,35 @@ button { font-family: inherit; cursor: pointer; }
 .corp-card:hover .eq-icon, .corp-card:focus-visible .eq-icon { transform: scale(1.08); }
 .corp-card .eq-icon { transition: transform 0.3s var(--ease); }
 .eq-icon { width: 44%; height: auto; display: block; }
+/*
+ * The client logo, which replaces the placeholder glyph once one is uploaded.
+ *
+ * ABSOLUTELY POSITIONED on purpose — this is what makes any logo safe to upload. The tile's height
+ * comes from its `aspect-ratio`, but that is only a *preferred* size: an in-flow child taller than
+ * the ratio stretches the tile, and a grid area sized by its own content makes a percentage height
+ * resolve to `auto`, so the image falls back to its intrinsic size. A 100x3000 logo dropped in that
+ * way stretched one tile to 2503px while its neighbours stayed at 77px.
+ *
+ * Out of flow, the image cannot contribute to the tile's height at all. Its four insets pin it to the
+ * padding, its size is therefore fixed by the tile rather than by the picture, and `object-fit:
+ * contain` scales the artwork down inside that box without cropping or distorting it. Whatever the
+ * logo's dimensions or aspect ratio, every tile in the grid stays identical.
+ */
+.corp-card__logo {
+  position: absolute;
+  inset-block-start: var(--corp-pad-block);
+  inset-inline-start: var(--corp-pad-inline);
+  /* Explicit sizes, not `auto` with four insets: an absolutely positioned REPLACED element ignores
+     inset-stretching and falls back to the image's intrinsic size, which is the very thing being
+     defended against. An abspos box resolves percentages against the padding box, so subtracting
+     twice the padding lands it exactly on the content box. */
+  inline-size: calc(100% - (var(--corp-pad-inline) * 2));
+  block-size: calc(100% - (var(--corp-pad-block) * 2));
+  display: block;
+  object-fit: contain;
+  transition: transform 0.3s var(--ease);
+}
+.corp-card:hover .corp-card__logo, .corp-card:focus-visible .corp-card__logo { transform: scale(1.08); }
 .eq-bar { animation: eqPulse 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 .eq-bar:nth-child(2) { animation-delay: 0.35s; }
 .eq-bar:nth-child(3) { animation-delay: 0.7s; }
@@ -405,9 +438,19 @@ button { font-family: inherit; cursor: pointer; }
 .indiv-card:hover { transform: translateY(-6px); box-shadow: 0 20px 50px rgba(0,0,0,0.4); }
 .indiv-card__info { padding: 20px 22px; display: flex; flex-direction: column; }
 .indiv-card__title { font-size: clamp(18px, 1.5vw, 22px); font-weight: 700; letter-spacing: 0.01em; }
-.indiv-card__sub { margin-top: 2px; font-size: 13px; color: rgba(255,255,255,0.8); }
-.indiv-card__stat { margin-top: auto; font-size: 15px; color: rgba(255,255,255,0.92); }
-.indiv-card__stat strong { font-weight: 700; }
+/* The subtitle sits directly under the name and may bold part of itself (the handoff's "+1M views").
+   Clamped to two lines: the editor's character cap is a writing guide, but the box fits 24 characters
+   per line at 1440px and only 15 at 1024px, so no single count can promise two lines at every width.
+   This can — a third line would grow the card and every one of its neighbours in the carousel row. */
+.indiv-card__sub {
+  margin-block-start: 2px; font-size: 15px; color: rgba(255,255,255,0.92);
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.indiv-card__sub strong { font-weight: 700; }
+/* The card's body copy — the client post's own content — is bottom-anchored, as the stat line was. */
+.indiv-card__content { margin-block-start: auto; font-size: 13px; color: rgba(255,255,255,0.8); }
+.indiv-card__content > :first-child { margin-block-start: 0; }
+.indiv-card__content > :last-child { margin-block-end: 0; }
 .indiv-card__thumb { position: relative; }
 .indiv-card__thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
@@ -969,9 +1012,28 @@ main { padding-top: 0; }
   .process-step__icon img { width: 44px; height: 44px; }
   .contact-choose { order: -1; }
 }
+/* ---------- Selected Work: the tablet band (owner review 2026-07-28) ----------
+   The 7-column mosaic used to hold its hard-coded spans (`grid-column: 5/7`) all the way down to
+   520px, with nothing changing between there and 900px. Measured at 600px that gave a `1fr` column of
+   74px — `.m5`/`.m9` rendered as 74x120px slivers and `.m3` as a 74x250px one — while the `0.5fr`
+   brand column was 37px wide holding a logo sized in `vh`, which does not shrink with it at all.
+   Four equal columns keep the mosaic's rhythm (two feature tiles, the rest uniform) at sizes a
+   person can actually see. The spans below are relative (`span N`), not absolute line numbers, so
+   they survive the column count changing. */
+@media (max-width: 900px) {
+  .work-masonry { grid-template-columns: repeat(4, 1fr); grid-auto-rows: 130px; }
+  .work-masonry .work-card { grid-column: auto; grid-row: auto; }
+  /* The two leads stay leads; everything else is a uniform tile. Qualified with `.work-masonry` to
+     match the reset above: a bare `.m1` is one class against two and loses on specificity, not order,
+     so the feature tiles silently flattened to 1x1 and the mosaic became a plain grid. */
+  .work-masonry .m1, .work-masonry .m11 { grid-column: span 2; grid-row: span 2; }
+  .work-masonry .m3, .work-masonry .m14 { grid-row: span 2; }
+  /* The brand card's column no longer exists here, and its logo is sized off viewport height, so it
+     cannot shrink into what is left. It is decorative and `aria-hidden` — dropping it costs nothing. */
+  .work-brand { display: none; }
+}
 @media (max-width: 760px) {
   .svc-tabs { grid-template-columns: repeat(2, 1fr); max-width: 520px; }
-  .work-masonry { grid-auto-rows: 120px; }
   .work-more-grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 620px) {
@@ -979,12 +1041,14 @@ main { padding-top: 0; }
   .process-arrow { transform: rotate(90deg); padding-top: 0; }
   [dir="rtl"] .process-arrow svg { transform: none; }
 }
-@media (max-width: 520px) {
+/* Two columns from 560px down — raised from 520px so nothing lands in the band the 4-column rule
+   above now owns. The `!important`s the old rule needed are gone: that rule was fighting absolute
+   line numbers from the desktop mosaic, and the tablet band already reset those to `auto`. */
+@media (max-width: 560px) {
   .svc-tabs { grid-template-columns: 1fr 1fr; }
   .work-masonry { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 130px; }
-  .work-masonry .work-card, .work-masonry .work-brand { grid-column: auto !important; grid-row: auto !important; }
-  .m1, .m11 { grid-column: 1 / 3 !important; grid-row: span 2 !important; }
-  .work-brand { display: none !important; }
+  .work-masonry .m1, .work-masonry .m11 { grid-column: span 2; grid-row: span 2; }
+  .work-masonry .m3, .work-masonry .m14 { grid-row: auto; }
   .work-more-grid { grid-template-columns: 1fr; }
 }
 

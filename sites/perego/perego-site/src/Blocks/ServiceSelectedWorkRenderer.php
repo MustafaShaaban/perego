@@ -80,7 +80,8 @@ final class ServiceSelectedWorkRenderer
 
         $html = '<div class="work-masonry">';
         foreach ($placed as $index => $project) {
-            $html .= $this->card($project, 'work-card m' . ($index + 1) . ' reveal', $galleryBadge);
+            $slot = 'm' . ($index + 1);
+            $html .= $this->card($project, 'work-card ' . $slot . ' reveal', $galleryBadge, ['slot' => $slot]);
 
             if ($index === 0) {
                 // The handoff's non-interactive brand card sits right after the lead tile
@@ -102,7 +103,7 @@ final class ServiceSelectedWorkRenderer
                     $project,
                     'work-card reveal',
                     $galleryBadge,
-                    $delay > 0 ? ' data-delay="' . $delay . '"' : '',
+                    ['attrs' => $delay > 0 ? ' data-delay="' . $delay . '"' : ''],
                 );
             }
             $html .= '</div>';
@@ -117,42 +118,65 @@ final class ServiceSelectedWorkRenderer
     }
 
     /**
-     * One masonry tile in its handoff variant: a video project is a ▶ `data-video` card
-     * (always-visible play button), a multi-image project is a `data-gallery` card (with a "Gallery"
-     * badge), anything else is a single-image `data-image` card. Owner review (spec 020): the hover
-     * zoom "+" glyph (`.work-zoom`) is dropped from gallery and image cards — only video tiles carry a
-     * visible affordance (the ▶); non-video tiles still open the lightbox on click, without an icon.
+     * One masonry tile.
      *
-     * @param array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl?: string} $project
+     * The tile's TRIGGER is still derived from the project's media — a video opens `data-video`, a
+     * multi-image project `data-gallery`, anything else `data-image`. What the tile ADVERTISES is now
+     * the editor's explicit choice (`_perego_project_icon`), because those are different questions:
+     * a project can carry a video without wanting a ▶ on every grid it appears in. Before this, a
+     * video always forced the badge and nobody could turn it off.
+     *
+     * @param array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl?: string, id?: int, icon?: string} $project
+     * @param array{slot?: string, attrs?: string} $tile where this tile sits, and any extra attributes
      */
-    private function card(array $project, string $classes, string $galleryBadge, string $extraAttrs = ''): string
+    private function card(array $project, string $classes, string $galleryBadge, array $tile = []): string
     {
-        $videoUrl = $project['videoUrl'] ?? '';
-        $isVideo = $videoUrl !== '';
-        $isGallery = ! $isVideo && count($project['gallerySrcs']) > 1;
+        $slot = (string) ($tile['slot'] ?? '');
+        $extraAttrs = (string) ($tile['attrs'] ?? '');
 
-        if ($isVideo) {
+        $videoUrl = $project['videoUrl'] ?? '';
+        $isGallery = $videoUrl === '' && count($project['gallerySrcs']) > 1;
+
+        if ($videoUrl !== '') {
             $trigger = 'data-video="' . esc_attr($videoUrl) . '"';
-            $affordance = '<span class="play-btn" aria-hidden="true"></span>';
         } elseif ($isGallery) {
             $trigger = 'data-gallery="' . esc_attr(implode(',', $project['gallerySrcs'])) . '"';
-            $affordance = '<span class="work-badge">' . esc_html($galleryBadge) . '</span>';
         } else {
             $trigger = 'data-image="' . esc_attr($project['thumbUrl']) . '"';
-            $affordance = '';
         }
 
         // A gallery project may have gallery images but no featured thumb; show its first image.
         $thumbUrl = $project['thumbUrl'] !== '' ? $project['thumbUrl'] : ($project['gallerySrcs'][0] ?? '');
+        $media = ProjectTileImage::render(
+            (int) ($project['id'] ?? 0),
+            $slot,
+            $project['thumbAlt'],
+            $thumbUrl
+        );
 
         /* translators: %s: project title. */
         $openLabel = sprintf(__('Open %s', 'perego-site'), $project['title']);
 
         return '<button type="button" class="' . esc_attr($classes) . '" ' . $trigger . $extraAttrs . ' '
             . 'aria-label="' . esc_attr($openLabel) . '">'
-            . '<img src="' . esc_url($thumbUrl) . '" alt="' . esc_attr($project['thumbAlt']) . '" loading="lazy" />'
+            . $media
             . '<span class="work-card__overlay"></span>'
-            . $affordance
+            . self::affordance($project['icon'] ?? 'none', $galleryBadge)
             . '</button>';
+    }
+
+    /**
+     * The tile's visible affordance for the editor's chosen icon.
+     *
+     * The ▶ is decorative (`aria-hidden`) because the tile is already a labelled button; the gallery
+     * badge is real text, so it stays readable to assistive tech.
+     */
+    public static function affordance(string $icon, string $galleryBadge): string
+    {
+        return match ($icon) {
+            'play' => '<span class="play-btn" aria-hidden="true"></span>',
+            'gallery' => '<span class="work-badge">' . esc_html($galleryBadge) . '</span>',
+            default => '',
+        };
     }
 }

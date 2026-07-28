@@ -10,9 +10,17 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
+	CLIENT_BEHAVIOR_KEY,
+	CLIENT_BEHAVIOR_OPTIONS,
+	CLIENT_GALLERY_KEY,
+	CLIENT_HIDE_PLAY_ICON_KEY,
+	CLIENT_LINK_KEYS,
 	CLIENT_PANELS,
+	CLIENT_SUBTITLE_KEY,
 	PORTFOLIO_MODE_OPTIONS,
+	PROJECT_ICON_OPTIONS,
 	PROJECT_PANELS,
+	PROJECT_THUMB_FIELDS,
 	SERVICE_PANELS,
 	LEGAL_PANEL,
 } from './schema';
@@ -80,11 +88,66 @@ describe( 'panel schema ↔ PHP sanitizer enums', () => {
 		expect( PORTFOLIO_MODE_OPTIONS.map( ( option ) => option.value ).sort() ).toEqual( [ ...allowed ].sort() );
 	} );
 
-	test( 'the video-source select offers exactly ClientPostType::VIDEO_TYPES', () => {
-		const allowed = phpConstantList( php( 'PostTypes/ClientPostType.php' ), 'VIDEO_TYPES' );
-		const field = CLIENT_PANELS.flatMap( ( p ) => p.fields ).find( ( f ) => f.key === '_perego_client_video_type' );
+	test( 'the project icon select offers exactly ProjectPostType::ICONS', () => {
+		const allowed = phpConstantList( php( 'PostTypes/ProjectPostType.php' ), 'ICONS' );
 
-		expect( field.options.map( ( option ) => option.value ).sort() ).toEqual( [ ...allowed ].sort() );
+		expect( PROJECT_ICON_OPTIONS.map( ( option ) => option.value ).sort() ).toEqual( [ ...allowed ].sort() );
+	} );
+
+	/*
+	 * Each crop field writes a meta key the PHP resolver reads by name. A typo here would save to a
+	 * key nothing reads: the picker would look like it worked and the tile would never change.
+	 */
+	test( 'every project crop field is a real ProjectThumbnails shape', () => {
+		const shapes = php( 'PostTypes/ProjectThumbnails.php' );
+		const constants = phpConstants( php( 'PostTypes/ProjectPostType.php' ) );
+
+		PROJECT_THUMB_FIELDS.forEach( ( field ) => {
+			const constName = Object.keys( constants ).find( ( name ) => constants[ name ] === field.key );
+
+			expect( constName ).toBeDefined();
+			expect( shapes ).toContain( `ProjectPostType::${ constName }` );
+		} );
+	} );
+
+	test( 'the behaviour choice offers exactly ClientPostType::BEHAVIORS', () => {
+		const allowed = phpConstantList( php( 'PostTypes/ClientPostType.php' ), 'BEHAVIORS' );
+
+		expect( CLIENT_BEHAVIOR_OPTIONS.map( ( option ) => option.value ).sort() ).toEqual( [ ...allowed ].sort() );
+	} );
+
+	/*
+	 * `none` must lead the list: a card that acts by accident is the exact defect this model
+	 * replaced, so the safe option is the one an editor lands on.
+	 *
+	 * It must NOT be declared as a PHP meta `default`, though. Since WP 5.5 a registered default is
+	 * returned by `get_post_meta()` for a key that was never written, which makes "unset"
+	 * indistinguishable from "explicitly none" — that masked the migration's already-done marker and
+	 * would have stopped `TranslatedMeta` inheriting from the English record, rendering every Arabic
+	 * card inert. An empty value sanitizes to `none` anyway, so the effective default is unchanged.
+	 */
+	test( 'the inert behaviour leads the list and is NOT a registered PHP default', () => {
+		const source = php( 'PostTypes/ClientPostType.php' );
+		const behaviorArgs = source.match( /META_BEHAVIOR => \[([\s\S]*?)\],/ )[ 1 ];
+
+		expect( CLIENT_BEHAVIOR_OPTIONS[ 0 ].value ).toBe( 'none' );
+		expect( behaviorArgs ).not.toMatch( /'default'/ );
+	} );
+
+	/*
+	 * The panel writes these keys directly rather than through the schema list, so they get the same
+	 * PHP-constant guard the schema fields have — a typo here writes meta no renderer reads.
+	 */
+	test( 'the keys the Client panel writes directly are real ClientPostType constants', () => {
+		const constants = Object.values( phpConstants( php( 'PostTypes/ClientPostType.php' ) ) );
+
+		[
+			CLIENT_BEHAVIOR_KEY,
+			CLIENT_SUBTITLE_KEY,
+			CLIENT_GALLERY_KEY,
+			CLIENT_HIDE_PLAY_ICON_KEY,
+			...Object.values( CLIENT_LINK_KEYS ),
+		].forEach( ( key ) => expect( constants ).toContain( key ) );
 	} );
 
 	/*

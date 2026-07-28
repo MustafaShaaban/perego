@@ -150,7 +150,7 @@ final class ProjectRepository
      * was a framework upgrade Perego took part in rather than a site it owned, and a portfolio has to
      * say so. Any project can carry one; only that card sets it today.
      *
-     * @return array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
+     * @return array{id: int, icon: string, title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
      */
     public function toGridCard(WP_Post $post, PortfolioContent $content): array
     {
@@ -175,6 +175,8 @@ final class ProjectRepository
         $logoAlt = $logoId ? (string) get_post_meta($logoId, '_wp_attachment_image_alt', true) : '';
 
         return [
+            'id' => (int) $post->ID,
+            'icon' => $this->iconFor($post),
             'title' => get_the_title($post),
             'url' => (string) get_permalink($post),
             'category' => $category,
@@ -200,6 +202,19 @@ final class ProjectRepository
      * non-empty string `"0"` and the English fallback would never fire. Same shape as the featured-image
      * fallback in toGridCard() above.
      */
+    /**
+     * The affordance the project's grid tiles should wear, following the linked EN translation.
+     *
+     * Safe through `metaWithEnFallback()` — unlike the integer keys above, this one is registered with
+     * no default, so an unset value really does arrive as `''` and the fallback fires as intended.
+     */
+    public function iconFor(WP_Post $post): string
+    {
+        return ProjectPostType::sanitizeIcon(
+            $this->metaWithEnFallback($post, ProjectPostType::META_ICON)
+        );
+    }
+
     private function logoId(WP_Post $post): int
     {
         $logoId = (int) get_post_meta($post->ID, ProjectPostType::META_LOGO, true);

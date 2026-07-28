@@ -8,10 +8,15 @@
  * and the automatic/manual/hybrid client composer now live in the Inspector on the shared `../../Editor`
  * primitives (`PanelSection`, `LanguagePair`, `RecordPicker`) — the SSR preview updates live as they change.
  * Server-rendered (save returns null); the scroll-snap track + arrows are wired by view.js.
+ *
+ * This block chooses WHICH clients appear, never what a card does — the play badge used to be one
+ * toggle here governing every individual card at once, and is now each client's own setting alongside
+ * its behaviour (2026-07-28). A `showPlayIcon` left in an already-saved block is inert: the block is
+ * server-rendered with `save: () => null`, so an unknown attribute needs no deprecation.
  */
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { SelectControl, TextareaControl, ToggleControl } from '@wordpress/components';
+import { SelectControl, TextareaControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
@@ -106,15 +111,6 @@ function Edit( { attributes, setAttributes } ) {
 					clients={ clientsForType( 'corporate' ) } attributes={ attributes } setAttributes={ setAttributes } />
 				<ClientComposer type="individual" title={ __( 'Individual clients', 'perego-site' ) }
 					clients={ clientsForType( 'individual' ) } attributes={ attributes } setAttributes={ setAttributes } />
-				<PanelSection title={ __( 'Display', 'perego-site' ) }>
-					<ToggleControl
-						__nextHasNoMarginBottom
-						label={ __( 'Show the play badge', 'perego-site' ) }
-						help={ __( 'The ▶ badge on individual client cards that open a video. Decorative only — the card still opens its video either way.', 'perego-site' ) }
-						checked={ attributes.showPlayIcon !== false }
-						onChange={ ( showPlayIcon ) => setAttributes( { showPlayIcon } ) }
-					/>
-				</PanelSection>
 			</InspectorControls>
 			<div className="perego-clients-carousel__preview" onClick={ ( event ) => {
 				// Neutralize the SSR preview's real links/buttons so a click never navigates the editor away.

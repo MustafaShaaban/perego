@@ -57,7 +57,7 @@ foreach ($legacySlugs as $legacySlug) {
 }
 
 /**
- * @var list<array{name:string, slug:string, type:string, sub?:string, stat?:string, video_url?:string, video_type?:string}> $clients
+ * @var list<array{name:string, slug:string, type:string, content?:string, stat?:string, video_url?:string}> $clients
  */
 $clients = [];
 
@@ -73,11 +73,11 @@ for ($i = 1; $i <= 3; $i++) {
         'name' => 'REVIEW EL ETNEN',
         'slug' => 'review-el-etnen-' . $i,
         'type' => 'individual',
-        'sub' => 'intertainment show',
+        // The card's body copy is the post's own content, not a meta field.
+        'content' => 'intertainment show',
         'stat' => '<strong>+1M</strong> views',
         // Neutral, embeddable placeholder clip (Big Buck Bunny, CC) — replace with the real showreel.
         'video_url' => 'https://www.youtube.com/embed/aqz-KE-bpKQ',
-        'video_type' => 'embed',
     ];
 }
 
@@ -102,7 +102,10 @@ foreach ($clients as $client) {
         'post_status' => 'publish',
         'post_title' => $client['name'],
         'post_name' => $slug,
-        'post_content' => '<!-- wp:paragraph --><p>Example client — replace with a real, approved client and media.</p><!-- /wp:paragraph -->',
+        'post_content' => sprintf(
+            '<!-- wp:paragraph --><p>%s</p><!-- /wp:paragraph -->',
+            esc_html($client['content'] ?? 'Example client — replace with a real, approved client and media.')
+        ),
     ], true);
 
     if (is_wp_error($id)) {
@@ -113,15 +116,19 @@ foreach ($clients as $client) {
     $id = (int) $id;
     wp_set_object_terms($id, $client['type'], ClientPostType::TAXONOMY);
 
-    if (($client['sub'] ?? '') !== '') {
-        update_post_meta($id, ClientPostType::META_SUB, $client['sub']);
-    }
     if (($client['stat'] ?? '') !== '') {
         update_post_meta($id, ClientPostType::META_STAT, $client['stat']);
     }
+
+    // A seeded video is one gallery entry opened by the lightbox behaviour — the same model an editor
+    // sees. Corporate tiles are seeded inert; `seed-client-media.php` gives them their gallery.
     if (($client['video_url'] ?? '') !== '') {
-        update_post_meta($id, ClientPostType::META_VIDEO_URL, $client['video_url']);
-        update_post_meta($id, ClientPostType::META_VIDEO_TYPE, $client['video_type'] ?? 'embed');
+        update_post_meta($id, ClientPostType::META_BEHAVIOR, 'lightbox');
+        update_post_meta($id, ClientPostType::META_GALLERY, [
+            ['type' => 'video', 'id' => 0, 'url' => $client['video_url']],
+        ]);
+    } else {
+        update_post_meta($id, ClientPostType::META_BEHAVIOR, 'none');
     }
 
     if ($pllReady && ! pll_get_post_language($id)) {

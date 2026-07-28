@@ -98,13 +98,12 @@ final class PeregoSiteServiceProvider
         // typed, grouped panels in the block editor's document sidebar. These replace the four classic
         // meta boxes this used to register (PostMetaBoxes, ProjectGalleryMetaBox, ClientMediaMetaBox,
         // ServicePortfolioMetaBox) — every field is `show_in_rest` post meta, so the panels need no
-        // nonce and no save handler, and no meta key changed. The Client gallery/video repeater keeps
-        // its dedicated box for now: its value is a list of typed objects, not a flat ID list, and it
-        // is the one surface the shared primitives do not yet cover.
+        // nonce and no save handler. ClientMediaMetaBox was the last holdout, kept because its gallery
+        // is a list of typed objects rather than a flat ID list; the panel now owns that repeater too,
+        // so no classic meta box remains.
         if (is_admin()) {
             (new \PeregoSite\Admin\FieldPanels())->register();
             (new \PeregoSite\Admin\PostListColumns())->register();
-            (new \PeregoSite\Admin\ClientMediaMetaBox())->register();
         }
     }
 
@@ -396,8 +395,11 @@ final class PeregoSiteServiceProvider
             register_block_type($this->blockDir('clients-carousel'), [
                 'render_callback' => static function (array $attributes) use ($languageService): string {
                     $locale = $languageService->driver()->currentLocale();
+                    // A `link`-behaviour client resolves per card, not per block, so this renderer
+                    // holds its own LinkTarget rather than being handed one resolved href.
+                    $linkTarget = new \PeregoSite\Blocks\LinkTarget($languageService->driver());
 
-                    return (new ClientsCarouselRenderer(new ClientsContent($locale), $locale, $attributes))->render();
+                    return (new ClientsCarouselRenderer(new ClientsContent($locale), $locale, $attributes, $linkTarget))->render();
                 },
             ]);
         });
@@ -656,6 +658,10 @@ final class PeregoSiteServiceProvider
                         $gallery = $projects->galleryFor($post);
 
                         return [
+                            // The id lets the tile resolve its own per-shape crop; the icon is the
+                            // editor's explicit choice of affordance (spec 021 T043).
+                            'id' => (int) $post->ID,
+                            'icon' => $projects->iconFor($post),
                             'title' => $card['title'],
                             'thumbUrl' => $card['thumbUrl'],
                             'thumbAlt' => $card['thumbAlt'],
@@ -820,6 +826,10 @@ final class PeregoSiteServiceProvider
                         $gallery = $projects->galleryFor($post);
 
                         return [
+                            // The id lets the tile resolve its own per-shape crop; the icon is the
+                            // editor's explicit choice of affordance (spec 021 T043).
+                            'id' => (int) $post->ID,
+                            'icon' => $projects->iconFor($post),
                             'title' => $card['title'],
                             'thumbUrl' => $card['thumbUrl'],
                             'thumbAlt' => $card['thumbAlt'],

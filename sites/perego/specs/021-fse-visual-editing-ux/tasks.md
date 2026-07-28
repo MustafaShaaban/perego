@@ -124,6 +124,79 @@ Storage is additive so existing `{label, href}` data keeps working:
 
 Rendering is a shared PHP resolver: `custom` follows the existing `SiteHeaderRenderer::ctaHref()` rule (localize an internal path; use an external/`mailto:`/`tel:`/`#anchor` verbatim); `dynamic` resolves the Polylang-translated permalink for the current locale and falls back to `href` when the target is unpublished or gone; `openInNewTab` emits `target="_blank" rel="noopener"`, the pairing already used by `SiteFooterRenderer` and `ClientsCarouselRenderer`.
 
+## Phase 9 — Client content model: type-driven fields + explicit behaviour (owner, 2026-07-28)
+
+T019 gave Clients typed panels but kept the field set flat: every client saw every field, and what a card
+*did* was inferred rather than chosen. The owner's model makes client type the first choice, and makes
+**Behavior** — `No actions` (default) / `Lightbox` / `Link` — the single thing that decides what a card does.
+
+- [x] T037 **Behaviour data model.** `_perego_client_behavior` (`none|lightbox|link`, default `none`),
+  `_perego_client_hide_play_icon`, and the flat `_perego_client_link_*` `LinkTarget` set registered on
+  `ClientPostType` with REST schema, sanitizers and `auth_callback`. `_perego_client_gallery` now also
+  keeps an uploaded video's attachment id. Retired: `_perego_client_sub`, `_perego_client_video_url`,
+  `_perego_client_video_type`, `VIDEO_TYPES`. The play badge is stored **inverted** (`hide`, default
+  false) because WordPress writes a `false` boolean as `''`, which is indistinguishable from unset — a
+  default-true `show` flag could never have been switched off.
+- [x] T038 **Behaviour rendering.** `ClientsCarouselRenderer` builds both card types through one
+  `cardTags()`: `lightbox` → `<button>` + the trigger from the new shared `Blocks\LightboxTrigger`,
+  `link` → `<a>` via `LinkTarget`, `none` → an inert `<div>`. A behaviour whose data is missing degrades
+  to inert rather than rendering a control that does nothing. The implicit corporate logo-lightbox
+  fallback is **gone** (owner-confirmed). `LightboxTrigger` also percent-encodes commas, closing the
+  `data-gallery` splitting hazard `view.js` has always had.
+- [x] T039 **Individual card copy.** The former "Statistic" field is relabelled **Subtitle** (same
+  `_perego_client_stat` key and `<strong>` sanitizer — the owner adds the tag), and the card's body is
+  now the client post's **own editor content**, reduced by `wp_kses` to a non-interactive subset because
+  the card element is itself a `<button>`/`<a>`.
+- [x] T040 **One grouped panel.** `EditorPanels` composes Client type (writing the taxonomy, Polylang
+  locale-preserving), name, logo/thumbnail, subtitle, behaviour, gallery repeater, link picker, per-client
+  play badge and a live card preview. The default taxonomy panel is removed so type is chosen in exactly
+  one place. **The last classic meta box (`ClientMediaMetaBox`) is deleted**, closing T019's holdout;
+  the dead `PostMetaBoxes` goes with it. The carousel-wide `showPlayIcon` block attribute is removed.
+- [x] T041 **Migration.** `scripts/migrate-client-behavior.php` — idempotent, `--dry-run`, snapshots into
+  `_perego_client_migration_backup` before writing, sweeps EN and AR. Derives the behaviour each client
+  already had, folds a single video into the gallery, moves `_perego_client_sub` into the post body.
+- [x] T042 **Card refinements** (owner, 2026-07-28). (a) The individual subtitle is capped at
+  `ClientPostType::SUBTITLE_MAX_CHARS` = **30 visible characters** — measured, not chosen: the rendered
+  box fits 15 characters per line at its narrowest desktop breakpoint, so 30 is exactly two lines
+  everywhere and a long subtitle can no longer grow the card and push the carousel row. Enforced in the
+  panel by a live counter that refuses over-long input, and in `sanitizeStat()` as a backstop for REST,
+  WP-CLI and imports; the cap counts text only, leaves `<strong>` intact and closes a tag left open by
+  the cut. (b) The corporate tile shows the **client's logo**; the equalizer glyph is demoted to a
+  placeholder for clients without artwork. The logo is absolutely positioned and inset to a
+  `--corp-pad-*` padding with `object-fit: contain`, so no logo — of any size or aspect — can change
+  the tile's height. Verified by injecting 3000×100, 100×3000 and 4000×4000 logos: tile heights stayed
+  identical and nothing overflowed.
+
+## Phase 10 — Work grid: explicit icons, per-slot crops, tablet layout (owner, 2026-07-28)
+
+- [x] T043 **Explicit tile icon.** `_perego_project_icon` (`none|play|gallery`, no registered default)
+  replaces the inference that gave a ▶ to any project with a video and a badge to any with 2+ images.
+  Applies to the services mosaic **and** the work/portfolio grid, which previously showed no affordance
+  at all even on cards that open a lightbox. The tile's *trigger* stays media-derived: what a tile
+  opens and what it advertises are separate questions.
+- [x] T044 **Per-shape crops.** Four optional attachment metas (`_perego_thumb_hero|banner|tall|card`,
+  578×332 / 380×158 / 182×332 / 406×254) plus `PostTypes\ProjectThumbnails`, which owns the shape
+  table, the slot→shape map and the fallback chain (own crop → nearest shape by aspect ratio →
+  featured image). `Blocks\ProjectTileImage` emits a `<picture>` naming the desktop, tablet and mobile
+  bands; a project with no crops still emits the plain `<img>` it always did.
+  **Resolved server-side, not by measuring in JS**: the slot is already decided by the renderer and
+  the bands are viewport-based, so the markup can simply state the mapping — and the tile keeps
+  working with JavaScript off.
+- [x] T045 **Slot-map guard.** `EditorPanels/slot-shapes.test.js` parses the theme's `.m{n}` spans and
+  asserts each slot's real geometry still matches the shape PHP assigns it — the two live in different
+  languages in different packages and nothing else makes them agree.
+- [x] T046 **Tablet band.** New `max-width: 900px` layout: 4 equal columns, relative `span N` in place
+  of the desktop mosaic's absolute line numbers, brand tile hidden. The 2-column collapse moves 520px
+  → 560px so nothing lands in the old dead band. Measured: the narrowest tile went from **63–74px** to
+  **119px**, pinned by 14 new checks in `verify-interactions.mjs`.
+- [x] T047 **Subtitle two-line clamp.** `.indiv-card__sub` is `line-clamp: 2`, and
+  `ClientPostType::SUBTITLE_MAX_CHARS` rises 30 → 48: the clamp guarantees two lines at every width,
+  which no character count can, so the cap is a writing guide rather than the layout's protection.
+  Editor copy reworded and the Content hint given its own label — the two help texts ran together.
+- [x] T048 **Migration.** `scripts/migrate-project-icon.php`, same shape as the client one: idempotent,
+  `--dry-run`, batched, snapshots, `metadata_exists()` marker, EN+AR sweep, and a derived `none` left
+  unwritten so translations keep inheriting. Applied: 3 projects given an icon, 63 genuinely have none.
+
 ## Standard for every visual-block slice (per DECISIONS 2026-07-21, refining framework #43)
 
 Static-layout blocks (Header, Footer, Hero, Services teaser, About, Service Inner Hero, What We Do, Process) render their **real markup in `edit()`** with in-canvas `RichText`/`MediaPlaceholder` and ship a **markup-parity test**; `<ServerSideRender>` is retained only for dynamic/query blocks (Clients, Portfolio grid, related/search) with a styled placeholder + `RecordPicker`. Repeaters use structured attributes with legacy JSON-string read-time normalization. Content-model rework also covers **Project admin UX (C13)** alongside the Client editor in T019/T022.

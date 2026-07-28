@@ -30,6 +30,13 @@ use WP_Query;
  * two attributes (`...En`/`...Ar`), both edited together in one editor view, and the PHP renderer
  * picks the current-locale variant. An empty attribute (never edited) falls back to the
  * locale-aware `ClientsContent` seed, so existing pages with no saved attributes render unchanged.
+ *
+ * 2026-07-28: what a card DOES is now the editor's explicit choice — `_perego_client_behavior` is one
+ * of `none` (an inert tile, the default), `lightbox` (opens the client's gallery) or `link` (navigates
+ * to a `LinkTarget` destination). It used to be inferred: a corporate tile opened a lightbox if it
+ * happened to have a gallery and otherwise opened its own logo image, and an individual card's action
+ * came from a `video_type` enum. Both inferences are gone — a tile is interactive only when its
+ * behaviour says so, and both card types now share one behaviour model and one gallery.
  */
 final class ClientsCarouselRenderer
 {
@@ -38,11 +45,39 @@ final class ClientsCarouselRenderer
 
     private const INDIV_MAX = 12;
 
-    /** @param array<string,mixed> $attributes */
+    /**
+     * What an individual card's body may contain.
+     *
+     * The card element is itself a `<button>` or an `<a>`, so anything interactive nested inside it is
+     * a real accessibility defect (a link inside a button has no sane keyboard or screen-reader
+     * behaviour) as well as invalid HTML. Editors write the body in the normal editor, so this is the
+     * gate that keeps a stray link, embed or media block out of the card.
+     */
+    private const CONTENT_TAGS = [
+        'p' => [],
+        'strong' => [],
+        'em' => [],
+        'b' => [],
+        'i' => [],
+        'br' => [],
+        'ul' => [],
+        'ol' => [],
+        'li' => [],
+        'span' => [],
+    ];
+
+    /**
+     * @param array<string,mixed> $attributes
+     * @param LinkTarget|null     $linkTarget resolves a `link`-behaviour client to an href; null keeps
+     *                                        the renderer constructible without a language driver, in
+     *                                        which case a custom URL is used verbatim and a dynamic
+     *                                        link falls back to its stored URL
+     */
     public function __construct(
         private readonly ClientsContent $content,
         private readonly string $locale = 'en',
-        private readonly array $attributes = []
+        private readonly array $attributes = [],
+        private readonly ?LinkTarget $linkTarget = null
     ) {
     }
 
@@ -96,33 +131,136 @@ final class ClientsCarouselRenderer
     }
 
     /**
-     * Corporate: a small square tile (handoff `.corp-card`) — icon/logo only, no visible name. The
-     * client name stays available to assistive tech via aria-label. When an editor sets a gallery
-     * (`Admin\ClientMediaMetaBox`, a mix of images and video links/uploads), the tile opens it in the
-     * site-wide media lightbox (perego-theme/media-lightbox) as a `data-gallery` list — the lightbox
-     * already resolves each item's type (image vs YouTube/video) itself. Falls back to the featured
-     * image (single logo) when there's no gallery; stays non-interactive with neither.
+     * Corporate: a small square tile (handoff `.corp-card`) — the client's logo, no visible name. The
+     * client name (the post title) stays available to assistive tech via aria-label, which is also why
+     * the logo itself is `alt=""`: repeating the name would announce it twice.
+     *
+     * The equalizer glyph is a PLACEHOLDER, shown only until a logo is uploaded — so a client without
+     * artwork still renders a finished-looking tile instead of an empty box.
+     *
+     * What the tile does is the editor's explicit choice, not an inference from which fields happen to
+     * be filled in — see {@see cardTags()}.
      */
     private function corporateCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
+        $tags = $this->cardTags($client, 'corp-card', ' aria-label="' . esc_attr($title) . '"');
+        // Follows the English fallback: Polylang gives a translation its own empty thumbnail slot, so
+        // an Arabic tile would otherwise drop back to the placeholder its English twin never shows.
+        $logo = $this->thumbnailHtml($client, 'medium', ['class' => 'corp-card__logo']);
+
+        return $tags['open']
+            . ($logo !== '' ? $logo : '<svg class="eq-icon" viewBox="0 0 64 64" aria-hidden="true"><use href="#eq"></use></svg>')
+            . $tags['close'];
+    }
+
+    /**
+     * The card's wrapping element for the behaviour its editor chose (`_perego_client_behavior`).
+     *
+     * - `lightbox` — a `<button>` carrying the media-lightbox trigger for the client's gallery,
+     *   falling back to the featured image so a client that chose Lightbox but has not filled the
+     *   gallery in yet still opens its own artwork rather than nothing.
+     * - `link` — an `<a>` to the resolved destination, honouring the link's own new-tab choice.
+     * - `none` — an inert `<div>`. This is the default, and it is exactly as static as it says:
+     *   the tile carries no trigger attribute at all.
+     *
+     * A behaviour whose data is missing entirely (Lightbox with no gallery **and** no featured image,
+     * Link with no destination) degrades to the inert element, because a control that visibly invites
+     * a click and then does nothing is worse than a plain tile.
+     *
+     * @return array{open:string, close:string, opensLightbox:bool}
+     */
+    private function cardTags(\WP_Post $client, string $class, string $extraAttributes = ''): array
+    {
+        $tags = match ($this->behavior($client)) {
+            'lightbox' => $this->lightboxTags($client, $class, $extraAttributes),
+            'link' => $this->linkTags($client, $class, $extraAttributes),
+            default => null,
+        };
+
+        // The `?? ` is the degrade-to-inert rule: a behaviour whose data is missing produces null
+        // above, and lands here rather than rendering a control that does nothing.
+        return $tags ?? [
+            'open' => '<div class="' . $class . '" role="listitem"' . $extraAttributes . '>',
+            'close' => '</div>',
+            'opensLightbox' => false,
+        ];
+    }
+
+    /**
+     * A lightbox card, or null when there is no media to open.
+     *
+     * @return array{open:string, close:string, opensLightbox:bool}|null
+     */
+    private function lightboxTags(\WP_Post $client, string $class, string $extraAttributes): ?array
+    {
         // Media is language-neutral and Polylang does not copy meta to translations, so an Arabic
         // client reads its linked English record's gallery — otherwise the AR card renders inert.
-        $gallery = ClientPostType::sanitizeGallery(TranslatedMeta::value($client, ClientPostType::META_GALLERY));
-        $galleryUrls = array_filter(array_map([$this, 'galleryItemUrl'], $gallery));
+        $trigger = LightboxTrigger::attribute(
+            (array) TranslatedMeta::value($client, ClientPostType::META_GALLERY),
+            $this->thumbnailUrl($client)
+        );
 
-        if ($galleryUrls !== []) {
-            $trigger = ' data-gallery="' . esc_attr(implode(',', $galleryUrls)) . '"';
-        } else {
-            $logoUrl = $this->thumbnailUrl($client);
-            $trigger = $logoUrl !== '' ? ' data-image="' . esc_url($logoUrl) . '"' : '';
+        if ($trigger === '') {
+            return null;
         }
 
-        $html = '<button type="button" class="corp-card" role="listitem" aria-label="' . esc_attr($title) . '"' . $trigger . '>';
-        $html .= '<svg class="eq-icon" viewBox="0 0 64 64" aria-hidden="true"><use href="#eq"></use></svg>';
-        $html .= '</button>';
+        return [
+            'open' => '<button type="button" class="' . $class . '" role="listitem"' . $extraAttributes . $trigger . '>',
+            'close' => '</button>',
+            'opensLightbox' => true,
+        ];
+    }
 
-        return $html;
+    /**
+     * A navigating card, or null when the link has no destination.
+     *
+     * @return array{open:string, close:string, opensLightbox:bool}|null
+     */
+    private function linkTags(\WP_Post $client, string $class, string $extraAttributes): ?array
+    {
+        $link = $this->link($client);
+        $href = $this->linkTarget?->hrefIfSet($link) ?? (string) $link['href'];
+
+        if ($href === '') {
+            return null;
+        }
+
+        $target = $this->linkTarget?->targetAttributes($link)
+            ?? (! empty($link['openInNewTab']) ? ' target="_blank" rel="noopener"' : '');
+
+        return [
+            'open' => '<a class="' . $class . '" href="' . esc_url($href) . '"' . $target . ' role="listitem"' . $extraAttributes . '>',
+            'close' => '</a>',
+            'opensLightbox' => false,
+        ];
+    }
+
+    /** The card's chosen behaviour, following the English fallback because it describes media, not copy. */
+    private function behavior(\WP_Post $client): string
+    {
+        return ClientPostType::sanitizeBehavior(
+            TranslatedMeta::string($client, ClientPostType::META_BEHAVIOR)
+        );
+    }
+
+    /**
+     * The `link` behaviour's destination in the shape `LinkTarget` expects. Language-neutral like the
+     * gallery: `LinkTarget` localizes an internal path and resolves a chosen record in the current
+     * locale itself, so an Arabic card follows its English record's choice to the Arabic page.
+     *
+     * @return array<string, mixed>
+     */
+    private function link(\WP_Post $client): array
+    {
+        return [
+            'href' => TranslatedMeta::string($client, ClientPostType::META_LINK_URL),
+            'linkKind' => ClientPostType::sanitizeLinkKind(
+                TranslatedMeta::string($client, ClientPostType::META_LINK_KIND)
+            ),
+            'postId' => (int) TranslatedMeta::value($client, ClientPostType::META_LINK_POST_ID),
+            'openInNewTab' => (bool) TranslatedMeta::value($client, ClientPostType::META_LINK_NEW_TAB),
+        ];
     }
 
     /**
@@ -152,87 +290,82 @@ final class ClientsCarouselRenderer
         return $id === 0 ? '' : (string) get_the_post_thumbnail_url($id, 'large');
     }
 
-    /** The card thumbnail's `<img>`, following the English fallback; empty when neither post has one. */
-    private function thumbnailHtml(\WP_Post $client): string
+    /**
+     * The card thumbnail's `<img>`, following the English fallback; empty when neither post has one.
+     *
+     * `alt=""` on both card types: the individual card prints the client name as a heading beside the
+     * image, and the corporate tile carries it as the element's own aria-label, so describing the
+     * image would announce the same name twice.
+     *
+     * @param array<string, string> $attributes merged over the shared defaults
+     */
+    private function thumbnailHtml(\WP_Post $client, string $size = 'medium', array $attributes = []): string
     {
         $id = $this->thumbnailSourceId($client);
 
-        return $id === 0 ? '' : (string) get_the_post_thumbnail($id, 'medium', ['loading' => 'lazy', 'alt' => '']);
-    }
-
-    /** @param array{type:string,id:int,url:string} $item */
-    private function galleryItemUrl(array $item): string
-    {
-        if ($item['type'] === 'image') {
-            return $item['id'] > 0 ? (string) wp_get_attachment_image_url($item['id'], 'large') : '';
-        }
-
-        return $item['url'];
+        return $id === 0 ? '' : (string) get_the_post_thumbnail(
+            $id,
+            $size,
+            array_merge(['loading' => 'lazy', 'alt' => ''], $attributes)
+        );
     }
 
     /**
-     * Individual: a wide info-plus-thumbnail card (handoff `.indiv-card`) — name/stat text beside a
-     * thumbnail. `_perego_client_video_type` decides the card's single action (handoff C-04: a card
-     * must never both open the lightbox AND navigate): `embed`/`upload` render a <button> lightbox
-     * trigger with the handoff's `.play-btn` affordance (perego-theme/media-lightbox resolves
-     * YouTube-style embeds and direct video files itself); `external` is a plain link opening in a
-     * new tab — no `data-video` and no play button (the play affordance is reserved for approved
-     * in-lightbox media). Without any video the card is a plain non-interactive tile.
+     * Individual: a wide info-plus-thumbnail card (handoff `.indiv-card`) — title, subtitle and body
+     * copy beside a thumbnail. The card's behaviour decides its single action (handoff C-04: a card
+     * must never both open the lightbox AND navigate) — see {@see cardTags()}.
      */
     private function individualCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
+        $tags = $this->cardTags($client, 'indiv-card');
         // MEDIA falls back to the linked English record, because Polylang does not copy meta to
-        // translations and a video/thumbnail is the same asset in either language. Without this the
+        // translations and a thumbnail is the same asset in either language. Without this the
         // Arabic carousel rendered inert `<div>`s that looked right and did nothing when clicked.
         $thumb = $this->thumbnailHtml($client);
-        $videoUrl = TranslatedMeta::string($client, ClientPostType::META_VIDEO_URL);
-        $videoType = ClientPostType::sanitizeVideoType(TranslatedMeta::string($client, ClientPostType::META_VIDEO_TYPE));
-        // COPY deliberately does NOT fall back. The subtitle and statistic are editorial text, not
-        // assets: inheriting them would print the English wording on an Arabic card (the live EN
-        // records carry "intertainment show"), which is the language leak this whole pass exists to
-        // remove. An untranslated card shows no subtitle — the prompt to enter Arabic copy — while
-        // still opening its video.
-        $sub = (string) get_post_meta($client->ID, ClientPostType::META_SUB, true);
-        $stat = (string) get_post_meta($client->ID, ClientPostType::META_STAT, true);
-        $opensLightbox = $videoUrl !== '' && $videoType !== 'external';
+        // COPY deliberately does NOT fall back. The subtitle and body are editorial text, not assets:
+        // inheriting them would print the English wording on an Arabic card, which is the language
+        // leak this whole pass exists to remove. An untranslated card shows no subtitle — the prompt
+        // to enter Arabic copy — while still opening its media.
+        $subtitle = (string) get_post_meta($client->ID, ClientPostType::META_STAT, true);
 
-        if ($opensLightbox) {
-            $html = '<button type="button" class="indiv-card" data-video="' . esc_attr($videoUrl) . '" role="listitem">';
-        } elseif ($videoUrl !== '') {
-            $html = '<a class="indiv-card" href="' . esc_url($videoUrl) . '" target="_blank" rel="noopener" role="listitem">';
-        } else {
-            $html = '<div class="indiv-card" role="listitem">';
-        }
-
+        $html = $tags['open'];
         $html .= '<div class="indiv-card__info"><h3 class="indiv-card__title">' . esc_html($title) . '</h3>';
-        if ($sub !== '') {
-            $html .= '<p class="indiv-card__sub">' . esc_html($sub) . '</p>';
+        if ($subtitle !== '') {
+            $html .= '<p class="indiv-card__sub">' . wp_kses($subtitle, ['strong' => []]) . '</p>';
         }
-        if ($stat !== '') {
-            $html .= '<p class="indiv-card__stat">' . wp_kses($stat, ['strong' => []]) . '</p>';
-        }
-        $html .= '</div>'; // .client-card__info
+        $html .= $this->cardContent($client);
+        $html .= '</div>'; // .indiv-card__info
 
         $html .= '<div class="indiv-card__thumb">';
         $html .= $thumb !== '' ? $thumb : '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/client-review-crop.png') . '" alt="" loading="lazy" />';
-        // The play badge is an editor choice (client request 2026-07-28). It is purely decorative —
-        // `aria-hidden`, and the card is already a button — so hiding it changes how the row looks,
-        // never whether the video opens.
-        if ($opensLightbox && $this->showsPlayIcon()) {
+        // The play badge is a per-client editor choice (client request 2026-07-28). It is purely
+        // decorative — `aria-hidden`, and the card is already a button — so hiding it changes how the
+        // row looks, never whether the media opens.
+        if ($tags['opensLightbox'] && $this->showsPlayIcon($client)) {
             $html .= '<span class="play-btn" aria-hidden="true"></span>';
         }
-        $html .= '</div>'; // .client-card__thumb
+        $html .= '</div>'; // .indiv-card__thumb
 
-        if ($opensLightbox) {
-            $html .= '</button>';
-        } elseif ($videoUrl !== '') {
-            $html .= '</a>';
-        } else {
-            $html .= '</div>';
+        return $html . $tags['close'];
+    }
+
+    /**
+     * The card's body copy — the client post's own editor content, reduced to the non-interactive
+     * subset a card may safely contain ({@see CONTENT_TAGS}).
+     */
+    private function cardContent(\WP_Post $client): string
+    {
+        $raw = (string) $client->post_content;
+
+        if (trim($raw) === '') {
+            return '';
         }
 
-        return $html;
+        $rendered = function_exists('do_blocks') ? (string) do_blocks($raw) : $raw;
+        $safe = trim(wp_kses($rendered, self::CONTENT_TAGS));
+
+        return $safe === '' ? '' : '<div class="indiv-card__content">' . $safe . '</div>';
     }
 
     /**
@@ -249,15 +382,17 @@ final class ClientsCarouselRenderer
     }
 
     /**
-     * Whether the individual cards wear the play badge.
+     * Whether THIS card wears the play badge.
      *
-     * Defaults to true so every page saved before the toggle existed keeps the badge it already
-     * shows — an unset attribute must mean "as it was", not "off".
+     * Was one toggle on the carousel block governing every card at once; it is now the client's own
+     * setting, so a row can mix badged and unbadged cards. The stored flag is the inverse — see
+     * `ClientPostType::META_HIDE_PLAY_ICON` for why — so an absent value keeps the badge.
      */
-    private function showsPlayIcon(): bool
+    private function showsPlayIcon(\WP_Post $client): bool
     {
-        return ! array_key_exists('showPlayIcon', $this->attributes)
-            || (bool) $this->attributes['showPlayIcon'];
+        return ! ClientPostType::sanitizeBool(
+            TranslatedMeta::value($client, ClientPostType::META_HIDE_PLAY_ICON)
+        );
     }
 
     private function arrowSvg(string $direction): string

@@ -24,8 +24,7 @@
 		"corporateExcludeIds": { "type": "array", "default": [] },
 		"individualMode": { "type": "string", "default": "automatic" },
 		"individualOrder": { "type": "array", "default": [] },
-		"individualExcludeIds": { "type": "array", "default": [] },
-		"showPlayIcon": { "type": "boolean", "default": true }
+		"individualExcludeIds": { "type": "array", "default": [] }
 	},
 	"supports": { "html": false }
 }

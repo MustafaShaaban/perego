@@ -21,7 +21,7 @@ use PeregoSite\Theme\SiteRoutes;
  * `render()` takes already-resolved data (projects + the ordered filter labels) so it stays a pure,
  * unit-testable function; the block's render callback does the WP_Query and maps posts to the array.
  *
- * @phpstan-type Project array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
+ * @phpstan-type Project array{id: int, icon: string, title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
  */
 final class PortfolioGridRenderer
 {
@@ -31,7 +31,7 @@ final class PortfolioGridRenderer
     /**
      * @param list<Project> $projects
      * @param array<string, string> $filterLabels ordered, keyed by slug ('all' first); values are labels
-     * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string} $strings
+     * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string, galleryBadge?: string} $strings
      * @param array{link?: array<string, mixed>, target?: string} $cta the closing CTA's resolved link (spec 021 T036)
      */
     public function render(array $projects, array $filterLabels, array $strings, array $cta = []): string
@@ -59,7 +59,7 @@ final class PortfolioGridRenderer
         }
 
         $html .= $this->renderFilters($filterLabels, $strings['groupLabel']);
-        $html .= $this->renderGrid($projects);
+        $html .= $this->renderGrid($projects, (string) ($strings['galleryBadge'] ?? __('Gallery', 'perego-site')));
         $html .= '<p id="portfolioEmpty" hidden class="section-lead" role="status" '
             . 'style="font-size:var(--fs-lead);padding:clamp(40px,6vw,80px) 0;">'
             . esc_html($strings['noResults']) . '</p>';
@@ -124,12 +124,12 @@ final class PortfolioGridRenderer
     /**
      * @param list<Project> $projects
      */
-    private function renderGrid(array $projects): string
+    private function renderGrid(array $projects, string $galleryBadge): string
     {
         $html = '<div class="blog-grid" id="portfolioGrid" data-per-page="' . esc_attr((string) self::PER_PAGE) . '">';
 
         foreach ($projects as $project) {
-            $html .= $this->renderCard($project);
+            $html .= $this->renderCard($project, $galleryBadge);
         }
 
         $html .= '</div>';
@@ -152,7 +152,7 @@ final class PortfolioGridRenderer
      *
      * @param Project $project
      */
-    private function renderCard(array $project): string
+    private function renderCard(array $project, string $galleryBadge): string
     {
         // Every web project is a logo card, whether or not a logo has been supplied. It used to
         // depend on `logoUrl`, so a site awaiting its logo silently fell back to a cropped
@@ -167,11 +167,23 @@ final class PortfolioGridRenderer
 
         if ($isWebCard && ! $hasLogo) {
             $media = $this->namePlate($project);
-        } elseif ($mediaSrc !== '') {
+        } elseif ($hasLogo) {
+            // A logo is a brand mark, not a scene: it has no per-shape crops and must not be
+            // swapped by breakpoint.
             $media = '<img src="' . esc_url($mediaSrc) . '" alt="' . esc_attr($mediaAlt) . '" loading="lazy" />';
+        } elseif ($mediaSrc !== '') {
+            // These cards are all one shape, so they ask for the uniform card crop.
+            $media = ProjectTileImage::render((int) ($project['id'] ?? 0), '', $mediaAlt, $mediaSrc);
         } else {
             $media = '<span class="post-card__media-placeholder" data-category="' . esc_attr($project['category']) . '" aria-hidden="true"></span>';
         }
+
+        // The work grid used to carry no affordance at all, even though its non-web cards are lightbox
+        // buttons — a card that opened a gallery looked identical to one that did nothing. It now
+        // shows whatever the editor chose, the same vocabulary the services mosaic uses.
+        $affordance = $isWebCard
+            ? ''
+            : ServiceSelectedWorkRenderer::affordance((string) ($project['icon'] ?? 'none'), $galleryBadge);
 
         $classes = 'post-card reveal' . ($isWebCard ? ' post-card--logo' : '')
             . ($isWebCard && ! $hasLogo ? ' post-card--plate' : '');
@@ -198,7 +210,7 @@ final class PortfolioGridRenderer
         $role = (string) ($project['role'] ?? '');
 
         $html = $open;
-        $html .= '<div class="post-card__media">' . $media . '</div>';
+        $html .= '<div class="post-card__media">' . $media . $affordance . '</div>';
         $html .= '<div class="post-card__body">';
         $html .= '<span class="post-card__cat">' . esc_html($project['categoryLabel']) . '</span>';
         $html .= '<h2 class="post-card__title" style="font-size:clamp(18px,1.6vw,22px);">' . esc_html($project['title']) . '</h2>';

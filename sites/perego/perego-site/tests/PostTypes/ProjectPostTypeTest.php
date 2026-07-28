@@ -77,6 +77,11 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
         ProjectPostType::META_VIDEO_URL,
         ProjectPostType::META_LOGO,
         ProjectPostType::META_GALLERY,
+        ProjectPostType::META_ICON,
+        ProjectPostType::META_THUMB_HERO,
+        ProjectPostType::META_THUMB_BANNER,
+        ProjectPostType::META_THUMB_TALL,
+        ProjectPostType::META_THUMB_CARD,
     ]);
 
     foreach ($meta as $args) {
@@ -95,6 +100,39 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
     // The showcase fields carry their own dedicated sanitizers.
     expect($meta[ProjectPostType::META_SITE_TYPE]['sanitize_callback'])->toBe([ProjectPostType::class, 'sanitizeSiteType'])
         ->and($meta[ProjectPostType::META_SITE_URL]['sanitize_callback'])->toBe('esc_url_raw');
+
+    // Per-shape crops are attachment ids, like the logo.
+    expect($meta[ProjectPostType::META_THUMB_HERO]['type'])->toBe('integer')
+        ->and($meta[ProjectPostType::META_THUMB_HERO]['sanitize_callback'])->toBe('absint');
+});
+
+/*
+ * A registered default is returned by `get_post_meta()` for a key that was never written, which makes
+ * "unset" indistinguishable from "explicitly none/zero". That breaks the migration's already-done
+ * marker and stops the English-translation fallback, so an Arabic project stops inheriting its English
+ * record's icon and crops. Established the hard way on the Client behaviour field; pinned here so the
+ * next person to "tidy up" these registrations by adding defaults fails loudly instead.
+ */
+it('declares no default on the icon or the per-shape crops', function () {
+    $meta = (new ProjectPostType())->metaArgs();
+
+    foreach ([
+        ProjectPostType::META_ICON,
+        ProjectPostType::META_THUMB_HERO,
+        ProjectPostType::META_THUMB_BANNER,
+        ProjectPostType::META_THUMB_TALL,
+        ProjectPostType::META_THUMB_CARD,
+    ] as $key) {
+        expect($meta[$key])->not->toHaveKey('default');
+    }
+});
+
+it('normalizes an unknown icon to no icon, so a tile never advertises by accident', function () {
+    expect(ProjectPostType::sanitizeIcon('play'))->toBe('play')
+        ->and(ProjectPostType::sanitizeIcon('gallery'))->toBe('gallery')
+        ->and(ProjectPostType::sanitizeIcon('none'))->toBe('none')
+        ->and(ProjectPostType::sanitizeIcon('bogus'))->toBe('none')
+        ->and(ProjectPostType::sanitizeIcon(''))->toBe('none');
 });
 
 it('whitelists the site type to the fixed showcase-filter enum', function () {

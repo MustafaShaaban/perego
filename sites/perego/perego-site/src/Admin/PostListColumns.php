@@ -39,8 +39,10 @@ final class PostListColumns
             'perego_service_key' => __('Service key', 'perego-site'),
         ]);
 
+        // Behaviour rather than a copy field: what a client card DOES is the thing an editor scanning
+        // this list cannot otherwise see, and the thing most likely to be left at its inert default.
         $this->registerFor(ClientPostType::POST_TYPE, [
-            'perego_client_sub' => __('Subtitle', 'perego-site'),
+            'perego_client_behavior' => __('Behavior', 'perego-site'),
         ]);
 
         add_action('admin_head', static function (): void {
@@ -96,11 +98,16 @@ final class PostListColumns
             return;
         }
 
+        if ($column === 'perego_client_behavior') {
+            echo esc_html($this->behaviorLabel($postId));
+
+            return;
+        }
+
         $key = match ($column) {
             'perego_client' => ProjectPostType::META_CLIENT,
             'perego_year' => ProjectPostType::META_YEAR,
             'perego_service_key' => ServicePostType::META_SERVICE_SLUG,
-            'perego_client_sub' => ClientPostType::META_SUB,
             default => '',
         };
 
@@ -110,6 +117,20 @@ final class PostListColumns
 
         $value = (string) get_post_meta($postId, $key, true);
         echo $value !== '' ? esc_html($value) : '<span aria-hidden="true">&mdash;</span>';
+    }
+
+    /** A client's behaviour in the editor's words, not the stored slug. */
+    private function behaviorLabel(int $postId): string
+    {
+        $behavior = ClientPostType::sanitizeBehavior(
+            (string) get_post_meta($postId, ClientPostType::META_BEHAVIOR, true)
+        );
+
+        return match ($behavior) {
+            'lightbox' => __('Lightbox', 'perego-site'),
+            'link' => __('Link', 'perego-site'),
+            default => __('No actions', 'perego-site'),
+        };
     }
 
     /**

@@ -38,14 +38,19 @@ function MediaControl( { field, value, onChange } ) {
 	);
 
 	return (
-		<MediaField
-			label={ field.label }
-			value={ value }
-			media={ media ? { url: media.source_url, alt: media.alt_text, width: media.media_details?.width, height: media.media_details?.height } : null }
-			allowedTypes={ field.allowedTypes || [ 'image' ] }
-			onSelect={ ( selected ) => onChange( selected.id ) }
-			onRemove={ () => onChange( 0 ) }
-		/>
+		<>
+			<MediaField
+				label={ field.label }
+				value={ value }
+				media={ media ? { url: media.source_url, alt: media.alt_text, width: media.media_details?.width, height: media.media_details?.height } : null }
+				allowedTypes={ field.allowedTypes || [ 'image' ] }
+				onSelect={ ( selected ) => onChange( selected.id ) }
+				onRemove={ () => onChange( 0 ) }
+			/>
+			{ /* MediaField is a bare picker with no help slot of its own, but these fields need one:
+			     the per-shape project crops are only comprehensible with a sentence of explanation. */ }
+			{ field.help && <p className="perego-editor-help">{ field.help }</p> }
+		</>
 	);
 }
 
@@ -79,6 +84,39 @@ function EnumControl( { field, value, onChange } ) {
 	);
 }
 
+/** Visible length of a value that may carry inline markup — tags never count against a limit. */
+const visibleLength = ( value ) => String( value ?? '' ).replace( /<[^>]*>/g, '' ).length;
+
+/**
+ * A text field with a hard budget of VISIBLE characters, shown as a live count.
+ *
+ * Not a plain `maxLength`: this field's value may contain `<strong>`, and `maxLength` counts the raw
+ * string, so the 17 characters of an empty `<strong></strong>` would eat more than half the budget
+ * and the editor would be cut off mid-word for no visible reason. Input that would exceed the budget
+ * is refused rather than silently trimmed, so what the editor sees is what gets saved — and matches
+ * what `ClientPostType::sanitizeStat` would have enforced anyway.
+ */
+function CappedTextControl( { field, value, onChange } ) {
+	const used = visibleLength( value );
+	const max = field.maxVisibleChars;
+	const counter = `${ used } / ${ max }`;
+
+	return (
+		<TextControl __nextHasNoMarginBottom
+			label={ field.label }
+			help={ field.help ? `${ field.help } (${ counter })` : counter }
+			placeholder={ field.placeholder }
+			value={ value ?? '' }
+			onChange={ ( next ) => {
+				// Allow anything that fits, and always allow shortening — otherwise a value already
+				// over the limit (an import, or a lowered limit) could never be edited back down.
+				if ( visibleLength( next ) <= max || visibleLength( next ) < used ) {
+					onChange( next );
+				}
+			} } />
+	);
+}
+
 /**
  * Render one field. The `match`-style dispatch is the whole point: adding a field type is one case
  * here, not a new hand-written control in three panels.
@@ -89,6 +127,10 @@ function EnumControl( { field, value, onChange } ) {
  * @param {Function} props.onChange Receives the new value.
  */
 export function Field( { field, value, onChange } ) {
+	if ( field.maxVisibleChars ) {
+		return <CappedTextControl field={ field } value={ value } onChange={ onChange } />;
+	}
+
 	switch ( field.type ) {
 		case 'media':
 			return <MediaControl field={ field } value={ value } onChange={ onChange } />;

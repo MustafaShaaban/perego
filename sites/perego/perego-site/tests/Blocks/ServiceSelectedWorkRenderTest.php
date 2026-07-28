@@ -21,7 +21,7 @@ function sampleServiceWork(): array
 {
     return [
         ['title' => 'Brand Film', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Brand Film', 'gallerySrcs' => []],
-        ['title' => 'Product Teaser', 'thumbUrl' => 'https://perego.local/b.jpg', 'thumbAlt' => 'Product Teaser', 'gallerySrcs' => ['https://perego.local/b.jpg', 'https://perego.local/b2.jpg']],
+        ['title' => 'Product Teaser', 'icon' => 'gallery', 'thumbUrl' => 'https://perego.local/b.jpg', 'thumbAlt' => 'Product Teaser', 'gallerySrcs' => ['https://perego.local/b.jpg', 'https://perego.local/b2.jpg']],
         ['title' => 'No Media Project', 'thumbUrl' => '', 'thumbAlt' => '', 'gallerySrcs' => []],
     ];
 }
@@ -78,7 +78,7 @@ it('places the non-interactive brand card right after the lead tile', function (
 
 it('renders a video project as the handoff\'s ▶ play card (data-video + play-btn)', function () {
     $html = (new ServiceSelectedWorkRenderer())->render([
-        ['title' => 'Reel', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Reel', 'gallerySrcs' => [], 'videoUrl' => 'https://www.youtube.com/embed/abc123'],
+        ['title' => 'Reel', 'icon' => 'play', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Reel', 'gallerySrcs' => [], 'videoUrl' => 'https://www.youtube.com/embed/abc123'],
     ]);
 
     expect($html)->toContain('data-video="https://www.youtube.com/embed/abc123"')
@@ -90,12 +90,45 @@ it('renders a video project as the handoff\'s ▶ play card (data-video + play-b
 
 it('lets the video variant win over a gallery — one trigger per card, like the handoff', function () {
     $html = (new ServiceSelectedWorkRenderer())->render([
-        ['title' => 'Reel', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Reel', 'gallerySrcs' => ['https://perego.local/a.jpg', 'https://perego.local/b.jpg'], 'videoUrl' => 'https://www.youtube.com/embed/abc123'],
+        ['title' => 'Reel', 'icon' => 'play', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Reel', 'gallerySrcs' => ['https://perego.local/a.jpg', 'https://perego.local/b.jpg'], 'videoUrl' => 'https://www.youtube.com/embed/abc123'],
     ]);
 
     expect($html)->toContain('data-video=')
         ->and($html)->toContain('play-btn')
         ->and($html)->not->toContain('data-gallery=');
+});
+
+/*
+ * The affordance is the editor's choice now, not a consequence of the media (owner, 2026-07-28). A
+ * video project used to force a ▶ on every grid it appeared in with no way to turn it off; what a
+ * tile OPENS and what it ADVERTISES are separate questions and are now separately decided.
+ */
+it('shows no icon on a video project whose editor chose none, while still opening the video', function () {
+    $html = (new ServiceSelectedWorkRenderer())->render([
+        ['title' => 'Reel', 'icon' => 'none', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Reel', 'gallerySrcs' => [], 'videoUrl' => 'https://www.youtube.com/embed/abc123'],
+    ]);
+
+    expect($html)->toContain('data-video="https://www.youtube.com/embed/abc123"')
+        ->and($html)->not->toContain('play-btn');
+});
+
+it('shows the gallery badge on a video project when that is what the editor chose', function () {
+    $html = (new ServiceSelectedWorkRenderer())->render([
+        ['title' => 'Reel', 'icon' => 'gallery', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Reel', 'gallerySrcs' => [], 'videoUrl' => 'https://www.youtube.com/embed/abc123'],
+    ], ['galleryBadge' => 'Gallery']);
+
+    expect($html)->toContain('<span class="work-badge">Gallery</span>')
+        ->and($html)->not->toContain('play-btn');
+});
+
+// An absent icon key (a project not yet migrated) must be inert, never a guessed badge.
+it('shows no icon when the project carries no icon at all', function () {
+    $html = (new ServiceSelectedWorkRenderer())->render([
+        ['title' => 'Reel', 'thumbUrl' => 'https://perego.local/a.jpg', 'thumbAlt' => 'Reel', 'gallerySrcs' => [], 'videoUrl' => 'https://www.youtube.com/embed/abc123'],
+    ]);
+
+    expect($html)->not->toContain('play-btn')
+        ->and($html)->not->toContain('work-badge');
 });
 
 it('marks gallery projects with the handoff\'s Gallery badge', function () {

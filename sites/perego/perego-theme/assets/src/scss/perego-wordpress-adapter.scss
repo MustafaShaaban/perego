@@ -1528,7 +1528,7 @@ div.web-card__shot {
    them legible on the violet card without touching the asset — and gives the whole wall one surface
    instead of thirty different backgrounds. */
 .post-card--logo .post-card__media {
-	background: #fff;
+	background: var(--panel-overlay, #160435);
 }
 
 /* The name plate: a site whose logo has not been supplied yet. It is a real card — same aspect box,

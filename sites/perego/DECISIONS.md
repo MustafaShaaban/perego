@@ -1,5 +1,151 @@
 # Perego — Decision Log
 
+## 2026-07-28 — A project tile's icon is chosen, and its crop follows the slot
+
+**Decision (owner).** Projects get an **Icon** field — `No icon` (default), `Show play icon`,
+`Gallery label` — and four optional per-shape thumbnails. Both apply to the services mosaic and the
+work/portfolio grid.
+
+**Why the icon.** It was inferred: a video forced a ▶ and 2+ gallery images forced a badge, with no
+way to say otherwise, and the work grid showed *nothing at all* even though its non-web cards are
+lightbox buttons — a card that opened a gallery looked identical to one that did nothing. Same defect,
+same fix, as the Client Behavior field. The tile's **trigger** stays media-derived: what a tile opens
+and what it advertises are different questions, and only the second one is editorial.
+
+**Why per-shape crops.** A project appears in tiles of six aspect ratios and `.work-card img` is
+`object-fit: cover`, so one landscape featured image was centre-cropped into a 0.55:1 portrait slot
+and lost whatever mattered. Four crops (578×332, 380×158, 182×332, 406×254) cover the four shapes the
+owner named; the remaining slots take the nearest ratio. Every crop is optional and falls back —
+own crop → nearest shape → featured image — so a project with none renders exactly as before.
+
+### Resolved server-side, not by measuring the container
+
+The brief asked for the right crop to be "detected dynamically". It is, but in PHP: the renderer
+already decides which slot a project occupies (it hands out `m1`…`m15` by position) and the layout's
+bands are viewport-based, so the correct crop is knowable at render time. `Blocks\ProjectTileImage`
+emits a `<picture>` whose `<source media>` values name those bands. Measuring the container in
+JavaScript would only rediscover, later and less reliably, something the markup can state — and would
+break the "tiles work without JavaScript" contract this block has always kept.
+
+`PostTypes\ProjectThumbnails::SLOT_SHAPES` duplicates knowledge that lives in the theme's stylesheet,
+so `slot-shapes.test.js` parses the `.m{n}` spans and asserts each slot's real geometry still matches
+the shape PHP assigns it. Without that, re-tuning the mosaic would silently start feeding portrait
+crops into landscape slots, and the only symptom would be badly cropped images nobody traces back.
+
+### The tablet band was broken, and the fix needed a specificity fix inside it
+
+Nothing changed between 521px and 900px: the 7-column mosaic kept every hard-coded absolute span
+(`grid-column: 5/7`). Measured at 600px, a `1fr` column was **74px** — `.m5`/`.m9` rendered as
+74×120px slivers — and the `0.5fr` brand column was 37px wide while its logo is sized in `vh` and does
+not shrink with it. Now: 4 equal columns below 900px using relative `span N`, brand tile hidden, and
+the 2-column collapse raised 520px → 560px. Narrowest tile went from 63–74px to **119px**.
+
+The first cut of that rule silently did nothing to the feature tiles: `.m1` is one class against
+`.work-masonry .work-card`'s two, so the reset won on specificity regardless of source order and every
+tile flattened to 1×1. The screenshot looked plausible; the measurement caught it, because the tile
+reported as *narrowest* was `m1` — the one that is supposed to be widest. Selectors in that block are
+now qualified to match.
+
+### The client subtitle is clamped, not just counted
+
+`SUBTITLE_MAX_CHARS` 30 → 48, and `.indiv-card__sub` gained `line-clamp: 2`. A character count cannot
+promise two lines — the box fits 24 characters per line at 1440px and 15 at 1024px — so the clamp is
+what protects the layout and the count is a writing guide. The editor's two help texts also ran
+together into one unreadable sentence; the Content hint now has its own label.
+
+## 2026-07-28 — A client card's action is stored, not inferred
+
+**Decision (owner).** Client Type is the first choice in the Client editor and decides which fields
+exist; a new **Behavior** field — `No actions` (default), `Lightbox`, `Link` — decides what the card
+does. Nothing is inferred any more.
+
+**Why.** The old model guessed. A corporate tile opened a lightbox if it happened to have a gallery,
+and otherwise opened *its own logo image* — so a tile the editor never meant to be interactive was
+interactive, and there was no way to say "just show this". An individual card's action came from a
+`_perego_client_video_type` enum (`embed`/`upload` → lightbox, `external` → link), which described the
+*media* rather than the *intent*. Meanwhile every field showed for every client: corporate clients were
+offered the individual-only subtitle, individual clients the corporate gallery.
+
+**Accepted behaviour change.** Corporate tiles whose only "gallery" was the implicit logo fallback
+become static. That is the point of `No actions`, and the owner confirmed it explicitly.
+
+### The play badge is stored inverted, and that is not fussiness
+
+`_perego_client_hide_play_icon`, default `false` — not `show_play_icon`, default `true`.
+
+WordPress writes a `false` boolean to the meta table as `''`, which reads back identically to a key
+that was never written. A default-true `show` flag therefore has no representable "off": the editor
+switches it off, WordPress stores `''`, the renderer sees "unset" and applies the default, and the
+badge comes back. Naming the negative makes the only value worth storing the one the editor actually
+chose. The UI still presents a positive "Show play icon" switch.
+
+### Field mapping, and what happened to the old copy fields
+
+- "Statistic" → relabelled **Subtitle**, same `_perego_client_stat` key and same inline-`<strong>`
+  sanitizer. The owner keeps adding the tag by hand ("خليها زي ما كانت"), so nothing about how the
+  value is stored or rendered changed — only what the field is called and where it sits on the card.
+- The old `_perego_client_sub` became the client post's **own editor content**. That gives editors
+  real formatting, but the card element is a `<button>` or an `<a>`, so the renderer reduces the body
+  with `wp_kses` to a non-interactive subset — a nested link inside a button is both invalid HTML and
+  a genuine screen-reader defect.
+
+### The link uses the T036 contract rather than a bare URL
+
+The owner asked for "link URL". It is stored as the full flat `LinkTarget` set instead, because that
+is this repo's existing contract for every editable link and it costs the editor nothing — one control
+either way — while letting a client point at an internal project and survive a rename. Flagged as
+slightly more than was literally asked for.
+
+### One panel, and the last classic meta box is gone
+
+T019 moved Client text fields into typed sidebar panels but left `ClientMediaMetaBox` registered,
+because the gallery is a list of typed objects rather than a flat ID list. The panel now owns that
+repeater, so the meta box is deleted along with the already-dead `PostMetaBoxes`. The default
+`perego_client_type` taxonomy panel is removed too: two controls for one value can disagree, and the
+native one lists Polylang's per-language duplicates with no hint that exactly one must be chosen.
+
+`LightboxTrigger` was extracted while both card types were being unified onto one trigger path. It
+also percent-encodes commas, closing a latent hazard `media-lightbox/view.js` has always had: it
+splits `data-gallery` on commas, so a media URL containing one was torn into two broken slides.
+
+Migration: `scripts/migrate-client-behavior.php` — idempotent, `--dry-run`, snapshots before writing,
+sweeps EN and AR.
+
+### The subtitle cap is a measurement, not a preference
+
+`SUBTITLE_MAX_CHARS = 30`, counted in **visible** characters so `<strong>` is free.
+
+The number came from measuring the rendered `.indiv-card__sub` box across breakpoints rather than
+picking a round one: it fits 24 characters per line at 1440px, 21 at 1280, 18 at 768, and 15 at 1024 —
+the narrowest, because three cards are still side by side there. 30 is therefore exactly two lines at
+every breakpoint, which is the point: the card is bottom-anchored inside a grid row, so a third line
+grows the card and every one of its neighbours with it.
+
+Enforced twice, deliberately. The panel counts live and refuses input past the limit, so the editor
+sees what will be saved. `sanitizeStat()` caps as a backstop for REST, WP-CLI, imports and seeders,
+which have no such control — counting text only, leaving markup intact, and closing a `<strong>` left
+open by the cut, because capping the raw string would spend the budget on tag characters and could
+slice a tag in half.
+
+### The corporate logo is absolutely positioned, and that is the whole trick
+
+The tile now shows the client's logo; the equalizer glyph is demoted to a placeholder for a client
+that has no artwork yet, so an unfinished client still renders a finished-looking tile.
+
+The first attempt gave the logo `block-size: 100%` inside the tile's grid. It looked right and was
+wrong: `aspect-ratio` is only a *preferred* size, an in-flow child taller than the ratio stretches its
+parent, and a percentage height against a content-sized grid area resolves to `auto` — so the image
+fell back to its intrinsic height. A stress test with a 100×3000 logo stretched one tile to **2503px**
+while its neighbours stayed at 77px. The test is the only reason this was caught before the owner
+uploaded a tall logo.
+
+Out of flow, an image cannot contribute to the tile's height at all. The logo is `position: absolute`,
+inset to a `--corp-pad-block`/`--corp-pad-inline` pair (5px / 15px) declared once on the tile, with
+**explicit** `calc()` sizes rather than `auto` — an absolutely positioned *replaced* element ignores
+inset-stretching and falls back to intrinsic size, which is the very failure being defended against.
+`object-fit: contain` then scales the artwork inside that fixed box without cropping or distorting it.
+Re-tested with 3000×100, 100×3000 and 4000×4000 logos: identical tile heights, no overflow.
+
 ## 2026-07-28 — CoreX v0.37.0 assessed and deliberately deferred
 
 Upstream published v0.36.0 and v0.37.0 (`b486ff5` → `77524df`, 341 files). Assessed before

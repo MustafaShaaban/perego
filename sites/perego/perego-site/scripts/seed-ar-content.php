@@ -235,11 +235,15 @@ foreach (get_posts(['post_type' => \PeregoSite\PostTypes\ClientPostType::POST_TY
     }
     $arTitle = $clientAr[$enClient->post_title] ?? ($enClient->post_title . ' (AR)');
 
+    // Arabic placeholder copy, NOT the English body. A client's content is now the individual card's
+    // body text, so copying the English post here would print English on an Arabic card — the exact
+    // language leak the meta split in `ClientsCarouselRenderer` exists to avoid. An untranslated card
+    // shows Arabic placeholder text prompting real copy, never the other language's wording.
     $arId = wp_insert_post([
         'post_type' => \PeregoSite\PostTypes\ClientPostType::POST_TYPE,
         'post_status' => 'publish',
         'post_title' => $arTitle,
-        'post_content' => get_post_field('post_content', $enId),
+        'post_content' => '<!-- wp:paragraph --><p>عميل تجريبي — استبدله بعميل حقيقي معتمد ووسائطه.</p><!-- /wp:paragraph -->',
     ], true);
     if (is_wp_error($arId)) {
         WP_CLI::warning("AR client {$enClient->post_title}: " . $arId->get_error_message());

@@ -24,7 +24,7 @@ final class PortfolioContent
     /**
      * @var array<string, array{
      *   h1: string, intro: string, demoNote: string, all: string, noResults: string,
-     *   clientLabel: string, groupLabel: string,
+     *   clientLabel: string, groupLabel: string, galleryBadge: string,
      *   categories: array{video: string, motion: string, design: string, web: string}
      * }>
      */
@@ -37,6 +37,10 @@ final class PortfolioContent
             'noResults' => 'No projects in this category yet. Try another filter.',
             'clientLabel' => 'Client',
             'groupLabel' => 'Filter projects by service',
+            // The badge on a work-grid tile whose icon is "Gallery label". Same word the services
+            // mosaic uses (ServiceContent's `galleryBadge`), kept per-surface so either can be
+            // reworded without dragging the other with it.
+            'galleryBadge' => 'Gallery',
             'categories' => [
                 'video' => 'Video Editing',
                 'motion' => '2D Motion Graphics',
@@ -55,6 +59,7 @@ final class PortfolioContent
             'noResults' => 'لا توجد مشاريع في هذه الفئة بعد. جرّب فلترًا آخر.',
             'clientLabel' => 'العميل',
             'groupLabel' => 'تصفية المشاريع حسب الخدمة',
+            'galleryBadge' => 'معرض',
             'categories' => [
                 'video' => 'مونتاج الفيديو',
                 'motion' => 'موشن جرافيك ثنائي الأبعاد',
@@ -188,7 +193,7 @@ final class PortfolioContent
      * copy, and belong to the translation catalogue.
      *
      * @param array{heading?: string, intro?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string, showDemoNote?: bool} $overrides
-     * @return array{groupLabel: string, noResults: string, heading: string, intro: string, demoNote: string, uiHome: string, ctaTitle: string, ctaBody: string, ctaButton: string}
+     * @return array{groupLabel: string, noResults: string, galleryBadge: string, heading: string, intro: string, demoNote: string, uiHome: string, ctaTitle: string, ctaBody: string, ctaButton: string}
      */
     public function gridStrings(array $overrides = []): array
     {
@@ -201,6 +206,7 @@ final class PortfolioContent
         return [
             'groupLabel' => self::COPY[$this->locale]['groupLabel'],
             'noResults' => self::COPY[$this->locale]['noResults'],
+            'galleryBadge' => self::COPY[$this->locale]['galleryBadge'],
             'heading' => $pick('heading', 'h1'),
             'intro' => $pick('intro', 'intro'),
             'demoNote' => ($overrides['showDemoNote'] ?? true) ? self::COPY[$this->locale]['demoNote'] : '',

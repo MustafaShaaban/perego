@@ -2,7 +2,135 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-28, latest) — Round 10: the join form, and phone as its own row
+## RESUME HERE (2026-07-28, latest) — Round 12: the work grid stops guessing too
+
+**Projects now choose their tile icon, and supply the crop each tile shape needs.** The affordance was
+inferred — a video forced a ▶, 2+ gallery images forced a badge — and the work/portfolio grid showed
+*nothing at all*, even on cards that open a lightbox. There is now an **Icon** field
+(`No icon` default / `Show play icon` / `Gallery label`) driving both grids. The tile's *trigger* is
+still media-derived: what a tile opens and what it advertises are separate questions.
+
+**Four optional per-shape crops** (578×332, 380×158, 182×332, 406×254) replace one image being
+`object-fit: cover`-cropped into six different aspect ratios. `PostTypes\ProjectThumbnails` owns the
+shape table, the slot→shape map and the fallback chain (own crop → nearest ratio → featured image);
+`Blocks\ProjectTileImage` emits a `<picture>` naming the desktop/tablet/mobile bands. **Resolved
+server-side, not by measuring in JS** — the renderer already knows the slot and the bands are
+viewport-based, so the markup states it and tiles still work with JavaScript off. A project with no
+crops emits exactly the plain `<img>` it always did.
+
+**The 521–900px band is fixed.** Nothing used to change across it: the 7-column mosaic kept every
+hard-coded absolute span, so at 600px a column was **74px** and tiles were slivers, while the 0.5fr
+brand column was 37px holding a `vh`-sized logo. Now 4 equal columns below 900px with relative
+`span N`, brand tile hidden, 2-column collapse raised 520px → 560px. **Narrowest tile: 63–74px → 119px.**
+
+**Two bugs the measurements caught that screenshots would not have:**
+
+1. The first tablet rule silently did nothing to the feature tiles — `.m1` is one class against
+   `.work-masonry .work-card`'s two, so the reset won on **specificity**, not order, and every tile
+   flattened to 1×1. The tell was that `m1`, which should be widest, reported as *narrowest*.
+2. `PortfolioContent` needed `galleryBadge` in its grid-strings constant, not its project-labels one —
+   9 tests warned rather than failed, which is exactly how that would have shipped unnoticed.
+
+**Client subtitle:** cap 30 → 48 and `.indiv-card__sub` gained `line-clamp: 2`. The clamp guarantees
+two lines at every width, which a character count cannot (24 chars/line at 1440px, 15 at 1024px), so
+the cap is now a writing guide. The editor's two help texts ran together into one sentence; the
+Content hint has its own label.
+
+- **Spec:** `specs/021-fse-visual-editing-ux/` Phase 10, T043–T048.
+- **Verified:** Pest **563** (1965 assertions) · Jest **41 suites / 228** · both bundles + theme styles
+  build clean · POT regenerated (403 strings) · migration applied (3 projects given an icon, 63
+  genuinely have none — matches the data exactly: 2 videos, 1 multi-image gallery) and idempotent on
+  re-run · `verify-interactions.mjs` grew **14 grid checks** across 8 viewport widths, all passing.
+- **Known, pre-existing, not mine:** the same 3 `verify-interactions` failures (project gallery,
+  project-page lightbox, Services archive selected-work) and the framework `--testsuite=Unit` fatal.
+- **Worth knowing:** no page currently has more than 3 mosaic tiles, so `m4`–`m15` were verified by
+  injecting a full 15-tile grid in the browser rather than from live content.
+
+## Round 11 — clients stop guessing what a card does
+
+**Client Type now decides which fields exist, and a new Behavior field decides what the card does.**
+Before this, both were guesses. A corporate tile opened a lightbox if it happened to have a gallery
+and otherwise opened *its own logo image*, so a tile nobody meant to be interactive was; an individual
+card's action came from a `video_type` enum describing the media rather than the intent; and every
+field showed for every client regardless of type. Behavior is `No actions` (default) / `Lightbox` /
+`Link`, it applies to both client types, and a card is interactive only when it says so. A behaviour
+whose data is missing degrades to inert rather than rendering a control that does nothing.
+
+**Everything a client needs is now one panel.** Type, name, logo/thumbnail, subtitle, behaviour, the
+gallery repeater (images, uploaded videos, pasted YouTube/Vimeo links — one ordered list), the link
+picker, the per-client play badge, and a live card preview. That retires `ClientMediaMetaBox`, the last
+classic meta box on the site and T019's one documented holdout, plus the already-dead `PostMetaBoxes`.
+The carousel-wide `showPlayIcon` toggle is gone — the badge is each client's own setting now.
+
+**Field mapping:** "Statistic" is relabelled **Subtitle** (same key, same `<strong>` sanitizer — the
+owner adds the tag), and the old `_perego_client_sub` became the client post's own editor content,
+`wp_kses`-reduced to a non-interactive subset because the card element is itself a `<button>`/`<a>`.
+
+**Two non-obvious things worth remembering.** The play badge is stored **inverted**
+(`_perego_client_hide_play_icon`, default false): WordPress writes a `false` boolean as `''`, which is
+indistinguishable from unset, so a default-true `show` flag could never have been switched off. And
+the new shared `Blocks\LightboxTrigger` percent-encodes commas — `media-lightbox/view.js` splits
+`data-gallery` on commas, so a media URL containing one was always going to tear into two broken
+slides. Both are recorded in DECISIONS.
+
+**Migration: written, dry-run, and APPLIED to the local dev database.** 31 clients migrated, 23 left
+inheriting, 3 subtitles moved into post content, 0 legacy meta rows left, and a second run reported
+0/31-already-done — idempotent in practice, not just in intent.
+
+**The dry run earned its keep — it caught two bugs before they shipped.**
+
+1. The first run reported all 54 clients as "already migrated". `META_BEHAVIOR` declared
+   `'default' => 'none'`, and since WP 5.5 a registered default is returned by `get_post_meta()` for a
+   key that was never written — so the marker could never see an unset key. The same masking would
+   have stopped `TranslatedMeta` falling back to the linked English record, rendering **every Arabic
+   card inert**. Fix: no `default` on `META_BEHAVIOR`/`META_LINK_KIND`/`META_LINK_POST_ID` (an empty
+   value sanitizes to the same thing anyway), and the marker uses `metadata_exists()`. Pinned by a test.
+2. Writing a derived `none` onto the 23 Arabic translations would have been a *stored* value, which
+   defeats the same fallback. The migration now leaves `none` unwritten so a translation keeps
+   inheriting; an editor can still choose "No actions" explicitly.
+
+**Two card refinements (owner, same day).** The individual **subtitle is capped at 30 visible
+characters** — measured from the rendered box, which fits 15 characters per line at its narrowest
+desktop breakpoint, so 30 is exactly two lines everywhere and a long subtitle can no longer grow the
+card and push the whole carousel row. The panel counts live and refuses over-long input; `sanitizeStat()`
+caps as a backstop for REST/CLI/imports, counting text only and closing a `<strong>` left open by the cut.
+And the **corporate tile now shows the client's logo**, with the equalizer glyph demoted to a placeholder
+for clients that have no artwork yet.
+
+**The logo stress test earned its keep too.** The first cut gave the logo `block-size: 100%` in the
+tile's grid — which looked right and wasn't: `aspect-ratio` is only a *preferred* size and a percentage
+height against a content-sized grid area resolves to `auto`, so a 100×3000 logo stretched one tile to
+**2503px** while its neighbours stayed at 77px. The logo is now absolutely positioned and inset to a
+`--corp-pad-block`/`--corp-pad-inline` pair (5px / 15px) with explicit `calc()` sizes — `auto` is not
+enough, because an abspos *replaced* element ignores inset-stretching and falls back to intrinsic size.
+Re-verified with 3000×100, 100×3000 and 4000×4000 logos: identical tile heights, zero overflow.
+
+**One language leak found and fixed while verifying.** `seed-ar-content.php` copied the English
+`post_content` into Arabic client translations. Harmless while the body was unrendered — but the body
+is now the card's text, so Arabic cards showed English. The seeder writes Arabic placeholder copy now,
+and the 31 existing AR rows were corrected in place.
+
+- **Spec:** `specs/021-fse-visual-editing-ux/` Phase 9, T037–T041 (spec.md FR-005a/FR-005b,
+  data-model.md client behaviour model).
+- **Verified:** Pest **541** client (1889 assertions, +25); Jest **40 suites / 222** (+1 suite, +11 tests);
+  `build:blocks`, `build:panels` and theme `styles` all clean; POT regenerated (392 strings).
+- **Verified live** on `perego.local` (WP 7.0.2): 8 new client checks added to
+  `scripts/verify-interactions.mjs` and passing in **EN and AR** — tiles carry a trigger, every card's
+  element matches its behaviour (no inert `<div>` with a trigger, no triggerless `<button>`), the
+  lightbox opens visibly and locks scroll, Escape closes it. Front-end curl diff confirms 20 corporate
+  + 3 individual lightbox buttons and 3 play badges in each language.
+- **Editor panel confirmed working by the owner's own save.** Client #217 carries
+  `_perego_client_hide_play_icon` and the full `_perego_client_link_*` set — keys only the new panel
+  writes — with a `post_modified` inside this session, so the panel rendered, accepted edits and
+  persisted them. (That post now reads Subtitle "intertainment show" with an emptied body and
+  Behavior "No actions", which is simply what was entered, not a migration artefact.)
+- **Known, pre-existing, not mine:** 3 failures in `verify-interactions.mjs` (project gallery, project
+  page lightbox, Services archive selected-work) and a Pest `FatalException` on the framework
+  `--testsuite=Unit`. Both confirmed identical with this work stashed.
+- **Known, pre-existing, not mine:** the framework `--testsuite=Unit` run ends in a Pest
+  `FatalException`. Confirmed identical with this work stashed. Framework scope, not Client Site Mode.
+
+## Round 10 — the join form, and phone as its own row
 
 **The join form had gone silent, for the same reason the services field had.** Round 7 clipped
 `.corex-form__status` to a screen-reader-only live region when the toast took over the visual

@@ -13,11 +13,10 @@ defined('ABSPATH') || exit;
 /**
  * Enqueues the Perego post-type field panels into the block editor (spec 021 Phase 4 / T019).
  *
- * The panels replace four classic meta boxes — `PostMetaBoxes`, `ProjectGalleryMetaBox`,
+ * The panels replaced four classic meta boxes — `PostMetaBoxes`, `ProjectGalleryMetaBox`,
  * `ClientMediaMetaBox` and `ServicePortfolioMetaBox` — with typed, grouped controls in the document
- * sidebar. Because every field is registered post meta with `show_in_rest`, the panels read and write
- * through the REST entity: **no nonce, no save handler, no page reload**, and no meta key changes, so
- * the public output cannot move.
+ * sidebar; none of them remains. Because every field is registered post meta with `show_in_rest`, the
+ * panels read and write through the REST entity: **no nonce, no save handler, no page reload**.
  *
  * The bundle is built from `src/EditorPanels/` by `npm run build:panels` — its own wp-scripts entry,
  * because the block build only compiles `src/Blocks`.

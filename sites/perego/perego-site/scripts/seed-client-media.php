@@ -104,6 +104,9 @@ foreach ($clients as $client) {
         $gallery[] = ['type' => 'video', 'id' => 0, 'url' => peregoDemoVideoUrl()];
 
         update_post_meta($client->ID, ClientPostType::META_GALLERY, $gallery);
+        // A gallery is only reachable when the card's behaviour says so — nothing is implicit any
+        // more, so the seeder sets the behaviour it is seeding media for.
+        update_post_meta($client->ID, ClientPostType::META_BEHAVIOR, 'lightbox');
         $galleriesSet++;
     }
 
@@ -111,9 +114,12 @@ foreach ($clients as $client) {
         continue;
     }
 
-    if ((string) get_post_meta($client->ID, ClientPostType::META_VIDEO_URL, true) === '') {
-        update_post_meta($client->ID, ClientPostType::META_VIDEO_URL, peregoDemoVideoUrl());
-        update_post_meta($client->ID, ClientPostType::META_VIDEO_TYPE, 'embed');
+    $existingGallery = get_post_meta($client->ID, ClientPostType::META_GALLERY, true);
+    if (! is_array($existingGallery) || $existingGallery === []) {
+        update_post_meta($client->ID, ClientPostType::META_GALLERY, [
+            ['type' => 'video', 'id' => 0, 'url' => peregoDemoVideoUrl()],
+        ]);
+        update_post_meta($client->ID, ClientPostType::META_BEHAVIOR, 'lightbox');
         $videosSet++;
     }
 

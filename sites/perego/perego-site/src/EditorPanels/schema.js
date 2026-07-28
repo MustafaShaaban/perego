@@ -18,8 +18,38 @@ export const WEB_CATEGORY_SLUG = 'web';
 /** Mirror of `ServicePostType::POST_TYPE` / `::PORTFOLIO_MODES`. */
 export const SERVICE_POST_TYPE = 'perego_service';
 
-/** Mirror of `ClientPostType::POST_TYPE` / `::VIDEO_TYPES`. */
+/** Mirror of `ClientPostType::POST_TYPE` / `::TAXONOMY` / `::TYPES`. */
 export const CLIENT_POST_TYPE = 'perego_client';
+export const CLIENT_TAXONOMY = 'perego_client_type';
+export const CLIENT_TYPE_CORPORATE = 'corporate';
+export const CLIENT_TYPE_INDIVIDUAL = 'individual';
+
+/**
+ * Mirror of `ProjectPostType::ICONS` — what the project's grid tiles advertise.
+ *
+ * Was inferred: a project with a video always got a ▶ and one with 2+ images always got the badge,
+ * with no way to say otherwise. `none` leads because it is the quiet default.
+ */
+export const PROJECT_ICON_OPTIONS = [
+	{ value: 'none', label: __( 'No icon', 'perego-site' ) },
+	{ value: 'play', label: __( 'Show play icon', 'perego-site' ) },
+	{ value: 'gallery', label: __( 'Gallery label', 'perego-site' ) },
+];
+
+/**
+ * Mirror of `PostTypes\ProjectThumbnails::SHAPES`.
+ *
+ * A project appears in tiles of several different aspect ratios and the tile image is `object-fit:
+ * cover`, so one landscape photo gets centre-cropped into a portrait slot and loses whatever mattered.
+ * Each of these is optional — an empty one falls back to the nearest shape, then to the featured
+ * image, so a project with none of them renders exactly as it always did.
+ */
+export const PROJECT_THUMB_FIELDS = [
+	{ key: '_perego_thumb_hero', label: __( 'Wide feature — 578 × 332', 'perego-site' ) },
+	{ key: '_perego_thumb_banner', label: __( 'Banner — 380 × 158', 'perego-site' ) },
+	{ key: '_perego_thumb_tall', label: __( 'Tall — 182 × 332', 'perego-site' ) },
+	{ key: '_perego_thumb_card', label: __( 'Standard card — 406 × 254', 'perego-site' ) },
+];
 
 /** Mirror of `ProjectPostType::SITE_TYPES`. */
 const SITE_TYPE_OPTIONS = [
@@ -37,12 +67,39 @@ export const PORTFOLIO_MODE_OPTIONS = [
 	{ value: 'hybrid', label: __( 'Hybrid — my choices first, then automatic', 'perego-site' ) },
 ];
 
-/** Mirror of `ClientPostType::VIDEO_TYPES`. */
-const VIDEO_TYPE_OPTIONS = [
-	{ value: 'embed', label: __( 'Embed (YouTube / Vimeo)', 'perego-site' ) },
-	{ value: 'upload', label: __( 'Uploaded file', 'perego-site' ) },
-	{ value: 'external', label: __( 'External link', 'perego-site' ) },
+/**
+ * Mirror of `ClientPostType::BEHAVIORS` — what the card DOES.
+ *
+ * Phrased as outcomes an editor can picture, not as the slugs that are stored. `none` leads because
+ * it is the default and the safe one: a card that shows information and nothing else.
+ */
+export const CLIENT_BEHAVIOR_OPTIONS = [
+	{ value: 'none', label: __( 'No actions', 'perego-site' ) },
+	{ value: 'lightbox', label: __( 'Open a lightbox', 'perego-site' ) },
+	{ value: 'link', label: __( 'Go to a link', 'perego-site' ) },
 ];
+
+/** Mirrors of the `ClientPostType` meta constants the Client panel writes directly. */
+export const CLIENT_BEHAVIOR_KEY = '_perego_client_behavior';
+export const CLIENT_SUBTITLE_KEY = '_perego_client_stat';
+
+/**
+ * Mirror of `ClientPostType::SUBTITLE_MAX_CHARS` — visible characters, so `<strong>` is free.
+ *
+ * A writing guide rather than the layout's protection: `.indiv-card__sub` is clamped to two lines in
+ * CSS, which holds at every width, whereas a character count cannot (the box fits 24 characters per
+ * line at 1440px and 15 at 1024px).
+ */
+export const CLIENT_SUBTITLE_MAX_CHARS = 48;
+export const CLIENT_GALLERY_KEY = '_perego_client_gallery';
+export const CLIENT_HIDE_PLAY_ICON_KEY = '_perego_client_hide_play_icon';
+export const CLIENT_LINK_KEYS = {
+	href: '_perego_client_link_url',
+	linkKind: '_perego_client_link_kind',
+	postType: '_perego_client_link_post_type',
+	postId: '_perego_client_link_post_id',
+	openInNewTab: '_perego_client_link_new_tab',
+};
 
 /**
  * The four canonical Service slugs. This was a free-text `sanitize_key` field — an editor could type
@@ -83,6 +140,30 @@ export const PROJECT_PANELS = [
 				label: __( 'Video URL', 'perego-site' ),
 				help: __( 'A YouTube/Vimeo link or a video file. Set this and the project opens as a video card.', 'perego-site' ),
 			},
+		],
+	},
+	{
+		title: __( 'In the grids', 'perego-site' ),
+		fields: [
+			{
+				key: '_perego_project_icon',
+				type: 'select',
+				label: __( 'Icon', 'perego-site' ),
+				options: PROJECT_ICON_OPTIONS,
+				// Required so the list has no empty row: "No icon" IS the empty choice, and offering
+				// both an unset state and a "none" state would mean the same thing twice.
+				required: true,
+				help: __( 'What the project’s tile shows on top of its image, in the work grid and the services grid.', 'perego-site' ),
+			},
+			...PROJECT_THUMB_FIELDS.map( ( field, index ) => ( {
+				key: field.key,
+				type: 'media',
+				label: field.label,
+				// Explained once, on the last one, rather than repeated on all four.
+				help: index === PROJECT_THUMB_FIELDS.length - 1
+					? __( 'Each crop is optional. An empty one falls back to the closest shape you did upload, then to the featured image — so a project with none of these looks exactly as it does now.', 'perego-site' )
+					: undefined,
+			} ) ),
 		],
 	},
 	{
@@ -150,38 +231,33 @@ export const SERVICE_PANELS = [
 	},
 ];
 
+/**
+ * The Client panel's declarative text fields.
+ *
+ * Everything else on a client — type, logo/thumbnail, name, behaviour, gallery, link, play badge — is
+ * either a native post property or a control with its own state, so it is composed directly in
+ * `index.js` rather than described here. This list stays the schema so the PHP-mirror test keeps
+ * guarding the meta keys it does cover.
+ *
+ * The two fields that used to live here are gone: `_perego_client_sub` became the card's normal
+ * editor content, and the video source/URL pair became the behaviour + gallery model.
+ */
 export const CLIENT_PANELS = [
 	{
 		title: __( 'Client card', 'perego-site' ),
 		initialOpen: true,
 		fields: [
 			{
-				key: '_perego_client_sub',
+				key: CLIENT_SUBTITLE_KEY,
 				type: 'text',
-				label: __( 'Subtitle', 'perego-site' ),
-				help: __( 'Shown on individual cards only, under the name.', 'perego-site' ),
-			},
-			{
-				key: '_perego_client_stat',
-				type: 'text',
-				label: __( 'Statistic', 'perego-site' ),
-				// Was: 'wrap the number in <strong> to bold it, e.g. <strong>+1M</strong> views'.
+				// Renamed from "Statistic" (owner, 2026-07-28) — same meta, same sanitizer.
 				// `ClientPostType::sanitizeStat` permits inline <strong> and strips everything else.
-				help: __( 'Individual cards only. Wrap the number in <strong> to bold it — e.g. <strong>+1M</strong> views. Other HTML is removed.', 'perego-site' ),
+				label: __( 'Subtitle', 'perego-site' ),
+				help: __( 'Sits directly under the name. Wrap the part you want bold in <strong> — e.g. <strong>+1M</strong> views.', 'perego-site' ),
+				// A writing guide; the card clamps this line to two lines whatever is typed.
+				maxVisibleChars: CLIENT_SUBTITLE_MAX_CHARS,
+				showWhen: ( meta, context ) => context.isIndividual,
 			},
-		],
-	},
-	{
-		title: __( 'Client media', 'perego-site' ),
-		fields: [
-			{
-				key: '_perego_client_video_type',
-				type: 'select',
-				label: __( 'Video source', 'perego-site' ),
-				options: VIDEO_TYPE_OPTIONS,
-				help: __( 'How the individual card opens its video.', 'perego-site' ),
-			},
-			{ key: '_perego_client_video_url', type: 'url', label: __( 'Video URL', 'perego-site' ) },
 		],
 	},
 ];

@@ -20,6 +20,104 @@
 	}
 }
 
+/**
+ * The Client panel. Its controls are conditional — type decides which fields exist, behaviour decides
+ * which of those apply — so the grouping has to make "this belongs to the choice above it" legible
+ * without a heading for every pair of controls.
+ */
+.perego-client-panel__group {
+	margin-block-start: 20px;
+	padding-block-start: 16px;
+	border-block-start: 1px solid var(--wp--preset--color--contrast-3, #e0e0e0);
+}
+
+/* A read-only note that stands in for a field the sidebar cannot host — currently the client card's
+   body, which is the post content itself. Labelled like the controls around it so it does not read as
+   a continuation of the previous field's help text. */
+.perego-editor-note {
+	margin-block-start: 16px;
+
+	&__label {
+		display: block;
+		margin-block-end: 4px;
+		font-size: 11px;
+		font-weight: 500;
+		line-height: 1.4;
+		text-transform: uppercase;
+	}
+
+	.perego-editor-help {
+		margin-block-start: 0;
+	}
+}
+
+.perego-client-gallery {
+	&__row {
+		min-inline-size: 0;
+	}
+
+	&__thumb {
+		display: block;
+		inline-size: 48px;
+		block-size: 48px;
+		object-fit: cover;
+		border-radius: 2px;
+	}
+
+	&__type {
+		display: block;
+		font-weight: 600;
+	}
+
+	// A pasted video URL is long and must never widen the sidebar.
+	&__caption {
+		display: block;
+		overflow: hidden;
+		font-size: 12px;
+		color: var(--wp--preset--color--contrast-2, #757575);
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	&__actions {
+		margin-block-start: 12px;
+	}
+
+	&__link {
+		margin-block-start: 16px;
+	}
+}
+
+.perego-client-preview {
+	margin-block-start: 20px;
+	padding-block-start: 16px;
+	border-block-start: 1px solid var(--wp--preset--color--contrast-3, #e0e0e0);
+
+	&__card {
+		display: flex;
+		gap: 12px;
+		align-items: center;
+	}
+
+	img,
+	&__placeholder {
+		display: block;
+		flex: 0 0 auto;
+		inline-size: 56px;
+		block-size: 56px;
+		object-fit: cover;
+		background: var(--wp--preset--color--contrast-3, #f0f0f1);
+		border-radius: 2px;
+	}
+
+	&__sub,
+	&__behavior {
+		display: block;
+		font-size: 12px;
+		color: var(--wp--preset--color--contrast-2, #757575);
+	}
+}
+
 .perego-panel-gallery__grid {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);

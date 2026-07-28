@@ -34,6 +34,31 @@ final class ProjectPostType
     public const META_LOGO = '_perego_logo_id';
 
     /**
+     * Which affordance the project's grid tile wears — the editor's explicit choice, not an inference
+     * from which media the project happens to carry (owner, 2026-07-28).
+     *
+     * The tile's *trigger* is still derived from its media: what a tile opens and what it advertises
+     * are different questions, and only the second one is editorial.
+     */
+    public const META_ICON = '_perego_project_icon';
+
+    /** Allowed `META_ICON` values; `none` also covers every project saved before this field existed. */
+    public const ICONS = ['none', 'play', 'gallery'];
+
+    /**
+     * Per-shape thumbnails. A project appears in tiles of six different aspect ratios, and
+     * `.work-card img` is `object-fit: cover`, so one landscape featured image gets centre-cropped
+     * into a 0.55:1 portrait slot and loses whatever mattered. These let an editor supply the crop.
+     *
+     * All optional — {@see ProjectThumbnails} falls back to the nearest shape and finally to the
+     * featured image, so a project with none of them renders exactly as it does today.
+     */
+    public const META_THUMB_HERO = '_perego_thumb_hero';
+    public const META_THUMB_BANNER = '_perego_thumb_banner';
+    public const META_THUMB_TALL = '_perego_thumb_tall';
+    public const META_THUMB_CARD = '_perego_thumb_card';
+
+    /**
      * The website-showcase filter types (handoff service-website-making.html web-filters), for
      * web-category projects. Values are the handoff's data-filter/data-category enum; anything
      * else sanitizes to '' (untyped — shown under "All" only).
@@ -117,7 +142,52 @@ final class ProjectPostType
                 'sanitize_callback' => [self::class, 'sanitizeIntList'],
                 'auth_callback' => [self::class, 'authEdit'],
             ],
+            /*
+             * Deliberately NO `default` on the icon or the thumbnails below. Since WP 5.5 a registered
+             * default is returned by `get_post_meta()` for a key that was never written, which makes
+             * "unset" indistinguishable from "explicitly none/zero" — that breaks the migration's
+             * already-done marker and stops the English-translation fallback, so an Arabic project
+             * stops inheriting its English record's media. The same trap cost a debugging cycle on the
+             * Client behaviour field; `sanitizeIcon()` turns an empty value into `none` regardless, so
+             * the effective default is unchanged.
+             */
+            self::META_ICON => [
+                'type' => 'string',
+                'single' => true,
+                'show_in_rest' => true,
+                'sanitize_callback' => [self::class, 'sanitizeIcon'],
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+            ...$this->thumbnailMetaArgs(),
         ];
+    }
+
+    /**
+     * The per-shape thumbnail metas — one attachment id each, all optional.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function thumbnailMetaArgs(): array
+    {
+        $args = [];
+
+        foreach (ProjectThumbnails::metaKeys() as $key) {
+            $args[$key] = [
+                'type' => 'integer',
+                'single' => true,
+                'show_in_rest' => true,
+                'sanitize_callback' => 'absint',
+                'auth_callback' => [self::class, 'authEdit'],
+            ];
+        }
+
+        return $args;
+    }
+
+    /** An unrecognised icon means no icon — a tile never advertises something by accident. */
+    public static function sanitizeIcon(string $raw): string
+    {
+        return in_array($raw, self::ICONS, true) ? $raw : 'none';
     }
 
     /**
