@@ -1,8 +1,9 @@
 /**
  * Markup-parity tests for the service mosaic's live canvas (spec 023; owner 2026-07-28).
  *
- * The fixture is a live capture from `/services/video-editing/`, which renders three tiles — the whole
- * of what the Video Editing category currently holds.
+ * The fixture is a live capture from `/services/video-editing/`, at the six tiles a service single
+ * caps at — so it exercises every slot the page can actually render (`m1` hero, `m2` banner, `m3` tall,
+ * `m4` banner, `m5` card, `m6` banner) rather than only the first three.
  *
  * This test earns more than the usual parity test does. `../../Editor/parity.js` compares class hooks,
  * and the mosaic's placement IS a class (`.m1`…`.m15`) — so asserting the skeleton against the PHP
@@ -34,20 +35,29 @@ const project = ( id, overrides = {} ) => ( {
 } );
 
 describe( 'service mosaic markup parity', () => {
-	test( 'three tiles plus the brand card match the PHP mosaic', () => {
+	test( 'all six tiles plus the brand card match the PHP mosaic', () => {
 		const html = renderToString(
 			<ServiceMasonrySkeleton
-				// The captured page: two tiles advertise a video, the third advertises nothing.
-				projects={ [
-					project( 1, { icon: 'play' } ),
-					project( 2, { icon: 'play' } ),
-					project( 3, { icon: 'none' } ),
-				] }
+				// The captured page's affordance mix, position by position.
+				projects={ [ 'none', 'play', 'gallery', 'none', 'play', 'play' ].map(
+					( icon, index ) => project( index + 1, { icon } )
+				) }
 				labels={ { galleryBadge: 'Gallery', loadMore: 'Load more' } }
 			/>
 		);
 
 		expect( normalizeMarkup( html ) ).toEqual( normalizeMarkup( fixture ) );
+	} );
+
+	/*
+	 * The slot sequence across every position the page can render. Six is the cap
+	 * (`WORK_CAP_DEFAULT`), so these are the only placements a service single ever uses — m7-m15 are
+	 * reachable only from the services archive, which has no route today.
+	 */
+	test( 'the six rendered slots are the first six designed placements', () => {
+		const slots = [ ...fixture.matchAll( /work-card (m\d+) reveal/g ) ].map( ( m ) => m[ 1 ] );
+
+		expect( slots ).toEqual( [ 'm1', 'm2', 'm3', 'm4', 'm5', 'm6' ] );
 	} );
 
 	/*

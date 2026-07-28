@@ -35,8 +35,14 @@ if (! defined('ABSPATH')) {
     exit(1);
 }
 
-/** The mosaic lays out fifteen tiles; crops beyond that would never be seen on any one page. */
-const PEREGO_CROP_PROJECT_LIMIT = 15;
+/**
+ * How many projects to cut crops for.
+ *
+ * Fifteen is the mosaic's own tile count, so it is the right default for one page. It is overridable
+ * because the three mosaic services render six tiles each — eighteen projects across the site — and a
+ * global fifteen would leave the last service short.
+ */
+$limit = (int) (getenv('SEED_CROPS_LIMIT') ?: 15);
 
 $mode = getenv('SEED_CROPS_MODE') ?: 'manifest';
 if (! in_array($mode, ['manifest', 'import'], true)) {
@@ -47,7 +53,7 @@ $dir = rtrim(getenv('SEED_CROPS_DIR') ?: (get_temp_dir() . 'perego-crops'), '/\\
 $manifestPath = $dir . '/manifest.json';
 
 /** The non-web projects that still want at least one crop, with the source to cut it from. */
-$targets = static function (): array {
+$targets = static function () use ($limit): array {
     $rows = [];
 
     $posts = get_posts([
@@ -65,7 +71,7 @@ $targets = static function (): array {
     ]);
 
     foreach ($posts as $post) {
-        if (count($rows) >= PEREGO_CROP_PROJECT_LIMIT) {
+        if (count($rows) >= $limit) {
             break;
         }
 
