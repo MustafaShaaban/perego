@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-28T14:24:03+00:00\n"
+"POT-Creation-Date: 2026-07-28T18:47:53+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: perego-site\n"
@@ -31,12 +31,14 @@ msgstr ""
 
 #: src/Admin/PostListColumns.php:34
 #: src/PostTypes/ClientPostType.php:353
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/index.js:364
 #: src/EditorPanels/schema.js:127
 msgid "Client"
 msgstr ""
 
 #: src/Admin/PostListColumns.php:35
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:128
 msgid "Year"
 msgstr ""
@@ -46,12 +48,14 @@ msgid "Service key"
 msgstr ""
 
 #: src/Admin/PostListColumns.php:45
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/index.js:409
 msgid "Behavior"
 msgstr ""
 
 #: src/Admin/PostListColumns.php:69
 #: src/Admin/PostListColumns.php:81
+#: build/EditorPanels/index.js:1
 #: src/EditorPanels/ClientGallery.js:38
 #: src/EditorPanels/ClientGallery.js:50
 msgid "Image"
@@ -62,17 +66,26 @@ msgid "Lightbox"
 msgstr ""
 
 #: src/Admin/PostListColumns.php:131
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
 #: src/Editor/LinkControl.js:16
 #: src/Editor/LinkPicker.js:186
 msgid "Link"
 msgstr ""
 
 #: src/Admin/PostListColumns.php:132
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:77
 msgid "No actions"
 msgstr ""
 
 #: src/Admin/ProjectGalleryMetaBox.php:48
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/index.js:158
 msgid "Project gallery"
 msgstr ""
@@ -90,6 +103,7 @@ msgid "These images open in the project lightbox on the front end."
 msgstr ""
 
 #: src/Admin/ServicePortfolioMetaBox.php:41
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/index.js:193
 msgid "Selected work"
 msgstr ""
@@ -165,6 +179,7 @@ msgid "Corporate client logos"
 msgstr ""
 
 #: src/Blocks/ClientsCarouselRenderer.php:121
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:112
 msgid "Individual clients"
 msgstr ""
@@ -201,17 +216,20 @@ msgid "Slide %1$s of %2$s"
 msgstr ""
 
 #: src/Blocks/HeroSliderRenderer.php:52
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/preview.js:118
 msgid "Introduction"
 msgstr ""
 
 #: src/Blocks/HeroSliderRenderer.php:132
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/preview.js:143
 msgid "Hero slides"
 msgstr ""
 
 #. translators: %d: slide number
 #: src/Blocks/HeroSliderRenderer.php:139
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/preview.js:150
 #, php-format,js-format
 msgid "Slide %d"
@@ -227,6 +245,8 @@ msgstr ""
 #: src/Blocks/NotFoundRenderer.php:33
 #: src/Blocks/SiteFooterRenderer.php:137
 #: src/Blocks/SiteHeaderRenderer.php:239
+#: build/Blocks/site-footer/index.js:2
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/site-footer/preview.js:83
 #: src/Blocks/site-header/preview.js:133
 msgid "Perego — home"
@@ -273,6 +293,7 @@ msgid "Next page"
 msgstr ""
 
 #: src/Blocks/PostShareRenderer.php:43
+#: build/Blocks/post-share/index.js:1
 #: src/Blocks/post-share/preview.js:23
 msgid "Share this article"
 msgstr ""
@@ -280,30 +301,34 @@ msgstr ""
 #. translators: %s: social network name.
 #. translators: %s: social network name
 #: src/Blocks/PostShareRenderer.php:48
+#: build/Blocks/post-share/index.js:2
 #: src/Blocks/post-share/preview.js:29
 #, php-format,js-format
 msgid "Share on %s"
 msgstr ""
 
 #: src/Blocks/PostShareRenderer.php:60
+#: build/Blocks/post-share/index.js:2
 #: src/Blocks/post-share/preview.js:38
 msgid "Copy link"
 msgstr ""
 
 #: src/Blocks/PostShareRenderer.php:62
+#: build/Blocks/post-share/index.js:2
 #: src/Blocks/post-share/preview.js:42
 msgid "Copied"
 msgstr ""
 
 #. translators: %d: 1-based position of the image within the project gallery.
 #: src/Blocks/ProjectGalleryLightboxRenderer.php:54
+#: build/Blocks/project-gallery-lightbox/index.js:2
 #: src/Blocks/project-gallery-lightbox/preview.js:58
 #, php-format,js-format
 msgid "Open project media %d"
 msgstr ""
 
 #: src/Blocks/ProjectHeroRenderer.php:45
-#: src/PostTypes/ProjectPostType.php:240
+#: src/PostTypes/ProjectPostType.php:259
 msgid "Project"
 msgstr ""
 
@@ -330,17 +355,20 @@ msgid "Start your project"
 msgstr ""
 
 #: src/Blocks/SiteFooterRenderer.php:141
+#: build/Blocks/site-footer/index.js:2
 #: src/Blocks/site-footer/preview.js:86
 msgid "Contact us"
 msgstr ""
 
 #: src/Blocks/SiteFooterRenderer.php:174
+#: build/Blocks/site-footer/index.js:2
 #: src/Blocks/site-footer/preview.js:93
 msgid "Social media"
 msgstr ""
 
 #. translators: %s: social network name
 #: src/Blocks/SiteFooterRenderer.php:184
+#: build/Blocks/site-footer/index.js:2
 #: src/Blocks/site-footer/preview.js:97
 #, php-format,js-format
 msgid "Perego on %s"
@@ -348,12 +376,14 @@ msgstr ""
 
 #. translators: %s: current year.
 #: src/Blocks/SiteFooterRenderer.php:301
+#: build/Blocks/site-footer/index.js:2
 #: src/Blocks/site-footer/preview.js:48
 #, php-format,js-format
 msgid "© %s Perego Creative Studio — بيريجو. All rights reserved."
 msgstr ""
 
 #: src/Blocks/SiteFooterRenderer.php:309
+#: build/Blocks/site-footer/index.js:2
 #: src/Blocks/site-footer/preview.js:116
 msgid "Legal"
 msgstr ""
@@ -380,29 +410,33 @@ msgid "About Us"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:54
-#: src/PostTypes/ProjectPostType.php:261
+#: src/PostTypes/ProjectPostType.php:285
 #: src/PostTypes/ServicePostType.php:163
 #: src/PostTypes/ServicePostType.php:167
 msgid "Services"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:57
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:116
-#: src/EditorPanels/schema.js:215
+#: src/EditorPanels/schema.js:229
 msgid "Video Editing"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:58
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:117
 msgid "2D Motion Graphics"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:59
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:118
 msgid "Graphic Design"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:60
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:119
 msgid "Website Making"
 msgstr ""
@@ -426,24 +460,28 @@ msgid "Skip to content"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:245
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/site-header/preview.js:137
 msgid "Primary"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:263
 #: src/Blocks/SiteHeaderRenderer.php:266
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/site-header/preview.js:151
 #: src/Blocks/site-header/preview.js:152
 msgid "Menu"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:287
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/site-header/index.js:161
 #: src/Blocks/site-header/index.js:179
 msgid "Start a Project"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:363
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/site-header/preview.js:116
 msgid "Language"
 msgstr ""
@@ -565,26 +603,28 @@ msgstr ""
 msgid "Client Type"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:239
+#: src/PostTypes/ProjectPostType.php:258
 msgid "Projects"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:241
+#: src/PostTypes/ProjectPostType.php:260
 msgid "Add New Project"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:242
+#: src/PostTypes/ProjectPostType.php:261
 msgid "Edit Project"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:243
+#: src/PostTypes/ProjectPostType.php:262
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:60
 msgid "Portfolio"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:262
+#: src/PostTypes/ProjectPostType.php:286
 #: src/PostTypes/ServicePostType.php:164
-#: src/EditorPanels/schema.js:198
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:212
 msgid "Service"
 msgstr ""
 
@@ -596,122 +636,402 @@ msgstr ""
 msgid "Edit Service"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/footer-careers/index.js:1
+#: build/Blocks/journal-header/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: src/Editor/LanguagePair.js:25
+msgid "English"
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/footer-careers/index.js:1
+#: build/Blocks/journal-header/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: src/Editor/LanguagePair.js:27
+msgid "Arabic"
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RecordPicker.js:41
+msgid "No published records yet."
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RecordPicker.js:59
+msgid "Shown"
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RecordPicker.js:61
+msgid "None selected yet."
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RecordPicker.js:67
+#: src/Editor/RepeaterControls.js:18
+msgid "Move up"
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RecordPicker.js:69
+#: src/Editor/RepeaterControls.js:23
+msgid "Move down"
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: build/EditorPanels/index.js:3
+#: src/Editor/RecordPicker.js:71
+#: src/EditorPanels/index.js:94
+msgid "Remove"
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RecordPicker.js:79
+#: src/Editor/RecordPicker.js:84
+msgid "Add"
+msgstr ""
+
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:44
 msgid "Untitled Client"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:51
 msgid "No published clients are available for this client type yet."
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/clients-carousel/index.js:55
 #: src/Blocks/footer-careers/index.js:40
 msgid "Heading"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
+#: build/EditorPanels/index.js:3
 #: src/Blocks/clients-carousel/index.js:60
-#: src/EditorPanels/schema.js:255
+#: src/EditorPanels/schema.js:269
 msgid "Subtitle"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/clients-carousel/index.js:65
 #: src/Blocks/services-teaser/index.js:43
 msgid "Card source"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:67
 msgid "Automatic (all published clients)"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:68
 msgid "Manual (selected clients only)"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/clients-carousel/index.js:69
 #: src/Blocks/services-teaser/index.js:47
 msgid "Hybrid (selected first, then automatic)"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:74
 msgid "Shown clients (in order)"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:75
 msgid "Add a client"
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:76
 msgid "No clients selected yet."
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:86
 msgid "Each client’s tile and logo are edited on that Client’s own screen (Clients in the admin menu)."
 msgstr ""
 
+#: build/Blocks/clients-carousel/index.js:1
 #: src/Blocks/clients-carousel/index.js:110
 msgid "Corporate clients"
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:38
 msgid "Careers column — Arabic"
 msgstr ""
 
+#: build/Blocks/footer-careers/index.js:1
 #: src/Blocks/footer-careers/index.js:46
 msgid "Blurb"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:115
+msgid "(no title)"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:133
+msgid "Loading…"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:134
+msgid "— Select —"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkControl.js:14
+#: src/Editor/LinkPicker.js:140
+msgid "Label"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Blocks/services-teaser/index.js:117
+#: src/Editor/LinkPicker.js:146
+msgid "Links to"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:149
+msgid "A page on this site"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:150
+msgid "A custom URL"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:157
+msgid "Content type"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:168
+msgid "Page"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:176
+msgid "The link follows this page — including its Arabic translation, and its address if the page is later renamed."
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:180
+msgid "Nothing published in this content type yet."
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/LinkPicker.js:193
+msgid "Open in a new tab"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RepeaterControls.js:11
+#: src/EditorPanels/ClientGallery.js:104
+msgid "item"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RepeaterControls.js:28
+msgid "Duplicate"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
+#: src/Editor/RepeaterControls.js:33
+#, js-format
+msgid "Remove %s"
+msgstr ""
+
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:62
 msgid "Headline"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:68
 msgid "Supporting text"
 msgstr ""
 
 #. translators: %d: slide number
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:80
 #, js-format
 msgid "Slide %d — Arabic"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:81
 msgid "Arabic headline"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:85
 msgid "Arabic supporting text"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:90
 msgid "Slides"
 msgstr ""
 
 #. translators: 1: current slide number, 2: total slides
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:92
 #, js-format
 msgid "Editing slide %1$d of %2$d"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:94
 msgid "slide"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:105
 msgid "Add slide"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:108
 msgid "CTA — Arabic"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:109
 msgid "Arabic CTA label"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:114
 msgid "CTA link"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/hero-slider/index.js:118
 #: src/Blocks/portfolio-grid/index.js:101
 #: src/Blocks/project-navigation/index.js:98
@@ -719,28 +1039,36 @@ msgstr ""
 msgid "Button link"
 msgstr ""
 
+#: build/Blocks/hero-slider/index.js:1
 #: src/Blocks/hero-slider/index.js:119
 msgid "Leave empty for the contact page. A path such as /work is localized automatically."
 msgstr ""
 
+#: build/Blocks/home-about/index.js:1
 #: src/Blocks/home-about/index.js:29
 #: src/Blocks/home-about/index.js:74
 #: src/Blocks/home-about/index.js:84
 msgid "About panels"
 msgstr ""
 
+#: build/Blocks/home-about/index.js:1
 #: src/Blocks/home-about/index.js:31
 msgid "These panels are the page’s own content — the same text whether you edit it here or on the page itself. Each language keeps its copy on its own front page."
 msgstr ""
 
+#: build/Blocks/home-about/index.js:1
 #: src/Blocks/home-about/index.js:85
 msgid "No static front page is set, so there is no content to show here. Settings → Reading decides which page this is."
 msgstr ""
 
+#: build/Blocks/journal-header/index.js:1
 #: src/Blocks/journal-header/index.js:47
 msgid "Journal heading"
 msgstr ""
 
+#: build/Blocks/journal-header/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/EditorPanels/index.js:3
 #: src/Blocks/journal-header/index.js:49
 #: src/Blocks/portfolio-grid/index.js:67
 #: src/Blocks/portfolio-grid/index.js:86
@@ -748,1067 +1076,1208 @@ msgstr ""
 msgid "Title"
 msgstr ""
 
+#: build/Blocks/journal-header/index.js:1
 #: src/Blocks/journal-header/index.js:55
 msgid "Lead"
 msgstr ""
 
+#: build/Blocks/journal-header/index.js:1
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/journal-header/index.js:61
 #: src/Blocks/portfolio-grid/index.js:74
 msgid "Leave a field empty to keep the current wording."
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/portfolio-grid/index.js:65
 msgid "Archive heading"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/portfolio-grid/index.js:71
 msgid "Intro"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/portfolio-grid/index.js:78
 msgid "Show the demo note"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/portfolio-grid/index.js:79
 msgid "The temporary \"example projects\" line under the intro. Turn this off once real projects are published."
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/portfolio-grid/index.js:84
 #: src/Blocks/project-navigation/index.js:94
 msgid "Closing call to action"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/portfolio-grid/index.js:90
 msgid "Body"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/portfolio-grid/index.js:95
 #: src/Blocks/site-header/index.js:175
 msgid "Button text"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/index.js:1
 #: src/Blocks/portfolio-grid/index.js:102
 msgid "Leave empty for the contact page."
 msgstr ""
 
+#: build/Blocks/post-breadcrumb/index.js:1
 #: src/Blocks/post-breadcrumb/index.js:25
 msgid "Post title"
 msgstr ""
 
+#: build/Blocks/project-hero/index.js:1
 #: src/Blocks/project-hero/preview.js:64
 msgid "Project title"
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
+#: build/EditorPanels/index.js:3
 #: src/Blocks/project-navigation/index.js:53
 #: src/EditorPanels/index.js:182
 msgid "Untitled Project"
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/project-navigation/index.js:79
 msgid "Project navigation"
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/project-navigation/index.js:82
 msgid "Show"
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/project-navigation/index.js:83
 msgid "Which navigation surface this instance renders. The single-project template uses one of each."
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/project-navigation/index.js:86
 msgid "Previous / next links and related projects"
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/project-navigation/index.js:87
 msgid "Previous / next links only"
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/project-navigation/index.js:88
 msgid "Related projects only"
 msgstr ""
 
+#: build/Blocks/project-navigation/index.js:1
 #: src/Blocks/project-navigation/index.js:99
 msgid "Leave empty for the contact page. The button text comes from the project labels."
 msgstr ""
 
+#: build/Blocks/related-posts/index.js:1
 #: src/Blocks/related-posts/index.js:39
 msgid "Untitled"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/services-teaser/index.js:34
 #: src/Blocks/site-header/index.js:72
 msgid "Untitled Service"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:42
 msgid "Service cards"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:45
 msgid "Automatic (current Service cards)"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:46
 msgid "Manual (selected Services only)"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:53
 msgid "Shown cards (in order)"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
+#: build/Blocks/site-header/index.js:1
 #: src/Blocks/services-teaser/index.js:54
 #: src/Blocks/site-header/index.js:107
 msgid "Add a Service"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:55
 msgid "No Services selected yet."
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:56
 #: src/Blocks/services-teaser/index.js:62
 msgid "No published Services are available in this language yet."
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:66
 msgid "Each card’s label and image are edited on that Service’s own screen (Services in the admin menu)."
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:103
 msgid "Heading & link — Arabic"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:104
 msgid "Arabic heading"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:108
 msgid "Arabic “See All” label"
 msgstr ""
 
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:113
 msgid "“See all” link"
 msgstr ""
 
-#: src/Blocks/services-teaser/index.js:117
-#: src/Editor/LinkPicker.js:146
-msgid "Links to"
-msgstr ""
-
+#: build/Blocks/services-teaser/index.js:1
 #: src/Blocks/services-teaser/index.js:118
 msgid "Leave empty for the services archive. A path such as /work is localized automatically."
 msgstr ""
 
-#: src/Blocks/site-footer/index.js:25
-msgid "Contact channels (email/phone)"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:29
-msgid "contact channel"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:30
-msgid "Add contact channel"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:35
-msgid "Display text"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:36
-msgid "Link (mailto:… or tel:…)"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:51
-msgid "Social media links"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:55
-msgid "social link"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:56
-msgid "Add social link"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:60
-msgid "Network"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:63
-msgid "Profile URL"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:80
-msgid "legal link"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:81
-msgid "Add legal link"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:135
-msgid "Blurb — Arabic"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:136
-msgid "Arabic footer blurb"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:141
-msgid "Bottom bar"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:143
-msgid "Copyright"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:148
-msgid "Use {year} for the current year — it is filled in automatically on the live site."
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:149
-msgid "Legal links — English"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:151
-msgid "Legal links — Arabic"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:154
-msgid "Contact-page variant"
-msgstr ""
-
-#: src/Blocks/site-footer/index.js:155
-msgid "Flat 2-column layout (drops the quick-message column)"
-msgstr ""
-
-#: src/Blocks/site-footer/preview.js:136
-msgid "Quick message form — shown on the live site."
-msgstr ""
-
-#: src/Blocks/site-footer/preview.js:139
-msgid "Join us / careers — shown on the live site."
-msgstr ""
-
-#: src/Blocks/site-header/index.js:28
-msgid "A path such as /work is localized automatically; a full URL (https://…) or #anchor is used as-is."
-msgstr ""
-
-#: src/Blocks/site-header/index.js:38
-msgid "navigation link"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:39
-msgid "Add nav link"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:40
-msgid "New link"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:54
-msgid "dropdown link"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:55
-msgid "Add dropdown link"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:56
-msgid "New dropdown link"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:59
-msgid "Dropdown label"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:60
-msgid "Dropdown link"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:83
-msgid "Services dropdown"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:86
-msgid "Dropdown links"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:88
-msgid "Pick and order the Services shown, one by one."
-msgstr ""
-
-#: src/Blocks/site-header/index.js:89
-msgid "Every published Service is shown; hide any individually."
-msgstr ""
-
-#: src/Blocks/site-header/index.js:92
-msgid "Choose manually"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:93
-msgid "All published Services"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:105
-msgid "No published Services in this language yet."
-msgstr ""
-
-#: src/Blocks/site-header/index.js:106
-msgid "Shown in the dropdown"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:108
-msgid "None yet — the current dropdown stays until you add one."
-msgstr ""
-
-#: src/Blocks/site-header/index.js:152
-msgid "Replace the header logo"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:167
-#: src/EditorPanels/index.js:385
-#: src/EditorPanels/schema.js:185
-msgid "Logo"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:169
-msgid "Header logo"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:173
-msgid "Start a Project button"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:187
-msgid "A path such as /contact is localized automatically; a full URL (https://…) or #anchor is used as-is."
-msgstr ""
-
-#: src/Blocks/site-header/index.js:191
-msgid "Navigation — English"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:194
-msgid "Navigation — Arabic"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:197
-msgid "Header behavior"
-msgstr ""
-
-#: src/Blocks/site-header/index.js:199
-msgid "Sticky header (stays fixed while scrolling)"
-msgstr ""
-
+#: build/Blocks/site-footer/index.js:1
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
 #: src/Editor/LabeledRepeater.js:40
 msgid "Add item"
 msgstr ""
 
-#: src/Editor/LanguagePair.js:25
-msgid "English"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/preview.js:136
+msgid "Quick message form — shown on the live site."
 msgstr ""
 
-#: src/Editor/LanguagePair.js:27
-msgid "Arabic"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/preview.js:139
+msgid "Join us / careers — shown on the live site."
 msgstr ""
 
-#: src/Editor/LinkControl.js:14
-#: src/Editor/LinkPicker.js:140
-msgid "Label"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:25
+msgid "Contact channels (email/phone)"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:115
-msgid "(no title)"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:29
+msgid "contact channel"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:133
-msgid "Loading…"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:30
+msgid "Add contact channel"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:134
-msgid "— Select —"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:35
+msgid "Display text"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:149
-msgid "A page on this site"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:36
+msgid "Link (mailto:… or tel:…)"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:150
-msgid "A custom URL"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:51
+msgid "Social media links"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:157
-msgid "Content type"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:55
+msgid "social link"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:168
-msgid "Page"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:56
+msgid "Add social link"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:176
-msgid "The link follows this page — including its Arabic translation, and its address if the page is later renamed."
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:60
+msgid "Network"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:180
-msgid "Nothing published in this content type yet."
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:63
+msgid "Profile URL"
 msgstr ""
 
-#: src/Editor/LinkPicker.js:193
-msgid "Open in a new tab"
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:80
+msgid "legal link"
 msgstr ""
 
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:81
+msgid "Add legal link"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:135
+msgid "Blurb — Arabic"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:136
+msgid "Arabic footer blurb"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:141
+msgid "Bottom bar"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:143
+msgid "Copyright"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:148
+msgid "Use {year} for the current year — it is filled in automatically on the live site."
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:149
+msgid "Legal links — English"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:151
+msgid "Legal links — Arabic"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:154
+msgid "Contact-page variant"
+msgstr ""
+
+#: build/Blocks/site-footer/index.js:2
+#: src/Blocks/site-footer/index.js:155
+msgid "Flat 2-column layout (drops the quick-message column)"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
 #: src/Editor/MediaField.js:18
 msgid "Replace media"
 msgstr ""
 
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
 #: src/Editor/MediaField.js:18
 msgid "Select media"
 msgstr ""
 
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:1
 #: src/Editor/MediaField.js:20
 msgid "Remove media"
 msgstr ""
 
-#: src/Editor/RecordPicker.js:41
-msgid "No published records yet."
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:28
+msgid "A path such as /work is localized automatically; a full URL (https://…) or #anchor is used as-is."
 msgstr ""
 
-#: src/Editor/RecordPicker.js:59
-msgid "Shown"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:38
+msgid "navigation link"
 msgstr ""
 
-#: src/Editor/RecordPicker.js:61
-msgid "None selected yet."
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:39
+msgid "Add nav link"
 msgstr ""
 
-#: src/Editor/RecordPicker.js:67
-#: src/Editor/RepeaterControls.js:18
-msgid "Move up"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:40
+msgid "New link"
 msgstr ""
 
-#: src/Editor/RecordPicker.js:69
-#: src/Editor/RepeaterControls.js:23
-msgid "Move down"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:54
+msgid "dropdown link"
 msgstr ""
 
-#: src/Editor/RecordPicker.js:71
-#: src/EditorPanels/index.js:94
-msgid "Remove"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:55
+msgid "Add dropdown link"
 msgstr ""
 
-#: src/Editor/RecordPicker.js:79
-#: src/Editor/RecordPicker.js:84
-msgid "Add"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:56
+msgid "New dropdown link"
 msgstr ""
 
-#: src/Editor/RepeaterControls.js:11
-#: src/EditorPanels/ClientGallery.js:104
-msgid "item"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:59
+msgid "Dropdown label"
 msgstr ""
 
-#: src/Editor/RepeaterControls.js:28
-msgid "Duplicate"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:60
+msgid "Dropdown link"
 msgstr ""
 
-#: src/Editor/RepeaterControls.js:33
-#, js-format
-msgid "Remove %s"
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:83
+msgid "Services dropdown"
 msgstr ""
 
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:86
+msgid "Dropdown links"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:88
+msgid "Pick and order the Services shown, one by one."
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:89
+msgid "Every published Service is shown; hide any individually."
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:92
+msgid "Choose manually"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:93
+msgid "All published Services"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:105
+msgid "No published Services in this language yet."
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:106
+msgid "Shown in the dropdown"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:108
+msgid "None yet — the current dropdown stays until you add one."
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:152
+msgid "Replace the header logo"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: build/EditorPanels/index.js:3
+#: src/Blocks/site-header/index.js:167
+#: src/EditorPanels/index.js:385
+#: src/EditorPanels/schema.js:199
+msgid "Logo"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:169
+msgid "Header logo"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:173
+msgid "Start a Project button"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:187
+msgid "A path such as /contact is localized automatically; a full URL (https://…) or #anchor is used as-is."
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:191
+msgid "Navigation — English"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:194
+msgid "Navigation — Arabic"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:197
+msgid "Header behavior"
+msgstr ""
+
+#: build/Blocks/site-header/index.js:1
+#: src/Blocks/site-header/index.js:199
+msgid "Sticky header (stays fixed while scrolling)"
+msgstr ""
+
+#: build/EditorPanels/index.js:1
 #: src/EditorPanels/ClientGallery.js:50
 msgid "Video"
 msgstr ""
 
+#: build/EditorPanels/index.js:1
 #: src/EditorPanels/ClientGallery.js:76
 msgid "Video link"
 msgstr ""
 
+#: build/EditorPanels/index.js:1
 #: src/EditorPanels/ClientGallery.js:77
 msgid "A YouTube or Vimeo address. Paste it, then Add — it joins the list above."
 msgstr ""
 
+#: build/EditorPanels/index.js:1
 #: src/EditorPanels/ClientGallery.js:90
 msgid "Add video link"
 msgstr ""
 
+#: build/EditorPanels/index.js:1
 #: src/EditorPanels/ClientGallery.js:105
 msgid "Nothing in the gallery yet. Add images, videos or a video link below."
 msgstr ""
 
+#: build/EditorPanels/index.js:1
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/ClientGallery.js:120
 #: src/EditorPanels/index.js:109
 msgid "Add images"
 msgstr ""
 
+#: build/EditorPanels/index.js:1
 #: src/EditorPanels/ClientGallery.js:132
 msgid "Add videos"
 msgstr ""
 
 #. translators: %s: the unrecognised value currently stored on the post.
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/fields.js:71
 #, js-format
 msgid "%s (current value — not a standard option)"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/fields.js:76
 msgid "— None —"
 msgstr ""
 
-#: src/EditorPanels/index.js:109
-msgid "Edit gallery"
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:34
+msgid "No icon"
 msgstr ""
 
-#: src/EditorPanels/index.js:116
-msgid "No gallery images yet. The project single hides the gallery until you add some."
-msgstr ""
-
-#: src/EditorPanels/index.js:197
-msgid "Which projects"
-msgstr ""
-
-#: src/EditorPanels/index.js:207
-msgid "Shown projects (in order)"
-msgstr ""
-
-#: src/EditorPanels/index.js:208
-msgid "Add a project"
-msgstr ""
-
-#: src/EditorPanels/index.js:209
-msgid "None chosen yet."
-msgstr ""
-
-#: src/EditorPanels/index.js:210
-#: src/EditorPanels/index.js:216
-msgid "No published projects yet."
-msgstr ""
-
-#: src/EditorPanels/index.js:316
-msgid "Client card preview"
-msgstr ""
-
-#: src/EditorPanels/index.js:322
-#: src/EditorPanels/index.js:464
-msgid "Client name"
-msgstr ""
-
-#: src/EditorPanels/index.js:367
-msgid "Client type"
-msgstr ""
-
-#: src/EditorPanels/index.js:368
-msgid "Decides which carousel the client appears in, and which fields below apply."
-msgstr ""
-
-#: src/EditorPanels/index.js:371
-#: src/EditorPanels/schema.js:57
-msgid "Corporate"
-msgstr ""
-
-#: src/EditorPanels/index.js:372
-msgid "Individual"
-msgstr ""
-
-#: src/EditorPanels/index.js:378
-msgid "Pick a type — until you do, this client appears in neither carousel."
-msgstr ""
-
-#: src/EditorPanels/index.js:385
-msgid "Thumbnail"
-msgstr ""
-
-#: src/EditorPanels/index.js:387
-msgid "The picture beside the card text."
-msgstr ""
-
-#: src/EditorPanels/index.js:388
-msgid "Shown on the corporate tile. This is the post’s featured image."
-msgstr ""
-
-#: src/EditorPanels/index.js:400
-msgid "Content"
-msgstr ""
-
-#: src/EditorPanels/index.js:402
-msgid "The paragraph below the subtitle. Write it in the main editor area — the post’s own content is the card’s body."
-msgstr ""
-
-#: src/EditorPanels/index.js:410
-msgid "What happens when a visitor clicks the card. “No actions” shows the information and nothing else."
-msgstr ""
-
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/index.js:425
 #: src/EditorPanels/schema.js:35
 msgid "Show play icon"
 msgstr ""
 
-#: src/EditorPanels/index.js:426
-msgid "The ▶ badge over the thumbnail. Decorative — the card opens its gallery either way."
-msgstr ""
-
-#: src/EditorPanels/index.js:438
-msgid "Link URL"
-msgstr ""
-
-#: src/EditorPanels/index.js:439
-msgid "Where the card goes when clicked."
-msgstr ""
-
-#: src/EditorPanels/index.js:465
-msgid "The same value as the post title at the top of the editor."
-msgstr ""
-
-#: src/EditorPanels/schema.js:34
-msgid "No icon"
-msgstr ""
-
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:36
 msgid "Gallery label"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:48
 msgid "Wide feature — 578 × 332"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:49
 msgid "Banner — 380 × 158"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:50
 msgid "Tall — 182 × 332"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:51
 msgid "Standard card — 406 × 254"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:56
 msgid "E-commerce"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:371
+#: src/EditorPanels/schema.js:57
+msgid "Corporate"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:58
 msgid "Landing page"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:59
 msgid "Web app"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:65
 msgid "Automatic — latest matching projects"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:66
 msgid "Manual — only the projects I choose"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:67
 msgid "Hybrid — my choices first, then automatic"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:78
 msgid "Open a lightbox"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:79
 msgid "Go to a link"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:124
 msgid "Project details"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:129
 msgid "Our role"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:131
 msgid "Deliverables"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:135
 msgid "Media"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:140
 msgid "Video URL"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:141
 msgid "A YouTube/Vimeo link or a video file. Set this and the project opens as a video card."
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:146
 msgid "In the grids"
 msgstr ""
 
+#: build/EditorPanels/index.js:3
 #: src/EditorPanels/schema.js:151
+msgid "Feature on the home page"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:155
+msgid "The home page shows only featured projects. The Work archive always shows them all."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:160
 msgid "Icon"
 msgstr ""
 
-#: src/EditorPanels/schema.js:156
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:165
 msgid "What the project’s tile shows on top of its image, in the work grid and the services grid."
 msgstr ""
 
-#: src/EditorPanels/schema.js:164
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:173
 msgid "Each crop is optional. An empty one falls back to the closest shape you did upload, then to the featured image — so a project with none of these looks exactly as it does now."
 msgstr ""
 
-#: src/EditorPanels/schema.js:170
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:184
 msgid "Website showcase"
 msgstr ""
 
-#: src/EditorPanels/schema.js:175
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:189
 msgid "Site type"
 msgstr ""
 
-#: src/EditorPanels/schema.js:179
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:193
 msgid "Used by the Website Making showcase card."
 msgstr ""
 
-#: src/EditorPanels/schema.js:181
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:195
 msgid "Live site URL"
 msgstr ""
 
-#: src/EditorPanels/schema.js:188
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:202
 msgid "The client’s logo. Shown on the home Work grid instead of the screenshot; falls back to the featured image when empty."
 msgstr ""
 
-#: src/EditorPanels/schema.js:204
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:218
 msgid "Canonical service"
 msgstr ""
 
-#: src/EditorPanels/schema.js:209
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:223
 msgid "Which of the four services this post is. Drives the service tabs and the portfolio query."
 msgstr ""
 
-#: src/EditorPanels/schema.js:214
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:228
 msgid "Homepage card label"
 msgstr ""
 
-#: src/EditorPanels/schema.js:220
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:234
 msgid "Homepage card"
 msgstr ""
 
-#: src/EditorPanels/schema.js:223
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:237
 msgid "Card image"
 msgstr ""
 
-#: src/EditorPanels/schema.js:227
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:241
 msgid "Card image alt text"
 msgstr ""
 
-#: src/EditorPanels/schema.js:228
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:242
 msgid "Describes the image for screen readers. Leave empty only if the image is purely decorative."
 msgstr ""
 
-#: src/EditorPanels/schema.js:247
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:261
 msgid "Client card"
 msgstr ""
 
-#: src/EditorPanels/schema.js:256
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:270
 msgid "Sits directly under the name. Wrap the part you want bold in <strong> — e.g. <strong>+1M</strong> views."
 msgstr ""
 
-#: src/EditorPanels/schema.js:267
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:281
 msgid "Legal page"
 msgstr ""
 
-#: src/EditorPanels/schema.js:273
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:287
 msgid "Last updated"
 msgstr ""
 
-#: src/EditorPanels/schema.js:275
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/schema.js:289
 msgid "Shown under the title. Leave empty to use the page’s own modified date."
 msgstr ""
 
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:109
+msgid "Edit gallery"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:116
+msgid "No gallery images yet. The project single hides the gallery until you add some."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:197
+msgid "Which projects"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:207
+msgid "Shown projects (in order)"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:208
+msgid "Add a project"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:209
+msgid "None chosen yet."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:210
+#: src/EditorPanels/index.js:216
+msgid "No published projects yet."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:316
+msgid "Client card preview"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:322
+#: src/EditorPanels/index.js:464
+msgid "Client name"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:367
+msgid "Client type"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:368
+msgid "Decides which carousel the client appears in, and which fields below apply."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:372
+msgid "Individual"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:378
+msgid "Pick a type — until you do, this client appears in neither carousel."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:385
+msgid "Thumbnail"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:387
+msgid "The picture beside the card text."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:388
+msgid "Shown on the corporate tile. This is the post’s featured image."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:400
+msgid "Content"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:402
+msgid "The paragraph below the subtitle. Write it in the main editor area — the post’s own content is the card’s body."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:410
+msgid "What happens when a visitor clicks the card. “No actions” shows the information and nothing else."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:426
+msgid "The ▶ badge over the thumbnail. Decorative — the card opens its gallery either way."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:438
+msgid "Link URL"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:439
+msgid "Where the card goes when clicked."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:465
+msgid "The same value as the post title at the top of the editor."
+msgstr ""
+
+#: build/Blocks/clients-carousel/block.json
 #: src/Blocks/clients-carousel/block.json
 msgctxt "block title"
 msgid "Perego Clients Carousel"
 msgstr ""
 
+#: build/Blocks/clients-carousel/block.json
 #: src/Blocks/clients-carousel/block.json
 msgctxt "block description"
 msgid "The homepage Corporate + Individual client carousels. Cards are server-rendered (work without JS); a scroll-snap track + arrow buttons enhance them (see view.js). Styled by the theme's perego-reference.scss. Language-aware."
 msgstr ""
 
+#: build/Blocks/contact-service-chooser/block.json
 #: src/Blocks/contact-service-chooser/block.json
 msgctxt "block title"
 msgid "Perego Contact Service Chooser"
 msgstr ""
 
+#: build/Blocks/contact-service-chooser/block.json
 #: src/Blocks/contact-service-chooser/block.json
 msgctxt "block description"
 msgid "Dynamic service choices for the Start a Project page."
 msgstr ""
 
+#: build/Blocks/footer-careers/block.json
 #: src/Blocks/footer-careers/block.json
 msgctxt "block title"
 msgid "Perego Footer Careers"
 msgstr ""
 
+#: build/Blocks/footer-careers/block.json
 #: src/Blocks/footer-careers/block.json
 msgctxt "block description"
 msgid "The footer 'Join us' careers heading and blurb, stored bilingually (EN + AR) in block attributes; renders only the current language on the frontend and shows both languages in the editor."
 msgstr ""
 
+#: build/Blocks/hero-slider/block.json
 #: src/Blocks/hero-slider/block.json
 msgctxt "block title"
 msgid "Perego Hero Slider"
 msgstr ""
 
+#: build/Blocks/hero-slider/block.json
 #: src/Blocks/hero-slider/block.json
 msgctxt "block description"
 msgid "The homepage hero: a rotating set of headline slides with dot tabs, an aria-live announcer, and a CTA. Auto-advances (6.5s), pauses on hover and when the tab is hidden, and never auto-advances under reduced motion. Server-rendered; interactivity via view.js. Slide text + CTA are RichText-editable in the canvas (spec 020 round 4)."
 msgstr ""
 
+#: build/Blocks/home-about-bg/block.json
 #: src/Blocks/home-about-bg/block.json
 msgctxt "block title"
 msgid "Perego Home About Background"
 msgstr ""
 
+#: build/Blocks/home-about-bg/block.json
 #: src/Blocks/home-about-bg/block.json
 msgctxt "block description"
 msgid "The homepage About section's full-bleed background image, absolutely positioned behind the editor-canvas panel content. Server-rendered; no view script."
 msgstr ""
 
+#: build/Blocks/home-about/block.json
 #: src/Blocks/home-about/block.json
 msgctxt "block title"
 msgid "Perego Home About"
 msgstr ""
 
+#: build/Blocks/home-about/block.json
 #: src/Blocks/home-about/block.json
 msgctxt "block description"
 msgid "The homepage About panels. The copy lives in the front page's own content — this block renders it on the site and makes it editable inside the Front Page template canvas. English and Arabic each keep their own page."
 msgstr ""
 
+#: build/Blocks/join-form/block.json
 #: src/Blocks/join-form/block.json
 msgctxt "block title"
 msgid "Perego Join Us Form"
 msgstr ""
 
+#: build/Blocks/join-form/block.json
 #: src/Blocks/join-form/block.json
 msgctxt "block description"
 msgid "The footer Join-us / CV submission form (secure upload to perego/v1/careers/apply)."
 msgstr ""
 
+#: build/Blocks/journal-comments/block.json
 #: src/Blocks/journal-comments/block.json
 msgctxt "block title"
 msgid "Perego Journal Comments"
 msgstr ""
 
+#: build/Blocks/journal-comments/block.json
 #: src/Blocks/journal-comments/block.json
 msgctxt "block description"
 msgid "The journal single's approved-comment list in the handoff's card design (initials avatar + bordered body, indented replies). Server-rendered from the current post's comments."
 msgstr ""
 
+#: build/Blocks/journal-header/block.json
 #: src/Blocks/journal-header/block.json
 msgctxt "block title"
 msgid "Perego Journal Header"
 msgstr ""
 
+#: build/Blocks/journal-header/block.json
 #: src/Blocks/journal-header/block.json
 msgctxt "block description"
 msgid "The journal index heading: 'The Perego Journal' (H1) + lead. Language-aware."
 msgstr ""
 
+#: build/Blocks/legal-toc/block.json
 #: src/Blocks/legal-toc/block.json
 msgctxt "block title"
 msgid "Perego Legal TOC"
 msgstr ""
 
+#: build/Blocks/legal-toc/block.json
 #: src/Blocks/legal-toc/block.json
 msgctxt "block description"
 msgid "The legal page aside: draft/review notice, last-updated line, and a table of contents generated from the page's own H2 anchors. Language-aware."
 msgstr ""
 
+#: build/Blocks/legal-updated/block.json
 #: src/Blocks/legal-updated/block.json
 msgctxt "block title"
 msgid "Perego Legal Updated Date"
 msgstr ""
 
+#: build/Blocks/legal-updated/block.json
 #: src/Blocks/legal-updated/block.json
 msgctxt "block description"
 msgid "The legal page's \"Last updated: <date>\" line. Reads the curated page meta, else the modified date. Language-aware."
 msgstr ""
 
+#: build/Blocks/media-lightbox/block.json
 #: src/Blocks/media-lightbox/block.json
 msgctxt "block title"
 msgid "Perego Media Lightbox"
 msgstr ""
 
+#: build/Blocks/media-lightbox/block.json
 #: src/Blocks/media-lightbox/block.json
 msgctxt "block description"
 msgid "The site-wide accessible image/video/gallery lightbox dialog (ported from the handoff's main.js lightbox IIFE). Renders once per page in the footer template part; its view script delegates a click listener to every [data-image]/[data-video]/[data-gallery] trigger anywhere on the page, so any block can open it without wiring its own dialog."
 msgstr ""
 
+#: build/Blocks/not-found/block.json
 #: src/Blocks/not-found/block.json
 msgctxt "block title"
 msgid "Perego 404"
 msgstr ""
 
+#: build/Blocks/not-found/block.json
 #: src/Blocks/not-found/block.json
 msgctxt "block description"
 msgid "The 404 composition: code, title (H1), body, and Back-home / Contact actions. Server-rendered + language-aware."
 msgstr ""
 
+#: build/Blocks/portfolio-grid/block.json
 #: src/Blocks/portfolio-grid/block.json
 msgctxt "block title"
 msgid "Perego Portfolio Grid"
 msgstr ""
 
+#: build/Blocks/portfolio-grid/block.json
 #: src/Blocks/portfolio-grid/block.json
 msgctxt "block description"
 msgid "The work/portfolio grid: a service-filter chip row and a masonry grid of project cards queried from the project CPT, with a no-results state. Server-rendered; the client-side filter is wired via view.js."
 msgstr ""
 
+#: build/Blocks/post-breadcrumb/block.json
 #: src/Blocks/post-breadcrumb/block.json
 msgctxt "block title"
 msgid "Perego Post Breadcrumb"
 msgstr ""
 
+#: build/Blocks/post-breadcrumb/block.json
 #: src/Blocks/post-breadcrumb/block.json
 msgctxt "block description"
 msgid "The single-post breadcrumb: Home / Journal / <post title>. Language-aware."
 msgstr ""
 
+#: build/Blocks/post-reading-time/block.json
 #: src/Blocks/post-reading-time/block.json
 msgctxt "block title"
 msgid "Perego Post Reading Time"
 msgstr ""
 
+#: build/Blocks/post-reading-time/block.json
 #: src/Blocks/post-reading-time/block.json
 msgctxt "block description"
 msgid "The single-post \"N min read\" meta estimate. Language-aware."
 msgstr ""
 
+#: build/Blocks/post-share/block.json
 #: src/Blocks/post-share/block.json
 msgctxt "block title"
 msgid "Perego Post Share"
 msgstr ""
 
+#: build/Blocks/post-share/block.json
 #: src/Blocks/post-share/block.json
 msgctxt "block description"
 msgid "The single-post share row: X, LinkedIn, Facebook, WhatsApp, and copy-link. Plain share URLs — no third-party script."
 msgstr ""
 
+#: build/Blocks/preloader/block.json
 #: src/Blocks/preloader/block.json
 msgctxt "block title"
 msgid "Perego Preloader"
 msgstr ""
 
+#: build/Blocks/preloader/block.json
 #: src/Blocks/preloader/block.json
 msgctxt "block description"
 msgid "Branded first-visit-per-session preload overlay for the homepage only. Reduced-motion-safe; hides itself with a hard 2.5s safety timeout regardless of asset load."
 msgstr ""
 
+#: build/Blocks/project-gallery-lightbox/block.json
 #: src/Blocks/project-gallery-lightbox/block.json
 msgctxt "block title"
 msgid "Perego Project Gallery Lightbox"
 msgstr ""
 
+#: build/Blocks/project-gallery-lightbox/block.json
 #: src/Blocks/project-gallery-lightbox/block.json
 msgctxt "block description"
 msgid "A project's gallery: a thumbnail grid whose thumbs open the site-wide media lightbox (perego-theme/media-lightbox) — the page's single dialog instance per the handoff contract."
 msgstr ""
 
+#: build/Blocks/project-hero/block.json
 #: src/Blocks/project-hero/block.json
 msgctxt "block title"
 msgid "Perego Project Hero"
 msgstr ""
 
+#: build/Blocks/project-hero/block.json
 #: src/Blocks/project-hero/block.json
 msgctxt "block description"
 msgid "The case-study hero: breadcrumb, service category, project title (H1), and the client/year/role/deliverables meta. Server-rendered from the queried project."
 msgstr ""
 
+#: build/Blocks/project-navigation/block.json
 #: src/Blocks/project-navigation/block.json
 msgctxt "block title"
 msgid "Perego Project Navigation"
 msgstr ""
 
+#: build/Blocks/project-navigation/block.json
 #: src/Blocks/project-navigation/block.json
 msgctxt "block description"
 msgid "Dynamic adjacent and related project links for a project single."
 msgstr ""
 
+#: build/Blocks/related-posts/block.json
 #: src/Blocks/related-posts/block.json
 msgctxt "block title"
 msgid "Perego Related Articles"
 msgstr ""
 
+#: build/Blocks/related-posts/block.json
 #: src/Blocks/related-posts/block.json
 msgctxt "block description"
 msgid "The journal single's 'Related articles' band (handoff single-post.html): three same-category post cards, back-filled when the category is thin. Cards navigate — never the lightbox. Language-aware."
 msgstr ""
 
+#: build/Blocks/search-results/block.json
 #: src/Blocks/search-results/block.json
 msgctxt "block title"
 msgid "Perego Search Results"
 msgstr ""
 
+#: build/Blocks/search-results/block.json
 #: src/Blocks/search-results/block.json
 msgctxt "block description"
 msgid "The search page: title (H1), search form, results-for summary, server-rendered result list, and empty state. Language-aware."
 msgstr ""
 
+#: build/Blocks/service-hero/block.json
 #: src/Blocks/service-hero/block.json
 msgctxt "block title"
 msgid "Perego Service Hero"
 msgstr ""
 
+#: build/Blocks/service-hero/block.json
 #: src/Blocks/service-hero/block.json
 msgctxt "block description"
 msgid "The service single hero: an eyebrow, the current service's name as H1, and the shared four-service tabs (main link + Start-your-project CTA). Server-rendered; tab hover/active is pure CSS."
 msgstr ""
 
+#: build/Blocks/service-selected-work/block.json
 #: src/Blocks/service-selected-work/block.json
 msgctxt "block title"
 msgid "Perego Service Selected Work"
 msgstr ""
 
+#: build/Blocks/service-selected-work/block.json
 #: src/Blocks/service-selected-work/block.json
 msgctxt "block description"
 msgid "The service single's own \"Selected work\" masonry (handoff service-*.html): real published projects filtered to the current service's category, opening the site-wide media lightbox. Server-rendered."
 msgstr ""
 
+#: build/Blocks/services-overview/block.json
 #: src/Blocks/services-overview/block.json
 msgctxt "block title"
 msgid "Perego Services Overview"
 msgstr ""
 
+#: build/Blocks/services-overview/block.json
 #: src/Blocks/services-overview/block.json
 msgctxt "block description"
 msgid "The services archive: Our Services intro, four service cards, the shared process, and a closing CTA. Server-rendered + language-aware."
 msgstr ""
 
+#: build/Blocks/services-teaser/block.json
 #: src/Blocks/services-teaser/block.json
 msgctxt "block title"
 msgid "Perego Services Teaser"
 msgstr ""
 
+#: build/Blocks/services-teaser/block.json
 #: src/Blocks/services-teaser/block.json
 msgctxt "block description"
 msgid "The homepage services teaser: a heading, a See All Services link, and the four service cards (staggered offsets + hover lift). Server-rendered; hover is pure CSS (no view script)."
 msgstr ""
 
+#: build/Blocks/site-footer/block.json
 #: src/Blocks/site-footer/block.json
 msgctxt "block title"
 msgid "Perego Site Footer"
 msgstr ""
 
+#: build/Blocks/site-footer/block.json
 #: src/Blocks/site-footer/block.json
 msgctxt "block description"
 msgid "The global site footer: contact / quick-message / careers columns + bottom bar, or the flat 2-column variant on the contact page."
 msgstr ""
 
+#: build/Blocks/site-header/block.json
 #: src/Blocks/site-header/block.json
 msgctxt "block title"
 msgid "Perego Site Header"
 msgstr ""
 
+#: build/Blocks/site-header/block.json
 #: src/Blocks/site-header/block.json
 msgctxt "block description"
 msgid "The global site header: logo, primary nav with Services dropdown, Start a Project CTA, language toggle, mobile hamburger. Server-rendered; interactivity via view.js. Nav links, logo, and sticky-vs-static are editable via the block's Inspector controls (spec 020 round 4)."

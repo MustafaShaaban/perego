@@ -175,3 +175,37 @@ describe( 'panel schema ↔ PHP sanitizer enums', () => {
 		expect( field.options.map( ( option ) => option.value ) ).not.toEqual( categoryKeys );
 	} );
 } );
+
+/*
+ * The several-shapes crop set is a Video/Motion/Design feature. A Website Making project renders
+ * through WebShowcaseRenderer — one fixed card shape showing the client's logo — so the four crops
+ * never reach it, and the front end has always behaved that way. What was wrong is that the editor
+ * still offered them, inviting someone to prepare four crops nothing would display.
+ */
+describe( 'per-shape crops are offered only where they render', () => {
+	const gridsPanel = () => PROJECT_PANELS.find( ( panel ) => panel.fields.some( ( f ) => f.key === '_perego_thumb_hero' ) );
+	const visibleKeys = ( context ) =>
+		gridsPanel()
+			.fields.filter( ( field ) => ! field.showWhen || field.showWhen( {}, context ) )
+			.map( ( field ) => field.key );
+
+	test( 'every crop field is offered on a non-web project', () => {
+		expect( visibleKeys( { isWebProject: false } ) ).toEqual(
+			expect.arrayContaining( PROJECT_THUMB_FIELDS.map( ( field ) => field.key ) )
+		);
+	} );
+
+	test( 'no crop field is offered on a web project', () => {
+		const shown = visibleKeys( { isWebProject: true } );
+
+		PROJECT_THUMB_FIELDS.forEach( ( field ) => expect( shown ).not.toContain( field.key ) );
+	} );
+
+	test( 'the icon and the featured flag stay on both, since both grids read them', () => {
+		[ true, false ].forEach( ( isWebProject ) =>
+			expect( visibleKeys( { isWebProject } ) ).toEqual(
+				expect.arrayContaining( [ '_perego_project_icon', '_perego_project_featured' ] )
+			)
+		);
+	} );
+} );

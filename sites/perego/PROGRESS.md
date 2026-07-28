@@ -2,7 +2,54 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-28, latest) — Round 12: the work grid stops guessing too
+## RESUME HERE (2026-07-28, latest) — Round 13: the home page leads with a shortlist
+
+**Branch `feature/022-project-presentation-fixes`** (off `feature/021`), spec
+`specs/022-project-presentation-fixes/`. Four owner items; three more are spec 023.
+
+**Featured projects.** New `_perego_project_featured` flag and a `featuredOnly` attribute on
+`portfolio-grid`, set only in `front-page.html`. Home now shows 7, `/work` still shows 33. Filtered in
+PHP rather than by `meta_query`, because an Arabic project inherits its English record's meta and a
+`meta_query` would have silently emptied the Arabic home page. `page-attributes` added to the CPT so
+`menu_order` reaches REST — spec 023's canvas needs it.
+
+**Crop fields hidden on Website Creation projects.** The front end already routed them through
+`WebShowcaseRenderer` and never through the mosaic; the editor was still offering four fields nothing
+would display. A `showWhen`, not a renderer change.
+
+**Two CSS defects, both specificity rather than geometry.** The service-page logo plate declared
+`display: grid; place-items: center` but lost to `a.web-card__shot { display: block }` (type selector
+beats class), *and* its `<img>` inherited `position: absolute; inset: 0; min-height: 100%` — an abspos
+child with non-auto insets is not a grid item. The play badge resolved its `top: 50%` against
+`.reveal.is-visible`, whose settled `translateY(0)` is still a transform, so it measured the whole card
+instead of the thumbnail. Both measured in a real browser engine afterwards: 20/20 logo cards centred
+on both axes, badge at `top 101.8 / bottom 101.8`. Plate background `#fff` →
+`var(--panel-overlay, #160435)` so white marks are visible.
+
+**Seeded crops so the feature is visible.** `seed-project-crops.php` (manifest/import) +
+`generate-project-crops.mjs` (`sharp`, attention crop) gave 4 projects all 16 crops;
+`/services/video-editing/` now emits `<picture>` where slot `m1` resolves `hero` and `m2` resolves
+`banner`. `seed-featured-projects.php` marks up to 3 per category.
+
+**⚠ Content finding — needs the owner, not code.** The published portfolio is **web 29, video 3,
+motion 1, design 0**. So the shortlist is 7 not 12, the **Graphic Design chip on the home page resolves
+to nothing**, the Graphic Design service page's Selected Work is empty, and only 4 projects were
+eligible for crops.
+
+- **Verified:** Pest **569** (1978 assertions) · Jest **41 suites / 231** · build clean · POT
+  regenerated · both seeds idempotent · Arabic home 7 via the English fallback.
+- **Known, pre-existing, not mine:** `verify-visual` 10 failures (4 × the home page's two `<h1>`s,
+  proved unchanged against the stashed baseline; 6 × routes with no content) and `verify-a11y` 2 ×
+  `color-contrast` on `.btn--accent`.
+
+### Next
+
+1. **Spec 023** — PDF attachments in the lightbox, image zoom + fullscreen, then the live-canvas
+   conversion of `portfolio-grid` and `service-selected-work` with drag reordering and the Service
+   block content migration. Plan: `~/.claude/plans/now-in-the-work-portfolio-sharded-cray.md`.
+2. **Then** the CoreX v0.37.0 reconciliation, on its own branch, per the deferral in `DECISIONS.md`.
+
+## Round 12: the work grid stops guessing too
 
 **Projects now choose their tile icon, and supply the crop each tile shape needs.** The affordance was
 inferred — a video forced a ▶, 2+ gallery images forced a badge — and the work/portfolio grid showed

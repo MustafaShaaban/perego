@@ -862,7 +862,12 @@ final class PeregoSiteServiceProvider
                 'render_callback' => static function (array $attributes) use ($gridRenderer, $languageService): string {
                     $locale   = $languageService->driver()->currentLocale();
                     $content  = new PortfolioContent($locale);
-                    $projects = (new ProjectRepository())->allForGrid($content);
+                    // Home leads with a shortlist, `/work` shows the portfolio. Same block, same
+                    // query — only this attribute differs, and only the home template sets it.
+                    $projects = (new ProjectRepository())->allForGrid(
+                        $content,
+                        (bool) ($attributes['featuredOnly'] ?? false),
+                    );
 
                     // spec 021 C11: the archive heading/intro and closing CTA are editable per locale;
                     // an empty field falls back to the seed copy, so an unedited block is unchanged.

@@ -146,6 +146,15 @@ export const PROJECT_PANELS = [
 		title: __( 'In the grids', 'perego-site' ),
 		fields: [
 			{
+				key: '_perego_project_featured',
+				type: 'toggle',
+				label: __( 'Feature on the home page', 'perego-site' ),
+				// Mirror of `ProjectPostType::META_FEATURED`. Named for where it shows rather than as a
+				// bare "Featured", because the home grid is the only surface that reads it — the Work
+				// archive still lists every project either way.
+				help: __( 'The home page shows only featured projects. The Work archive always shows them all.', 'perego-site' ),
+			},
+			{
 				key: '_perego_project_icon',
 				type: 'select',
 				label: __( 'Icon', 'perego-site' ),
@@ -163,6 +172,11 @@ export const PROJECT_PANELS = [
 				help: index === PROJECT_THUMB_FIELDS.length - 1
 					? __( 'Each crop is optional. An empty one falls back to the closest shape you did upload, then to the featured image — so a project with none of these looks exactly as it does now.', 'perego-site' )
 					: undefined,
+				// The several-shapes mosaic is a Video/Motion/Design surface. A Website Making project
+				// renders through the showcase card instead, which is one fixed shape and shows the
+				// client's logo rather than a crop — so these four never reach it, and offering them
+				// here only invites an editor to prepare artwork nothing will ever display.
+				showWhen: ( meta, context ) => ! context.isWebProject,
 			} ) ),
 		],
 	},

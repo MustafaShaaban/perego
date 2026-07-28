@@ -78,6 +78,7 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
         ProjectPostType::META_LOGO,
         ProjectPostType::META_GALLERY,
         ProjectPostType::META_ICON,
+        ProjectPostType::META_FEATURED,
         ProjectPostType::META_THUMB_HERO,
         ProjectPostType::META_THUMB_BANNER,
         ProjectPostType::META_THUMB_TALL,
@@ -113,11 +114,12 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
  * record's icon and crops. Established the hard way on the Client behaviour field; pinned here so the
  * next person to "tidy up" these registrations by adding defaults fails loudly instead.
  */
-it('declares no default on the icon or the per-shape crops', function () {
+it('declares no default on the icon, the featured flag, or the per-shape crops', function () {
     $meta = (new ProjectPostType())->metaArgs();
 
     foreach ([
         ProjectPostType::META_ICON,
+        ProjectPostType::META_FEATURED,
         ProjectPostType::META_THUMB_HERO,
         ProjectPostType::META_THUMB_BANNER,
         ProjectPostType::META_THUMB_TALL,
@@ -125,6 +127,25 @@ it('declares no default on the icon or the per-shape crops', function () {
     ] as $key) {
         expect($meta[$key])->not->toHaveKey('default');
     }
+});
+
+it('registers the featured flag as an attachment-style integer flag', function () {
+    $meta = (new ProjectPostType())->metaArgs();
+
+    expect($meta[ProjectPostType::META_FEATURED]['type'])->toBe('integer')
+        ->and($meta[ProjectPostType::META_FEATURED]['sanitize_callback'])->toBe('absint')
+        ->and($meta[ProjectPostType::META_FEATURED]['show_in_rest'])->toBeTrue();
+});
+
+/*
+ * Not cosmetic. Core's REST posts controller gates both the `menu_order` field and the
+ * `orderby=menu_order` enum value on `page-attributes` support, and `allForGrid()` orders by
+ * `menu_order` before date — so dropping this support silently stops the editor being able to read or
+ * reproduce the order visitors actually see. Pinned so a future "we don't use page attributes" tidy-up
+ * fails here rather than in the canvas.
+ */
+it('supports page attributes, which is what exposes menu_order to REST', function () {
+    expect((new ProjectPostType())->postTypeArgs()['supports'])->toContain('page-attributes');
 });
 
 it('normalizes an unknown icon to no icon, so a tile never advertises by accident', function () {

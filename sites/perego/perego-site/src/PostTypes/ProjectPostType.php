@@ -46,6 +46,15 @@ final class ProjectPostType
     public const ICONS = ['none', 'play', 'gallery'];
 
     /**
+     * Whether the project is one of the few the home page leads with (owner, 2026-07-28).
+     *
+     * Home is a shortlist, `/work` is the whole portfolio; both render the same `portfolio-grid`
+     * block, so which projects appear is the block's question and this is the project's half of the
+     * answer. Only the home instance filters on it — the archive keeps showing everything.
+     */
+    public const META_FEATURED = '_perego_project_featured';
+
+    /**
      * Per-shape thumbnails. A project appears in tiles of six different aspect ratios, and
      * `.work-card img` is `object-fit: cover`, so one landscape featured image gets centre-cropped
      * into a 0.55:1 portrait slot and loses whatever mattered. These let an editor supply the crop.
@@ -158,6 +167,16 @@ final class ProjectPostType
                 'sanitize_callback' => [self::class, 'sanitizeIcon'],
                 'auth_callback' => [self::class, 'authEdit'],
             ],
+            // Same no-default rule as the icon above, for the same reason: an Arabic project carries
+            // no media of its own and reads its English record, which only works while "never set"
+            // stays distinguishable from "set to 0".
+            self::META_FEATURED => [
+                'type' => 'integer',
+                'single' => true,
+                'show_in_rest' => true,
+                'sanitize_callback' => 'absint',
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
             ...$this->thumbnailMetaArgs(),
         ];
     }
@@ -245,7 +264,12 @@ final class ProjectPostType
             'public' => true,
             'has_archive' => 'work',
             'menu_icon' => 'dashicons-portfolio',
-            'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'custom-fields'],
+            // `page-attributes` is load-bearing, not decorative: core's REST posts controller gates
+            // both the `menu_order` field and the `orderby=menu_order` enum value on this exact
+            // support. `ProjectRepository::allForGrid()` orders by `menu_order` first, so without it
+            // the editor cannot read or reproduce the order the front end actually renders. The
+            // visible "Order" box it adds to the sidebar is the honest price.
+            'supports' => ['title', 'editor', 'excerpt', 'thumbnail', 'custom-fields', 'page-attributes'],
             'rewrite' => ['slug' => 'work'],
             'show_in_rest' => true,
         ];

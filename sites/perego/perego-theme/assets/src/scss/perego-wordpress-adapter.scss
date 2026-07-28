@@ -1500,6 +1500,18 @@ div.web-card__shot {
 	cursor: default;
 }
 
+/* The affordances laid over a work-grid thumbnail — `.play-btn` (centred) and `.work-badge` (pinned to
+   a corner) — are absolutely positioned, but `.post-card__media` (`perego-reference.scss:1106`) never
+   established a containing block for them, and neither does `.post-card`. So they resolved against
+   whichever ancestor happened to be positioned: `.reveal.is-visible`, whose settled `translateY(0)` is
+   still a transform and so still creates one. That is the whole card, title and excerpt included, which
+   is why the play button measured its 50% against the card and sat near the foot of the image instead
+   of at its centre. The mosaic (`.work-card`) and the individual cards (`.indiv-card__thumb`) position
+   their own media box already and were never affected. */
+.post-card__media {
+	position: relative;
+}
+
 /* Web logo cards (client request 2026-07-27). A logo is not a photograph: cover-cropping one to the
  * card's 16/10 box would slice the mark, so it is contained and padded inside a tinted plate instead,
  * and the generic `.post-card:hover img { scale(1.06) }` zoom is cancelled — on a brand mark that reads
@@ -1578,26 +1590,43 @@ div.web-card__shot {
 }
 
 /* The service-page showcase now leads with the same marks as the home grid, so its shot frame
-   becomes a logo plate too rather than a cropped screenshot. */
+   becomes a logo plate too rather than a cropped screenshot. The plate is the same violet the home
+   grid uses (client request 2026-07-28): it was white here, which hid any mark drawn in white. */
 .web-card__shot--logo,
 .web-card__shot--plate {
 	display: grid;
 	place-items: center;
 	min-block-size: 190px;
 	padding: clamp(18px, 5%, 34px);
-	background: #fff;
-}
-
-.web-card__shot--plate {
 	background: var(--panel-overlay, #160435);
 }
 
+/* `a.web-card__shot` above sets `display: block` with a type selector, so it outweighs the class-only
+   plate rule — and every card that records a live URL is an anchor, which is nearly all of them. The
+   plate's `display: grid` was therefore losing exactly where it was needed, which is why centring the
+   mark never took. Restated here at matching specificity, after that rule. */
+a.web-card__shot--logo,
+a.web-card__shot--plate {
+	display: grid;
+}
+
+/* The base rule this overrides (`perego-reference.scss:950`) lays a screenshot over the whole frame:
+   `position: absolute; inset: 0; min-height: 100%; object-position: center top`. Sizing alone is not
+   enough to undo that for a logo — an absolutely-positioned child with non-auto insets is not a grid
+   item, so `place-items: center` above never reaches it, and `min-height` beats the `max-block-size`
+   below, stretching the box to the full plate with the mark parked at its top. Returning the image to
+   normal flow makes it a grid item and lets all three land. Equal specificity to the base rule, so
+   this depends on the adapter being imported after `perego-reference` in `main.scss` — the same thing
+   the size overrides here have always relied on. */
 .web-card__shot--logo img {
+	position: static;
 	inline-size: auto;
 	block-size: auto;
+	min-block-size: 0;
 	max-inline-size: 100%;
 	max-block-size: 130px;
 	object-fit: contain;
+	object-position: center;
 }
 
 .web-card__shot--logo:hover img {

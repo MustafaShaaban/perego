@@ -113,9 +113,12 @@ final class ProjectRepository
      * All published projects, newest first, shaped for PortfolioGridRenderer. Bounded to a sane cap
      * (never -1) per the query-discipline rule.
      *
+     * `$featuredOnly` narrows the set to the shortlist the home page leads with; `/work` renders the
+     * same block without it and still shows everything.
+     *
      * @return list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}>
      */
-    public function allForGrid(PortfolioContent $content): array
+    public function allForGrid(PortfolioContent $content, bool $featuredOnly = false): array
     {
         // `menu_order` first, then date. The client supplied the website portfolio in a deliberate
         // order — their strongest work leads — and date DESC was really "whatever order the importer
@@ -130,10 +133,37 @@ final class ProjectRepository
             'orderby' => ['menu_order' => 'ASC', 'date' => 'DESC'],
         ]);
 
+        // Filtered here rather than as a `meta_query`, because an Arabic project holds no meta of its
+        // own and inherits the English record's — a meta_query would silently empty the Arabic home
+        // page. The set is already capped at 120 with no_found_rows, so the pass is cheap.
+        $posts = $featuredOnly
+            ? array_values(array_filter($query->posts, fn (WP_Post $post): bool => $this->isFeatured($post)))
+            : $query->posts;
+
         return array_map(
             fn (WP_Post $post): array => $this->toGridCard($post, $content),
-            $query->posts,
+            $posts,
         );
+    }
+
+    /**
+     * Whether this project is on the home shortlist, falling back to its linked English translation.
+     *
+     * The empty-string test is the point, and is why {@see ProjectPostType::META_FEATURED} registers
+     * no default: `get_post_meta()` answers `''` for a key never written but `'0'` for one explicitly
+     * set to zero. So an Arabic project that has never been touched inherits the English answer, while
+     * one deliberately taken off the shortlist stays off it rather than inheriting its way back on.
+     */
+    public function isFeatured(WP_Post $post): bool
+    {
+        $own = get_post_meta($post->ID, ProjectPostType::META_FEATURED, true);
+        if ($own !== '' && $own !== false) {
+            return (int) $own > 0;
+        }
+
+        $enId = $this->enTranslationId($post);
+
+        return $enId !== 0 && (int) get_post_meta($enId, ProjectPostType::META_FEATURED, true) > 0;
     }
 
     /**

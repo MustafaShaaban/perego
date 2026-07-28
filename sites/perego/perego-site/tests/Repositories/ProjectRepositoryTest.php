@@ -169,3 +169,47 @@ it('falls back to the linked EN translation\'s gallery for an AR project with no
     expect($gallery)->toHaveCount(2)
         ->and($gallery[0]['src'])->toBe('https://perego.local/g11-full.png');
 });
+
+/*
+ * The home page shows only featured projects while `/work` shows every one, so this predicate is the
+ * whole difference between the two — and it has to survive Polylang, which does not copy custom meta
+ * onto a translation.
+ */
+it('treats a project with no featured flag of its own as not featured', function () {
+    expect((new ProjectRepository())->isFeatured(perego_project_post(1)))->toBeFalse();
+});
+
+it('reads the project\'s own featured flag when it has one', function () {
+    Functions\when('get_post_meta')->alias(
+        fn (int $postId, string $key) => $key === '_perego_project_featured' ? '1' : ''
+    );
+
+    expect((new ProjectRepository())->isFeatured(perego_project_post(1)))->toBeTrue();
+});
+
+it('falls back to the linked EN translation\'s featured flag for an AR project', function () {
+    Functions\when('get_post_meta')->alias(
+        fn (int $postId, string $key) => ($postId === 7 && $key === '_perego_project_featured') ? '1' : ''
+    );
+    Functions\when('pll_get_post')->alias(fn (int $postId, string $lang) => $postId === 2 && $lang === 'en' ? 7 : 0);
+
+    expect((new ProjectRepository())->isFeatured(perego_project_post(2)))->toBeTrue();
+});
+
+/*
+ * The distinction the whole no-default rule exists to protect: `get_post_meta()` answers '' for a key
+ * never written but '0' for one explicitly set to zero. An editor who takes the Arabic project off the
+ * home page must not have it inherit its way back on from the English record.
+ */
+it('respects an AR project explicitly unfeatured, rather than inheriting the EN flag', function () {
+    Functions\when('get_post_meta')->alias(function (int $postId, string $key) {
+        if ($key !== '_perego_project_featured') {
+            return '';
+        }
+
+        return $postId === 7 ? '1' : '0'; // EN is featured, the AR post says no
+    });
+    Functions\when('pll_get_post')->alias(fn (int $postId, string $lang) => $postId === 2 && $lang === 'en' ? 7 : 0);
+
+    expect((new ProjectRepository())->isFeatured(perego_project_post(2)))->toBeFalse();
+});

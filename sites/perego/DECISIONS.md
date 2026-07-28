@@ -1,5 +1,67 @@
 # Perego — Decision Log
 
+## 2026-07-28 — The home page leads with a shortlist, and crops are offered only where they render
+
+**Decision (owner).** The home Work section shows **featured projects only**; `/work` keeps showing the
+whole portfolio. The several-shapes crop set is a **Video / Motion / Graphic Design** feature and is no
+longer offered on Website Creation projects.
+
+**Featured is a filter in PHP, not a `meta_query`.** An Arabic project holds no meta of its own and
+reads its English record, so a `meta_query` would have emptied the Arabic home page while passing every
+test written against the English one. `allForGrid()` therefore filters the (already capped, already
+`no_found_rows`) result set through `isFeatured()`, which falls back to the linked English post — but
+only when the key was **never written**. `get_post_meta()` answers `''` for unset and `'0'` for an
+explicit zero, so an editor who takes the Arabic project off the home page keeps it off instead of
+inheriting its way back on. This is the third feature to depend on that distinction, and the third
+reason `META_FEATURED` registers no default.
+
+**Home and `/work` are the same block.** Which projects appear is the block instance's question, so it
+is a `featuredOnly` attribute set only in `front-page.html` — not a second block, and not a rule buried
+in the renderer. There is deliberately **no "fall back to everything when nothing is featured"**: a
+silent fallback makes an unset flag look like a broken one.
+
+**`page-attributes` added to the Project CPT, for REST rather than for the admin.** Core gates both the
+`menu_order` field and the `orderby=menu_order` enum value on that support, and `allForGrid()` orders by
+`menu_order` before date. Without it spec 023's canvas cannot read or reproduce the order visitors
+actually see. The visible "Order" box it adds to the sidebar is the price, and the test says so.
+
+**Crops: the front end was already right; the editor was not.** Website Making has always rendered
+through `WebShowcaseRenderer` — one fixed card shape showing the client's logo — and never through the
+mosaic. The fix is a `showWhen`, not a renderer change: four fields that would invite an editor to
+prepare artwork nothing displays are no longer offered.
+
+**Two CSS defects, both specificity rather than geometry.** Worth recording because in both cases the
+rule that looked wrong was correct and losing:
+
+1. The service-page logo plate declared `display: grid; place-items: center`, but `a.web-card__shot`
+   sets `display: block` with a **type selector** and outweighs a class-only rule. Every card with a
+   live URL is an anchor, so the plate was never a grid where it mattered. The mark also inherited
+   `position: absolute; inset: 0; min-height: 100%` from `perego-reference.scss:950`: an abspos child
+   with non-auto insets is not a grid item at all, and `min-height` beats `max-block-size`. Three
+   separate reasons the same `place-items: center` did nothing.
+2. `.play-btn` is `position: absolute; top: 50%`, but neither `.post-card` nor `.post-card__media`
+   established a containing block, so it resolved against `.reveal.is-visible` — whose settled
+   `translateY(0)` is still a transform. Its 50% measured the whole card, title and excerpt included.
+
+Both were verified by measuring computed boxes in a real browser engine, not by reading the cascade:
+20/20 logo cards now have equal gaps on both axes. The plate background also moves `#fff` →
+`var(--panel-overlay, #160435)`, so a mark drawn in white is visible.
+
+**Content finding that bounds all of this.** The published portfolio is **web 29, video 3, motion 1,
+design 0** (33 EN posts). So the shortlist is 7 rather than 12, the **Graphic Design filter chip on the
+home page resolves to nothing**, the Graphic Design service page has an empty Selected Work section,
+and only four projects are eligible for seeded crops. The seed script warns rather than failing
+silently. This is content to supply, not code to fix.
+
+- **Spec:** `specs/022-project-presentation-fixes/`.
+- **Verified:** Pest **569** (1978 assertions) · Jest **41 suites / 231** · build clean · POT
+  regenerated · both seeds idempotent on re-run · home 7 cards / `/work` 33 / Arabic home 7 via the
+  English fallback · `/services/video-editing/` emits `<picture>` with `m1`→hero and `m2`→banner.
+- **Known, pre-existing, not mine:** `verify-visual` 10 failures — 4 × the home page's two `<h1>`s
+  (proved unchanged against the stashed baseline) and 6 × routes with no content (`/services/`,
+  `/sample-page/`, `/work/landing-page-microsite/`); `verify-a11y` 2 × `color-contrast` on
+  `.btn--accent`, a `perego-reference.scss` token this branch does not touch.
+
 ## 2026-07-28 — A project tile's icon is chosen, and its crop follows the slot
 
 **Decision (owner).** Projects get an **Icon** field — `No icon` (default), `Show play icon`,
