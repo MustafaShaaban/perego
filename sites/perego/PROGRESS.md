@@ -2,7 +2,298 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-27, latest) — Client round 4 complete except two blocked captures
+## RESUME HERE (2026-07-28, latest) — Round 9: the missing service, and the framework debt filed
+
+**Submitting the brief with no service picked now says so.** It did nothing at all before — no
+message, no highlight, no request. Three silencers stacked: the framework wrote a correct
+"required" message into the `services` field wrapper, which this page hides with
+`* { display: none }` because the chooser buttons replaced it; its `focus()` on a `display:none`
+select was a no-op, so the page did not even scroll; and the status line has been screen-reader-only
+since round 7, while the toast listens for an event the runtime does not emit on its client-side
+branch. The chooser block now watches `aria-invalid` on the select — set on both the client and
+server error paths, so one observer covers both — and mirrors the message under the buttons with the
+wording the generic rule cannot give, a visible edge on the group, and the focus move the framework
+tried and could not deliver. It defers focus when an earlier field is also invalid, and clears the
+moment a service is picked. `main.js` re-dispatches `corex:form:error` when a submit leaves the form
+invalid, so *every* Perego form now gets a banner on client-side failure, not just this one.
+
+**Verified live at `perego.local`, not just in jsdom** — `/start-a-project` and
+`/ar/start-a-project-2`, at 1280 and 375, LTR and RTL: message visible and translated, `services[]`
+the only invalid control, focus on the first service button, one toast, no horizontal overflow, and
+the message gone the instant a service is picked.
+
+**The framework work is committed and being filed upstream.** 26 Corex files had accumulated
+uncommitted across rounds 5–8 — a documented Role Gate deviation, since several client-visible
+defects had no site-side fix. Now committed per module (`corex-forms`, `corex-config`,
+`corex-email`, `corex-media`) and reported as three module-scoped issues on top of the existing
+#138 and #142: **[#148](https://github.com/MustafaShaaban/corex/issues/148)** (forms + runtime,
+8 items), **[#149](https://github.com/MustafaShaaban/corex/issues/149)** (config admin),
+**[#150](https://github.com/MustafaShaaban/corex/issues/150)** (email sender), plus a comment on
+#138 correcting that its reply-to item is still open.
+
+**Suites:** Pest **1479 framework** + **512 client**; Jest **41 suites / 278 framework** +
+**39 suites / 197 client**.
+*Two run notes: the framework Pest suite needs `php -d memory_limit=2G vendor/bin/pest` (Patchwork
+exhausts the default 128M), and a bare `npx jest` at the root sweeps in two stale copies of the repo
+under `.claude/worktrees/`, producing 76 phantom failures — the root config ignores `sites/` but not
+that path.*
+
+**Next:** spec 022, the client user guide. Format is still undecided (repo Markdown vs. a searchable
+page inside WordPress vs. an add-on) — do not start until that is settled. Two decisions already
+made: **English only**, and **screenshots captured automatically with Playwright** against
+`http://perego.local/wp-admin`, reusing `tests/e2e/render-admin.mjs` (saved admin `storageState`,
+`/wp-login.php` → `/corex-login/` fallback) and the determinism handling in
+`perego-site/scripts/*.mjs` (`reducedMotion: 'reduce'`, preloader dismissal,
+`--host-resolver-rules=MAP perego.local 127.0.0.1`). Note when writing it: the root `.gitignore`
+matches a bare `output/` at any depth, so committed screenshots must not live under `output/` or
+`build/`.
+
+## (previous, 2026-07-28) — Round 8: the phone picker, and a real toast
+
+Three follow-ups to round 7. Two were defects in what shipped; the third was a design rejection.
+
+**The country list was unstyled because of a class name.** `initCustomSelects()` (theme `select.js`)
+scans for `select.corex-form__input`; the injected picker carried `phone-field__code` only, so it was
+skipped while the budget select beside it got the styled listbox. Adding the class is the fix —
+nothing needed exporting, and timing was never the issue (the block's module runs before `main.js`'s
+`DOMContentLoaded`). It also needed a real `<label for>` (the enhancer names its trigger from that and
+does **not** copy `aria-label`) and a `change` listener that re-syncs, so a typed country code updates
+the visible trigger.
+
+**The field was tight because the trigger showed the full country name.** A half field is 150–255px;
+`max-inline-size: 42%` left the number input as little as 78px. Options now carry
+`data-trigger-label` — "EG +20" closed, "Egypt (+20)" open — a general addition to the theme's select
+rather than a phone special case. The picker is a fixed 96px, the list may be wider than it
+(`max(272px, 100%)`), and between 901–1024px the phone field takes the full row.
+
+**The toast now uses the design system's actual glass surface.** `.glass-panel` was already defined —
+`rgba(22,4,53,0.55)`, `blur(10px)`, accent hairline, `var(--r-card)`, inset accent glow — and the toast
+had adopted none of it. Added: a 40px tinted medallion (the device the emails already use), a
+title/message hierarchy, and a timer bar that drains over the dismiss window and pauses on hover. The
+`×` text glyph became a drawn SVG at 36px with a 44px hit area (it was ~20px, under the minimum), and
+entering/exiting now use different easing curves.
+
+**Two bugs found while doing it:** `transform-origin: inline-start` is invalid CSS — it falls back to
+50%, so the timer bar drained from its middle; it is the physical side now, mirrored for RTL. And
+round 7's `__('Dismiss', 'perego-theme')` used a text domain that does not exist (the theme declares
+`perego-site`), so it could never translate. Fixed, with the new titles in the Arabic catalogue.
+
+**Verified in the browser at 1280 / 1010 / 375, LTR and RTL:** picker enhanced and named, trigger
+"EG +20" with "Egypt (+20)" in the list, list 272px and never clipped or overflowing, input 116px at
+1280 and 258px at 1010, no horizontal overflow at any width; toast at `r-card` 29px with `blur(10px)`,
+three shadow layers, the correct state tints, and the timer origin at 0px (LTR) / 378px (RTL).
+
+**Suites:** Pest **1479 framework** + **511 client**; Jest **641 framework** + **193 client**.
+*Note: the site's block tests need their own config — run `npm run test:js` inside `perego-site`, not
+the root `npx jest`, which cannot resolve `@wordpress/interactivity`.*
+
+## (previous, 2026-07-28) — Client round 7: email legibility, form UX, the logo wall
+
+Ten reports. Each was reproduced against the live install before any code changed.
+
+**Email was unreadable because of two Outlook rules, not a colour choice.** `fieldRows()`/`kvRow()` let
+the value `<td>` inherit white from an ancestor `<table>`; the Word engine does not carry `color` across
+that boundary. And **every** `rgba()` in the file (11 text, 5 background) is dropped by it, with no
+`bgcolor=` attribute anywhere to fall back on — so the text went black and the dark card went white.
+Every colour is now a flat hex named as a constant, every text element states its own, and every dark
+surface carries `bgcolor` too. The gradient header gained a solid `background-color` first (a
+gradient-blind client had been left with white-on-white), and the CTA label sits on a `bgcolor` cell.
+
+**Links pointed at peregoads.com because the DB said so** — the `perego_mail_base_url` option was set
+to it, which is step 2 of `MailBaseUrl::resolve()` and beats `siteurl`. Option deleted; mail now follows
+the sending site. The constant and option remain as deliberate production pins, documented as such.
+
+**Careers CV** is now stored as a URL on the submission (`cv_url`), and the inbox drawer renders any
+http(s) value as a link (new shared `FieldValue` component, http/https only). Two latent bugs fixed
+alongside: the Data explorer's detail modal read `payload.record` off a payload that *is* the record,
+and indexed a flat map against the submissions source's `{label,value}` list — so it showed "—" for
+every field.
+
+**Loader** now spins inside the button, reusing the reference stylesheet's own
+`.footer-form__submit.is-loading` treatment and `plSpin`; the framework's injected sibling spinner is
+hidden. One loading state across the site instead of two.
+
+**Phone** is E.164 with a country picker built in-house — the constitution forbids loading a global JS
+library (Principle VI), which rules out intl-tel-input. New `CountryCodes` (78 countries, EG/SA/AE
+first, EN+AR names), a `phone` rule in the framework registry mirrored client-side, and `inputmode`/
+`autocomplete`/`dir="ltr"` on the input (a number reads LTR on the Arabic page too).
+
+**Validation now clears as you fix it.** The runtime bound only `submit`; it now re-validates on `blur`
+always and on input once a field is already invalid, one field at a time. `max_words` and `phone` joined
+the client rule table — `max_words` was absent entirely, so the 200-word cap was server-only and came
+back as "Please check this field."
+
+**Arabic messages** reach the browser through a new `data-corex-messages` attribute the renderer fills
+with `__()` strings, so `FrameworkFormStrings` translates them. The runtime's own table goes through
+`wp.i18n`, which needs a JS translation file this site does not ship — that is why every message stayed
+English on `/ar/`. The three server rejection reasons are translatable now too.
+
+**Toasts** replace the status line as the visual feedback (theme `toast.js`, listening to the runtime's
+existing `corex:form:success`/`error` events). `.corex-form__status` stays as a visually-hidden live
+region, so screen readers are unaffected.
+
+**The logo wall: all 29 sites, in the client's order.** ETCC and HPD were created (never imported last
+round); `menu_order` 1–29 now drives the grid instead of date DESC; e& carries "Framework upgrade
+participation" via the existing `_perego_role` meta. **24 of 29 logos** were collected from the sites
+themselves (`scripts/fetch-portfolio-logos.mjs` → `scripts/import-portfolio-logos.php`, both idempotent
+and re-runnable). Web cards no longer fall back to a screenshot — a site awaiting its logo renders a
+typographic name plate, so the wall stays a wall of marks. Non-web services are capped at 6 works, and
+the Individual Clients play badge is an editor toggle.
+
+**⚠ 5 logos still need a manual upload** (Media → set the project's Logo field):
+`lessons.moe.gov.eg` (incomplete TLS chain), `oshco.com` (bot challenge), `eand.ae` (JS-only shell),
+`ourforum.ae` (their own asset is 192px and blocky), `hpd.ae` (**domain does not resolve — worth asking
+the client whether this site still exists**). All five render as name plates meanwhile.
+
+**Framework bug fixed in passing:** `WebpConverter` fatals — not warns — on a palette PNG
+("Palette image not supported by webp"), which is exactly what an exported logo usually is. It now
+promotes to truecolour and preserves alpha first. This took down the first import run mid-upload.
+
+**Verified:** Pest **1479 framework** (6337 assertions) + **509 client** (1505), Jest **69** runtime
+tests. Live: 29 web cards in order, 24 logos, 5 plates, 1 role caption, 0 screenshots among the marks.
+
+## (previous, 2026-07-27) — Client round 6: mail routing, careers, multi-select, loader
+
+Nine further reports, all reproduced against the live DB and the FluentSMTP log
+(`perego_wp_fsmpt_email_logs`) before any code changed. Every fix below is anchored to observed
+behaviour, and the log is the verification surface.
+
+**Mail identity — one policy, one place (`PeregoMailbox`)**
+- **Three mailboxes are configured in FluentSMTP and only one was ever used.** Routing there is keyed on
+  the From address, but `MailRequest` had no `from` field at all and `WpMailDriver` read a single global
+  `mail.from.address`. Threaded an optional `from` through `MailRequest → EmailMessage → MessageBuilder →
+  WpMailDriver` (additive; null keeps the configured identity). Policy: `info@` for visitor
+  confirmations, `noreply@` for automated internal mail, `contact@` for a human-typed inbox reply.
+- **Confirmations carried the visitor's own address as `Reply-To`** (log rows 63/65/67) — replying to a
+  confirmation replied to yourself. Now `noreply@` everywhere *except* the team notification, which keeps
+  the submitter so the team can answer a client by hitting Reply. That is the deliberate exception.
+- **Admin notifications now sign off as `System Notification Service · Perego Web Platform`**, in HTML
+  and in the plain-text part — which previously closed every template as "The Perego Team", including
+  automated alerts.
+
+**Careers — the whole reported failure was one line**
+- **HR mail went to `get_option('admin_email')` = `admin@example.com`** (log rows 59/64) while forms mail
+  went to the *configured* recipient. Both paths now share one `TeamRecipient`. The CV download link was
+  already implemented — it was simply never seen, because the mail went nowhere.
+- **Applications never wrote a `corex_submission`**, so they could not appear next to Contact and
+  Start-a-Project. They now do (`perego-careers`), and the slug is registered in the inbox filter. The
+  `corex_applications` Data table stays as the recruiting record.
+- **The "In admin" link could never render:** `get_edit_post_link()` returns null unless the *current*
+  user can edit the post, and this runs on an anonymous submission. Built from `admin_url()` instead.
+
+**Multi-select services — a browser API, not a server bug**
+- `collect()` read `select.value`, which on a `<select multiple>` reports **only the first selected
+  option**. Confirmed against submission 650: a multi-pick stored `services = motion-graphics`. Fixed to
+  read `selectedOptions`; `SubmitController::sanitizeShape()` gained the `multi-select` arm it was
+  missing (`sanitize_text_field` returns `''` for an array, so the client fix alone would have blanked
+  the field). `SubmissionsSource` now renders a list as `a, b` instead of JSON.
+
+**Submit loader — invisible for a token reason**
+- `.corex-spinner` sets `border: var(--wp--custom--focus--width) …` and
+  `animation: … var(--wp--custom--motion--duration--slow) …`. This theme defines neither, and an
+  unresolved `var()` inside a shorthand invalidates the **whole declaration** — so the spinner had no
+  border-style and no animation. Restated in real values in the adapter; the careers form now toggles the
+  `is-loading` class the reference stylesheet already spins.
+
+**Also:** inbox replies render through a new Perego `reply` template (the CoreX `Layout` is a white
+600px table — correct as a framework default, wrong for this brand), bound via the framework's own
+`SubmissionEmailGateway` seam, so it is client-site composition rather than a framework edit.
+
+**Verified:** Pest **1467 framework** (6324 assertions) + **488 client** (1389), Jest **53** runtime
+tests. Plus a live wiring check on this install: careers now resolves `notification@peregoads.com` (not
+`admin@example.com`), the reply gateway resolves to `PeregoSubmissionEmailGateway`, the sender map
+returns info/noreply/contact per template, `perego-careers` is in the inbox filter, and `applications` is
+in the managed Data tables. **Still to confirm by hand:** submit each of the three forms and read
+`perego_wp_fsmpt_email_logs` — the `from` column and the serialized `reply-to` header must match the
+policy above.
+
+*Note: the framework suite needs `php -d memory_limit=2G`; the 128M default exhausts Patchwork.*
+
+## (previous, 2026-07-27) — Email pipeline: six reported symptoms, all fixed
+
+SMTP now works, so delivery problems surfaced as *content* problems. All six reports were real bugs.
+
+**The cycle, for reference.** Nothing in `perego-site` calls `wp_mail()`. Form block → REST endpoint →
+listener → `PeregoMailer` → `PeregoEmailRenderer` (branded HTML) → `Corex\Mail\Mailer` seam →
+`QueuedMailer` → `RequestMailer` → `MessageBuilder` → `MailService` → `WpMailDriver` → the single
+`wp_mail()` → FluentSMTP. Each form sends two emails: the submitter's confirmation and the team's.
+
+**Client-side (`sites/perego/`)**
+- **Logo + every CTA link were broken in delivered mail.** Both were derived from the running site URL,
+  so inboxes received `http://perego.local/...`. New `MailBaseUrl` resolves
+  `PEREGO_MAIL_BASE_URL` → `perego_mail_base_url` option → `get_option('siteurl')`. It reads the
+  **option**, not `home_url()`, because `wp/wp-config.php` rewrites `WP_HOME` to the ngrok host on
+  tunnelled requests — which would bake an ephemeral domain into a permanent email.
+- **"Reply-to: <email> • <phone> • <company>"** was the submitter's own details echoed back under a
+  header-looking label. Now "Your details" / "بياناتك" (and "Your email" on the contact confirmation).
+- **Team notifications now use the branded `admin-notification` template** with `Reply-To` = submitter.
+  Both Perego forms drop the engine's `SendEmailListener` (which sent `label: value` plain text that
+  `WpMailDriver` then delivered as `text/html`, collapsing every line).
+- **Careers:** HR mail gains a real `Reply-To`, a **CV download link**, and a wp-admin link. The mail
+  stack has no attachment support at all, so a link is the only route — and it keeps personal data out
+  of mail servers.
+- **Applications now appear in CoreX → Data** (`table-applications`, 4 rows live) via `ManagedTable`,
+  registered in `register()` not `boot()` — see the framework note below.
+
+**Framework (`plugins/`, `addons/`) — owner-authorized, see [corex#138](https://github.com/MustafaShaaban/corex/issues/138)**
+- `Form::listeners()` was **global, not per-form**: listeners were deduplicated across all forms, so the
+  engine mailer fired for every submission regardless of the override. This was sending the team two
+  emails and no client-side change could stop it.
+- `DataRegistry` **sealed its source list during boot**, before any app could register a managed table —
+  no ordering could win. Now `defer()`red to first read.
+- Submission-inbox **reply bypassed the brand layout** that `resend()` applies, and forced `replyTo` null.
+
+**Verified:** Pest **1461 framework** (6313 assertions) + **464 client** (1323), Jest **193**. Plus live
+checks on this install: a real `perego-project-brief` dispatch now sends exactly **2** branded emails
+(was 3), the framework's own form still notifies, an unknown slug is ignored, a manual reply renders
+inside the shell with its body intact, and no rendered email contains a `perego.local` URL.
+
+**⚠ The logo will still not render until `perego-site` is deployed to the production host** —
+`peregoads.com` answers 200 but 404s the plugin asset path, so the new build is not there yet. The local
+`perego_mail_base_url` option is set to `https://peregoads.com` so test mail previews production URLs;
+delete it to go back to environment-derived behaviour.
+
+**NOT fixed, reported upstream (issue #138):** the mail stack has no attachment support; CoreX Forms has
+no file field type or `$_FILES` handling (so the CV form cannot be a CoreX Form and cannot reach the
+Submissions inbox); Data/Submissions render every cell as plain text, so the CV column shows the bare
+attachment id; the mail `Layout` logo branch is unreachable dead code; `corex-careers` discards the CV on
+its own route. Items 6–9 in the issue.
+
+## (previous, 2026-07-27) — Client round 5: five visual corrections, all verified
+
+**Patterns split into two assets.** `caca726` had replaced `wavy-corners.png` in place, which silently
+swapped the art on *every* section using it. The two client sources are different artwork, not two
+resolutions of one image: `pattern@4x` is a single diagonal ribbon (only reads well clipped to an edge),
+`Asset 4@4x` is corner-anchored waves around an empty centre (what an ambient section background needs).
+Now `wave-ribbon.png` = the ribbon, on home Work + Journal only; `wavy-corners.png` = the corner art
+rebuilt from `Asset 4@4x` at **3200x1800, 637 KB, 42 alpha levels** (beats the pre-`caca726` 930 KB /
+1800x1013 build at nearly double the resolution), on every other section.
+
+**Website projects show a logo, not a screenshot.** New `_perego_logo_id` meta + a Logo media picker in
+the existing "Website showcase" sidebar panel (web-category only). The featured image stays the
+screenshot because the Website-Making showcase needs it. A web card with a logo renders as an `<a>` to
+the live site (or an inert `<article>` with no URL) instead of a lightbox trigger; without a logo it
+falls through to the old card unchanged. **The Website-Making showcase shot** is likewise now an anchor
+to the live site — that section no longer touches the lightbox at all.
+
+**Header fixed at 360px.** It overflowed by ~33px (silently cropped by `overflow-x: clip`, and cropped
+the *other* edge under RTL): three `flex: none` children and no media query below 1024px. New
+`max-width: 480px` block — logo 46→34px (the asset is 3.25:1, so height drives width: 149.4→110.4px),
+gaps 20→12px, smaller language chips, and the hamburger 46→36px so it matches the chip height instead of
+towering over the shrunken chips. Its bars had to be re-derived, not inherited: the middle bar is
+measured from the button, `::before`/`::after` from the span. **About panel type down 10%**, scoped to
+`.home-about` rather than the shared `--fs-h2`/`--fs-lead` tokens.
+
+**Verified:** Pest **451 (1287 assertions)**, Jest **39 suites / 193**, plus a 17-check Playwright pass
+against the live site — header fits at 360/390/414/480/1025 in LTR *and* RTL with tap targets ≥24px, the
+right pattern on every section, About at 36px/17.5px (was 40/19.44), 0 lightbox triggers left in the
+showcase, all 23 shots `target="_blank" rel="noopener"`.
+
+**⚠ ACTION NEEDED — no logos uploaded yet.** All **27 web projects have 0 logos set**, so the home grid
+still shows screenshots. The code is live and falls back correctly, but the client's request is not
+*visible* until someone opens each web project and picks a Logo. That is content entry, not code.
+
+## (previous, 2026-07-27) — Client round 4 complete except two blocked captures
 
 **Portfolio rebuilt.** 154 seeded demos cut to **4** (one per lightbox type: mixed photos+video,
 gallery, video, single image — both languages), then **27 of the client's 29 real projects** imported

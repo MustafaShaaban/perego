@@ -1,5 +1,321 @@
 # Perego — Decision Log
 
+## 2026-07-28 — Round 9: a missing service says so, and the framework debt is filed
+
+### The error was correct, written, and invisible — three silencers stacked
+
+Submitting the brief with no service picked did nothing at all. Nothing was broken in any one
+layer; the failure lived in how three correct decisions composed.
+
+The runtime validated the field and produced `{ services: 'required' }`. It wrote the message into
+`.corex-form__error` inside `[data-corex-field="services"]` — and the contact page hides that whole
+wrapper with `* { display: none }`, because the chooser buttons are its visible replacement. It then
+called `focus()` on the hidden `<select>`, which a `display:none` element silently ignores, so the
+page did not even scroll. And the status line has been screen-reader-only since round 7 handed the
+visual job to the toast — which listens for `corex:form:error`, an event the runtime emits on its
+server-rejection path but *not* on its client-side one.
+
+So: a correct message in an invisible node, no focus, no banner, and no request. Every other field
+behaved, because only the `services` wrapper carries that display rule.
+
+### Watching `aria-invalid`, not hooking `submit`
+
+The chooser block already bridges the decorative buttons and the real `<select>`, so it is the right
+owner for the message too. It observes `aria-invalid` on the select rather than binding `submit`,
+because the runtime sets that attribute on **both** its error paths — one observer covers client and
+server rejection, and no validation logic is duplicated site-side.
+
+The wording is ours only for `required`, recognised by nothing being selected. "This field is
+required." names no field, and this control has no visible label of its own — the buttons took it.
+Any other rule keeps the framework's message rather than risk showing a confidently wrong one.
+
+Focus moves to the first service button only when nothing earlier in the form is also invalid.
+Otherwise the visitor would be thrown past the empty name and email they still have to fix — the
+framework's own focus choice is right in that case, and this defers to it.
+
+The live region hides on `:empty` rather than carrying `hidden`. An author `display` rule beats the
+UA `[hidden]` sheet; this project has been bitten by that before.
+
+### The toast gap was general, so it was fixed generally
+
+No Perego form showed a banner when client-side validation stopped a submit — not just this one.
+Rather than add a second toast entry point, `main.js` re-dispatches the framework's own
+`corex:form:error` on a form left with an invalid field, and the existing relay does the rest.
+Capture phase plus a next-tick read makes it independent of listener registration order.
+
+Fixing it in the runtime instead — emitting the event on the client branch, where the asymmetry
+actually lives — is the better repair, but that is framework work. It is filed upstream rather than
+patched here.
+
+### Framework changes on a client-site branch: a deliberate, recorded deviation
+
+The Role Gate says Client Site Mode does not edit Corex. Rounds 5–8 broke that rule for 26 files,
+because several client-visible defects had no site-side fix: a `<select multiple>` collapsing to one
+stored value, validation messages that could not be translated at all, a media upload that fatals on
+a palette PNG. The changes are generic — no Perego coupling in any of them — and they are committed
+here separately per module, then reported upstream as their own issues so the framework can adopt
+them rather than the fork carrying them forever.
+
+Two were already filed: [#138](https://github.com/MustafaShaaban/corex/issues/138) (per-form
+listeners, data sources sealed at boot, reply layout) and
+[#142](https://github.com/MustafaShaaban/corex/issues/142) (the WebP fatal). The rest went up as
+three module-scoped issues, so each can be triaged and closed on its own rather than as a lump:
+
+- [#148](https://github.com/MustafaShaaban/corex/issues/148) — **corex-forms + runtime.** Eight
+  items: multi-value data loss, no `novalidate` on the form renderers, the `wp.i18n` translation
+  trap, the missing `phone` rule and client rule arms, no live re-validation, no
+  `inputmode`/`autocomplete`/`dir`, the `corex:form:error` asymmetry that caused this round's bug,
+  and `.corex-spinner` depending on theme tokens it does not own.
+- [#149](https://github.com/MustafaShaaban/corex/issues/149) — **corex-config admin.** The Data
+  detail modal (two bugs, so it has never shown a value for any source) and URL linkification in
+  admin cells.
+- [#150](https://github.com/MustafaShaaban/corex/issues/150) — **corex-email.** The per-message
+  `from`, with the multi-mailbox routing rationale.
+
+Plus a comment on #138 correcting item 3: the reply layout is fixed, but `reply()` still passes
+`replyTo: null` and nothing downstream fills it, so that half is still open.
+
+## 2026-07-28 — Round 8: the phone picker joins the theme's select, and the toast gets the real glass
+
+### The picker was unstyled because of a class name, not a missing feature
+
+The theme already owns a styled select — `initCustomSelects()` in `assets/src/js/select.js`, which is
+why "Estimated budget" opens a proper listbox. It scans for `select.corex-form__input`. The injected
+country picker carried `phone-field__code` only, so it was skipped and stayed a raw OS dropdown.
+
+Adding the class is the whole fix; nothing needed exporting or re-running. Timing was never the
+problem — the block's `viewScriptModule` executes before `main.js`'s `DOMContentLoaded` handler, so
+the select is already in the DOM when the enhancer sweeps.
+
+Two things the enhancer needs that a runtime-built control does not get for free:
+
+- **A real `<label for>`.** It names its trigger from `labelIdFor()` and does **not** copy
+  `aria-label`, so a bare aria-label would have shipped a visible control with no accessible name.
+- **A `change` listener that re-syncs.** The enhancer synced its trigger only from its own `choose()`.
+  Setting `select.value` from outside fires nothing, so when a visitor typed a number that already
+  carried a country code, the trigger kept showing the old country. It now follows the native control
+  whoever moved it, and the picker dispatches `change` (guarded against re-entry) after a programmatic
+  set. That is the correct general behaviour, not a phone-specific patch.
+
+### One option, two labels
+
+`triggerLabel()` used `option.textContent`, so the closed control inherited "United Arab Emirates
+(+971)". A half-width field on this form is **150–255px**; with `max-inline-size: 42%` the picker took
+64–107px and left the number input as little as 78px. That is the reported tightness.
+
+Options may now carry `data-trigger-label` — short in the trigger, full in the list. Written into the
+theme's select rather than special-cased here, because "the trigger has less room than the list" is a
+general problem any long-optioned select has. `CountryCodes::options()` supplies both; `short` stays
+Latin in Arabic, since an ISO code and a dial code are what you read off a SIM.
+
+The picker is now a **fixed 96px**, not a percentage, and the list is allowed to be wider than the
+control that opened it (`max(272px, 100%)`) — otherwise every country name clipped. Between 901 and
+1024px the contact hero is still two-up and a half field is only ~153–190px, so the phone field takes
+the full row there; below 900px the hero collapses on its own.
+
+### The toast was cheap because it ignored the design system, not because it lacked ideas
+
+The system already defines the surface: `.glass-panel` in `perego-reference.scss` —
+`rgba(22,4,53,0.55)`, `backdrop-filter: blur(10px)`, an accent hairline, `var(--r-card)`, and an inset
+accent glow. The toast used a flat `--panel-overlay` fill, a 14px radius and a 3px side bar, and
+adopted none of it. The redesign is mostly *adoption*, not invention.
+
+What is new is anatomy: a 40px tinted medallion around the icon — the device the transactional emails
+already use for their check, so it is the brand's own — a title/message hierarchy instead of one loose
+line, and a timer bar that drains over the dismiss window so a message never simply vanishes
+mid-sentence. It pauses with the timer on hover and focus.
+
+Two rules were being broken outright. The close control was a `×` **text glyph** at roughly 20px —
+under the 44px minimum touch target, and a glyph never optically centres against an icon set; it is
+now a drawn SVG at 36px with the hit area expanded to 44. And entering and exiting shared one easing
+curve; entering is `ease-out` and exiting `ease-in`, which is what makes a thing feel placed rather
+than thrown.
+
+**`transform-origin` takes no logical keyword.** `inline-start` is invalid and silently falls back to
+the 50% default, so the timer drained outward from its middle. It is the physical side, mirrored under
+`[dir="rtl"]` — verified in the browser at 0px and 378px respectively.
+
+### A text domain that did not exist
+
+Last round's toast string used `__('Dismiss', 'perego-theme')`. The theme declares
+`Text Domain: perego-site` and ships no `perego-theme` catalogue at all, so that string could never
+translate however complete the translations were. Fixed, with the new titles added to
+`perego-site-ar.po`/`.mo` (95 translated messages) — the same class of trap as the `wp.i18n` one in
+round 7, and worth watching for: a wrong domain fails silently and looks like a missing translation.
+
+## 2026-07-28 — Client round 7: email colour, form UX, the logo wall
+
+### Email colour is an Outlook problem, so the fix is structural rather than aesthetic
+
+Two rules explain the whole report. Outlook renders with the Word engine, which **drops `rgba()`
+outright** and **does not inherit `color` from a `<table>` into a `<td>`**. The shell used `rgba()` for
+eleven text colours and five backgrounds and let value cells inherit their white — so the text fell back
+to the client default (black) while the dark card behind it disappeared.
+
+Nothing was "made darker". Every colour is now the flat hex the `rgba()` resolved to **on the surface it
+sits on**, so the rendering is unchanged wherever the old CSS worked. The invariant, stated once at the
+top of the renderer: anything that shows text states its own `color`, anything that provides contrast
+also carries a `bgcolor` attribute. Two consequences worth naming: the header's gradient now has a solid
+`background-color` **before** the `background-image`, because declared through the `background` shorthand
+a gradient-blind client got no background at all — white brand mark on white; and the CTA's near-black
+label sits on a `bgcolor` cell, because clients routinely drop `background` from an inline-block anchor.
+
+### The mail base URL was a pin, not a bug
+
+`perego_mail_base_url` was set to `https://peregoads.com` in the database, which is step 2 of
+`MailBaseUrl::resolve()` and outranks `siteurl`. That is what the option is *for* — previewing
+production URLs from a local install — but left set it makes every email link to a host that does not
+serve the file. Deleted. The constant and option stay, now documented as deliberate pins; production
+needs no configuration because there `siteurl` already is the real domain.
+
+### No JS library for the phone field, by constitution
+
+Principle VI is unambiguous: *"MUST NOT load any global CSS/JS library. Ever."* That settles
+intl-tel-input regardless of its UX. The picker is a `<select>` styled by the site's own rules, sharing
+one underline with the number input, and — the part that matters — it carries **no `name`**. The tel
+input stays the single named field, so the runtime's `collect()` is untouched and what gets submitted,
+validated and dialled is one E.164 string.
+
+`max:24` was replaced by a `phone` rule, not supplemented. A character cap accepted `01016999700`; for a
+studio serving Egypt, Saudi and the UAE the country code is the part of a phone number that matters.
+
+### Client-side messages come from PHP, because `wp.i18n` needs a file nobody ships
+
+The runtime translated its messages through `wp.i18n.__(…, 'corex')`, which requires a per-domain **JS**
+translation file to be built and shipped. None exists, so every validation message was English on the
+Arabic pages no matter what. The renderer now emits the same strings in a `data-corex-messages`
+attribute, built with PHP `__()` — where the site's existing `gettext_corex` filter already translates
+them, with nothing new to build. The runtime's own table survives only as the fallback.
+
+Related: the server rejected with the raw literal `'Validation failed.'`, and the runtime **prefers**
+`envelope.message` over the translated `data-corex-error` — so the banner was English even when the
+attribute was not. Those three reasons are translatable now.
+
+### Live validation re-validates one field, not the form
+
+`clearErrors`/`showErrors` operate on the whole form, which is right on submit and wrong while typing —
+re-running them would blank a neighbour's error the moment you edited this field. The new path validates
+the single edited field against its own schema entry. It fires on `blur` always, and on input only once
+a field is already marked invalid: nagging someone on their first keystroke is worse than saying nothing.
+
+### The wall stays a wall of marks
+
+A web card used to fall back to its screenshot when no logo was set. With 24 of 29 logos in place that
+would have put five photographs among the brand marks, which reads as a mistake rather than as missing
+content. Every web card is a logo card now; without an image it renders a typographic name plate — same
+aspect box, same outbound link, obviously awaiting an asset. **No logo is better than a wrong one** is
+also why `og:image` was removed from the fetcher's candidate list after it returned a stock photograph
+of a gold bar for Bullion Trading Center.
+
+Ranking beats collecting: taking the first logo-shaped image on a page picked a **sponsor's** logo for
+Our Forum and a near-invisible watermark for NAMA. Candidates are scored so a filename matching the
+site's own name wins, with two explicit per-site overrides where that still loses. Naming two URLs is
+more honest than tuning a heuristic until it appears to work.
+
+Order comes from `menu_order` 1–29 rather than date DESC, which was really "whatever order the importer
+ran in". e&'s qualifier reuses the **existing** `_perego_role` meta — no new field — so any project can
+be annotated from the admin later.
+
+### Framework edits this round
+
+Four, all additive: the `phone` rule and the message-table attribute (corex-forms), URL linkification in
+the admin plus the two Data-explorer detail bugs (corex-config), live re-validation and two rules in the
+runtime (corex-core), and a genuine crash fix in corex-media — `imagewebp()` **fatals** on a palette
+image, and an exported logo is usually exactly that, so it took down an upload mid-request. Continues the
+authorization recorded for [corex#138](https://github.com/MustafaShaaban/corex/issues/138).
+
+## 2026-07-27 — Client round 6: mail identity, careers routing, multi-value fields
+
+### Three mailboxes, chosen by template, not by caller
+
+FluentSMTP routes on the From address — each configured address is a separate authenticated
+connection — so the sender is not cosmetic. The framework had no way to express it: `MailRequest`
+carried no `from`, and `WpMailDriver` read one global `mail.from.address`.
+
+The split is by *who is expected to reply*, which is the only distinction that changes behaviour for
+a reader:
+
+| Mailbox | Carries | Why |
+|---|---|---|
+| `info@` | Visitor confirmations | A person who just wrote to us may answer the confirmation. It has to be monitored. |
+| `noreply@` | Team notifications, comment alerts | Machine-generated. The address itself says nobody reads replies. |
+| `contact@` | A reply typed in the Submissions inbox | A person wrote it, so the client's answer must reach a person. |
+
+**The decision lives in `PeregoMailbox`, keyed by template name, not at the call sites.** There is one
+mail policy for the site, so one place knows it; a call site that had to pass a sender would eventually
+pass the wrong one.
+
+### `Reply-To: noreply@` everywhere — except the one email where it would cost something
+
+The owner asked for no-reply on all mail. Applied literally that removes the team's ability to answer a
+client by hitting Reply on a notification, which is the standard CRM behaviour and the thing the previous
+round deliberately added. The exception is therefore **the internal notification only**: it keeps the
+submitter.
+
+What the request was actually reacting to is fixed in full — confirmations carried the *visitor's own*
+address as `Reply-To`, so replying to a confirmation replied to yourself. A blank reply-to now resolves to
+`noreply@` rather than `null`, because `null` falls through to whatever the global mail config holds, and
+that is a policy this site does not control.
+
+### Careers mail was never a mail bug
+
+The endpoint read `get_option('admin_email')` — still the WordPress default `admin@example.com` on this
+install — while the forms listener read the configured `forms.email.recipient`. Two paths, two answers,
+and applications went to a mailbox nobody owns. The CV download link reported missing had been
+implemented the round before; it was simply never seen. **One `TeamRecipient` now serves both**, which is
+the actual fix: any future sender that resolves its own recipient will drift again.
+
+**Applications are mirrored into the Submissions inbox as well as `corex_applications`.** Careers is a
+bespoke REST endpoint (CoreX Forms still has no file-field type), so nothing wrote a `corex_submission`
+and the client looked for applications where every other form's submissions live and found nothing.
+Duplication is the honest trade here: the inbox row is the *submission*, the table row is the
+*recruiting record* (status, CV attachment id), and they answer different questions.
+
+**The "In admin" link is built from `admin_url()`, not `get_edit_post_link()`.** The latter returns null
+unless the *current* user can edit the post; on an anonymous public submission there is no current user,
+so that row could never have rendered. Emitting the URL directly is safe — wp-admin still authenticates
+whoever follows it.
+
+### Multi-select: the browser was the bug, but both ends needed fixing
+
+`collect()` read `select.value`, which for `<select multiple>` reports **only the first selected
+option**. Confirmed against stored submission 650: three services picked, `motion-graphics` stored.
+
+The client fix alone would have made it worse. `SubmitController::sanitizeShape()` had no `multi-select`
+arm, and `sanitize_text_field()` returns `''` for an array — so sending a real list would have blanked
+the field entirely. **The two changes only make sense together**, and the server arm is copied verbatim
+from `FlowSubmissionController`, which already had it right; the two submit paths must not hold two
+opinions about the same field type.
+
+Display was a third, separate decision: a *list* of scalars renders as `a, b`, while keyed and nested
+data keeps its JSON. Joining `['source' => 'newsletter']` would print `newsletter` and throw away the
+half of the value that says what it is.
+
+### The invisible spinner was a token problem, not a CSS-authoring problem
+
+`.corex-spinner` sets `border: var(--wp--custom--focus--width) solid currentcolor` and
+`animation: corex-spin var(--wp--custom--motion--duration--slow) linear infinite`. This theme defines
+neither custom property, and **an unresolved `var()` inside a shorthand invalidates the entire
+declaration at computed-value time** — not just the one component. The result was an element with no
+border-style and no animation: a 1em transparent box. The theme had even styled its colour, which is why
+it looked deliberate.
+
+Restated in real values in the adapter rather than adding the two tokens to `theme.json`, because those
+names are the framework's vocabulary, not this theme's, and adopting them would tie the palette to
+another project's naming. The careers form reuses `.footer-form__submit.is-loading`, which the reference
+stylesheet already spins — a second spinner would have been a second answer to a solved problem.
+
+### Framework edits, continued authorization
+
+Five fixes could not be made from `sites/perego/`: the `from` field, the multi-select collapse, and the
+list rendering all live in `plugins/` and `addons/`. This continues the authorization recorded for
+[corex#138](https://github.com/MustafaShaaban/corex/issues/138) in the previous round; every change is
+additive and backward compatible (`from` defaults to null, the sanitize arm mirrors an existing one).
+
+The one thing deliberately **not** done as a framework edit: the branded inbox reply. `SubmissionEmailGateway`
+is the framework's documented seam for exactly this, so Perego binds its own decorator and keeps
+`resend()`/`log()` delegated to the engine that owns those records.
+
 ## 2026-07-27 — Client round 4, phase 3: legal content and the share row
 
 ### The legal documents converted to real blocks, not a pasted blob
@@ -2287,3 +2603,95 @@ primitives and the parity-test harness are built once, before the first componen
 `edit()` (live-canvas, parity-tested); a block whose content is a runtime query keeps `<ServerSideRender>` with
 a styled placeholder. New repeaters use structured attributes; legacy JSON-string values are upgraded at read
 time, never dropped.
+
+## 2026-07-27 — Client round 5: two pattern assets, and a logo field rather than reusing the featured image
+
+**The wave pattern is now two files, not one.** `caca726` swapped `wavy-corners.png` in place with the
+client's `pattern@4x` source. Because six surfaces reference that one filename, changing the bytes changed
+the art everywhere — which is how the ribbon ended up drawing a band through the middle of the Services
+teaser and the Clients carousel. Inspection settled that these are **different artwork, not two
+resolutions of one image**: `Asset 4@4x` is 5761x3241 (1.777, matching the pre-`caca726` 1800x1013 build)
+and draws waves anchored in the corners around an empty centre; `pattern@4x` is 7797x4192 (1.860, matching
+the 3200x1720 build) and draws one diagonal ribbon.
+
+**Decision:** name each asset after its art and choose per section. `wave-ribbon.png` keeps the ribbon and
+is confined to the two places that clip it — home Work (`block-size: 55%`, anchored bottom) and the Journal.
+`wavy-corners.png` is rebuilt from `Asset 4@4x` for everything else. Rebuilt rather than restored from git
+so the corner art gets the same treatment the ribbon got: 3200px wide, palette PNG, **637 KB with all 42
+alpha levels intact** — smaller than the 930 KB it shipped at before, at nearly double the resolution.
+The `caca726` reasoning still holds: sparse line work on transparency indexes far better than it compresses.
+
+*Consequence to remember:* replacing a shared image asset in place is a silent global restyle. If two
+sections need different art, they need different filenames — the filename is the interface.
+
+**Website projects get their own logo field; the featured image stays the screenshot.** The client asked
+for logos instead of screenshots on the home Work grid. The obvious cheap route — upload the logo *as* the
+featured image — was rejected: `WebShowcaseRenderer` builds the Website-Making showcase's browser-chrome
+cards from that same featured image and **drops any card whose image is missing**, so overwriting it would
+have traded one surface for another. Two images are genuinely needed, so `_perego_logo_id` is registered
+alongside the existing showcase meta and surfaced through the `media` field type the panel schema already
+had. Web cards fall back to the old screenshot card when no logo is set, so the change is invisible until
+content arrives rather than leaving 27 blank cards.
+
+**`metaWithEnFallback()` is not safe for integer meta.** It treats only `''` as empty, but a key registered
+with `'default' => 0` returns the *non-empty* string `"0"` when unset, so the Arabic-translation fallback
+would never fire. `ProjectRepository::logoId()` therefore mirrors the featured-image fallback shape instead.
+The same trap applies to any future non-string meta — `TranslatedMeta::value()` exists for exactly this
+reason and is what the gallery key uses.
+
+**Neither surface opens a lightbox for a website any more.** On a card already wearing browser chrome, a
+bigger picture of the site is not the useful destination; the site is. Both the home logo card and the
+showcase shot became `<a target="_blank" rel="noopener">`, and both degrade to non-focusable markup
+(`<article>` / `<div>`) when no URL is recorded — a control that does nothing on click should not take
+focus. This retired the `preview` copy string in both locales.
+
+## 2026-07-27 — Email: a stable mail base URL, branded team notifications, and three framework fixes
+
+**Email URLs are resolved from the site *option*, never the request.** The logo and every CTA were built
+with `plugins_url()`/`home_url()`, which resolve against the running site URL — so delivered mail carried
+`http://perego.local/...`. `MailBaseUrl` resolves `PEREGO_MAIL_BASE_URL` → `perego_mail_base_url` option →
+`get_option('siteurl')`, and `rebase()` swaps only the origin of a URL WordPress already built (so a
+subdirectory install or a moved `wp-content` still works).
+
+The deliberate part is reading the **option** rather than calling `home_url()`. `wp/wp-config.php` rewrites
+`WP_HOME`/`WP_SITEURL` to the ngrok host whenever a request arrives through a tunnel; `home_url()` honours
+those constants, so mail sent during a tunnelled request would embed a hostname that dies with the tunnel.
+The option is the site's stable identity, so production needs no configuration at all. `resolve()` never
+returns `''` — an empty base renders CTA links as `/work`, which no mail client can follow.
+
+*Consequence to remember:* an email is read elsewhere, later, by someone not on this network. Any URL in
+one must come from durable configuration, never from the request that happened to send it.
+
+**The team notification is Perego's, not the engine's.** CoreX's `SendEmailListener` builds a
+`label: value` plain-text body, and `WpMailDriver` delivers every message as `text/html` — so the
+notification arrived as one unformatted run, with no `Reply-To`. Both Perego forms now drop that listener
+via `Form::listeners()` and `PeregoFormMailListener` sends the branded `admin-notification` template
+instead, with `Reply-To` = the submitter. The recipient still comes from the engine's own
+`forms.email.recipient` config key, so one setting governs both paths rather than two drifting apart.
+
+**The CV travels as a link, not an attachment.** The mail stack has no attachments field anywhere —
+`MailRequest`, `EmailMessage` and `MessageBuilder` carry none, and `WpMailDriver` calls `wp_mail()` with
+four arguments. Adding one is upstream work. A link is also the better answer on its own merits: a CV is
+personal data, and a link keeps it out of mail servers, forwarded threads and inbox backups. The stored
+attachment is already private and its id is already on the application row, so nothing new is persisted.
+
+**Three fixes had to be made in the framework, because no client-side change could reach them.** Recorded
+here because they explain client behaviour; the canonical record is [corex#138](https://github.com/MustafaShaaban/corex/issues/138).
+
+1. *`Form::listeners()` was global.* `FormsServiceProvider::registerListeners()` deduplicated listener ids
+   across **all** forms, so the engine mailer ran for every submission whatever a form declared. Overriding
+   `listeners()` could not remove anything — the team was getting two emails and Perego could not stop it.
+   Now one listener resolves the form by slug at event time and runs only its list.
+2. *Data sources were sealed at boot.* `DataRegistry` looped `ManagedTables` into sources inside its
+   singleton factory, which corex-config resolves during its own boot. Applications registered later never
+   appeared, and no ordering could win: the framework boots before the apps extending it. Added
+   `DataRegistry::defer()` so the snapshot happens on first read. Perego registers its table in
+   `register()`, not `boot()` — every provider registers before any provider boots, and that is the last
+   moment that still counts.
+3. *Submission reply skipped the layout.* `EmailStudioSubmissionGateway::reply()` sent the operator's raw
+   textarea HTML as the whole body while `resend()`, directly below it, rendered through the layout.
+
+**Deliberately left to upstream:** attachment support in the mail stack, a `file` field type in CoreX
+Forms, attachment rendering in the Data/Submissions cells, the unreachable `Layout` logo branch, and
+`corex-careers` discarding the CV on its own route. Until the Data cell renderer lands, the CV column shows
+the bare attachment id — which is why the notification email carries the working download link.
