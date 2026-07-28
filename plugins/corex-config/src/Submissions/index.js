@@ -8,6 +8,7 @@ import {
 import { Button, Modal, Spinner } from '@wordpress/components';
 import { __, _n, sprintf } from '@wordpress/i18n';
 import CorexSelect from '../admin/components/CorexSelect.js';
+import FieldValue from '../admin/components/FieldValue.js';
 import { buildExportPayload, toggleSubmission } from './inbox.js';
 import { useInbox } from './useInbox.js';
 
@@ -235,7 +236,7 @@ function DetailDrawer( { drawer, inbox } ) {
 
 function DetailSection( { title, value } ) {
 	const entries = Object.entries( value || {} );
-	return <section><h3>{ title }</h3>{ entries.length === 0 ? <p className="corex-inbox__muted">{ __( 'No data recorded.', 'corex' ) }</p> : <dl className="corex-inbox__fields">{ entries.map( ( [ key, item ] ) => <div key={ key }><dt>{ key }</dt><dd>{ typeof item === 'object' ? JSON.stringify( item ) : String( item ) }</dd></div> ) }</dl> }</section>;
+	return <section><h3>{ title }</h3>{ entries.length === 0 ? <p className="corex-inbox__muted">{ __( 'No data recorded.', 'corex' ) }</p> : <dl className="corex-inbox__fields">{ entries.map( ( [ key, item ] ) => <div key={ key }><dt>{ key }</dt><dd><FieldValue value={ item } empty="" /></dd></div> ) }</dl> }</section>;
 }
 
 function ConfirmBulk( { preview, close, apply } ) {

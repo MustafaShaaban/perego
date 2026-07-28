@@ -117,6 +117,7 @@ use Corex\Config\Submissions\WpSubmissionBulkPreviewStore;
 use Corex\Config\Submissions\WpSubmissionExportJobQueue;
 use Corex\Config\Submissions\WpSubmissionExportStore;
 use Corex\Config\Retention\SubmissionRetentionStore;
+use Corex\Database\Schema\ManagedTable;
 use Corex\Database\Schema\ManagedTables;
 use Corex\Database\Schema\Migrator;
 use Corex\Config\Insights\InsightRegistry;
@@ -426,10 +427,16 @@ final class ConfigServiceProvider extends ServiceProvider
             $registry->register(new SubmissionsSource($c->make(SubmissionsReader::class)));
 
             // Every table an app marked managed appears as its own source — no admin code (spec 038).
-            $reader = new WpTableDataReader($c->make(Migrator::class));
-            foreach ($c->make(ManagedTables::class)->all() as $table) {
-                $registry->register(new TableDataSource($table, $reader));
-            }
+            // Deferred, not looped in here: this singleton is built during boot, so reading ManagedTables
+            // now would freeze the list before apps that boot later have registered theirs.
+            $registry->defer(static function () use ($c): array {
+                $reader = new WpTableDataReader($c->make(Migrator::class));
+
+                return array_map(
+                    static fn (ManagedTable $table): TableDataSource => new TableDataSource($table, $reader),
+                    $c->make(ManagedTables::class)->all(),
+                );
+            });
 
             return $registry;
         });

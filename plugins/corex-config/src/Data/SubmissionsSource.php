@@ -257,11 +257,35 @@ final class SubmissionsSource implements QueryableDataSource, SchemaAwareDataSou
         foreach ($fields as $name => $value) {
             $out[] = [
                 'label' => ucwords(str_replace(['_', '-'], ' ', (string) $name)),
-                'value' => is_scalar($value) ? (string) $value : (string) wp_json_encode($value),
+                'value' => self::readable($value),
             ];
         }
 
         return $out;
+    }
+
+    /**
+     * A field value as a person should read it.
+     *
+     * Multi-value fields (multi-select, checkbox group) are stored as lists, and JSON-encoding them
+     * showed an operator `["brand-identity","motion-graphics"]` where they expected two services.
+     * A *list* of scalars is exactly a comma-separated sentence, so it reads as one.
+     *
+     * A keyed array is deliberately not covered: joining `['source' => 'newsletter']` would print
+     * `newsletter` and throw the key away, which loses the half of the value that says what it is.
+     * Keyed and nested data keeps its JSON, where the structure is the point.
+     */
+    private static function readable(mixed $value): string
+    {
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+
+        if (is_array($value) && array_is_list($value) && $value === array_filter($value, 'is_scalar')) {
+            return implode(', ', array_map('strval', $value));
+        }
+
+        return (string) wp_json_encode($value);
     }
 
     /**
@@ -273,7 +297,7 @@ final class SubmissionsSource implements QueryableDataSource, SchemaAwareDataSou
     {
         $parts = [];
         foreach ($fields as $name => $value) {
-            $parts[] = $name . ': ' . (is_scalar($value) ? (string) $value : (string) wp_json_encode($value));
+            $parts[] = $name . ': ' . self::readable($value);
         }
 
         return implode(' · ', $parts);
