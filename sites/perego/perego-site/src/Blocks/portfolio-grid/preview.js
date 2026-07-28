@@ -145,6 +145,35 @@ function CardBody( { card } ) {
 }
 
 /**
+ * What a card contains, without the element that contains it.
+ *
+ * Split out because the canvas cannot reuse the front end's `<button>`/`<a>`: the sorting affordance
+ * is itself a pair of buttons, and nesting an interactive element inside another is invalid and
+ * unusable. In the editor the card becomes a `<div>` carrying the same classes — which is what
+ * `.blog-grid` lays out and what the stylesheet targets — with these contents inside it.
+ */
+export function PortfolioCardContent( { card, galleryBadge } ) {
+	return (
+		<>
+			<CardMedia card={ card } galleryBadge={ galleryBadge } />
+			<CardBody card={ card } />
+		</>
+	);
+}
+
+/** The classes a card wears, whatever element it is. */
+export function cardClassName( card ) {
+	const isWebCard = card.category === 'web';
+	const hasLogo = isWebCard && card.logoUrl !== '';
+
+	return [
+		'post-card reveal',
+		isWebCard ? 'post-card--logo' : '',
+		isWebCard && ! hasLogo ? 'post-card--plate' : '',
+	].filter( Boolean ).join( ' ' );
+}
+
+/**
  * One card, in whichever of the three shapes the project calls for.
  *
  * `extraProps` carries the sorting wiring. The plate variant is an `<article>` on the front end —
@@ -153,19 +182,9 @@ function CardBody( { card } ) {
  */
 export function PortfolioCard( { card, galleryBadge, extraProps = {}, isEditor = false } ) {
 	const isWebCard = card.category === 'web';
-	const hasLogo = isWebCard && card.logoUrl !== '';
-	const className = [
-		'post-card reveal',
-		isWebCard ? 'post-card--logo' : '',
-		isWebCard && ! hasLogo ? 'post-card--plate' : '',
-	].filter( Boolean ).join( ' ' );
+	const className = cardClassName( card );
 
-	const inner = (
-		<>
-			<CardMedia card={ card } galleryBadge={ galleryBadge } />
-			<CardBody card={ card } />
-		</>
-	);
+	const inner = <PortfolioCardContent card={ card } galleryBadge={ galleryBadge } />;
 
 	if ( isWebCard && card.siteUrl !== '' ) {
 		return (

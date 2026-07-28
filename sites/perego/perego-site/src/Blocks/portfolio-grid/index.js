@@ -26,7 +26,7 @@ import { LinkPicker, linkFromAttributes, linkToAttributes } from '../../Editor/L
 import { PanelSection } from '../../Editor/PanelSection';
 import { SortableItem } from '../../Editor/SortableItem';
 import { useCanvasSort } from '../../Editor/useCanvasSort';
-import { PortfolioCard, PortfolioGridSkeleton, placeholderCards } from './preview';
+import { PortfolioCardContent, PortfolioGridSkeleton, cardClassName, placeholderCards } from './preview';
 import { useProjectCards } from './useProjectCards';
 import metadata from './block.json';
 import './style.scss';
@@ -215,8 +215,12 @@ function Edit( { attributes, setAttributes, isSelected } ) {
 						sort={ sort }
 						isEnabled={ isSelected && isReady }
 						label={ card.title }
+						// The wrapper IS the card: `.blog-grid` lays out its children, and the card's
+						// own classes carry the whole visual treatment, so they belong on the element
+						// the grid places rather than on something nested inside it.
+						className={ cardClassName( card ) }
 					>
-						<PortfolioCard card={ card } galleryBadge={ __( 'Gallery', 'perego-site' ) } isEditor />
+						<PortfolioCardContent card={ card } galleryBadge={ __( 'Gallery', 'perego-site' ) } />
 					</SortableItem>
 				) }
 			/>

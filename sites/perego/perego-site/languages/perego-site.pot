@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-28T19:04:39+00:00\n"
+"POT-Creation-Date: 2026-07-28T23:00:58+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: perego-site\n"
@@ -257,7 +257,13 @@ msgid "Perego بيريجو"
 msgstr ""
 
 #: src/Blocks/PortfolioGridRenderer.php:62
-#: src/Blocks/ServiceSelectedWorkRenderer.php:79
+#: src/Blocks/ServiceSelectedWorkRenderer.php:93
+#: build/Blocks/portfolio-grid/index.js:6
+#: build/Blocks/service-selected-work/index.js:6
+#: src/Blocks/portfolio-grid/index.js:203
+#: src/Blocks/portfolio-grid/index.js:223
+#: src/Blocks/service-selected-work/index.js:251
+#: src/Blocks/service-selected-work/index.js:266
 msgid "Gallery"
 msgstr ""
 
@@ -269,7 +275,7 @@ msgstr ""
 
 #. translators: %s: project title.
 #: src/Blocks/PortfolioGridRenderer.php:204
-#: src/Blocks/ServiceSelectedWorkRenderer.php:158
+#: src/Blocks/ServiceSelectedWorkRenderer.php:172
 #, php-format
 msgid "Open %s"
 msgstr ""
@@ -346,7 +352,9 @@ msgstr ""
 msgid "Next"
 msgstr ""
 
-#: src/Blocks/ServiceSelectedWorkRenderer.php:112
+#: src/Blocks/ServiceSelectedWorkRenderer.php:126
+#: build/Blocks/service-selected-work/index.js:6
+#: src/Blocks/service-selected-work/index.js:251
 msgid "Load more"
 msgstr ""
 
@@ -402,6 +410,8 @@ msgid "Privacy Policy"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:51
+#: build/Blocks/portfolio-grid/index.js:6
+#: src/Blocks/portfolio-grid/index.js:198
 msgid "Home"
 msgstr ""
 
@@ -417,26 +427,34 @@ msgid "Services"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:57
+#: build/Blocks/portfolio-grid/index.js:1
 #: build/EditorPanels/index.js:3
+#: src/Blocks/portfolio-grid/index.js:51
 #: src/EditorPanels/schema.js:126
 #: src/EditorPanels/schema.js:239
 msgid "Video Editing"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:58
+#: build/Blocks/portfolio-grid/index.js:1
 #: build/EditorPanels/index.js:3
+#: src/Blocks/portfolio-grid/index.js:52
 #: src/EditorPanels/schema.js:127
 msgid "2D Motion Graphics"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:59
+#: build/Blocks/portfolio-grid/index.js:1
 #: build/EditorPanels/index.js:3
+#: src/Blocks/portfolio-grid/index.js:53
 #: src/EditorPanels/schema.js:128
 msgid "Graphic Design"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:60
+#: build/Blocks/portfolio-grid/index.js:1
 #: build/EditorPanels/index.js:3
+#: src/Blocks/portfolio-grid/index.js:54
 #: src/EditorPanels/schema.js:129
 msgid "Website Making"
 msgstr ""
@@ -583,7 +601,7 @@ msgstr ""
 msgid "Say hello."
 msgstr ""
 
-#: src/PeregoSiteServiceProvider.php:218
+#: src/PeregoSiteServiceProvider.php:219
 msgid "Careers application"
 msgstr ""
 
@@ -687,7 +705,7 @@ msgstr ""
 #: build/Blocks/site-header/index.js:1
 #: build/EditorPanels/index.js:1
 #: src/Editor/RecordPicker.js:67
-#: src/Editor/RepeaterControls.js:18
+#: src/Editor/RepeaterControls.js:23
 msgid "Move up"
 msgstr ""
 
@@ -698,7 +716,7 @@ msgstr ""
 #: build/Blocks/site-header/index.js:1
 #: build/EditorPanels/index.js:1
 #: src/Editor/RecordPicker.js:69
-#: src/Editor/RepeaterControls.js:23
+#: src/Editor/RepeaterControls.js:28
 msgid "Move down"
 msgstr ""
 
@@ -943,7 +961,7 @@ msgstr ""
 #: build/Blocks/site-footer/index.js:1
 #: build/Blocks/site-header/index.js:1
 #: build/EditorPanels/index.js:1
-#: src/Editor/RepeaterControls.js:11
+#: src/Editor/RepeaterControls.js:16
 #: src/EditorPanels/ClientGallery.js:104
 msgid "item"
 msgstr ""
@@ -952,7 +970,7 @@ msgstr ""
 #: build/Blocks/site-footer/index.js:1
 #: build/Blocks/site-header/index.js:1
 #: build/EditorPanels/index.js:1
-#: src/Editor/RepeaterControls.js:28
+#: src/Editor/RepeaterControls.js:33
 msgid "Duplicate"
 msgstr ""
 
@@ -960,7 +978,7 @@ msgstr ""
 #: build/Blocks/site-footer/index.js:1
 #: build/Blocks/site-header/index.js:1
 #: build/EditorPanels/index.js:1
-#: src/Editor/RepeaterControls.js:33
+#: src/Editor/RepeaterControls.js:38
 #, js-format
 msgid "Remove %s"
 msgstr ""
@@ -1030,11 +1048,11 @@ msgid "CTA link"
 msgstr ""
 
 #: build/Blocks/hero-slider/index.js:1
-#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/portfolio-grid/index.js:5
 #: build/Blocks/project-navigation/index.js:1
 #: build/Blocks/site-header/index.js:1
 #: src/Blocks/hero-slider/index.js:118
-#: src/Blocks/portfolio-grid/index.js:101
+#: src/Blocks/portfolio-grid/index.js:178
 #: src/Blocks/project-navigation/index.js:98
 #: src/Blocks/site-header/index.js:186
 msgid "Button link"
@@ -1068,11 +1086,11 @@ msgid "Journal heading"
 msgstr ""
 
 #: build/Blocks/journal-header/index.js:1
-#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/portfolio-grid/index.js:5
 #: build/EditorPanels/index.js:3
 #: src/Blocks/journal-header/index.js:49
-#: src/Blocks/portfolio-grid/index.js:67
-#: src/Blocks/portfolio-grid/index.js:86
+#: src/Blocks/portfolio-grid/index.js:144
+#: src/Blocks/portfolio-grid/index.js:163
 #: src/EditorPanels/index.js:524
 msgid "Title"
 msgstr ""
@@ -1083,54 +1101,186 @@ msgid "Lead"
 msgstr ""
 
 #: build/Blocks/journal-header/index.js:1
-#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/portfolio-grid/index.js:5
 #: src/Blocks/journal-header/index.js:61
-#: src/Blocks/portfolio-grid/index.js:74
+#: src/Blocks/portfolio-grid/index.js:151
 msgid "Leave a field empty to keep the current wording."
 msgstr ""
 
+#. translators: %s: project name.
 #: build/Blocks/portfolio-grid/index.js:1
-#: src/Blocks/portfolio-grid/index.js:65
+#: build/Blocks/service-selected-work/index.js:1
+#: src/Editor/SortableItem.js:33
+#: src/Editor/SortableItem.js:34
+msgid "Move earlier"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/service-selected-work/index.js:1
+#: src/Editor/SortableItem.js:42
+#: src/Editor/SortableItem.js:43
+msgid "Move later"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:1
+#: src/Blocks/portfolio-grid/index.js:50
+msgid "All"
+msgstr ""
+
+#. translators: 1: project name. 2: new position. 3: total. 4: what the new position does to the tile.
+#: build/Blocks/portfolio-grid/index.js:2
+#: build/Blocks/service-selected-work/index.js:3
+#: src/Editor/useCanvasSort.js:63
+#, js-format
+msgid "%1$s moved to position %2$d of %3$d. %4$s"
+msgstr ""
+
+#. translators: 1: project name. 2: current position. 3: total.
+#: build/Blocks/portfolio-grid/index.js:3
+#: build/Blocks/service-selected-work/index.js:4
+#: src/Editor/useCanvasSort.js:121
+#, js-format
+msgid "Grabbed %1$s. Position %2$d of %3$d. Use Move earlier and Move later, or press Escape to cancel."
+msgstr ""
+
+#. translators: 1: target position. 2: total.
+#: build/Blocks/portfolio-grid/index.js:4
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Editor/useCanvasSort.js:137
+#, js-format
+msgid "Moving to position %1$d of %2$d."
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:4
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Editor/useCanvasSort.js:158
+msgid "Move cancelled."
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:4
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Blocks/portfolio-grid/index.js:104
+#: src/Blocks/service-selected-work/index.js:212
+msgid "Order"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:4
+#: src/Blocks/portfolio-grid/index.js:107
+msgid "Drag a card to reorder it, or use the Move earlier / Move later buttons on each card."
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:4
+#: src/Blocks/portfolio-grid/index.js:108
+msgid "Select this block to reorder its cards."
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:4
+#: src/Blocks/portfolio-grid/index.js:111
+msgid "This order applies to this grid only — the Work archive keeps its own."
+msgstr ""
+
+#. translators: %d: number of projects published since the order was set.
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:117
+#, js-format
+msgid "%d project published since this order was set appears at the end."
+msgid_plural "%d projects published since this order was set appear at the end."
+msgstr[0] ""
+msgstr[1] ""
+
+#: build/Blocks/portfolio-grid/index.js:5
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Blocks/portfolio-grid/index.js:129
+#: src/Blocks/service-selected-work/index.js:220
+msgid "Reset to automatic order"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:5
+#: build/EditorPanels/index.js:3
+#: src/Blocks/portfolio-grid/index.js:133
+#: src/EditorPanels/index.js:257
+msgid "Which projects"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:136
+msgid "Featured projects only"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:137
+msgid "The home page leads with a shortlist. The Work archive should show everything."
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:142
 msgid "Archive heading"
 msgstr ""
 
-#: build/Blocks/portfolio-grid/index.js:1
-#: src/Blocks/portfolio-grid/index.js:71
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:148
 msgid "Intro"
 msgstr ""
 
-#: build/Blocks/portfolio-grid/index.js:1
-#: src/Blocks/portfolio-grid/index.js:78
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:155
 msgid "Show the demo note"
 msgstr ""
 
-#: build/Blocks/portfolio-grid/index.js:1
-#: src/Blocks/portfolio-grid/index.js:79
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:156
 msgid "The temporary \"example projects\" line under the intro. Turn this off once real projects are published."
 msgstr ""
 
-#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/portfolio-grid/index.js:5
 #: build/Blocks/project-navigation/index.js:1
-#: src/Blocks/portfolio-grid/index.js:84
+#: src/Blocks/portfolio-grid/index.js:161
 #: src/Blocks/project-navigation/index.js:94
 msgid "Closing call to action"
 msgstr ""
 
-#: build/Blocks/portfolio-grid/index.js:1
-#: src/Blocks/portfolio-grid/index.js:90
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:167
 msgid "Body"
 msgstr ""
 
-#: build/Blocks/portfolio-grid/index.js:1
+#: build/Blocks/portfolio-grid/index.js:5
 #: build/Blocks/site-header/index.js:1
-#: src/Blocks/portfolio-grid/index.js:95
+#: src/Blocks/portfolio-grid/index.js:172
 #: src/Blocks/site-header/index.js:175
 msgid "Button text"
 msgstr ""
 
-#: build/Blocks/portfolio-grid/index.js:1
-#: src/Blocks/portfolio-grid/index.js:102
+#: build/Blocks/portfolio-grid/index.js:5
+#: src/Blocks/portfolio-grid/index.js:179
 msgid "Leave empty for the contact page."
+msgstr ""
+
+#. translators: %d: total number of projects shown in the canvas.
+#: build/Blocks/portfolio-grid/index.js:6
+#: src/Blocks/portfolio-grid/index.js:189
+#, js-format
+msgid "All %d projects are shown here so you can order them. Visitors see 9 at a time, filtered by service. The preview uses the English projects; the Arabic page shows their translations in the same order."
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:6
+#: src/Blocks/portfolio-grid/index.js:192
+msgid "Loading projects…"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:6
+#: src/Blocks/portfolio-grid/index.js:200
+msgid "Example projects shown below."
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:6
+#: src/Blocks/portfolio-grid/index.js:201
+msgid "Filter projects by service"
+msgstr ""
+
+#: build/Blocks/portfolio-grid/index.js:6
+#: src/Blocks/portfolio-grid/index.js:202
+msgid "No projects match this filter yet."
 msgstr ""
 
 #: build/Blocks/post-breadcrumb/index.js:1
@@ -1144,8 +1294,10 @@ msgid "Project title"
 msgstr ""
 
 #: build/Blocks/project-navigation/index.js:1
+#: build/Blocks/service-selected-work/index.js:1
 #: build/EditorPanels/index.js:3
 #: src/Blocks/project-navigation/index.js:53
+#: src/Blocks/service-selected-work/index.js:169
 #: src/EditorPanels/index.js:242
 msgid "Untitled Project"
 msgstr ""
@@ -1188,6 +1340,64 @@ msgstr ""
 #: build/Blocks/related-posts/index.js:1
 #: src/Blocks/related-posts/index.js:39
 msgid "Untitled"
+msgstr ""
+
+#: build/Blocks/service-selected-work/index.js:1
+#: src/Blocks/service-selected-work/index.js:112
+msgid "Website Making shows the browser-chrome showcase rather than the mosaic, so its cards are all one shape and ordering them changes no crops."
+msgstr ""
+
+#. translators: 1: the shape this slot wants. 2: the shape actually being used.
+#: build/Blocks/service-selected-work/index.js:2
+#: src/Blocks/service-selected-work/index.js:188
+#, js-format
+msgid "No %1$s crop — using %2$s"
+msgstr ""
+
+#. translators: %s: crop shape name.
+#: build/Blocks/service-selected-work/index.js:2
+#: src/Blocks/service-selected-work/index.js:192
+#, js-format
+msgid "No %s crop — using the featured image"
+msgstr ""
+
+#. translators: %s: crop shape name.
+#: build/Blocks/service-selected-work/index.js:2
+#: src/Blocks/service-selected-work/index.js:182
+#, js-format
+msgid "%s crop"
+msgstr ""
+
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Blocks/service-selected-work/index.js:215
+msgid "Drag a tile to reorder it. Its position decides its shape, so a tile is re-cropped as it lands."
+msgstr ""
+
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Blocks/service-selected-work/index.js:216
+msgid "Select this block to reorder its tiles."
+msgstr ""
+
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Blocks/service-selected-work/index.js:224
+msgid "Crops in use"
+msgstr ""
+
+#: build/Blocks/service-selected-work/index.js:5
+#: src/Blocks/service-selected-work/index.js:228
+msgid "No projects with usable images yet."
+msgstr ""
+
+#. translators: 1: position. 2: project name. 3: which crop it uses.
+#: build/Blocks/service-selected-work/index.js:6
+#: src/Blocks/service-selected-work/index.js:234
+#, js-format
+msgid "Tile %1$d — %2$s: %3$s"
+msgstr ""
+
+#: build/Blocks/service-selected-work/index.js:6
+#: src/Blocks/service-selected-work/index.js:243
+msgid "Upload the missing crops on each project’s own screen, under “In the grids”."
 msgstr ""
 
 #: build/Blocks/services-teaser/index.js:1
@@ -1857,11 +2067,6 @@ msgstr ""
 #: build/EditorPanels/index.js:3
 #: src/EditorPanels/index.js:218
 msgid "Project documents"
-msgstr ""
-
-#: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:257
-msgid "Which projects"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
