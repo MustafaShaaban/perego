@@ -2,7 +2,49 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-28, latest) — Round 9: the missing service, and the framework debt filed
+## RESUME HERE (2026-07-28, latest) — Round 10: the join form, and phone as its own row
+
+**The join form had gone silent, for the same reason the services field had.** Round 7 clipped
+`.corex-form__status` to a screen-reader-only live region when the toast took over the visual
+channel. The join form borrows that class but is not a CoreX form — bespoke renderer, own REST
+route — so it never dispatched `corex:form:success`/`corex:form:error`, and the generic sniffer in
+`main.js` gates on a `corex-form` class it does not carry. A successful application wrote its
+confirmation into a clipped node and did nothing else. One `dispatchEvent` inside the existing
+`setStatus()` fixes it, so a future state cannot be added without announcing itself. Also: the CV
+hint repeated the drop zone's own prompt ("Upload your CV here") and was clipped as a duplicate —
+it now states what will be *accepted*, types and size, and is visible; and the portfolio link is
+validated client-side (http/https via the URL parser, so a `javascript:` string is not a link).
+
+**Phone is a full row now.** It is the form's only composite control — a picker and a number in a
+slot sized for one — which left ~151px for a ~190px placeholder. Declared in `ProjectBriefForm`'s
+own `width` rather than a CSS override, so the framework's `:not(--half)` rule places it and a
+`max-width: 1024px` special case retires (its comment claimed "901–1024px" but it had no lower
+bound). The hero grid tilts 1.15fr/0.85fr above 900px — the chooser caps its content at 400px and
+was sitting in a 616px column — and `subject` goes full-width so the remaining five halves pair up.
+
+**The placeholder is a format that follows the country**, and the picker detects the visitor from
+`Intl.DateTimeFormat().resolvedOptions().timeZone` (no network, no permission, no third party),
+falling back to the language region then to the default. **Default is now AE and the list leads
+AE · SA · EG** — the segment is the Gulf, so the fallback should favour the audience. Example
+numbers are published for the Arab region only; elsewhere the field keeps its translated sentence
+rather than showing an invented format.
+
+**Verified live at `perego.local`**, EN and AR, at 1440 / 1280 / 1100 / 1024 / 900 / 375: the
+placeholder measures 130–132px against 184–508px of input at every combination, no horizontal
+overflow, chooser still fits its 400px. Detection: `Asia/Dubai`→AE, `Asia/Riyadh`→SA,
+`Africa/Cairo`→EG, `Europe/London`→GB with the generic copy restored. Join form on `/` and `/ar/`:
+one error toast, both inline errors, the constraint hint readable, and zero requests to
+`careers/apply`.
+
+**Suites:** Pest **1479 framework** + **516 client**; Jest **41 suites / 278 framework** +
+**39 suites / 211 client**.
+
+**Next:** unchanged — spec 022, the client user guide, still blocked on the format decision (repo
+Markdown vs. a searchable page inside WordPress vs. an add-on). English only and Playwright-captured
+screenshots are already decided; see the previous entry for the capture harness and the `output/`
+gitignore trap.
+
+## (previous, 2026-07-28) — Round 9: the missing service, and the framework debt filed
 
 **Submitting the brief with no service picked now says so.** It did nothing at all before — no
 message, no highlight, no request. Three silencers stacked: the framework wrote a correct
@@ -38,7 +80,7 @@ exhausts the default 128M), and a bare `npx jest` at the root sweeps in two stal
 under `.claude/worktrees/`, producing 76 phantom failures — the root config ignores `sites/` but not
 that path.*
 
-**Next:** spec 022, the client user guide. Format is still undecided (repo Markdown vs. a searchable
+**Next (superseded by round 10):** spec 022, the client user guide. Format is still undecided (repo Markdown vs. a searchable
 page inside WordPress vs. an add-on) — do not start until that is settled. Two decisions already
 made: **English only**, and **screenshots captured automatically with Playwright** against
 `http://perego.local/wp-admin`, reusing `tests/e2e/render-admin.mjs` (saved admin `storageState`,

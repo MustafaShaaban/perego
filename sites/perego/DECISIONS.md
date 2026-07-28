@@ -1,5 +1,87 @@
 # Perego — Decision Log
 
+## 2026-07-28 — Round 10: the join form's missing wire, and phone as a first-class control
+
+### The join form went silent for the same reason the services field did
+
+Round 7 moved the visual feedback channel to the toast and clipped `.corex-form__status` to a
+screen-reader-only live region. The join form's status paragraph carries that class — deliberately,
+so it would inherit the framework's styling rather than a hand-matched copy. But the join form is
+not a CoreX form: it is a bespoke renderer posting to `perego/v1/careers/apply`, it never dispatched
+`corex:form:success`/`corex:form:error`, and `initClientValidationToasts()` gates on a `corex-form`
+class it does not have.
+
+So a successful application wrote its confirmation into a clipped node and did nothing else. Since
+round 7, submitting that form has produced no visible feedback at all.
+
+Worth naming the pattern, because it has now happened twice: **borrowing a framework class buys its
+styling and its assumptions.** `.corex-form__status` stopped being a banner and became a live region,
+and every borrower silently inherited that. The fix is one `dispatchEvent` inside the existing
+`setStatus()`, so a future state cannot be added without announcing itself.
+
+### Not migrating the join form onto `Corex\Forms\Form`
+
+It would grant the toast, the shared rule table and the styled select for free. It is blocked on the
+framework having no file field type or `$_FILES` handling — item 6 of corex#138 — while
+`PeregoCareersController` does finfo sniffing, private attachment storage and rate limiting the
+Forms engine does not provide. Revisit when that lands; until then the bespoke path stays, wired to
+the same events.
+
+### The CV hint said the wrong thing, so hiding it was the wrong fix
+
+The hint and the drop zone both read "Upload your CV here", so the hint was clipped as a duplicate.
+The duplication was the bug: nothing told the applicant what would be *accepted*, and they met the
+10 MB cap by breaching it after the upload. It now states types and size, and is visible.
+
+### Phone: a composite control in a slot sized for a simple one
+
+Every other field on the brief holds one input. Phone holds two — a country picker and a number —
+and at a 255px half that left the input ~151px for a ~190px placeholder. It clipped at every desktop
+width and was worst around 1100–1250px, where the half drops to ~180px but the old ≤1024px escape
+had not fired.
+
+Three things, in order of how much they mattered:
+
+- **The field takes a row**, declared in `ProjectBriefForm`'s own `width` rather than as a CSS
+  override, so the framework's existing `:not(--half)` rule places it and a special-case selector
+  disappears. That also retired a `max-width: 1024px` rule whose comment claimed "901–1024px" while
+  having no lower bound — it duplicated the 760px rule underneath it.
+- **The hero grid tilts toward the form**, 1.15fr / 0.85fr above 900px. The chooser column caps its
+  own content at 400px, so at 1440px it was rendering 400px inside a 616px column while the form
+  beside it squeezed six fields into 255px halves. The ratio costs the chooser nothing visible.
+- **`subject` goes full-width**, because promoting phone left five halves and one would have been
+  stranded beside a gap. A free-text line is the right one of the five to promote.
+
+### The placeholder is a format, and the format follows the country
+
+"Best number to reach you" repeated the visible label. A phone hint's job is the *shape* — which is
+also the E.164 form the validator wants — so it now shows one, and rewrites itself when the picker
+changes: a Saudi visitor should not be shown an Emirati number.
+
+Examples are published for the Gulf and the Arab region only. Elsewhere the field keeps its
+translated sentence. Inventing plausible-looking formats for sixty more countries is how wrong ones
+ship, and a wrong format teaches worse than no format.
+
+### Detecting the country from the timezone, not from an IP service
+
+`Intl.DateTimeFormat().resolvedOptions().timeZone` is the one country signal a browser gives away
+for free: no network call, no geolocation prompt, no third party, and already correct on any device
+that set its own clock. An IP lookup would have meant a request per visitor to somebody else's
+service, which Principle VI rules out anyway.
+
+`navigator.language` is the fallback rather than the primary because it so often is not a location:
+someone in Dubai on an English laptop reports `en-US`. Anything unrecognised returns nothing rather
+than a guess, and the default takes over — one click to correct, against a wrong code silently
+attached to a real phone number.
+
+The zone map lives in `CountryCodes` beside the list it refers to, with a test asserting every value
+is a country the picker actually offers. It caught a stray `BD` on the first run.
+
+### The default is the Emirates now, not Egypt
+
+The studio is in Cairo; the segment it sells to is the UAE and Saudi Arabia (owner decision). A
+fallback should favour the audience, so `DEFAULT_ISO` is `AE` and the list leads AE · SA · EG.
+
 ## 2026-07-28 — Round 9: a missing service says so, and the framework debt is filed
 
 ### The error was correct, written, and invisible — three silencers stacked
