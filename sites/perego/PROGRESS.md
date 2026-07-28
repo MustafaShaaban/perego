@@ -39,10 +39,21 @@ one error toast, both inline errors, the constraint hint readable, and zero requ
 **Suites:** Pest **1479 framework** + **516 client**; Jest **41 suites / 278 framework** +
 **39 suites / 211 client**.
 
+**CoreX v0.37.0 assessed, deliberately not installed.** Upstream published v0.36.0 and v0.37.0
+(341 files). Checked before installing: it would not silently undo anything, but five of our
+framework patches are superseded by better upstream versions and eleven have no upstream equivalent
+and would need re-applying over a `corex-runtime.js` that has been rewritten to ES6 (20 files / 24
+conflict hunks, almost all textual). Deferred until PR #37 lands so that PR stays reviewable — the
+full reconciliation map is in `DECISIONS.md` so the merge does not have to re-derive it. Issue
+**#142 is now closed upstream** by their own (better) WebP fix, and a new upstream defect was
+reported on **#149**: Spec 080 fixed the record-shape half of the Data detail modal but not the
+`payload.record` unwrap, so the modal now says "This record has no readable fields" — which reads
+as true rather than broken.
+
 **Next:** unchanged — spec 022, the client user guide, still blocked on the format decision (repo
 Markdown vs. a searchable page inside WordPress vs. an add-on). English only and Playwright-captured
 screenshots are already decided; see the previous entry for the capture harness and the `output/`
-gitignore trap.
+gitignore trap. After that, or after PR #37 merges: the v0.37.0 reconciliation on its own branch.
 
 ## (previous, 2026-07-28) — Round 9: the missing service, and the framework debt filed
 

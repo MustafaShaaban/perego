@@ -1,5 +1,54 @@
 # Perego — Decision Log
 
+## 2026-07-28 — CoreX v0.37.0 assessed and deliberately deferred
+
+Upstream published v0.36.0 and v0.37.0 (`b486ff5` → `77524df`, 341 files). Assessed before
+installing, per the standing rule that a framework update must not silently undo a client fix.
+
+**Decision: stay on v0.35.1 until PR #37 lands.** Not because the update is unsafe — it is not —
+but because taking 341 framework files into an open client PR makes that PR unreviewable, and the
+reconciliation below is a piece of work in its own right that deserves its own branch.
+
+The assessment is recorded in full because it is expensive to re-derive and it is exactly what the
+eventual merge needs.
+
+### Five of our patches are superseded — drop ours, take theirs
+
+Upstream's Spec 080 (#147) and #146 fixed these independently, and in each case their version is
+better than the patch we were carrying:
+
+| Ours | Upstream | Why theirs wins |
+|---|---|---|
+| `WebpConverter` palette fix | #146, **issue #142 now closed** | Adds a precondition check and refuses to call the encoder unless the image is truecolour by then — and says honestly that the alpha calls are not what fixes the fatal |
+| `FormsServiceProvider` listener routing | Spec 080 | Same approach, resolving the form by `$event->formSlug` |
+| `DataRegistry::defer()` | `registerDeferred()` | Same design, **different name** — our `ConfigServiceProvider` call site must be adapted |
+| `EmailStudioSubmissionGateway` layout wrap | Spec 080 | Also adds `replyToAddress()`, which is the half our #138 comment reported as still missing |
+| `RecordDetail` `entriesFor()` | `recordRows.js` | Three passes, record-as-authority, plus an undeclared-field pass so a source growing a field cannot silently regress |
+
+### Eleven of our fixes have no upstream equivalent — they must be re-applied
+
+Verified line by line against `upstream/main`, not assumed. All of #148 and #150 are untouched:
+`collect()` still ends `data[name] = el.value`; `RULES` still holds only required/email/max/min/
+numeric; `messageFor()` still goes through `wp.i18n`; no `novalidate` on either form renderer; no
+`Phone` rule in `Validation/Rules/`; no `inputmode`/`dir` from `FieldRenderer`; no `from` on
+`MailRequest`; the spinner still puts unfallback'd theme tokens inside shorthands.
+
+### The one new upstream defect, reported
+
+Spec 080's `recordRows.js` fixes the *shape* half of #149 — but `useDataExplorer.detail()` still
+returns `payload.record` off a payload that **is** the record, so `recordRows` receives `undefined`.
+The modal now renders the new empty state, *"This record has no readable fields."*, which reads as
+a true statement about the record rather than a bug. The fix made the failure more plausible. Filed
+as a comment on #149 with the `return payload;` one-liner and a note that `recordRows.test.js`
+passes precisely because it bypasses the broken layer.
+
+### The merge shape, for whoever does it
+
+20 files conflict, 24 hunks. Almost all of it is `plugins/corex-core/assets/js/corex-runtime.js`,
+which upstream rewrote to ES6 and reformatted for ESLint (203+/109−) — so the conflicts there are
+**textual, not semantic**: our features and their reformatting touch the same lines while disagreeing
+about nothing. Re-apply ours on top of their file rather than trying to merge hunk by hunk.
+
 ## 2026-07-28 — Round 10: the join form's missing wire, and phone as a first-class control
 
 ### The join form went silent for the same reason the services field did
