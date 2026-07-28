@@ -11,6 +11,7 @@ namespace PeregoSite\Forms;
 defined('ABSPATH') || exit;
 
 use Corex\Forms\Form;
+use Corex\Forms\Listeners\StoreSubmissionListener;
 use PeregoSite\PostTypes\ServicePostType;
 use WP_Post;
 
@@ -37,6 +38,12 @@ final class ProjectBriefForm extends Form
         return __('Start a project', 'perego-site');
     }
 
+    /** Storage only; PeregoFormMailListener sends the branded notification. See QuickMessageForm. */
+    public function listeners(): array
+    {
+        return [StoreSubmissionListener::class];
+    }
+
     /**
      * @return array<string,array<string,mixed>>
      */
@@ -59,8 +66,12 @@ final class ProjectBriefForm extends Form
             ],
             'phone' => [
                 'type' => 'phone',
+                // E.164, not a character count. `max:24` accepted "01016999700" — a number nobody
+                // outside Egypt can dial, which for a studio serving EG/SA/AE is the whole point of
+                // asking (client report 2026-07-27). The country picker in
+                // contact-service-chooser/view.js makes supplying the code a choice, not typing.
                 'width' => 'half',
-                'rules' => ['max:24'],
+                'rules' => ['phone'],
                 'label' => __('Phone', 'perego-site'),
                 'placeholder' => __('Best number to reach you', 'perego-site'),
             ],

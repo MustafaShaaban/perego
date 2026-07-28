@@ -47,11 +47,14 @@ it('bounds every field so no rule is unlimited (spec Phase 7 limits)', function 
     }
 });
 
-it('inherits the engine default listeners so submissions store and email', function () {
+it('stores submissions but drops the engine mailer, so the team gets one branded email', function () {
     $listeners = (new QuickMessageForm())->listeners();
 
+    // SendEmailListener builds a plain-text body that ships as text/html, so it arrived unformatted and
+    // without a Reply-To. PeregoFormMailListener sends the branded notification instead; keeping both
+    // would mail the team twice per submission.
     expect($listeners)->toContain(\Corex\Forms\Listeners\StoreSubmissionListener::class)
-        ->and($listeners)->toContain(\Corex\Forms\Listeners\SendEmailListener::class);
+        ->and($listeners)->not->toContain(\Corex\Forms\Listeners\SendEmailListener::class);
 });
 
 it('gives the form a human label for the block selector', function () {

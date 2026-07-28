@@ -54,7 +54,9 @@ it('keeps the handoff validation limits on every field', function () {
 
     expect($fields['name']['rules'])->toBe(['required', 'min:2', 'max:80'])
         ->and($fields['email']['rules'])->toBe(['required', 'email', 'max:120'])
-        ->and($fields['phone']['rules'])->toBe(['max:24'])
+        // E.164, not a character count: `max:24` accepted "01016999700", a number nobody outside
+        // Egypt can dial, which for a studio serving EG/SA/AE defeats the point of asking.
+        ->and($fields['phone']['rules'])->toBe(['phone'])
         ->and($fields['subject']['rules'])->toBe(['required', 'min:3', 'max:120'])
         ->and($fields['message']['rules'])->toBe(['required', 'min:10', 'max_words:200'])
         ->and($fields['message']['attrs'])->toBe(['data-max-words' => '200'])

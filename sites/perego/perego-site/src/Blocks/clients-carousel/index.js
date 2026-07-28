@@ -11,7 +11,7 @@
  */
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { SelectControl, TextareaControl } from '@wordpress/components';
+import { SelectControl, TextareaControl, ToggleControl } from '@wordpress/components';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
 import ServerSideRender from '@wordpress/server-side-render';
@@ -106,6 +106,15 @@ function Edit( { attributes, setAttributes } ) {
 					clients={ clientsForType( 'corporate' ) } attributes={ attributes } setAttributes={ setAttributes } />
 				<ClientComposer type="individual" title={ __( 'Individual clients', 'perego-site' ) }
 					clients={ clientsForType( 'individual' ) } attributes={ attributes } setAttributes={ setAttributes } />
+				<PanelSection title={ __( 'Display', 'perego-site' ) }>
+					<ToggleControl
+						__nextHasNoMarginBottom
+						label={ __( 'Show the play badge', 'perego-site' ) }
+						help={ __( 'The ▶ badge on individual client cards that open a video. Decorative only — the card still opens its video either way.', 'perego-site' ) }
+						checked={ attributes.showPlayIcon !== false }
+						onChange={ ( showPlayIcon ) => setAttributes( { showPlayIcon } ) }
+					/>
+				</PanelSection>
 			</InspectorControls>
 			<div className="perego-clients-carousel__preview" onClick={ ( event ) => {
 				// Neutralize the SSR preview's real links/buttons so a click never navigates the editor away.

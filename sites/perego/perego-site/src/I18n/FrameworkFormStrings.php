@@ -25,6 +25,22 @@ final class FrameworkFormStrings
         'Send' => 'إرسال',
         'Thank you — your message has been sent.' => 'شكرًا لك — تم إرسال رسالتك.',
         'Please review the highlighted fields and try again.' => 'يرجى مراجعة الحقول المميزة والمحاولة مرة أخرى.',
+        'Unknown form.' => 'نموذج غير معروف.',
+        'Submission rejected.' => 'تم رفض الإرسال.',
+
+        // Per-field validation. These reach the browser through the form's `data-corex-messages`
+        // attribute, which the engine renders with `__()` precisely so this filter can localize
+        // them — the client runtime's own copies go through `wp.i18n`, which needs a JS translation
+        // file this site does not ship, so they stayed English on the Arabic pages.
+        'This field is required.' => 'هذا الحقل مطلوب.',
+        'Enter a valid email address.' => 'يرجى إدخال بريد إلكتروني صحيح.',
+        'Enter a number.' => 'يرجى إدخال رقم.',
+        'Enter a valid link.' => 'يرجى إدخال رابط صحيح.',
+        'Enter a phone number including its country code.' => 'يرجى إدخال رقم الهاتف مع رمز الدولة.',
+        'This value is too long.' => 'هذه القيمة طويلة جدًا.',
+        'This value is too short.' => 'هذه القيمة قصيرة جدًا.',
+        'This message is too long.' => 'هذه الرسالة تتجاوز الحد المسموح من الكلمات.',
+        'This value is not in the expected format.' => 'صيغة هذه القيمة غير صحيحة.',
     ];
 
     public function register(): void

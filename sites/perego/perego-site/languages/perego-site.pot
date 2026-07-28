@@ -1743,3 +1743,27 @@ msgstr ""
 msgctxt "block description"
 msgid "The global site header: logo, primary nav with Services dropdown, Start a Project CTA, language toggle, mobile hamburger. Server-rendered; interactivity via view.js. Nav links, logo, and sticky-vs-static are editable via the block's Inspector controls (spec 020 round 4)."
 msgstr ""
+
+#: perego-theme/functions.php
+msgid "Message sent"
+msgstr ""
+
+#: perego-theme/functions.php
+msgid "Not sent"
+msgstr ""
+
+#: perego-theme/functions.php
+msgid "Dismiss"
+msgstr ""
+
+#: perego-site/src/Blocks/ContactServiceChooserRenderer.php
+msgid "Country code"
+msgstr ""
+
+#: perego-site/src/Blocks/ContactServiceChooserRenderer.php
+msgid "Please choose at least one service."
+msgstr ""
+
+#: perego-site/src/Blocks/ContactServiceChooserRenderer.php
+msgid "words"
+msgstr ""

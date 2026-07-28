@@ -34,7 +34,7 @@ export function ContactServiceChooserSkeleton( { services = SEED_SERVICES, selec
 	return (
 		<div className="contact-choose reveal" data-perego-service-chooser>
 			<h2 className="section-title">{ SEED.title }</h2>
-			<div className="svc-choice-list" role="group" aria-label={ SEED.groupLabel }>
+			<div className="svc-choice-list" role="group" aria-describedby="perego-services-error" aria-label={ SEED.groupLabel }>
 				{ services.map( ( service ) => (
 					<button
 						key={ service.slug }
@@ -47,6 +47,9 @@ export function ContactServiceChooserSkeleton( { services = SEED_SERVICES, selec
 					</button>
 				) ) }
 			</div>
+			{ /* Empty on the canvas as on a first page load — it only ever holds a validation
+			     message the visitor caused, and `:empty` keeps it out of the layout until then. */ }
+			<p className="svc-choice-error" id="perego-services-error" role="alert" />
 			<p className="svc-choice-help">{ SEED.help }</p>
 			<img className="contact-choose__watermark" src="" alt="" />
 		</div>

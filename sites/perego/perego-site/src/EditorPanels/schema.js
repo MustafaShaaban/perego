@@ -98,6 +98,14 @@ export const PROJECT_PANELS = [
 				help: __( 'Used by the Website Making showcase card.', 'perego-site' ),
 			},
 			{ key: '_perego_site_url', type: 'url', label: __( 'Live site URL', 'perego-site' ) },
+			{
+				key: '_perego_logo_id',
+				type: 'media',
+				label: __( 'Logo', 'perego-site' ),
+				// The featured image stays the site screenshot, which the showcase card below needs.
+				// Mirror of `ProjectPostType::META_LOGO`.
+				help: __( 'The client’s logo. Shown on the home Work grid instead of the screenshot; falls back to the featured image when empty.', 'perego-site' ),
+			},
 		],
 		// Only meaningful for web-category projects — the showcase card is the Website Making surface.
 		showWhen: ( meta, context ) => context.isWebProject,

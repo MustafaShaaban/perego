@@ -38,7 +38,7 @@ final class ClientsCarouselRenderer
 
     private const INDIV_MAX = 12;
 
-    /** @param array<string,string> $attributes */
+    /** @param array<string,mixed> $attributes */
     public function __construct(
         private readonly ClientsContent $content,
         private readonly string $locale = 'en',
@@ -216,7 +216,10 @@ final class ClientsCarouselRenderer
 
         $html .= '<div class="indiv-card__thumb">';
         $html .= $thumb !== '' ? $thumb : '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/client-review-crop.png') . '" alt="" loading="lazy" />';
-        if ($opensLightbox) {
+        // The play badge is an editor choice (client request 2026-07-28). It is purely decorative —
+        // `aria-hidden`, and the card is already a button — so hiding it changes how the row looks,
+        // never whether the video opens.
+        if ($opensLightbox && $this->showsPlayIcon()) {
             $html .= '<span class="play-btn" aria-hidden="true"></span>';
         }
         $html .= '</div>'; // .client-card__thumb
@@ -243,6 +246,18 @@ final class ClientsCarouselRenderer
         $value = trim((string) ($this->attributes[$attrKey . $suffix] ?? ''));
 
         return $value !== '' ? $value : $this->content->get($contentKey);
+    }
+
+    /**
+     * Whether the individual cards wear the play badge.
+     *
+     * Defaults to true so every page saved before the toggle existed keeps the badge it already
+     * shows — an unset attribute must mean "as it was", not "off".
+     */
+    private function showsPlayIcon(): bool
+    {
+        return ! array_key_exists('showPlayIcon', $this->attributes)
+            || (bool) $this->attributes['showPlayIcon'];
     }
 
     private function arrowSvg(string $direction): string

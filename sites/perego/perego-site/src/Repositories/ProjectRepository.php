@@ -117,13 +117,17 @@ final class ProjectRepository
      */
     public function allForGrid(PortfolioContent $content): array
     {
+        // `menu_order` first, then date. The client supplied the website portfolio in a deliberate
+        // order — their strongest work leads — and date DESC was really "whatever order the importer
+        // happened to run in". Anything never given an explicit position keeps `menu_order` 0 and so
+        // sorts ahead; that is why the tie-break is still date, and why the ordered set was numbered
+        // from 1 rather than 0 (scripts/import-portfolio-logos.php).
         $query = new WP_Query([
             'post_type' => ProjectPostType::POST_TYPE,
             'post_status' => 'publish',
             'posts_per_page' => 120,
             'no_found_rows' => true,
-            'orderby' => 'date',
-            'order' => 'DESC',
+            'orderby' => ['menu_order' => 'ASC', 'date' => 'DESC'],
         ]);
 
         return array_map(
@@ -138,7 +142,15 @@ final class ProjectRepository
      * showcase cards already use (see ServiceSelectedWorkRenderer). `url` is kept — the archive route
      * still resolves, nothing links to it any more.
      *
-     * @return array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}
+     * `logoUrl`/`siteUrl` carry the web-card variant: client request 2026-07-27 replaced the cropped
+     * screenshot on web-category cards with the client's logo, and the card links out to the live site
+     * instead of opening the lightbox. Both are empty for every other category.
+     *
+     * `role` is the optional contribution qualifier. It exists because one project — e& / Etisalat UAE —
+     * was a framework upgrade Perego took part in rather than a site it owned, and a portfolio has to
+     * say so. Any project can carry one; only that card sets it today.
+     *
+     * @return array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
      */
     public function toGridCard(WP_Post $post, PortfolioContent $content): array
     {
@@ -158,6 +170,10 @@ final class ProjectRepository
         $thumbUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'large') : '';
         $thumbAlt = $thumbId ? (string) get_post_meta($thumbId, '_wp_attachment_image_alt', true) : '';
 
+        $logoId  = $this->logoId($post);
+        $logoUrl = $logoId ? (string) wp_get_attachment_image_url($logoId, 'large') : '';
+        $logoAlt = $logoId ? (string) get_post_meta($logoId, '_wp_attachment_image_alt', true) : '';
+
         return [
             'title' => get_the_title($post),
             'url' => (string) get_permalink($post),
@@ -168,7 +184,32 @@ final class ProjectRepository
             'thumbAlt' => $thumbAlt !== '' ? $thumbAlt : get_the_title($post),
             'gallerySrcs' => array_column($this->galleryFor($post), 'src'),
             'videoUrl' => $this->videoUrlFor($post),
+            'logoUrl' => $logoUrl,
+            'logoAlt' => $logoAlt !== '' ? $logoAlt : get_the_title($post),
+            'siteUrl' => $this->metaWithEnFallback($post, ProjectPostType::META_SITE_URL),
+            'role' => $this->metaWithEnFallback($post, ProjectPostType::META_ROLE),
         ];
+    }
+
+    /**
+     * The project's logo attachment id, falling back to its linked EN translation's (AR projects carry
+     * no media of their own — see enTranslationId()).
+     *
+     * Deliberately NOT routed through metaWithEnFallback(): that helper treats only `''` as empty, but
+     * this key is registered as an integer defaulting to `0`, so an unset AR value arrives as the
+     * non-empty string `"0"` and the English fallback would never fire. Same shape as the featured-image
+     * fallback in toGridCard() above.
+     */
+    private function logoId(WP_Post $post): int
+    {
+        $logoId = (int) get_post_meta($post->ID, ProjectPostType::META_LOGO, true);
+        if ($logoId !== 0) {
+            return $logoId;
+        }
+
+        $enId = $this->enTranslationId($post);
+
+        return $enId === 0 ? 0 : (int) get_post_meta($enId, ProjectPostType::META_LOGO, true);
     }
 
     /**
@@ -186,12 +227,20 @@ final class ProjectRepository
         $shotUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'large') : '';
         $fullUrl = $thumbId ? (string) wp_get_attachment_image_url($thumbId, 'full') : '';
 
+        $logoId = $this->logoId($post);
+        $logoUrl = $logoId ? (string) wp_get_attachment_image_url($logoId, 'large') : '';
+        $logoAlt = $logoId ? (string) get_post_meta($logoId, '_wp_attachment_image_alt', true) : '';
+
         return [
             'title' => get_the_title($post),
             'shotUrl' => $shotUrl,
             'fullUrl' => $fullUrl !== '' ? $fullUrl : $shotUrl,
             'siteType' => ProjectPostType::sanitizeSiteType($this->metaWithEnFallback($post, ProjectPostType::META_SITE_TYPE)),
             'siteUrl' => $this->metaWithEnFallback($post, ProjectPostType::META_SITE_URL),
+            // The showcase leads with the brand mark now, same as the home grid; the screenshot is
+            // only the fallback for a project that has one and no logo yet.
+            'logoUrl' => $logoUrl,
+            'logoAlt' => $logoAlt,
         ];
     }
 

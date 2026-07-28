@@ -66,6 +66,13 @@ final class PeregoSiteServiceProvider
             cookie: $_COOKIE,
             requestUri: $_SERVER['REQUEST_URI'] ?? '/',
         );
+
+        // Must be register(), not boot(): corex-config resolves its DataRegistry during ITS boot (the
+        // Overview renderer pulls it in), and that singleton reads ManagedTables once, at build time. A
+        // table registered in our boot() — let alone on `init` — arrives after the registry is sealed and
+        // never reaches the Data screen. Every provider registers before any provider boots, so this is
+        // the last moment that still counts.
+        self::registerApplicationsTable();
     }
 
     public function boot(): void
@@ -202,11 +209,64 @@ final class PeregoSiteServiceProvider
                     $options[] = ['id' => 0, 'name' => $form->label(), 'slug' => $form->slug];
                 }
 
+                // Careers is a REST endpoint, not a registered Form, so it is not in the loop above —
+                // but it does write submissions (PeregoCareersController::recordSubmission), and a
+                // submission the filter cannot name is a submission nobody finds.
+                // The label is a literal, not the FORM_NAME constant: `wp i18n make-pot` extracts by
+                // parsing the source, so a constant argument yields no POT entry and no translation.
+                $options[] = [
+                    'id' => 0,
+                    'name' => __('Careers application', 'perego-site'),
+                    'slug' => \PeregoSite\Careers\PeregoCareersController::SUBMISSION_SLUG,
+                ];
+
                 return $options;
             });
 
             self::registerFormEmail($container);
         }, 20);
+    }
+
+    /**
+     * Surface job applications in CoreX → Data (client request 2026-07-27: "where can I find it in the
+     * admin?").
+     *
+     * The careers add-on creates `corex_applications` with the Migrator but never marks it managed, so
+     * the Data screen — which lists only registered ManagedTables — had no idea it existed, and there is
+     * no other admin surface for applications anywhere (spec 014 defers a recruiter screen; spec 017
+     * defers the applications DataView). Registering it here is the framework's own opt-in API and needs
+     * no framework edit.
+     *
+     * `cv_attachment` is the stored attachment id. It renders as a bare integer until the Data screen
+     * learns to render attachment columns as download links — tracked as a CoreX framework fix; until
+     * then the careers notification email carries the working download link.
+     */
+    private static function registerApplicationsTable(): void
+    {
+        if (! class_exists(\Corex\Boot::class)) {
+            return;
+        }
+
+        $container = \Corex\Boot::app()->container();
+        if (! $container->has(\Corex\Database\Schema\ManagedTables::class)) {
+            return;
+        }
+
+        $container->make(\Corex\Database\Schema\ManagedTables::class)->register(
+            new \Corex\Database\Schema\ManagedTable(
+                'applications',
+                'Applications',
+                [
+                    ['id' => 'name', 'label' => 'Name'],
+                    ['id' => 'email', 'label' => 'Email'],
+                    ['id' => 'cover_letter', 'label' => 'Portfolio'],
+                    ['id' => 'cv_attachment', 'label' => 'CV'],
+                    ['id' => 'status', 'label' => 'Status'],
+                    ['id' => 'created_at', 'label' => 'Received'],
+                ],
+                'perego-site',
+            ),
+        );
     }
 
     /**
@@ -222,30 +282,78 @@ final class PeregoSiteServiceProvider
             return;
         }
 
+        // Both the logo and every CTA are rebased onto the public mail base URL: an inbox cannot resolve
+        // the host this request happened to arrive on. See MailBaseUrl for why the site *option* rather
+        // than home_url() is the floor.
         $logoUrl = function_exists('plugins_url')
-            ? plugins_url('assets/email/logo-full.png', dirname(__DIR__) . '/perego-site.php')
+            ? \PeregoSite\Email\MailBaseUrl::rebase(
+                plugins_url('assets/email/logo-full.png', dirname(__DIR__) . '/perego-site.php')
+            )
             : '';
-        $siteUrl = function_exists('home_url') ? (string) home_url('/') : 'https://peregoads.com';
+        $siteUrl = \PeregoSite\Email\MailBaseUrl::resolve();
 
         $mailer = new \PeregoSite\Email\PeregoMailer(
             $container->make(\Corex\Mail\Mailer::class),
-            new \PeregoSite\Email\PeregoEmailRenderer(rtrim($siteUrl, '/'), $logoUrl),
+            new \PeregoSite\Email\PeregoEmailRenderer($siteUrl, $logoUrl),
+        );
+
+        // Where internal mail lands: `forms.email.recipient` when configured, else the site admin. One
+        // resolver shared by the forms listener and the careers endpoint, so the two cannot drift.
+        $recipient = new \PeregoSite\Email\TeamRecipient(
+            $container->has(\Corex\Support\Config\ConfigInterface::class)
+                ? $container->make(\Corex\Support\Config\ConfigInterface::class)
+                : null,
         );
 
         $container->make(\Corex\Events\ListenerProvider::class)->listen(
             \Corex\Forms\Submission\FormSubmittedEvent::class,
-            new \PeregoSite\Email\PeregoFormMailListener($mailer),
+            new \PeregoSite\Email\PeregoFormMailListener($mailer, $recipient),
         );
 
         // Branded comment-moderation email (replaces WordPress's plain native notifications).
         (new \PeregoSite\Email\PeregoCommentNotifier($mailer))->register();
 
+        self::registerReplyGateway($container, $mailer);
+
         // The "Join us" / CV submission endpoint (secure upload → store → branded emails).
-        add_action('rest_api_init', static function () use ($mailer): void {
-            (new \PeregoSite\Careers\PeregoCareersController($mailer))->register();
+        add_action('rest_api_init', static function () use ($mailer, $recipient): void {
+            (new \PeregoSite\Careers\PeregoCareersController($mailer, $recipient))->register();
             // Secure AJAX comment submission (nonce + honeypot + rate limit + WP moderation).
             (new \PeregoSite\Comments\PeregoCommentController())->register();
         });
+    }
+
+    /**
+     * Re-point the Submissions-inbox reply at Perego's own branded template.
+     *
+     * `SubmissionEmailGateway` is the framework's documented seam for this: corex-config binds an
+     * unavailable stub, corex-email overrides it with the Email Studio gateway, and a site may override
+     * it in turn — which is client-site composition, not a framework edit. Re-binding drops the cached
+     * singleton, and nothing resolves this seam until an admin opens the inbox, so replacing it here on
+     * `init` is in time.
+     *
+     * The decorator keeps the engine's gateway for `resend()`/`log()`; it is depended on by its concrete
+     * class rather than by the interface, because asking the container for the interface inside its own
+     * factory would resolve straight back into this closure.
+     */
+    private static function registerReplyGateway(
+        \Corex\Container\ContainerInterface $container,
+        \PeregoSite\Email\PeregoMailer $mailer,
+    ): void {
+        if (! interface_exists(\Corex\Mail\SubmissionEmailGateway::class)) {
+            return;
+        }
+
+        $container->singleton(
+            \Corex\Mail\SubmissionEmailGateway::class,
+            static function (\Corex\Container\ContainerInterface $c) use ($mailer): \Corex\Mail\SubmissionEmailGateway {
+                $inner = class_exists(\Corex\Email\Studio\EmailStudioSubmissionGateway::class)
+                    ? $c->make(\Corex\Email\Studio\EmailStudioSubmissionGateway::class)
+                    : new \Corex\Mail\UnavailableSubmissionEmailGateway();
+
+                return new \PeregoSite\Email\PeregoSubmissionEmailGateway($inner, $mailer);
+            },
+        );
     }
 
     /**
@@ -656,12 +764,16 @@ final class PeregoSiteServiceProvider
 
                     $projects = new ProjectRepository();
 
-                    // 15 designed mosaic placements + up to 8 "Load more" overflow tiles (handoff
-                    // service-*.html masonry parity).
+                    // The website service shows the full logo wall; every other service shows a
+                    // short, curated set. The client asked for "minimum 5 and not more than 6" there
+                    // — a service page is a pitch, not an archive, and 23 tiles behind a "Load more"
+                    // button buried the work it was meant to lead with.
+                    $workCap = $currentSlug === 'website-making' ? 23 : 6;
+
                     $posts = (new \WP_Query([
                         'post_type' => ProjectPostType::POST_TYPE,
                         'post_status' => 'publish',
-                        'posts_per_page' => 23,
+                        'posts_per_page' => $workCap,
                         'no_found_rows' => true,
                         'orderby' => 'date',
                         'order' => 'DESC',
@@ -685,7 +797,7 @@ final class PeregoSiteServiceProvider
                     $posts = array_slice(
                         (new ServicePortfolioSelection())->resolve($posts, $selectedPosts, $portfolioMode, $portfolioExclusions),
                         0,
-                        23,
+                        $workCap,
                     );
 
                     $content = new ServiceContent($locale);

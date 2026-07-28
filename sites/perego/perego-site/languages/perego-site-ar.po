@@ -297,3 +297,26 @@ msgstr "© %s بيريجو — Perego Creative Studio. جميع الحقوق م�
 # ::after that printed English on the Arabic form.
 msgid "(optional)"
 msgstr "(اختياري)"
+
+# Form toasts (assets/src/js/toast.js, 2026-07-28). The message body comes from the form itself;
+# only the headline and the dismiss control are the toast's own copy.
+msgid "Message sent"
+msgstr "تم إرسال الرسالة"
+
+msgid "Not sent"
+msgstr "لم يتم الإرسال"
+
+msgid "Dismiss"
+msgstr "إغلاق"
+
+# The country-code picker on the project brief (contact-service-chooser/view.js).
+msgid "Country code"
+msgstr "رمز الدولة"
+
+# Shown under the service buttons when the brief is submitted with none of them picked. The
+# framework's generic "required" message names no field, and this control has no visible label.
+msgid "Please choose at least one service."
+msgstr "من فضلك اختر خدمة واحدة على الأقل."
+
+msgid "words"
+msgstr "كلمة"

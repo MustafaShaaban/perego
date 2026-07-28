@@ -165,11 +165,16 @@ const init = () => {
 	} );
 };
 
+// `disabled` alone is not feedback: a CV upload can run for seconds, and a merely greyed-out button
+// reads as "broken", not "working" (client report 2026-07-27). `is-loading` is the same class the
+// reference stylesheet already spins on `.footer-form__submit`, which this button also carries — so
+// the visual busy state is the one the rest of the site uses, not a second one invented here.
 function lock( submit, busy ) {
 	if ( ! submit ) {
 		return;
 	}
 	submit.disabled = busy;
+	submit.classList.toggle( 'is-loading', busy );
 	submit.setAttribute( 'aria-busy', busy ? 'true' : 'false' );
 }
 

@@ -31,6 +31,7 @@ final class ProjectPostType
     public const META_SITE_TYPE = '_perego_site_type';
     public const META_SITE_URL = '_perego_site_url';
     public const META_VIDEO_URL = '_perego_video_url';
+    public const META_LOGO = '_perego_logo_id';
 
     /**
      * The website-showcase filter types (handoff service-website-making.html web-filters), for
@@ -96,6 +97,17 @@ final class ProjectPostType
             self::META_VIDEO_URL => array_merge($text(), [
                 'sanitize_callback' => 'esc_url_raw',
             ]),
+            // The client's logo, for web-category projects. The featured image stays the site
+            // screenshot — the Website-Making showcase needs it — so the home Work grid needs a second
+            // image to show a brand mark instead of a cropped screenshot. 0 means "not set".
+            self::META_LOGO => [
+                'type' => 'integer',
+                'single' => true,
+                'default' => 0,
+                'show_in_rest' => true,
+                'sanitize_callback' => 'absint',
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
             self::META_GALLERY => [
                 'type' => 'array',
                 'single' => true,

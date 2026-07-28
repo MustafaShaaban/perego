@@ -21,19 +21,41 @@ beforeEach(function () {
 function sampleWebCards(): array
 {
     return [
-        ['title' => 'Aurora Retail', 'shotUrl' => 'https://perego.local/p1-large.png', 'fullUrl' => 'https://perego.local/p1.png', 'siteType' => 'ecommerce', 'siteUrl' => 'https://aurora-retail.com'],
-        ['title' => 'Meridian Group', 'shotUrl' => 'https://perego.local/p2-large.png', 'fullUrl' => 'https://perego.local/p2.png', 'siteType' => 'corporate', 'siteUrl' => 'https://www.meridiangroup.co/about'],
-        ['title' => 'No Shot Project', 'shotUrl' => '', 'fullUrl' => '', 'siteType' => 'landing', 'siteUrl' => 'https://gone.example'],
-        ['title' => 'Untyped Site', 'shotUrl' => 'https://perego.local/p3-large.png', 'fullUrl' => 'https://perego.local/p3.png', 'siteType' => '', 'siteUrl' => ''],
+        ['title' => 'Aurora Retail', 'shotUrl' => 'https://perego.local/p1-large.png', 'fullUrl' => 'https://perego.local/p1.png', 'siteType' => 'ecommerce', 'siteUrl' => 'https://aurora-retail.com', 'logoUrl' => '', 'logoAlt' => ''],
+        ['title' => 'Meridian Group', 'shotUrl' => 'https://perego.local/p2-large.png', 'fullUrl' => 'https://perego.local/p2.png', 'siteType' => 'corporate', 'siteUrl' => 'https://www.meridiangroup.co/about', 'logoUrl' => '', 'logoAlt' => ''],
+        ['title' => 'No Shot Project', 'shotUrl' => '', 'fullUrl' => '', 'siteType' => 'landing', 'siteUrl' => 'https://gone.example', 'logoUrl' => '', 'logoAlt' => ''],
+        ['title' => 'Untyped Site', 'shotUrl' => 'https://perego.local/p3-large.png', 'fullUrl' => 'https://perego.local/p3.png', 'siteType' => '', 'siteUrl' => '', 'logoUrl' => '', 'logoAlt' => ''],
     ];
 }
 
-it('renders nothing at all when no project has a usable shot', function () {
+it('renders nothing at all when no project has a logo or a shot', function () {
     $html = (new WebShowcaseRenderer())->render(new ServiceContent('en'), [
-        ['title' => 'No Shot', 'shotUrl' => '', 'fullUrl' => '', 'siteType' => 'landing', 'siteUrl' => ''],
+        ['title' => 'Nothing', 'shotUrl' => '', 'fullUrl' => '', 'siteType' => 'landing', 'siteUrl' => '', 'logoUrl' => '', 'logoAlt' => ''],
     ]);
 
     expect($html)->toBe('');
+});
+
+it('keeps a project that has only a logo, which is now the point of the section', function () {
+    $html = (new WebShowcaseRenderer())->render(new ServiceContent('en'), [
+        ['title' => 'Logo Only', 'shotUrl' => '', 'fullUrl' => '', 'siteType' => 'corporate', 'siteUrl' => 'https://logo-only.test', 'logoUrl' => 'https://perego.local/mark.png', 'logoAlt' => 'Logo Only mark'],
+    ]);
+
+    // Requiring a screenshot would have dropped every site whose logo is the only asset held —
+    // against the client's explicit "don't miss any site".
+    expect($html)->toContain('web-card__shot--logo')
+        ->and($html)->toContain('src="https://perego.local/mark.png"')
+        ->and($html)->toContain('alt="Logo Only mark"');
+});
+
+it('prefers the logo over the screenshot when a project has both', function () {
+    $html = (new WebShowcaseRenderer())->render(new ServiceContent('en'), [
+        ['title' => 'Both', 'shotUrl' => 'https://perego.local/shot.png', 'fullUrl' => '', 'siteType' => 'corporate', 'siteUrl' => 'https://both.test', 'logoUrl' => 'https://perego.local/mark.png', 'logoAlt' => ''],
+    ]);
+
+    // The client asked this section to show the marks of the sites they built, not pictures of them.
+    expect($html)->toContain('mark.png')
+        ->and($html)->not->toContain('shot.png');
 });
 
 it('renders the handoff web-showcase shell: head, filter pills, and browser-chrome cards', function () {
@@ -61,19 +83,35 @@ it('emits filter pills only for site types present in the data, in the handoff o
 
 it('hides the filter group entirely when fewer than two types are present', function () {
     $html = (new WebShowcaseRenderer())->render(new ServiceContent('en'), [
-        ['title' => 'Solo', 'shotUrl' => 'https://perego.local/p1.png', 'fullUrl' => '', 'siteType' => 'ecommerce', 'siteUrl' => ''],
+        ['title' => 'Solo', 'shotUrl' => 'https://perego.local/p1.png', 'fullUrl' => '', 'siteType' => 'ecommerce', 'siteUrl' => '', 'logoUrl' => '', 'logoAlt' => ''],
     ]);
 
     expect($html)->not->toContain('web-filters')
         ->and($html)->toContain('web-grid');
 });
 
-it('opens the full-size shot in the site-wide lightbox from the Preview button', function () {
+it('links the shot to the live site rather than opening a lightbox', function () {
     $html = (new WebShowcaseRenderer())->render(new ServiceContent('en'), sampleWebCards());
 
-    expect($html)->toContain('class="web-card__shot" data-image="https://perego.local/p1.png"')
-        ->and($html)->toContain('aria-label="Preview Aurora Retail"')
-        ->and($html)->toContain('<span class="web-card__view"><span>Preview</span></span>');
+    expect($html)->toContain('<a class="web-card__shot" href="https://aurora-retail.com" target="_blank" rel="noopener"')
+        ->and($html)->toContain('aria-label="Visit Aurora Retail"')
+        ->and($html)->toContain('<span class="web-card__view"><span>Visit</span></span>')
+        // The section no longer participates in the site-wide lightbox at all. Scoped to the shot:
+        // the type-filter pills above the grid are <button>s of their own.
+        ->and($html)->not->toContain('data-image')
+        ->and($html)->not->toContain('<button type="button" class="web-card__shot');
+});
+
+it('renders an inert shot with no hover label when a project has no live site', function () {
+    $html = (new WebShowcaseRenderer())->render(new ServiceContent('en'), sampleWebCards());
+
+    $cards = array_filter(explode('<article', $html), fn (string $chunk) => str_contains($chunk, 'Untyped Site'));
+    $untyped = array_values($cards)[0] ?? '';
+
+    expect($untyped)->not->toBe('')
+        ->and($untyped)->toContain('<div class="web-card__shot">')
+        ->and($untyped)->toContain('src="https://perego.local/p3-large.png"')
+        ->and($untyped)->not->toContain('web-card__view');
 });
 
 it('links Visit to the live site in a new tab, showing the bare host in the browser bar', function () {
@@ -101,6 +139,5 @@ it('localizes the showcase copy into Arabic', function () {
 
     expect($html)->toContain('مواقع أنشأناها')
         ->and($html)->toContain('متجر إلكتروني')
-        ->and($html)->toContain('معاينة')
         ->and($html)->toContain('زيارة');
 });

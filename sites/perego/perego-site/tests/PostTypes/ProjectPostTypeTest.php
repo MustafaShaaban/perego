@@ -75,6 +75,7 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
         ProjectPostType::META_SITE_TYPE,
         ProjectPostType::META_SITE_URL,
         ProjectPostType::META_VIDEO_URL,
+        ProjectPostType::META_LOGO,
         ProjectPostType::META_GALLERY,
     ]);
 
@@ -85,9 +86,11 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
             ->and($args['auth_callback'])->toBe([ProjectPostType::class, 'authEdit']);
     }
 
-    // The gallery is a typed integer list, not a scalar.
+    // The gallery is a typed integer list, not a scalar; the logo is an attachment id.
     expect($meta[ProjectPostType::META_GALLERY]['type'])->toBe('array')
-        ->and($meta[ProjectPostType::META_CLIENT]['type'])->toBe('string');
+        ->and($meta[ProjectPostType::META_CLIENT]['type'])->toBe('string')
+        ->and($meta[ProjectPostType::META_LOGO]['type'])->toBe('integer')
+        ->and($meta[ProjectPostType::META_LOGO]['sanitize_callback'])->toBe('absint');
 
     // The showcase fields carry their own dedicated sanitizers.
     expect($meta[ProjectPostType::META_SITE_TYPE]['sanitize_callback'])->toBe([ProjectPostType::class, 'sanitizeSiteType'])

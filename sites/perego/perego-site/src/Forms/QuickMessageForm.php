@@ -11,6 +11,7 @@ namespace PeregoSite\Forms;
 defined('ABSPATH') || exit;
 
 use Corex\Forms\Form;
+use Corex\Forms\Listeners\StoreSubmissionListener;
 
 /**
  * The footer "quick message" form (spec Phase 7, form 1) — the lightweight contact entry point
@@ -28,6 +29,21 @@ final class QuickMessageForm extends Form
     public function label(): string
     {
         return __('Quick message', 'perego-site');
+    }
+
+    /**
+     * Storage only — the engine's SendEmailListener is deliberately dropped.
+     *
+     * It builds a `label: value` plain-text body that WpMailDriver then delivers as `text/html`, so the
+     * team notification arrived as one unformatted run with no `Reply-To` (client report 2026-07-27).
+     * PeregoFormMailListener sends the branded notification instead; leaving both registered would send
+     * the team two emails per submission.
+     *
+     * @return list<class-string>
+     */
+    public function listeners(): array
+    {
+        return [StoreSubmissionListener::class];
     }
 
     /**

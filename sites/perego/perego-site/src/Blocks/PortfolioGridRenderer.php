@@ -21,7 +21,7 @@ use PeregoSite\Theme\SiteRoutes;
  * `render()` takes already-resolved data (projects + the ordered filter labels) so it stays a pure,
  * unit-testable function; the block's render callback does the WP_Query and maps posts to the array.
  *
- * @phpstan-type Project array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}
+ * @phpstan-type Project array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
  */
 final class PortfolioGridRenderer
 {
@@ -29,7 +29,7 @@ final class PortfolioGridRenderer
     private const PER_PAGE = 9;
 
     /**
-     * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}> $projects
+     * @param list<Project> $projects
      * @param array<string, string> $filterLabels ordered, keyed by slug ('all' first); values are labels
      * @param array{groupLabel: string, noResults: string, heading?: string, intro?: string, demoNote?: string, uiHome?: string, ctaTitle?: string, ctaBody?: string, ctaButton?: string} $strings
      * @param array{link?: array<string, mixed>, target?: string} $cta the closing CTA's resolved link (spec 021 T036)
@@ -122,39 +122,115 @@ final class PortfolioGridRenderer
     }
 
     /**
-     * @param list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string}> $projects
+     * @param list<Project> $projects
      */
     private function renderGrid(array $projects): string
     {
         $html = '<div class="blog-grid" id="portfolioGrid" data-per-page="' . esc_attr((string) self::PER_PAGE) . '">';
 
         foreach ($projects as $project) {
-            $media = $project['thumbUrl'] !== ''
-                ? '<img src="' . esc_url($project['thumbUrl']) . '" alt="' . esc_attr($project['thumbAlt']) . '" loading="lazy" />'
-                : '<span class="post-card__media-placeholder" data-category="' . esc_attr($project['category']) . '" aria-hidden="true"></span>';
-
-            // view.js filters/paginates by reading data-category and toggling the hidden attribute.
-            // A <button> rather than a link: client request 2026-07-26 — a card opens the project's
-            // media in the shared lightbox instead of navigating to a single page. The trigger contract
-            // (data-video / data-gallery / data-image) is the one media-lightbox/view.js already binds
-            // site-wide, and mirrors ServiceSelectedWorkRenderer::card(). One action per card.
-            /* translators: %s: project title. */
-            $openLabel = sprintf(__('Open %s', 'perego-site'), $project['title']);
-
-            $html .= '<button type="button" class="post-card reveal" ' . $this->lightboxTrigger($project) . ' '
-                . 'aria-label="' . esc_attr($openLabel) . '" '
-                . 'data-category="' . esc_attr($project['category']) . '">';
-            $html .= '<div class="post-card__media">' . $media . '</div>';
-            $html .= '<div class="post-card__body">';
-            $html .= '<span class="post-card__cat">' . esc_html($project['categoryLabel']) . '</span>';
-            $html .= '<h2 class="post-card__title" style="font-size:clamp(18px,1.6vw,22px);">' . esc_html($project['title']) . '</h2>';
-            $html .= '<p class="post-card__excerpt">' . esc_html($project['excerpt']) . '</p>';
-            $html .= '</div></button>';
+            $html .= $this->renderCard($project);
         }
 
         $html .= '</div>';
 
         return $html;
+    }
+
+    /**
+     * One project card.
+     *
+     * Two shapes. A web-category project carrying a logo is the exception (client request 2026-07-27):
+     * it shows the client's brand mark instead of a cover-cropped screenshot, and goes to the live site
+     * instead of opening the lightbox — so it renders as an <a>, or as an inert <article> when no live
+     * URL is recorded, because a control that does nothing on click should not be focusable.
+     *
+     * Everything else keeps the <button> lightbox trigger from the 2026-07-26 request: a card opens the
+     * project's media in the shared dialog rather than navigating to a single page. Either way view.js
+     * filters and paginates by reading `data-category` off this element and toggling `hidden`, which is
+     * why the class and that attribute stay on the wrapper whatever the tag.
+     *
+     * @param Project $project
+     */
+    private function renderCard(array $project): string
+    {
+        // Every web project is a logo card, whether or not a logo has been supplied. It used to
+        // depend on `logoUrl`, so a site awaiting its logo silently fell back to a cropped
+        // screenshot — one photograph in a wall of marks, which reads as a mistake. Without an
+        // image the card renders a typographic name plate instead: still on-brand, still a link to
+        // the live site, and obviously awaiting an asset rather than looking broken.
+        $isWebCard = $project['category'] === 'web';
+        $hasLogo = $isWebCard && $project['logoUrl'] !== '';
+
+        $mediaSrc = $hasLogo ? $project['logoUrl'] : $project['thumbUrl'];
+        $mediaAlt = $hasLogo ? $project['logoAlt'] : $project['thumbAlt'];
+
+        if ($isWebCard && ! $hasLogo) {
+            $media = $this->namePlate($project);
+        } elseif ($mediaSrc !== '') {
+            $media = '<img src="' . esc_url($mediaSrc) . '" alt="' . esc_attr($mediaAlt) . '" loading="lazy" />';
+        } else {
+            $media = '<span class="post-card__media-placeholder" data-category="' . esc_attr($project['category']) . '" aria-hidden="true"></span>';
+        }
+
+        $classes = 'post-card reveal' . ($isWebCard ? ' post-card--logo' : '')
+            . ($isWebCard && ! $hasLogo ? ' post-card--plate' : '');
+        $category = ' data-category="' . esc_attr($project['category']) . '"';
+
+        if ($isWebCard && $project['siteUrl'] !== '') {
+            /* translators: %s: project title. */
+            $visitLabel = sprintf(__('Visit %s', 'perego-site'), $project['title']);
+            $open = '<a class="' . $classes . '" href="' . esc_url($project['siteUrl']) . '" '
+                . 'target="_blank" rel="noopener" '
+                . 'aria-label="' . esc_attr($visitLabel) . '"' . $category . '>';
+            $close = '</a>';
+        } elseif ($isWebCard) {
+            $open = '<article class="' . $classes . '"' . $category . '>';
+            $close = '</article>';
+        } else {
+            /* translators: %s: project title. */
+            $openLabel = sprintf(__('Open %s', 'perego-site'), $project['title']);
+            $open = '<button type="button" class="' . $classes . '" ' . $this->lightboxTrigger($project) . ' '
+                . 'aria-label="' . esc_attr($openLabel) . '"' . $category . '>';
+            $close = '</button>';
+        }
+
+        $role = (string) ($project['role'] ?? '');
+
+        $html = $open;
+        $html .= '<div class="post-card__media">' . $media . '</div>';
+        $html .= '<div class="post-card__body">';
+        $html .= '<span class="post-card__cat">' . esc_html($project['categoryLabel']) . '</span>';
+        $html .= '<h2 class="post-card__title" style="font-size:clamp(18px,1.6vw,22px);">' . esc_html($project['title']) . '</h2>';
+        // The role qualifier replaces the excerpt when set: on a card that names a client's site,
+        // "framework upgrade participation" is the more honest and more useful sentence.
+        $html .= $role !== ''
+            ? '<p class="post-card__role">' . esc_html($role) . '</p>'
+            : '<p class="post-card__excerpt">' . esc_html($project['excerpt']) . '</p>';
+        $html .= '</div>' . $close;
+
+        return $html;
+    }
+
+    /**
+     * A typographic stand-in for a website whose logo has not been supplied yet.
+     *
+     * Five of the twenty-nine sites do not publish a usable logo a script can reach — two are behind
+     * a bot challenge, one is a JavaScript-only shell, one no longer resolves, and one publishes its
+     * mark at 192px. Showing nothing would drop them from a portfolio the client asked to be
+     * complete; showing a screenshot instead would break the wall of marks. The plate is the site's
+     * name over its bare domain, in the brand's own type.
+     *
+     * @param Project $project
+     */
+    private function namePlate(array $project): string
+    {
+        $host = (string) wp_parse_url($project['siteUrl'], PHP_URL_HOST);
+
+        return '<span class="post-card__plate" aria-hidden="true">'
+            . '<span class="post-card__plate-name">' . esc_html($project['title']) . '</span>'
+            . ($host !== '' ? '<span class="post-card__plate-host">' . esc_html(preg_replace('/^www\./', '', $host) ?? $host) . '</span>' : '')
+            . '</span>';
     }
 
     /**

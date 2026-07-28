@@ -20,6 +20,7 @@ beforeEach(function () {
     Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
     Functions\when('sanitize_key')->alias(fn ($v) => strtolower(preg_replace('/[^a-z0-9_\-]/', '', (string) $v)));
     Functions\when('wp_unslash')->returnArg();
+    Functions\when('wp_json_encode')->alias(static fn ($v) => json_encode($v));
     // No published service posts in these tests: forces the ServicePostType::SERVICES fallback.
     Functions\when('get_posts')->justReturn([]);
 });
@@ -58,6 +59,16 @@ it('renders the same concise labels translated when the locale resolves to ar', 
         ->and($html)->toContain('موشن جرافيك ثنائي الأبعاد')
         ->and($html)->toContain('التصميم الجرافيكي')
         ->and($html)->toContain('إنشاء المواقع');
+});
+
+it('renders an empty live region the chooser can put a validation message into', function () {
+    $html = renderContactServiceChooser();
+
+    // Empty, and no `hidden` attribute: an author `display` rule beats the UA `[hidden]` sheet,
+    // so the stylesheet hides it on `:empty` instead. `view.js` fills it.
+    expect($html)->toContain('<p class="svc-choice-error" id="perego-services-error" role="alert"></p>')
+        ->and($html)->toContain('aria-describedby="perego-services-error"')
+        ->and($html)->toContain('data-error-required="Please choose at least one service."');
 });
 
 it('marks the service preselected via the ?service= query arg as selected', function () {

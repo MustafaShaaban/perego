@@ -9,6 +9,7 @@ declare(strict_types=1);
 namespace PeregoSite\Blocks;
 
 use PeregoSite\Content\HomeContent;
+use PeregoSite\Forms\CountryCodes;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Services\LanguageService;
 
@@ -17,15 +18,29 @@ defined('ABSPATH') || exit;
 /** Renders the handoff contact-service controls from the current-language service records. */
 final class ContactServiceChooserRenderer
 {
+    /** Shared by the live region and the group's `aria-describedby`, so the two cannot drift. */
+    private const ERROR_ID = 'perego-services-error';
+
     public function __construct(private readonly LanguageService $languageService)
     {
     }
 
     public function render(): string
     {
-        $html = '<div class="contact-choose reveal" data-delay="1" data-perego-service-chooser>';
+        // The chooser is the contact page's one site-owned wrapper around the framework-rendered
+        // form, so it is also where the form's client-side data rides in. `view.js` reads both.
+        $html = '<div class="contact-choose reveal" data-delay="1" data-perego-service-chooser'
+            . ' data-countries="' . esc_attr((string) wp_json_encode(CountryCodes::options($this->locale()))) . '"'
+            . ' data-default-country="' . esc_attr(CountryCodes::DEFAULT_ISO) . '"'
+            . ' data-phone-label="' . esc_attr__('Country code', 'perego-site') . '"'
+            // The framework's per-rule message map only has the generic "This field is required.",
+            // which names no field — and this control has no visible label of its own, because the
+            // buttons below replaced it. Say what to do instead.
+            . ' data-error-required="' . esc_attr__('Please choose at least one service.', 'perego-site') . '"'
+            . ' data-words-label="' . esc_attr__('words', 'perego-site') . '">';
         $html .= '<h2 class="section-title">' . esc_html__('Choose your service', 'perego-site') . '</h2>';
-        $html .= '<div class="svc-choice-list" role="group" aria-label="' . esc_attr__('Choose your service (select one or more)', 'perego-site') . '">';
+        $html .= '<div class="svc-choice-list" role="group" aria-describedby="' . self::ERROR_ID . '"'
+            . ' aria-label="' . esc_attr__('Choose your service (select one or more)', 'perego-site') . '">';
 
         foreach ($this->services() as $slug => $label) {
             $selected = $slug === $this->preselectedService();
@@ -35,10 +50,21 @@ final class ContactServiceChooserRenderer
         }
 
         $html .= '</div>';
+        // The framework writes its error into the `services` field wrapper, which this page hides
+        // (the buttons above are its visible replacement) — so the message landed in a node nobody
+        // could see and submitting looked like nothing happened. `view.js` mirrors it into here.
+        // No `hidden` attribute: an author `display` rule beats the UA `[hidden]` sheet, so this
+        // hides on `:empty` the way the framework's own `.corex-form__error` does.
+        $html .= '<p class="svc-choice-error" id="' . self::ERROR_ID . '" role="alert"></p>';
         $html .= '<p class="svc-choice-help">' . esc_html__('Tap to select one or more services. Tap again to deselect.', 'perego-site') . '</p>';
         $html .= '<img class="contact-choose__watermark" src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" alt="" />';
 
         return $html . '</div>';
+    }
+
+    private function locale(): string
+    {
+        return $this->languageService->driver()->currentLocale();
     }
 
     /** @return array<string,string> */

@@ -15,11 +15,14 @@ use PeregoSite\Content\ServiceContent;
 /**
  * Server-renders the Website-Making single's unique last section (handoff
  * `service-website-making.html:130-283`): the "Websites we've built" showcase — browser-chrome cards
- * with type-filter pills, a Preview shot opening the site-wide media lightbox
- * (perego-theme/media-lightbox), and an external Visit link. It replaces the Selected-work masonry
- * on that one service page (the perego-theme/service-selected-work render callback branches here),
- * so the shared single-perego_service template stays untouched. The filter behaviour lives in the
- * service-selected-work block's view.js (webFilter binder).
+ * with type-filter pills, a shot linking to the live site, and an external Visit link. It replaces the
+ * Selected-work masonry on that one service page (the perego-theme/service-selected-work render callback
+ * branches here), so the shared single-perego_service template stays untouched. The filter behaviour
+ * lives in the service-selected-work block's view.js (webFilter binder).
+ *
+ * The shot used to open the full-size screenshot in the site-wide media lightbox. Client request
+ * 2026-07-27 removed that: on a card that already wears browser chrome the useful destination is the
+ * real site, not a bigger picture of it. This section no longer participates in the lightbox at all.
  *
  * `render()` takes an already-resolved card list so it stays a pure, unit-testable function; the
  * block's render callback does the category-filtered WP_Query + meta reads.
@@ -35,14 +38,18 @@ final class WebShowcaseRenderer
         . '<path d="M7 17 17 7M9 7h8v8"/></svg>';
 
     /**
-     * @param list<array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string}> $cards
+     * @param list<array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string, logoUrl: string, logoAlt: string}> $cards
      */
     public function render(ServiceContent $content, array $cards): string
     {
         $copy = $content->webShowcase();
+        // A card needs a logo OR a screenshot. It used to require a screenshot, which would now drop
+        // every site the client asked to be listed but whose logo is the only asset we hold — and the
+        // client's instruction was explicitly "don't miss any site". A card with neither renders its
+        // name plate, so the only real requirement left is a title.
         $usable = array_values(array_filter(
             $cards,
-            static fn (array $card): bool => $card['shotUrl'] !== '',
+            static fn (array $card): bool => $card['logoUrl'] !== '' || $card['shotUrl'] !== '',
         ));
 
         if ($usable === []) {
@@ -72,7 +79,7 @@ final class WebShowcaseRenderer
      * filters down to an empty grid. No pills at all (0–1 distinct types) hides the group.
      *
      * @param array<string, mixed> $copy
-     * @param list<array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string}> $cards
+     * @param list<array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string, logoUrl: string, logoAlt: string}> $cards
      */
     private function renderFilters(array $copy, array $cards): string
     {
@@ -99,13 +106,12 @@ final class WebShowcaseRenderer
 
     /**
      * @param array<string, mixed> $copy
-     * @param array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string} $card
+     * @param array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string, logoUrl: string, logoAlt: string} $card
      */
     private function renderCard(array $copy, array $card, int $index): string
     {
         $host = $this->displayHost($card['siteUrl']);
         $delay = $index % 3;
-        $lightboxSrc = $card['fullUrl'] !== '' ? $card['fullUrl'] : $card['shotUrl'];
 
         $html = '<article class="web-card reveal" data-category="' . esc_attr($card['siteType']) . '"'
             . ($delay > 0 ? ' data-delay="' . $delay . '"' : ' data-delay="0"') . '>';
@@ -117,11 +123,7 @@ final class WebShowcaseRenderer
         }
         $html .= '</div>';
 
-        $html .= '<button type="button" class="web-card__shot" data-image="' . esc_attr($lightboxSrc) . '" '
-            . 'aria-label="' . esc_attr($copy['preview'] . ' ' . $card['title']) . '">'
-            . '<img src="' . esc_url($card['shotUrl']) . '" alt="' . esc_attr($card['title']) . '" loading="lazy" />'
-            . '<span class="web-card__view"><span>' . esc_html($copy['preview']) . '</span></span>'
-            . '</button>';
+        $html .= $this->renderShot($copy, $card);
 
         $html .= '<div class="web-card__body">';
         $html .= '<div><h3 class="web-card__title">' . esc_html($card['title']) . '</h3>';
@@ -139,6 +141,47 @@ final class WebShowcaseRenderer
         $html .= '</article>';
 
         return $html;
+    }
+
+    /**
+     * The screenshot inside the browser chrome, as a link to the live site.
+     *
+     * A card with no recorded URL has nowhere to go, so it renders as a plain <div> with no hover
+     * affordance rather than a control that does nothing — the same rule the home Work grid follows for
+     * a logo card without a URL. The hover label reuses the existing `visit` string; there is no
+     * "preview" any more now that nothing is previewed.
+     *
+     * @param array<string, mixed> $copy
+     * @param array{title: string, shotUrl: string, fullUrl: string, siteType: string, siteUrl: string, logoUrl: string, logoAlt: string} $card
+     */
+    private function renderShot(array $copy, array $card): string
+    {
+        // The logo is the subject now, not the screenshot: the client asked this section to show the
+        // brand marks of the sites they built. A screenshot is kept only as the fallback for a project
+        // that has one and no logo yet, and a project with neither gets the same typographic plate the
+        // home grid uses, so the row never breaks.
+        if ($card['logoUrl'] !== '') {
+            $img = '<img src="' . esc_url($card['logoUrl']) . '" alt="' . esc_attr($card['logoAlt'] !== '' ? $card['logoAlt'] : $card['title']) . '" loading="lazy" />';
+            $shotClass = 'web-card__shot web-card__shot--logo';
+        } elseif ($card['shotUrl'] !== '') {
+            $img = '<img src="' . esc_url($card['shotUrl']) . '" alt="' . esc_attr($card['title']) . '" loading="lazy" />';
+            $shotClass = 'web-card__shot';
+        } else {
+            $img = '<span class="post-card__plate" aria-hidden="true">'
+                . '<span class="post-card__plate-name">' . esc_html($card['title']) . '</span>'
+                . '<span class="post-card__plate-host">' . esc_html($this->displayHost($card['siteUrl'])) . '</span></span>';
+            $shotClass = 'web-card__shot web-card__shot--plate';
+        }
+
+        if ($card['siteUrl'] === '') {
+            return '<div class="' . $shotClass . '">' . $img . '</div>';
+        }
+
+        return '<a class="' . $shotClass . '" href="' . esc_url($card['siteUrl']) . '" target="_blank" rel="noopener" '
+            . 'aria-label="' . esc_attr($copy['visit'] . ' ' . $card['title']) . '">'
+            . $img
+            . '<span class="web-card__view"><span>' . esc_html($copy['visit']) . '</span></span>'
+            . '</a>';
     }
 
     /** The bare host shown in the card's browser bar ("aurora-retail.com" for https://aurora-retail.com/x). */
