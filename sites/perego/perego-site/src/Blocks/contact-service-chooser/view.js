@@ -127,7 +127,48 @@ function bindMessageCounter( form, wordsLabel ) {
  * `collect()` is untouched and the submitted value is one E.164 string — which is also what the
  * server's `phone` rule validates and what the team ends up dialling.
  */
-function bindPhoneCountry( form, countries, defaultIso, label ) {
+/**
+ * The visitor's own country, or '' when nothing reliable says.
+ *
+ * Timezone first: it is the one country signal a browser gives away for free — no network call, no
+ * geolocation permission, no third-party lookup — and it is already right on any device that set
+ * its own clock. Language is the fallback rather than the primary because it so often isn't a
+ * location at all: someone in Dubai on an English laptop reports `en-US`.
+ *
+ * Everything is wrapped, and an unknown answer returns '' rather than a guess: a visitor the map
+ * does not cover should get the configured default and change it, which costs one click. Detection
+ * runs once at init, before any interaction, so it can never overwrite a deliberate choice.
+ */
+function detectCountry( countries, zones ) {
+	const known = ( iso ) => ( iso && countries.some( ( country ) => country.iso === iso ) ? iso : '' );
+
+	try {
+		const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		const fromZone = known( zones[ zone ] );
+		if ( fromZone ) {
+			return fromZone;
+		}
+	} catch ( e ) {
+		// Intl is unavailable or refused; the language hint below is still worth trying.
+	}
+
+	try {
+		const tags = navigator.languages?.length ? navigator.languages : [ navigator.language ];
+		for ( const tag of tags ) {
+			// The region subtag of e.g. `ar-AE`. A bare `ar` names no country and is skipped.
+			const region = known( String( tag ).split( '-' )[ 1 ]?.toUpperCase() );
+			if ( region ) {
+				return region;
+			}
+		}
+	} catch ( e ) {
+		// Fall through to the caller's default.
+	}
+
+	return '';
+}
+
+function bindPhoneCountry( form, countries, { zones, defaultIso, label } ) {
 	const input = form.querySelector( 'input[name="phone"]' );
 	if ( ! input || ! countries.length || input.dataset.peregoPhoneBound === '1' ) return;
 	input.dataset.peregoPhoneBound = '1';
@@ -195,11 +236,32 @@ function bindPhoneCountry( form, countries, defaultIso, label ) {
 		echoing = false;
 	};
 
-	const fallback = countries.find( ( country ) => country.iso === defaultIso ) || countries[ 0 ];
-	select.value = fallback.dial;
+	// The placeholder follows the country, because a format is only a hint if it is the right
+	// format — a Saudi visitor shown a UAE-shaped number learns nothing. The server-rendered copy
+	// is kept as the fallback for the countries with no published example here, so an unmapped
+	// selection restores the translated sentence rather than emptying the field.
+	const genericPlaceholder = input.placeholder;
+	const syncPlaceholder = () => {
+		const iso = select.selectedOptions[ 0 ]?.dataset.iso;
+		const country = countries.find( ( item ) => item.iso === iso );
+		input.placeholder = country?.example || genericPlaceholder;
+	};
+
+	// Select by option, not by `select.value = dial`: dial codes are not unique (+1 is the US and
+	// Canada both), so assigning the value would silently land on whichever comes first.
+	const selectIso = ( iso ) => {
+		const option = Array.from( select.options ).find( ( item ) => item.dataset.iso === iso );
+		if ( option ) {
+			option.selected = true;
+		}
+	};
+
+	selectIso( detectCountry( countries, zones ) || defaultIso );
+	syncPlaceholder();
 	syncSelectFromInput();
 
 	select.addEventListener( 'change', () => {
+		syncPlaceholder();
 		if ( echoing ) {
 			return;
 		}
@@ -235,12 +297,17 @@ function parseJson( value, fallback ) {
 function init() {
 	const chooser = document.querySelector( '[data-perego-service-chooser]' );
 	const countries = parseJson( chooser?.dataset.countries, [] );
+	const zones = parseJson( chooser?.dataset.countryZones, {} );
 	const wordsLabel = chooser?.dataset.wordsLabel || 'words';
 
 	document.querySelectorAll( '[data-perego-service-chooser]' ).forEach( bindChooser );
 	document.querySelectorAll( 'form[data-corex-form="perego-project-brief"]' ).forEach( ( form ) => {
 		bindMessageCounter( form, wordsLabel );
-		bindPhoneCountry( form, countries, chooser?.dataset.defaultCountry || 'EG', chooser?.dataset.phoneLabel || 'Country code' );
+		bindPhoneCountry( form, countries, {
+			zones,
+			defaultIso: chooser?.dataset.defaultCountry || 'AE',
+			label: chooser?.dataset.phoneLabel || 'Country code',
+		} );
 	} );
 }
 

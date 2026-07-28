@@ -31,6 +31,10 @@ final class ContactServiceChooserRenderer
         // form, so it is also where the form's client-side data rides in. `view.js` reads both.
         $html = '<div class="contact-choose reveal" data-delay="1" data-perego-service-chooser'
             . ' data-countries="' . esc_attr((string) wp_json_encode(CountryCodes::options($this->locale()))) . '"'
+            // Timezone ⇒ ISO, so the picker can preselect the visitor's own country without a
+            // geolocation prompt or a third-party lookup. Emitted from PHP so the map and the
+            // country list cannot drift apart.
+            . ' data-country-zones="' . esc_attr((string) wp_json_encode(CountryCodes::zones())) . '"'
             . ' data-default-country="' . esc_attr(CountryCodes::DEFAULT_ISO) . '"'
             . ' data-phone-label="' . esc_attr__('Country code', 'perego-site') . '"'
             // The framework's per-rule message map only has the generic "This field is required.",

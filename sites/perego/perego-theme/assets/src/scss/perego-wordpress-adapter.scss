@@ -229,15 +229,14 @@ form.corex-is-loading .corex-form__submit::after {
 	display: none;
 }
 
-/* The CV constraint stays programmatically associated with the native input; the reference
- * file-drop is the only visible prompt. */
+/* The CV constraint was clipped here because it repeated the file-drop's own prompt. It now states
+ * what will be *accepted* — types and size — which the drop zone does not say, and which the
+ * applicant otherwise discovered by having a file rejected after uploading it. Visible, quiet,
+ * under the control it describes. */
 .site-footer .join-form__hint {
-	position: absolute;
-	inline-size: 1px;
-	block-size: 1px;
-	overflow: hidden;
-	clip: rect(0, 0, 0, 0);
-	white-space: nowrap;
+	margin-block-start: 8px;
+	font-size: var(--wp--preset--font-size--small);
+	color: var(--perego-muted, rgb(255 255 255 / 65%));
 }
 
 /* The contact page keeps CoreX's real form endpoint/schema markup, but projects the locked
@@ -249,6 +248,19 @@ form.corex-is-loading .corex-form__submit::after {
 	overflow: hidden;
 	clip: rect(0, 0, 0, 0);
 	white-space: nowrap;
+}
+
+/* The hero is a 50/50 grid in the reference sheet, but the two columns do not want the same room.
+ * The chooser caps its own content at 400px (`.svc-choice-list`, `.svc-choice-help`), so at 1440px
+ * it renders 400px inside a 616px column and leaves 216px doing nothing — while the form beside it
+ * is squeezing six fields into 255px halves. Shifting the ratio costs the chooser nothing visible
+ * and gives every field on the form about 35px back. Below 901px the reference collapses the grid
+ * to one column and this stops applying. */
+@media (min-width: 901px) {
+
+	.contact-hero__grid {
+		grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+	}
 }
 
 .contact-form-wrap .corex-form {
@@ -690,14 +702,15 @@ form.corex-is-loading .corex-form__submit::after {
 	border-bottom-color: #ff6ba6;
 }
 
-/* 901–1024px is the pinch: the contact hero is still two-up there, so a half field is only about
-   153–190px — too little for a picker and a phone number side by side. Below 900px the hero collapses
-   on its own and the existing 760px rule takes over. */
-@media (max-width: 1024px) {
-
-	.contact-form-wrap .corex-form__field[data-corex-field="phone"] {
-		grid-column: 1 / -1;
-	}
+/* Phone takes a whole row now — but it says so in `ProjectBriefForm`'s own `width`, not here, so
+ * the `:not(--half)` rule above already places it. That replaced a `max-width: 1024px` override
+ * whose comment claimed "901–1024px" while having no lower bound, so it also fired below 760px
+ * where another rule already said the same thing.
+ *
+ * What still belongs here is a floor under the number itself, so no future field change can quietly
+ * squeeze it invisible again — it would push the row rather than clip the text. */
+.contact-form-wrap .phone-field .corex-form__input[type="tel"] {
+	min-inline-size: 12rem;
 }
 
 /* The counter turns pink past the word cap. The reference stylesheet has always defined this

@@ -24,41 +24,52 @@ defined('ABSPATH') || exit;
  * system, styled by the same rules as every other Perego select.
  *
  * The order is deliberate. The primary markets lead, then the rest of the Arab region, then the
- * remaining countries the studio actually hears from, alphabetically. A visitor from Cairo should
- * not scroll past Afghanistan to find Egypt.
+ * remaining countries the studio actually hears from, alphabetically. A visitor from Dubai should
+ * not scroll past Afghanistan to find the Emirates.
  */
 final class CountryCodes
 {
-    /** The code preselected when the visitor's own country cannot be inferred. */
-    public const DEFAULT_ISO = 'EG';
+    /**
+     * The code preselected when the visitor's own country cannot be inferred.
+     *
+     * The Gulf, not Egypt, because the fallback should favour the audience rather than the studio's
+     * own address: the target segment is the UAE and Saudi Arabia, and someone the detection missed
+     * is far likelier to be there than in Cairo.
+     */
+    public const DEFAULT_ISO = 'AE';
 
     /**
-     * ISO 3166-1 alpha-2 => [dial code, English name, Arabic name].
+     * ISO 3166-1 alpha-2 => [dial code, English name, Arabic name, example number?].
      *
-     * @var array<string, array{0:string,1:string,2:string}>
+     * The example is the placeholder the field shows once this country is picked, and it is
+     * deliberately absent for most of the list: a *wrong* format teaches worse than no format, and
+     * inventing plausible-looking numbers for sixty countries is how wrong ones ship. Where it is
+     * absent the field keeps its translated "best number to reach you" copy.
+     *
+     * @var array<string, array{0:string,1:string,2:string,3?:string}>
      */
     private const COUNTRIES = [
         // Primary markets, first because most submissions come from them.
-        'EG' => ['+20', 'Egypt', 'مصر'],
-        'SA' => ['+966', 'Saudi Arabia', 'السعودية'],
-        'AE' => ['+971', 'United Arab Emirates', 'الإمارات'],
-        'KW' => ['+965', 'Kuwait', 'الكويت'],
-        'QA' => ['+974', 'Qatar', 'قطر'],
-        'BH' => ['+973', 'Bahrain', 'البحرين'],
-        'OM' => ['+968', 'Oman', 'عُمان'],
+        'AE' => ['+971', 'United Arab Emirates', 'الإمارات', '+971 50 123 4567'],
+        'SA' => ['+966', 'Saudi Arabia', 'السعودية', '+966 50 123 4567'],
+        'EG' => ['+20', 'Egypt', 'مصر', '+20 100 123 4567'],
+        'KW' => ['+965', 'Kuwait', 'الكويت', '+965 500 12345'],
+        'QA' => ['+974', 'Qatar', 'قطر', '+974 3312 3456'],
+        'BH' => ['+973', 'Bahrain', 'البحرين', '+973 3600 1234'],
+        'OM' => ['+968', 'Oman', 'عُمان', '+968 9212 3456'],
 
         // The rest of the Arab region.
-        'JO' => ['+962', 'Jordan', 'الأردن'],
-        'LB' => ['+961', 'Lebanon', 'لبنان'],
-        'IQ' => ['+964', 'Iraq', 'العراق'],
+        'JO' => ['+962', 'Jordan', 'الأردن', '+962 7 9012 3456'],
+        'LB' => ['+961', 'Lebanon', 'لبنان', '+961 71 123 456'],
+        'IQ' => ['+964', 'Iraq', 'العراق', '+964 790 123 4567'],
         'SY' => ['+963', 'Syria', 'سوريا'],
-        'PS' => ['+970', 'Palestine', 'فلسطين'],
+        'PS' => ['+970', 'Palestine', 'فلسطين', '+970 599 123 456'],
         'YE' => ['+967', 'Yemen', 'اليمن'],
-        'SD' => ['+249', 'Sudan', 'السودان'],
-        'LY' => ['+218', 'Libya', 'ليبيا'],
-        'TN' => ['+216', 'Tunisia', 'تونس'],
-        'DZ' => ['+213', 'Algeria', 'الجزائر'],
-        'MA' => ['+212', 'Morocco', 'المغرب'],
+        'SD' => ['+249', 'Sudan', 'السودان', '+249 91 123 4567'],
+        'LY' => ['+218', 'Libya', 'ليبيا', '+218 91 234 5678'],
+        'TN' => ['+216', 'Tunisia', 'تونس', '+216 20 123 456'],
+        'DZ' => ['+213', 'Algeria', 'الجزائر', '+213 551 23 45 67'],
+        'MA' => ['+212', 'Morocco', 'المغرب', '+212 650 123456'],
         'MR' => ['+222', 'Mauritania', 'موريتانيا'],
         'SO' => ['+252', 'Somalia', 'الصومال'],
         'DJ' => ['+253', 'Djibouti', 'جيبوتي'],
@@ -114,17 +125,122 @@ final class CountryCodes
     ];
 
     /**
+     * IANA timezone => ISO code, for inferring the visitor's country in the browser.
+     *
+     * `Intl.DateTimeFormat().resolvedOptions().timeZone` is the only country signal a browser gives
+     * away for free: no network call, no geolocation permission, no third-party service, and it is
+     * already correct on a phone that set its own clock. It is also, for this purpose, better than
+     * `navigator.language` — an Emirati on an English-locale laptop reports `en-US`.
+     *
+     * One canonical zone per offered country (a few carry two, where a country spans zones or where
+     * a legacy alias is still what browsers report — `Asia/Calcutta`, and the US zones). Anything
+     * outside the list falls through to the language hint and then to the default, which is the
+     * right outcome for a visitor the picker was never ordered around.
+     *
+     * Kept here rather than in JS so it cannot drift from COUNTRIES — every value below must be a
+     * key above, and CountryCodesTest fails if one is not.
+     *
+     * @return array<string, string>
+     */
+    public static function zones(): array
+    {
+        return [
+            // The Gulf and the wider Arab region: the audience this form is for.
+            'Asia/Dubai' => 'AE',
+            'Asia/Riyadh' => 'SA',
+            'Africa/Cairo' => 'EG',
+            'Asia/Kuwait' => 'KW',
+            'Asia/Qatar' => 'QA',
+            'Asia/Bahrain' => 'BH',
+            'Asia/Muscat' => 'OM',
+            'Asia/Amman' => 'JO',
+            'Asia/Beirut' => 'LB',
+            'Asia/Baghdad' => 'IQ',
+            'Asia/Damascus' => 'SY',
+            'Asia/Gaza' => 'PS',
+            'Asia/Hebron' => 'PS',
+            'Asia/Aden' => 'YE',
+            'Africa/Khartoum' => 'SD',
+            'Africa/Tripoli' => 'LY',
+            'Africa/Tunis' => 'TN',
+            'Africa/Algiers' => 'DZ',
+            'Africa/Casablanca' => 'MA',
+            'Africa/Nouakchott' => 'MR',
+            'Africa/Mogadishu' => 'SO',
+            'Africa/Djibouti' => 'DJ',
+            'Indian/Comoro' => 'KM',
+
+            // Europe.
+            'Europe/London' => 'GB',
+            'Europe/Dublin' => 'IE',
+            'Europe/Paris' => 'FR',
+            'Europe/Berlin' => 'DE',
+            'Europe/Madrid' => 'ES',
+            'Europe/Lisbon' => 'PT',
+            'Europe/Rome' => 'IT',
+            'Europe/Malta' => 'MT',
+            'Europe/Amsterdam' => 'NL',
+            'Europe/Brussels' => 'BE',
+            'Europe/Zurich' => 'CH',
+            'Europe/Vienna' => 'AT',
+            'Europe/Prague' => 'CZ',
+            'Europe/Warsaw' => 'PL',
+            'Europe/Bucharest' => 'RO',
+            'Europe/Athens' => 'GR',
+            'Europe/Stockholm' => 'SE',
+            'Europe/Oslo' => 'NO',
+            'Europe/Copenhagen' => 'DK',
+            'Europe/Helsinki' => 'FI',
+            'Europe/Kyiv' => 'UA',
+            'Europe/Kiev' => 'UA',
+            'Europe/Istanbul' => 'TR',
+            'Europe/Moscow' => 'RU',
+            'Asia/Nicosia' => 'CY',
+
+            // The Americas.
+            'America/New_York' => 'US',
+            'America/Chicago' => 'US',
+            'America/Denver' => 'US',
+            'America/Los_Angeles' => 'US',
+            'America/Toronto' => 'CA',
+            'America/Vancouver' => 'CA',
+            'America/Mexico_City' => 'MX',
+            'America/Sao_Paulo' => 'BR',
+
+            // Asia-Pacific and the rest of Africa.
+            'Asia/Karachi' => 'PK',
+            'Asia/Kolkata' => 'IN',
+            'Asia/Calcutta' => 'IN',
+            'Asia/Shanghai' => 'CN',
+            'Asia/Hong_Kong' => 'HK',
+            'Asia/Tokyo' => 'JP',
+            'Asia/Seoul' => 'KR',
+            'Asia/Singapore' => 'SG',
+            'Asia/Kuala_Lumpur' => 'MY',
+            'Asia/Jakarta' => 'ID',
+            'Asia/Bangkok' => 'TH',
+            'Asia/Manila' => 'PH',
+            'Asia/Ho_Chi_Minh' => 'VN',
+            'Australia/Sydney' => 'AU',
+            'Australia/Melbourne' => 'AU',
+            'Pacific/Auckland' => 'NZ',
+            'Africa/Lagos' => 'NG',
+            'Africa/Nairobi' => 'KE',
+            'Africa/Addis_Ababa' => 'ET',
+            'Africa/Johannesburg' => 'ZA',
+        ];
+    }
+
+    /**
      * The picker's options, in display order, for the locale given.
      *
-     * Two labels per country, because the control has two jobs. `label` names the country and is what
-     * the open list shows. `short` is what the closed trigger shows — the phone row is a half-width
-     * field on a two-column form, roughly 150–255px wide, so a trigger rendering "United Arab Emirates
-     * (+971)" squeezed the number input down to almost nothing (client report 2026-07-28).
+     * Three labels per country, because the control has three jobs. `label` names the country and is
+     * what the open list shows. `short` is what the closed trigger shows — an ISO plus a dial code,
+     * which is what you would read off a SIM card, so it stays Latin in both languages: localizing
+     * it would help nobody dial. `example` is the placeholder the number input adopts once this
+     * country is selected, and is an empty string where no format is published here.
      *
-     * `short` stays Latin in both languages: an ISO code and a dial code are what you would read off a
-     * SIM card, and localizing them would help nobody dial.
-     *
-     * @return list<array{iso:string,dial:string,label:string,short:string}>
+     * @return list<array{iso:string,dial:string,label:string,short:string,example:string}>
      */
     public static function options(string $locale = 'en'): array
     {
@@ -137,6 +253,8 @@ final class CountryCodes
                 'dial' => $dial,
                 'label' => ($arabic ? $arabicName : $english) . ' (' . $dial . ')',
                 'short' => $iso . ' ' . $dial,
+                // Digits read the same in both catalogues, so there is nothing here to translate.
+                'example' => self::COUNTRIES[$iso][3] ?? '',
             ];
         }
 

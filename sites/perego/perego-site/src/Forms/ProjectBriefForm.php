@@ -70,7 +70,11 @@ final class ProjectBriefForm extends Form
                 // outside Egypt can dial, which for a studio serving EG/SA/AE is the whole point of
                 // asking (client report 2026-07-27). The country picker in
                 // contact-service-chooser/view.js makes supplying the code a choice, not typing.
-                'width' => 'half',
+                //
+                // Full width, because this is the form's only *composite* control — the picker and
+                // the number are two controls in one field, and a half-width slot sized for one left
+                // the number ~151px for a ~190px placeholder, clipping the hint at every desktop
+                // width (client report 2026-07-28).
                 'rules' => ['phone'],
                 'label' => __('Phone', 'perego-site'),
                 'placeholder' => __('Best number to reach you', 'perego-site'),
@@ -90,8 +94,10 @@ final class ProjectBriefForm extends Form
                 'options' => $this->budgetOptions(),
             ],
             'subject' => [
+                // Full width, because phone took a row of its own and left five halves — one of
+                // them would have been stranded beside a gap. A free-text line is also the better
+                // candidate of the five for the extra room.
                 'type' => 'text',
-                'width' => 'half',
                 'rules' => ['required', 'min:3', 'max:120'],
                 'label' => __('Message Subject', 'perego-site'),
                 'placeholder' => __('What is this about?', 'perego-site'),

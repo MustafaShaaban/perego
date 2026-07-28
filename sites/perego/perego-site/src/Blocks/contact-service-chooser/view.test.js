@@ -31,6 +31,107 @@ beforeEach( () => {
 		</section>`;
 } );
 
+const COUNTRIES = [
+	{ iso: 'AE', dial: '+971', label: 'United Arab Emirates (+971)', short: 'AE +971', example: '+971 50 123 4567' },
+	{ iso: 'SA', dial: '+966', label: 'Saudi Arabia (+966)', short: 'SA +966', example: '+966 50 123 4567' },
+	{ iso: 'EG', dial: '+20', label: 'Egypt (+20)', short: 'EG +20', example: '+20 100 123 4567' },
+	{ iso: 'US', dial: '+1', label: 'United States (+1)', short: 'US +1', example: '' },
+];
+const ZONES = { 'Asia/Dubai': 'AE', 'Asia/Riyadh': 'SA', 'Africa/Cairo': 'EG', 'America/New_York': 'US' };
+const GENERIC = 'Best number to reach you';
+
+/** Loads the chooser with a phone field present, under a chosen timezone and language list. */
+function loadPhone( { timeZone = 'Asia/Dubai', languages = [ 'en' ] } = {} ) {
+	jest.spyOn( Intl, 'DateTimeFormat' ).mockReturnValue( { resolvedOptions: () => ( { timeZone } ) } );
+	Object.defineProperty( navigator, 'languages', { configurable: true, value: languages } );
+
+	const chooser = document.querySelector( '[data-perego-service-chooser]' );
+	chooser.dataset.countries = JSON.stringify( COUNTRIES );
+	chooser.dataset.countryZones = JSON.stringify( ZONES );
+	chooser.dataset.defaultCountry = 'AE';
+
+	const form = document.querySelector( 'form' );
+	form.insertAdjacentHTML(
+		'beforeend',
+		`<div data-corex-field="phone"><input name="phone" type="tel" placeholder="${ GENERIC }" /></div>`
+	);
+	loadChooser();
+
+	return document.querySelector( 'input[name="phone"]' );
+}
+
+const pickedIso = () => document.querySelector( '#perego-phone-country' ).selectedOptions[ 0 ].dataset.iso;
+
+afterEach( () => jest.restoreAllMocks() );
+
+test.each( [
+	[ 'Asia/Dubai', 'AE' ],
+	[ 'Asia/Riyadh', 'SA' ],
+	[ 'Africa/Cairo', 'EG' ],
+] )( 'preselects the visitor’s own country from the %s timezone', ( timeZone, iso ) => {
+	loadPhone( { timeZone } );
+
+	expect( pickedIso() ).toBe( iso );
+} );
+
+test( 'falls back to the language region when the timezone is not one we map', () => {
+	loadPhone( { timeZone: 'Antarctica/Troll', languages: [ 'ar-SA', 'en' ] } );
+
+	expect( pickedIso() ).toBe( 'SA' );
+} );
+
+test( 'falls back to the configured default when neither signal names a country we offer', () => {
+	// A bare `ar` is a language, not a location, and Troll is not on the map.
+	loadPhone( { timeZone: 'Antarctica/Troll', languages: [ 'ar' ] } );
+
+	expect( pickedIso() ).toBe( 'AE' );
+} );
+
+test( 'still renders a working picker when Intl refuses to answer', () => {
+	jest.spyOn( Intl, 'DateTimeFormat' ).mockImplementation( () => {
+		throw new Error( 'no Intl here' );
+	} );
+	Object.defineProperty( navigator, 'languages', { configurable: true, value: [ 'en' ] } );
+	const chooser = document.querySelector( '[data-perego-service-chooser]' );
+	chooser.dataset.countries = JSON.stringify( COUNTRIES );
+	chooser.dataset.countryZones = JSON.stringify( ZONES );
+	chooser.dataset.defaultCountry = 'AE';
+	document.querySelector( 'form' ).insertAdjacentHTML(
+		'beforeend',
+		`<div data-corex-field="phone"><input name="phone" type="tel" placeholder="${ GENERIC }" /></div>`
+	);
+	loadChooser();
+
+	expect( pickedIso() ).toBe( 'AE' );
+} );
+
+test( 'shows the selected country’s own number format, and the generic copy where there is none', () => {
+	const input = loadPhone( { timeZone: 'Asia/Dubai' } );
+	expect( input.placeholder ).toBe( '+971 50 123 4567' );
+
+	const select = document.querySelector( '#perego-phone-country' );
+	select.value = '+966';
+	select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+	expect( input.placeholder ).toBe( '+966 50 123 4567' );
+
+	// US publishes no example here, so the field restores its translated sentence rather than
+	// emptying the placeholder.
+	select.value = '+1';
+	select.dispatchEvent( new Event( 'change', { bubbles: true } ) );
+	expect( input.placeholder ).toBe( GENERIC );
+} );
+
+test( 'lets a typed dial code override the detected country', () => {
+	const input = loadPhone( { timeZone: 'Asia/Dubai' } );
+	expect( pickedIso() ).toBe( 'AE' );
+
+	input.value = '+20 100 169 9970';
+	input.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+	expect( pickedIso() ).toBe( 'EG' );
+	expect( input.placeholder ).toBe( '+20 100 123 4567' );
+} );
+
 test( 'keeps a live "n / 200 words" counter in sync with the live CoreX textarea', () => {
 	loadChooser();
 	const textarea = document.querySelector( 'textarea[name="message"]' );
