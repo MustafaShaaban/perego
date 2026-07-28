@@ -38,6 +38,7 @@ use PeregoSite\Blocks\FooterCareersRenderer;
 use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\GlobalContent;
 use PeregoSite\Content\PortfolioContent;
+use PeregoSite\Content\ProjectOrder;
 use PeregoSite\Content\ServiceContent;
 use PeregoSite\Content\ServicePortfolioSelection;
 use PeregoSite\PostTypes\ClientPostType;
@@ -708,7 +709,7 @@ final class PeregoSiteServiceProvider
             ]);
 
             register_block_type($this->blockDir('service-selected-work'), [
-                'render_callback' => static function () use ($selectedWorkRenderer, $webShowcaseRenderer, $languageService): string {
+                'render_callback' => static function (array $attributes) use ($selectedWorkRenderer, $webShowcaseRenderer, $languageService): string {
                     // The service and project CPTs use different (but 1:1) slugs for the same four
                     // disciplines — map the current service to its matching project category.
                     $serviceToCategory = [
@@ -774,7 +775,9 @@ final class PeregoSiteServiceProvider
                     // short, curated set. The client asked for "minimum 5 and not more than 6" there
                     // — a service page is a pitch, not an archive, and 23 tiles behind a "Load more"
                     // button buried the work it was meant to lead with.
-                    $workCap = $currentSlug === 'website-making' ? 23 : 6;
+                    $workCap = $currentSlug === 'website-making'
+                        ? ServiceSelectedWorkRenderer::WORK_CAP_WEB
+                        : ServiceSelectedWorkRenderer::WORK_CAP_DEFAULT;
 
                     $posts = (new \WP_Query([
                         'post_type' => ProjectPostType::POST_TYPE,
@@ -800,8 +803,13 @@ final class PeregoSiteServiceProvider
                             }
                         }
                     }
+                    // Composition first, then the block's own manual arrangement, then the cap — so a
+                    // drag decides which projects survive the cut, not just how the survivors sit.
                     $posts = array_slice(
-                        (new ServicePortfolioSelection())->resolve($posts, $selectedPosts, $portfolioMode, $portfolioExclusions),
+                        ProjectOrder::apply(
+                            (new ServicePortfolioSelection())->resolve($posts, $selectedPosts, $portfolioMode, $portfolioExclusions),
+                            array_map('intval', (array) ($attributes['projectOrder'] ?? [])),
+                        ),
                         0,
                         $workCap,
                     );
@@ -867,6 +875,7 @@ final class PeregoSiteServiceProvider
                     $projects = (new ProjectRepository())->allForGrid(
                         $content,
                         (bool) ($attributes['featuredOnly'] ?? false),
+                        array_map('intval', (array) ($attributes['projectOrder'] ?? [])),
                     );
 
                     // spec 021 C11: the archive heading/intro and closing CTA are editable per locale;

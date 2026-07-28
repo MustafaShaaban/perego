@@ -1,29 +1,33 @@
 /**
- * Perego portfolio-grid block — editor registration (spec 021 C11; DECISIONS 2026-07-22).
+ * Perego portfolio-grid block — editor registration (spec 021 C11; spec 023 canvas ordering).
  *
- * This is a **dynamic/query block**: every card is a projection of the whole `perego_project` archive for the
- * current language, so per the spec's static-vs-dynamic rule it keeps `<ServerSideRender>` for the canvas
- * rather than a hand-rebuilt skeleton — there is no parity test for it by design. (A skeleton would also have
- * needed a 43 KB, 77-card fixture to pin, which pins nothing useful.) The SSR preview replaces an `edit()` that
- * returned a bare sentence and showed the editor nothing.
+ * WHY THIS IS NO LONGER ServerSideRender. Spec 021 classed this a dynamic/query block and kept
+ * `<ServerSideRender>` on the rule that a block whose content is a runtime query previews rather than
+ * rebuilds. That rule assumed the editing surface was the block's *settings*. The owner's 2026-07-28
+ * request makes the editing surface the query result itself — dragging the real cards to order them —
+ * and nothing inside an SSR iframe can be dragged. The rule is superseded here and in
+ * `service-selected-work`, for that reason only; see DECISIONS 2026-07-28. `preview.js` now carries
+ * the markup and `parity.test.js` pins it to the PHP, which the SSR version had no need of.
  *
- * Its render callback is context-free — it queries the archive itself rather than the queried object — so SSR
- * renders the real grid in the editor, including the filter chips and pager.
+ * WHAT THE CANVAS DELIBERATELY DOES NOT REPRODUCE. It shows every project, unfiltered and unpaginated,
+ * with the chips and pager rendered but inert. `PER_PAGE` is 9; dragging a card from position 52 to
+ * position 3 is impossible through a nine-card window, and reproducing `view.js`'s filter and pager
+ * would be a second implementation of behaviour that already has its own tests.
  *
- * The Inspector makes the archive's editorial copy editable per locale (heading, intro, and the closing CTA),
- * on the shared `../../Editor` primitives. Empty means "use the seed copy from `PortfolioContent`", so an
- * unedited block renders byte-identically to before. The demo note is the exception: it is a launch placeholder
- * ("Example projects shown below — to be replaced with Perego's real work"), so it gets an explicit toggle that
- * genuinely removes it.
+ * The Inspector still makes the archive's editorial copy editable per locale. Empty means "use the seed
+ * copy from `PortfolioContent`", so an unedited block renders byte-identically to before.
  */
 import { registerBlockType } from '@wordpress/blocks';
 import { InspectorControls, useBlockProps } from '@wordpress/block-editor';
-import { TextareaControl, ToggleControl } from '@wordpress/components';
-import ServerSideRender from '@wordpress/server-side-render';
-import { __ } from '@wordpress/i18n';
+import { Button, TextareaControl, ToggleControl } from '@wordpress/components';
+import { __, sprintf, _n } from '@wordpress/i18n';
 import { LanguagePair } from '../../Editor/LanguagePair';
 import { LinkPicker, linkFromAttributes, linkToAttributes } from '../../Editor/LinkPicker';
 import { PanelSection } from '../../Editor/PanelSection';
+import { SortableItem } from '../../Editor/SortableItem';
+import { useCanvasSort } from '../../Editor/useCanvasSort';
+import { PortfolioCard, PortfolioGridSkeleton, placeholderCards } from './preview';
+import { useProjectCards } from './useProjectCards';
 import metadata from './block.json';
 import './style.scss';
 
@@ -41,8 +45,43 @@ const SEED = {
 	ctaButtonAr: 'ابدأ مشروعك',
 };
 
-function Edit( { attributes, setAttributes } ) {
+/** The chip labels, mirroring `PortfolioContent::filterLabels()` — 'all' first, then the four categories. */
+const FILTER_LABELS = {
+	all: __( 'All', 'perego-site' ),
+	video: __( 'Video Editing', 'perego-site' ),
+	motion: __( '2D Motion Graphics', 'perego-site' ),
+	design: __( 'Graphic Design', 'perego-site' ),
+	web: __( 'Website Making', 'perego-site' ),
+};
+
+function Edit( { attributes, setAttributes, isSelected } ) {
 	const blockProps = useBlockProps( { className: 'perego-portfolio-grid__editor' } );
+	const projectOrder = attributes.projectOrder || [];
+
+	const { cards } = useProjectCards( {
+		featuredOnly: attributes.featuredOnly,
+		projectOrder,
+		filterLabels: FILTER_LABELS,
+	} );
+
+	// Seed cards until REST resolves, so the block previews as itself rather than as nothing.
+	const resolved = cards || placeholderCards();
+	const isReady = Array.isArray( cards ) && cards.length > 0;
+
+	const sort = useCanvasSort( {
+		length: resolved.length,
+		isEnabled: isSelected && isReady,
+		describeItem: ( index ) => resolved[ index ]?.title || '',
+		onReorder: ( reorder ) => {
+			// The stored order names every card, not just the moved one — an order that named only
+			// what had been touched could not express "this one now comes third".
+			setAttributes( { projectOrder: reorder( resolved.map( ( card ) => card.id ) ) } );
+		},
+	} );
+
+	const unplaced = projectOrder.length === 0
+		? 0
+		: resolved.filter( ( card ) => ! projectOrder.includes( card.id ) ).length;
 	// Every editable field is the same En/Ar attribute pair, so the wiring is built once. The seed copy
 	// becomes the placeholder, making "empty" read as "this is what the page will say".
 	const pair = ( key ) => ( {
@@ -62,6 +101,44 @@ function Edit( { attributes, setAttributes } ) {
 			}
 		} }>
 			<InspectorControls>
+				<PanelSection title={ __( 'Order', 'perego-site' ) } initialOpen>
+					<p className="perego-editor-help">
+						{ isSelected
+							? __( 'Drag a card to reorder it, or use the Move earlier / Move later buttons on each card.', 'perego-site' )
+							: __( 'Select this block to reorder its cards.', 'perego-site' ) }
+					</p>
+					<p className="perego-editor-help">
+						{ __( 'This order applies to this grid only — the Work archive keeps its own.', 'perego-site' ) }
+					</p>
+					{ unplaced > 0 && (
+						<p className="perego-editor-help">
+							{ sprintf(
+								/* translators: %d: number of projects published since the order was set. */
+								_n(
+									'%d project published since this order was set appears at the end.',
+									'%d projects published since this order was set appear at the end.',
+									unplaced,
+									'perego-site'
+								),
+								unplaced
+							) }
+						</p>
+					) }
+					{ projectOrder.length > 0 && (
+						<Button variant="secondary" onClick={ () => setAttributes( { projectOrder: [] } ) }>
+							{ __( 'Reset to automatic order', 'perego-site' ) }
+						</Button>
+					) }
+				</PanelSection>
+				<PanelSection title={ __( 'Which projects', 'perego-site' ) }>
+					<ToggleControl
+						__nextHasNoMarginBottom
+						label={ __( 'Featured projects only', 'perego-site' ) }
+						help={ __( 'The home page leads with a shortlist. The Work archive should show everything.', 'perego-site' ) }
+						checked={ attributes.featuredOnly }
+						onChange={ ( featuredOnly ) => setAttributes( { featuredOnly } ) }
+					/>
+				</PanelSection>
 				<PanelSection title={ __( 'Archive heading', 'perego-site' ) } initialOpen>
 					<LanguagePair
 						label={ __( 'Title', 'perego-site' ) }
@@ -104,7 +181,45 @@ function Edit( { attributes, setAttributes } ) {
 					/>
 				</PanelSection>
 			</InspectorControls>
-			<ServerSideRender block={ metadata.name } attributes={ attributes } />
+
+			<p className="perego-editor-help perego-portfolio-grid__note">
+				{ isReady
+					? sprintf(
+						/* translators: %d: total number of projects shown in the canvas. */
+						__( 'All %d projects are shown here so you can order them. Visitors see 9 at a time, filtered by service. The preview uses the English projects; the Arabic page shows their translations in the same order.', 'perego-site' ),
+						resolved.length
+					)
+					: __( 'Loading projects…', 'perego-site' ) }
+			</p>
+
+			<PortfolioGridSkeleton
+				strings={ {
+					heading: attributes.headingEn || SEED.headingEn,
+					uiHome: attributes.showBreadcrumb ? __( 'Home', 'perego-site' ) : '',
+					intro: attributes.introEn || SEED.introEn,
+					demoNote: attributes.showDemoNote ? __( 'Example projects shown below.', 'perego-site' ) : '',
+					groupLabel: __( 'Filter projects by service', 'perego-site' ),
+					noResults: __( 'No projects match this filter yet.', 'perego-site' ),
+					galleryBadge: __( 'Gallery', 'perego-site' ),
+					ctaTitle: attributes.ctaTitleEn || SEED.ctaTitleEn,
+					ctaBody: attributes.ctaBodyEn || SEED.ctaBodyEn,
+					ctaButton: attributes.ctaButtonEn || SEED.ctaButtonEn,
+				} }
+				filterLabels={ FILTER_LABELS }
+				cards={ resolved }
+				renderCard={ ( card, index ) => (
+					<SortableItem
+						key={ card.id }
+						index={ index }
+						length={ resolved.length }
+						sort={ sort }
+						isEnabled={ isSelected && isReady }
+						label={ card.title }
+					>
+						<PortfolioCard card={ card } galleryBadge={ __( 'Gallery', 'perego-site' ) } isEditor />
+					</SortableItem>
+				) }
+			/>
 		</div>
 	);
 }

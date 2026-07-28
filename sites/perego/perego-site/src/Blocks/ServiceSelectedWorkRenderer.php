@@ -29,7 +29,21 @@ defined('ABSPATH') || exit;
 final class ServiceSelectedWorkRenderer
 {
     /** The handoff mosaic has exactly 15 designed placements; everything after is "Load more". */
-    private const MASONRY_TILES = 15;
+    public const MASONRY_TILES = 15;
+
+    /**
+     * How many projects a service single asks for, by service.
+     *
+     * These were a bare `? 23 : 6` in the block's render callback. They are here because the editor
+     * canvas has to know them: a canvas that renders fifteen tiles where the front end renders six is
+     * not a preview of anything, and `src/Editor/projectSlots.js` mirrors these two values with a test
+     * that parses this file.
+     *
+     * Website Making asks for far more because it does not use this mosaic at all — it branches to
+     * {@see WebShowcaseRenderer}, a uniform grid of browser-chrome cards with its own filter row.
+     */
+    public const WORK_CAP_DEFAULT = 6;
+    public const WORK_CAP_WEB = 23;
 
     /**
      * @param list<array{title: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl?: string}> $projects

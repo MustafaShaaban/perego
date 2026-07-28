@@ -36,3 +36,110 @@
 .perego-media-lightbox__editor .lightbox {
 	min-block-size: clamp(280px, 40vh, 460px);
 }
+
+/*
+ * Canvas drag-sorting (spec 023; owner 2026-07-28).
+ *
+ * Scoped to `.perego-sortable`, which only `SortableItem` emits and which therefore exists only inside
+ * the block-editor canvas — same discipline as the rules above, and the reason nothing here reaches a
+ * visitor even though this file compiles into `main.css`.
+ */
+
+.perego-sortable {
+	position: relative;
+
+	/*
+	 * Without this a touch drag scrolls the canvas instead of moving the tile: the browser claims the
+	 * gesture for panning before `pointermove` ever fires. Only the sortable card is affected, so the
+	 * canvas still scrolls everywhere else.
+	 */
+	touch-action: none;
+	cursor: grab;
+
+	&[data-sort-state="grabbed"] {
+		z-index: 2;
+		opacity: 0.85;
+		cursor: grabbing;
+	}
+
+	/*
+	 * The insertion hint for the uniform grid, drawn on the target's inline-start edge. Logical, so it
+	 * lands on the correct side of the tile on the Arabic page without a second rule. The mosaic does
+	 * not use this — there the whole grid re-slots live under the pointer, because in an explicitly
+	 * placed layout "insert before this one" does not describe anything the editor can see.
+	 */
+	&[data-sort-state="target"]::after {
+		content: "";
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: -6px;
+		inline-size: 3px;
+		border-radius: 3px;
+		background: var(--wp--preset--color--accent, #d86af3);
+	}
+}
+
+/* The single-pointer alternative WCAG 2.2 2.5.7 requires. Revealed on hover or when either button
+   takes focus, so it never obscures the card it belongs to but is always reachable. */
+.perego-sortable__controls {
+	position: absolute;
+	inset-block-start: 6px;
+	inset-inline-start: 6px;
+	z-index: 3;
+	display: flex;
+	gap: 4px;
+	padding: 3px;
+	border-radius: 6px;
+	background: rgba(6, 0, 16, 0.82);
+	opacity: 0;
+	transition: opacity 0.15s ease;
+
+	.perego-sortable:hover &,
+	&:focus-within {
+		opacity: 1;
+	}
+
+	.components-button {
+		/* 2.5.8 Target Size (Minimum) is 24x24 CSS px; the small button is 24px square. */
+		min-inline-size: 24px;
+		block-size: 24px;
+		padding: 0;
+		color: #fff;
+	}
+}
+
+/*
+ * The chips and pager still render in the canvas, because the parity harness compares structure — but
+ * they do nothing there: the canvas deliberately shows the whole unfiltered, unpaginated set so a card
+ * at position 52 can be dragged to position 3, which is impossible through a nine-card window.
+ */
+.perego-portfolio-grid__editor {
+	.portfolio-filters,
+	.pagination {
+		pointer-events: none;
+		opacity: 0.55;
+	}
+}
+
+/* The crop each mosaic tile resolves to, and whether it had to borrow one. A sibling layer rather than
+   markup inside `.work-masonry`, so the subtree the parity test compares stays clean. */
+.perego-ssw__editor-notes {
+	pointer-events: none;
+}
+
+.perego-sortable__crop-note {
+	position: absolute;
+	inset-block-end: 6px;
+	inset-inline-start: 6px;
+	z-index: 3;
+	padding: 2px 7px;
+	border-radius: 4px;
+	background: rgba(6, 0, 16, 0.82);
+	color: #fff;
+	font-size: 11px;
+	line-height: 1.5;
+
+	&[data-borrowed="true"] {
+		background: color-mix(in srgb, var(--wp--preset--color--accent, #d86af3) 80%, #000);
+	}
+}

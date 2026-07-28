@@ -11,6 +11,7 @@ namespace PeregoSite\Repositories;
 defined('ABSPATH') || exit;
 
 use PeregoSite\Content\PortfolioContent;
+use PeregoSite\Content\ProjectOrder;
 use PeregoSite\Content\TranslatedMeta;
 use PeregoSite\PostTypes\ProjectPostType;
 use WP_Post;
@@ -154,11 +155,13 @@ final class ProjectRepository
      * (never -1) per the query-discipline rule.
      *
      * `$featuredOnly` narrows the set to the shortlist the home page leads with; `/work` renders the
-     * same block without it and still shows everything.
+     * same block without it and still shows everything. `$order` is the block instance's own manual
+     * arrangement, laid over the `menu_order`/date fallback — empty means "no manual order".
      *
+     * @param list<int> $order
      * @return list<array{title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string}>
      */
-    public function allForGrid(PortfolioContent $content, bool $featuredOnly = false): array
+    public function allForGrid(PortfolioContent $content, bool $featuredOnly = false, array $order = []): array
     {
         // `menu_order` first, then date. The client supplied the website portfolio in a deliberate
         // order — their strongest work leads — and date DESC was really "whatever order the importer
@@ -179,6 +182,10 @@ final class ProjectRepository
         $posts = $featuredOnly
             ? array_values(array_filter($query->posts, fn (WP_Post $post): bool => $this->isFeatured($post)))
             : $query->posts;
+
+        // Applied after the filter, so an order saved before a project lost its featured flag simply
+        // skips it rather than reserving a gap for it.
+        $posts = ProjectOrder::apply($posts, $order);
 
         return array_map(
             fn (WP_Post $post): array => $this->toGridCard($post, $content),

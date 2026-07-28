@@ -5,7 +5,12 @@ import { duplicateItem, moveItem, removeItem } from './collection';
 
 /**
  * Accessible repeater actions shared by visual Perego blocks. Native keyboard controls are offered
- * alongside future pointer sorting so ordering is never mouse-only.
+ * alongside pointer sorting so ordering is never mouse-only.
+ *
+ * The pointer half this anticipated now exists as {@link useCanvasSort} + {@link SortableItem}, for
+ * the two query blocks whose cards are dragged on the canvas (spec 023). It follows the same rule
+ * from the other direction: dragging never replaces the buttons, because WCAG 2.2 2.5.7 requires a
+ * single-pointer alternative that is not a drag.
  */
 export function RepeaterControls( { items, index, onChange, createCopy, itemLabel, canDuplicate = true, canRemove = true } ) {
 	const label = itemLabel || __( 'item', 'perego-site' );
