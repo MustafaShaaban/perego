@@ -1,5 +1,80 @@
 # Perego — Decision Log
 
+## 2026-07-28 — Query blocks may be live canvases when the query result IS the editing surface
+
+**Decision (owner).** Projects are reordered by dragging the real cards on the editor canvas, on the
+home grid and on the single-service mosaic. Projects can carry PDFs, and the lightbox reads them, zooms
+images and fills the screen.
+
+**This supersedes a rule recorded on 2026-07-21**, which said a block whose content is a runtime query
+keeps `ServerSideRender` with a styled placeholder, and named `portfolio-grid` in its exclusion list.
+That rule was right for the case it was written about — the editing surface being the block's
+*settings*. It does not survive the editing surface being the *query result*: nothing inside an SSR
+iframe can be dragged. Superseded for `portfolio-grid` and `service-selected-work` **only**, and only
+for that reason. `clients-carousel` and the other query blocks keep SSR.
+
+**Order is a per-block attribute, not `menu_order`.** Three reasons, in order of weight: `menu_order`
+already carries the client's deliberate 29-site website sequence written by
+`scripts/import-portfolio-logos.php`, and a canvas drag would overwrite it; home and `/work` render the
+same block but now show different sets, so one global position cannot express both; and a drag would
+otherwise mean up to 77 individual post saves, outside the editor's undo stack. `menu_order` remains
+the fallback order and `Content\ProjectOrder` is the override laid on top. **Empty means no manual
+order** — which is why adding all of this changed nothing on the front end until someone drags.
+
+**`ProjectOrder` indexes by canonical English id AND raw id.** A grid's order is authored against the
+English posts because its template is language-neutral; a Service post owns its own block, so an Arabic
+service saves Arabic ids. One implementation serves both, and degrades to raw ids when Polylang is
+absent. Unnamed posts are appended, never promoted: publishing a project must not silently disturb an
+arrangement someone made deliberately.
+
+**Pointer events, not HTML5 drag, and no new dependency.** `useBlockProps` sets `draggable="true"` on
+the block wrapper, the editor installs document-level `dragover` handling for its own insertion
+indicator, and the canvas is an iframe while the drag chip renders in the outer document — a nested
+HTML5 drag source fights all three. Pointer events also give the `getBoundingClientRect()` hit-testing
+the mosaic needs: `.m1`–`.m15` carry explicit `grid-column`/`grid-row`, so DOM order is **not** visual
+order there and "insert before my next sibling" describes nothing an editor can see.
+
+**Dragging is never the only way.** WCAG 2.2 **2.5.7 Dragging Movements** requires a single-pointer
+alternative that is not a drag — a keyboard shortcut does not satisfy it. Every card carries Move
+earlier / Move later buttons at 24 px, plus `Ctrl/Cmd`+arrow, `Home`/`End` and Escape-to-cancel, with
+`speak()` announcements that name the new position *and the crop it lands on*. This is what
+`RepeaterControls`' docblock anticipated when it said pointer sorting would come *alongside* the button
+controls.
+
+**The sortable wrapper is the card.** The sorting affordance is itself a pair of buttons, and nesting
+those inside the front end's `<button>`/`<a>` card is invalid and unusable — so in the editor the card
+becomes a `<div>` carrying the same classes. That is what the grid places and what the stylesheet
+targets, so the tile still looks like itself.
+
+**The service block moved into post content.** It resolved its service from `get_queried_object()`,
+which the Site Editor never provides while editing a template — so its SSR preview was blank, and a
+block in a shared template had no service to save a per-service order against. `wp:post-content` was
+already in the template, so the move is visually identical. Migration used a **meta marker, not a
+content signature**: an editor who later deletes the block deliberately must not have it resurrected by
+the next run. Verified on all 8 posts, both languages, section rendering exactly once afterwards.
+
+**Documents are a separate meta key.** Widening `META_GALLERY` into typed `{type,id,url}` rows would be
+a migration for every project, touching six read sites, to buy something only this feature needs. In
+the lightbox they are simply more slides — `mediaType()` resolves each slide's own type, so images, a
+video and a document ride one list. The link under the framed PDF is not a courtesy: iOS Safari paints
+only the first page of a framed PDF and offers no way to scroll it.
+
+**Three JS mirrors of PHP were introduced**, each guarded by a test that parses the PHP: the slot/shape/
+crop resolver, the work caps, and the selection composer. `EditorPanels/slot-shapes.test.js` already
+guarded PHP against the stylesheet; these guard JS against PHP. Worth naming the endgame: once each
+Service post's block owns an ordered list, the `mode`/`project_ids`/`exclude_ids` triad is arguably
+redundant and `ServicePortfolioSelection` could retire — **a separate pass, not this one**.
+
+- **Spec:** `specs/023-project-media-and-canvas-ordering/`.
+- **Verified:** Pest **582** (2005 assertions) · Jest **46 suites / 299** · 15 parity assertions across
+  the two blocks · PDF/zoom/full-screen exercised in a real browser · front end byte-identical on both
+  languages before and after · `verify-a11y` **0 serious/critical**.
+- **Outstanding, and honestly so:** the drag has **not** been exercised in a real block editor. `siteurl`
+  is `peregoads.com` while the dev host is `perego.local`, so an admin session cannot be forged for
+  wp-admin, and taking a password to use the login form is out of scope for the agent. Everything below
+  the editor is covered; what is unproven is that pointer events survive the editor's own drag handling
+  inside the canvas iframe. The manual check is written out in the spec.
+
 ## 2026-07-28 — The home page leads with a shortlist, and crops are offered only where they render
 
 **Decision (owner).** The home Work section shows **featured projects only**; `/work` keeps showing the

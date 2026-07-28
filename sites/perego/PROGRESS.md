@@ -2,7 +2,51 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-28, latest) — Round 13: the home page leads with a shortlist
+## RESUME HERE (2026-07-28, latest) — Round 14: documents, zoom, and dragging the real cards
+
+**Branch `feature/023-project-media-and-canvas-ordering`** (off `feature/022`), spec
+`specs/023-project-media-and-canvas-ordering/`. The remaining three owner items.
+
+**Documents.** `_perego_project_pdf_ids` + its own editor panel; PDFs ride the same lightbox list as
+the artwork, in the browser's own viewer, with a link out because iOS Safari cannot scroll a framed
+PDF. **Zoom** (wheel / double-click / drag-to-pan / `+`-`-`-`0`, 1×–4×, reset per slide) and **full
+screen** on the whole dialog, driven by `fullscreenchange` so the browser's own exit keeps the button
+honest.
+
+**Ordering by dragging the real cards.** Stored per block as `projectOrder`, not `menu_order` —
+`menu_order` carries the client's 29-site sequence and home and `/work` now show different sets.
+`Content\ProjectOrder` indexes by English **and** raw id so one implementation serves the
+language-neutral templates and the per-language Service posts. Pointer events, no new dependency, and
+Move earlier / Move later buttons on every card because WCAG 2.2 2.5.7 needs a non-drag single-pointer
+path.
+
+**Both query blocks are now live canvases**, reversing spec 021's SSR-for-query-blocks rule for these
+two only — nothing inside an SSR iframe can be dragged. The **service block moved into each Service
+post's content** (migration applied, 8 posts, both languages): in a template it had no service to save
+an order against, and its SSR preview was blank anyway. Dragging a tile there **re-crops it**, because
+index → slot → shape → crop, and the tile says which crop it borrowed when it has none of its own.
+
+- **Verified:** Pest **582** (2005 assertions) · Jest **46 suites / 299** · PDF/zoom/full-screen in a
+  real browser · front end byte-identical both languages (7 / 33 cards, 3 / 1 / 0 / 22 tiles) ·
+  `verify-a11y` **0 serious/critical** · `verify-visual` 10 failures, all pre-existing.
+
+### ⚠ Outstanding — one manual check
+
+**The drag has not been exercised in a real block editor.** `siteurl` is `peregoads.com` while the dev
+host is `perego.local`, so an admin session cannot be forged for wp-admin, and the agent does not take
+passwords. Everything below the editor is covered by tests; what is unproven is that pointer events
+survive the editor's own drag handling inside the canvas iframe. Steps are written out at the end of
+`specs/023-project-media-and-canvas-ordering/spec.md`. If the drag does not take, the next lever is
+arming the sort from an explicit drag handle rather than the whole card.
+
+### Next
+
+1. **Run the manual editor check above.** Everything else in 023 is done.
+2. **Then** the CoreX v0.37.0 reconciliation, on its own branch, per the deferral in `DECISIONS.md`.
+3. **Content, not code:** Graphic Design has no published projects and Motion has one, so the home
+   Design chip and the Graphic Design service page are empty.
+
+## Round 13: the home page leads with a shortlist
 
 **Branch `feature/022-project-presentation-fixes`** (off `feature/021`), spec
 `specs/022-project-presentation-fixes/`. Four owner items; three more are spec 023.
