@@ -67,3 +67,29 @@ it('ignores values whose field is not declared in the schema', function () {
     expect($result->isValid())->toBeTrue()
         ->and($result->values)->toBe(['name' => 'A']); // undeclared field dropped
 });
+
+it('accepts a phone number in E.164 form, however the visitor punctuated it', function (string $number) {
+    // A phone field used to be length-capped only, so a local number nobody could dial from
+    // abroad passed. Punctuation people naturally type is not an error — rejecting
+    // "+20 101 699 9700" for its spaces would be pedantry, not validation.
+    expect(validate(['phone' => ['rules' => ['phone']]], ['phone' => $number])->isValid())->toBeTrue();
+})->with(['+201016999700', '+20 101 699 9700', '+971-4-123-4567', '+1 (415) 555-0100', '+966501234567']);
+
+it('rejects a number with no country code, or too few or too many digits', function (string $number) {
+    expect(validate(['phone' => ['rules' => ['phone']]], ['phone' => $number])->errors)
+        ->toBe(['phone' => 'phone']);
+})->with([
+    '01016999700',        // national form: the country code is the part that matters
+    '+0123456789',        // country codes never start at zero
+    '+1234567',           // 7 digits — below the E.164 minimum
+    '+1234567890123456',  // 16 digits — above the E.164 maximum of 15
+    'call me',
+    '++201016999700',
+]);
+
+it('leaves an empty phone to the required rule', function () {
+    // Emptiness is one concern and format is another; conflating them would make every optional
+    // phone field mandatory the moment it gained a format rule.
+    expect(validate(['phone' => ['rules' => ['phone']]], ['phone' => ''])->isValid())->toBeTrue()
+        ->and(validate(['phone' => ['rules' => ['phone']]], [])->isValid())->toBeTrue();
+});

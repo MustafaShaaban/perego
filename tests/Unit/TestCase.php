@@ -23,6 +23,14 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
         Monkey\setUp();
+
+        // Translation is not behaviour any unit test is asserting, but any string a class decides to
+        // make translatable pulls `__()` into its call path — and an unstubbed one fails the test for
+        // a reason unrelated to what it covers. Returning the source string is what an untranslated
+        // site does anyway; a test that cares about translation stubs it again with its own map.
+        Monkey\Functions\when('__')->returnArg();
+        Monkey\Functions\when('esc_html__')->returnArg();
+        Monkey\Functions\when('esc_attr__')->returnArg();
     }
 
     protected function tearDown(): void
