@@ -209,3 +209,121 @@
 		display: none;
 	}
 }
+
+/* ============================================================
+   Documents, zoom and full screen (owner, 2026-07-28)
+   ============================================================ */
+
+/* A document is not 16/9. `.lightbox__frame:has(iframe)` above reserves an embed's box before it
+   paints, which is right for a video and wrong for a page of A4 — so the document wrapper restates
+   its own proportion, and the frame's generic iframe rule is overridden inside it. */
+.lightbox__document {
+	inline-size: 100%;
+	display: grid;
+	gap: 12px;
+	justify-items: center;
+}
+
+.lightbox__frame:has(.lightbox__document) {
+	aspect-ratio: auto;
+}
+
+.lightbox__frame .lightbox__pdf {
+	inline-size: 100%;
+	/* Taller than wide: a document is read a page at a time, and 82vh matches the ceiling the images
+	   already use so the dialog does not change size between slides. */
+	aspect-ratio: auto;
+	block-size: 82vh;
+	background: #fff;
+}
+
+/* Not a courtesy link. iOS Safari paints only the first page of a framed PDF and gives no way to
+   scroll it, so on that platform this is the only way to read the document. */
+.lightbox__document-open {
+	color: var(--wp--preset--color--accent-soft);
+	font-size: 14px;
+	text-decoration: underline;
+
+	&:hover,
+	&:focus-visible {
+		color: #fff;
+	}
+}
+
+.lightbox__tools {
+	position: absolute;
+	inset-block-start: -52px;
+	/* Logical, so the cluster sits opposite the close button in both directions. */
+	inset-inline-start: 0;
+	z-index: 3;
+	display: flex;
+	gap: 8px;
+}
+
+.lightbox__tool {
+	box-sizing: border-box;
+	inline-size: 44px;
+	block-size: 44px;
+	display: grid;
+	place-items: center;
+	border: 0;
+	border-radius: 50%;
+	background: color-mix(in srgb, var(--wp--preset--color--accent) 85%, transparent);
+	color: #fff;
+	font-size: 18px;
+	line-height: 1;
+	cursor: pointer;
+	transition: background var(--wp--custom--perego--motion--dur-fast) var(--wp--custom--perego--motion--ease);
+
+	&[hidden] {
+		display: none;
+	}
+
+	&:hover,
+	&:focus-visible {
+		background: var(--wp--preset--color--accent-soft);
+	}
+
+	&[aria-pressed="true"] {
+		background: var(--wp--preset--color--accent-soft);
+	}
+}
+
+/* Zoom transforms the image inside a frame that must clip it, or a magnified photo would spill over
+   the dialog chrome and the page behind it. */
+.lightbox__frame.is-zoomed {
+	overflow: hidden;
+	border-radius: 14px;
+}
+
+.lightbox__frame img {
+	transform-origin: center center;
+}
+
+.lightbox__frame img.is-zoomed {
+	cursor: grab;
+
+	&:active {
+		cursor: grabbing;
+	}
+}
+
+/* Full screen makes the dialog the whole viewport, so the media should use it rather than stay boxed
+   at the desktop reading width. */
+.lightbox.is-fullscreen {
+	padding: 0;
+
+	.lightbox__inner {
+		inline-size: min(1600px, 100%);
+		padding-block-start: 60px;
+	}
+
+	.lightbox__frame img,
+	.lightbox__frame .lightbox__media {
+		max-block-size: 88vh;
+	}
+
+	.lightbox__frame .lightbox__pdf {
+		block-size: 88vh;
+	}
+}

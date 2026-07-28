@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-07-28T18:47:53+00:00\n"
+"POT-Creation-Date: 2026-07-28T19:04:39+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: perego-site\n"
@@ -32,14 +32,14 @@ msgstr ""
 #: src/Admin/PostListColumns.php:34
 #: src/PostTypes/ClientPostType.php:353
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:364
-#: src/EditorPanels/schema.js:127
+#: src/EditorPanels/index.js:424
+#: src/EditorPanels/schema.js:137
 msgid "Client"
 msgstr ""
 
 #: src/Admin/PostListColumns.php:35
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:128
+#: src/EditorPanels/schema.js:138
 msgid "Year"
 msgstr ""
 
@@ -49,7 +49,7 @@ msgstr ""
 
 #: src/Admin/PostListColumns.php:45
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:409
+#: src/EditorPanels/index.js:469
 msgid "Behavior"
 msgstr ""
 
@@ -80,13 +80,13 @@ msgstr ""
 
 #: src/Admin/PostListColumns.php:132
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:77
+#: src/EditorPanels/schema.js:87
 msgid "No actions"
 msgstr ""
 
 #: src/Admin/ProjectGalleryMetaBox.php:48
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:158
+#: src/EditorPanels/index.js:213
 msgid "Project gallery"
 msgstr ""
 
@@ -104,7 +104,7 @@ msgstr ""
 
 #: src/Admin/ServicePortfolioMetaBox.php:41
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:193
+#: src/EditorPanels/index.js:253
 msgid "Selected work"
 msgstr ""
 
@@ -274,21 +274,21 @@ msgstr ""
 msgid "Open %s"
 msgstr ""
 
-#: src/Blocks/PortfolioGridRenderer.php:296
+#: src/Blocks/PortfolioGridRenderer.php:332
 msgid "Projects pagination"
 msgstr ""
 
-#: src/Blocks/PortfolioGridRenderer.php:299
+#: src/Blocks/PortfolioGridRenderer.php:335
 msgid "Previous page"
 msgstr ""
 
 #. translators: %d: page number
-#: src/Blocks/PortfolioGridRenderer.php:303
+#: src/Blocks/PortfolioGridRenderer.php:339
 #, php-format
 msgid "Page %d"
 msgstr ""
 
-#: src/Blocks/PortfolioGridRenderer.php:308
+#: src/Blocks/PortfolioGridRenderer.php:344
 msgid "Next page"
 msgstr ""
 
@@ -328,7 +328,7 @@ msgid "Open project media %d"
 msgstr ""
 
 #: src/Blocks/ProjectHeroRenderer.php:45
-#: src/PostTypes/ProjectPostType.php:259
+#: src/PostTypes/ProjectPostType.php:279
 msgid "Project"
 msgstr ""
 
@@ -410,7 +410,7 @@ msgid "About Us"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:54
-#: src/PostTypes/ProjectPostType.php:285
+#: src/PostTypes/ProjectPostType.php:305
 #: src/PostTypes/ServicePostType.php:163
 #: src/PostTypes/ServicePostType.php:167
 msgid "Services"
@@ -418,26 +418,26 @@ msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:57
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:116
-#: src/EditorPanels/schema.js:229
+#: src/EditorPanels/schema.js:126
+#: src/EditorPanels/schema.js:239
 msgid "Video Editing"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:58
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:117
+#: src/EditorPanels/schema.js:127
 msgid "2D Motion Graphics"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:59
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:118
+#: src/EditorPanels/schema.js:128
 msgid "Graphic Design"
 msgstr ""
 
 #: src/Blocks/SiteHeaderRenderer.php:60
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:119
+#: src/EditorPanels/schema.js:129
 msgid "Website Making"
 msgstr ""
 
@@ -603,28 +603,28 @@ msgstr ""
 msgid "Client Type"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:258
+#: src/PostTypes/ProjectPostType.php:278
 msgid "Projects"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:260
+#: src/PostTypes/ProjectPostType.php:280
 msgid "Add New Project"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:261
+#: src/PostTypes/ProjectPostType.php:281
 msgid "Edit Project"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:262
+#: src/PostTypes/ProjectPostType.php:282
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:60
+#: src/EditorPanels/schema.js:70
 msgid "Portfolio"
 msgstr ""
 
-#: src/PostTypes/ProjectPostType.php:286
+#: src/PostTypes/ProjectPostType.php:306
 #: src/PostTypes/ServicePostType.php:164
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:212
+#: src/EditorPanels/schema.js:222
 msgid "Service"
 msgstr ""
 
@@ -709,6 +709,7 @@ msgstr ""
 #: build/EditorPanels/index.js:3
 #: src/Editor/RecordPicker.js:71
 #: src/EditorPanels/index.js:94
+#: src/EditorPanels/index.js:146
 msgid "Remove"
 msgstr ""
 
@@ -741,7 +742,7 @@ msgstr ""
 #: build/Blocks/clients-carousel/index.js:1
 #: build/EditorPanels/index.js:3
 #: src/Blocks/clients-carousel/index.js:60
-#: src/EditorPanels/schema.js:269
+#: src/EditorPanels/schema.js:279
 msgid "Subtitle"
 msgstr ""
 
@@ -1072,7 +1073,7 @@ msgstr ""
 #: src/Blocks/journal-header/index.js:49
 #: src/Blocks/portfolio-grid/index.js:67
 #: src/Blocks/portfolio-grid/index.js:86
-#: src/EditorPanels/index.js:464
+#: src/EditorPanels/index.js:524
 msgid "Title"
 msgstr ""
 
@@ -1145,7 +1146,7 @@ msgstr ""
 #: build/Blocks/project-navigation/index.js:1
 #: build/EditorPanels/index.js:3
 #: src/Blocks/project-navigation/index.js:53
-#: src/EditorPanels/index.js:182
+#: src/EditorPanels/index.js:242
 msgid "Untitled Project"
 msgstr ""
 
@@ -1502,8 +1503,8 @@ msgstr ""
 #: build/Blocks/site-header/index.js:1
 #: build/EditorPanels/index.js:3
 #: src/Blocks/site-header/index.js:167
-#: src/EditorPanels/index.js:385
-#: src/EditorPanels/schema.js:199
+#: src/EditorPanels/index.js:445
+#: src/EditorPanels/schema.js:209
 msgid "Logo"
 msgstr ""
 
@@ -1592,229 +1593,229 @@ msgid "— None —"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:34
+#: src/EditorPanels/schema.js:44
 msgid "No icon"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:425
-#: src/EditorPanels/schema.js:35
+#: src/EditorPanels/index.js:485
+#: src/EditorPanels/schema.js:45
 msgid "Show play icon"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:36
+#: src/EditorPanels/schema.js:46
 msgid "Gallery label"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:48
+#: src/EditorPanels/schema.js:58
 msgid "Wide feature — 578 × 332"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:49
+#: src/EditorPanels/schema.js:59
 msgid "Banner — 380 × 158"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:50
+#: src/EditorPanels/schema.js:60
 msgid "Tall — 182 × 332"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:51
+#: src/EditorPanels/schema.js:61
 msgid "Standard card — 406 × 254"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:56
+#: src/EditorPanels/schema.js:66
 msgid "E-commerce"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:371
-#: src/EditorPanels/schema.js:57
+#: src/EditorPanels/index.js:431
+#: src/EditorPanels/schema.js:67
 msgid "Corporate"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:58
+#: src/EditorPanels/schema.js:68
 msgid "Landing page"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:59
+#: src/EditorPanels/schema.js:69
 msgid "Web app"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:65
+#: src/EditorPanels/schema.js:75
 msgid "Automatic — latest matching projects"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:66
+#: src/EditorPanels/schema.js:76
 msgid "Manual — only the projects I choose"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:67
+#: src/EditorPanels/schema.js:77
 msgid "Hybrid — my choices first, then automatic"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:78
+#: src/EditorPanels/schema.js:88
 msgid "Open a lightbox"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:79
+#: src/EditorPanels/schema.js:89
 msgid "Go to a link"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:124
+#: src/EditorPanels/schema.js:134
 msgid "Project details"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:129
+#: src/EditorPanels/schema.js:139
 msgid "Our role"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:131
+#: src/EditorPanels/schema.js:141
 msgid "Deliverables"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:135
+#: src/EditorPanels/schema.js:145
 msgid "Media"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:140
+#: src/EditorPanels/schema.js:150
 msgid "Video URL"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:141
+#: src/EditorPanels/schema.js:151
 msgid "A YouTube/Vimeo link or a video file. Set this and the project opens as a video card."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:146
+#: src/EditorPanels/schema.js:156
 msgid "In the grids"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:151
+#: src/EditorPanels/schema.js:161
 msgid "Feature on the home page"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:155
+#: src/EditorPanels/schema.js:165
 msgid "The home page shows only featured projects. The Work archive always shows them all."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:160
+#: src/EditorPanels/schema.js:170
 msgid "Icon"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:165
+#: src/EditorPanels/schema.js:175
 msgid "What the project’s tile shows on top of its image, in the work grid and the services grid."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:173
+#: src/EditorPanels/schema.js:183
 msgid "Each crop is optional. An empty one falls back to the closest shape you did upload, then to the featured image — so a project with none of these looks exactly as it does now."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:184
+#: src/EditorPanels/schema.js:194
 msgid "Website showcase"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:189
+#: src/EditorPanels/schema.js:199
 msgid "Site type"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:193
+#: src/EditorPanels/schema.js:203
 msgid "Used by the Website Making showcase card."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:195
+#: src/EditorPanels/schema.js:205
 msgid "Live site URL"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:202
+#: src/EditorPanels/schema.js:212
 msgid "The client’s logo. Shown on the home Work grid instead of the screenshot; falls back to the featured image when empty."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:218
+#: src/EditorPanels/schema.js:228
 msgid "Canonical service"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:223
+#: src/EditorPanels/schema.js:233
 msgid "Which of the four services this post is. Drives the service tabs and the portfolio query."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:228
+#: src/EditorPanels/schema.js:238
 msgid "Homepage card label"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:234
+#: src/EditorPanels/schema.js:244
 msgid "Homepage card"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:237
+#: src/EditorPanels/schema.js:247
 msgid "Card image"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:241
+#: src/EditorPanels/schema.js:251
 msgid "Card image alt text"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:242
+#: src/EditorPanels/schema.js:252
 msgid "Describes the image for screen readers. Leave empty only if the image is purely decorative."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:261
+#: src/EditorPanels/schema.js:271
 msgid "Client card"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:270
+#: src/EditorPanels/schema.js:280
 msgid "Sits directly under the name. Wrap the part you want bold in <strong> — e.g. <strong>+1M</strong> views."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:281
+#: src/EditorPanels/schema.js:291
 msgid "Legal page"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:287
+#: src/EditorPanels/schema.js:297
 msgid "Last updated"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/schema.js:289
+#: src/EditorPanels/schema.js:299
 msgid "Shown under the title. Leave empty to use the page’s own modified date."
 msgstr ""
 
@@ -1829,109 +1830,139 @@ msgid "No gallery images yet. The project single hides the gallery until you add
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:197
+#: src/EditorPanels/index.js:142
+msgid "Untitled document"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:163
+msgid "Edit documents"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:163
+msgid "Add a PDF"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:170
+msgid "Optional. A PDF added here opens in the lightbox from the project’s card, after its images."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:171
+msgid "These open in the lightbox after the project’s images."
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:218
+msgid "Project documents"
+msgstr ""
+
+#: build/EditorPanels/index.js:3
+#: src/EditorPanels/index.js:257
 msgid "Which projects"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:207
+#: src/EditorPanels/index.js:267
 msgid "Shown projects (in order)"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:208
+#: src/EditorPanels/index.js:268
 msgid "Add a project"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:209
+#: src/EditorPanels/index.js:269
 msgid "None chosen yet."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:210
-#: src/EditorPanels/index.js:216
+#: src/EditorPanels/index.js:270
+#: src/EditorPanels/index.js:276
 msgid "No published projects yet."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:316
+#: src/EditorPanels/index.js:376
 msgid "Client card preview"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:322
-#: src/EditorPanels/index.js:464
+#: src/EditorPanels/index.js:382
+#: src/EditorPanels/index.js:524
 msgid "Client name"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:367
+#: src/EditorPanels/index.js:427
 msgid "Client type"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:368
+#: src/EditorPanels/index.js:428
 msgid "Decides which carousel the client appears in, and which fields below apply."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:372
+#: src/EditorPanels/index.js:432
 msgid "Individual"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:378
+#: src/EditorPanels/index.js:438
 msgid "Pick a type — until you do, this client appears in neither carousel."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:385
+#: src/EditorPanels/index.js:445
 msgid "Thumbnail"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:387
+#: src/EditorPanels/index.js:447
 msgid "The picture beside the card text."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:388
+#: src/EditorPanels/index.js:448
 msgid "Shown on the corporate tile. This is the post’s featured image."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:400
+#: src/EditorPanels/index.js:460
 msgid "Content"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:402
+#: src/EditorPanels/index.js:462
 msgid "The paragraph below the subtitle. Write it in the main editor area — the post’s own content is the card’s body."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:410
+#: src/EditorPanels/index.js:470
 msgid "What happens when a visitor clicks the card. “No actions” shows the information and nothing else."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:426
+#: src/EditorPanels/index.js:486
 msgid "The ▶ badge over the thumbnail. Decorative — the card opens its gallery either way."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:438
+#: src/EditorPanels/index.js:498
 msgid "Link URL"
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:439
+#: src/EditorPanels/index.js:499
 msgid "Where the card goes when clicked."
 msgstr ""
 
 #: build/EditorPanels/index.js:3
-#: src/EditorPanels/index.js:465
+#: src/EditorPanels/index.js:525
 msgid "The same value as the post title at the top of the editor."
 msgstr ""
 

@@ -77,6 +77,7 @@ it('registers every structured meta field with REST, sanitization, and auth', fu
         ProjectPostType::META_VIDEO_URL,
         ProjectPostType::META_LOGO,
         ProjectPostType::META_GALLERY,
+        ProjectPostType::META_PDFS,
         ProjectPostType::META_ICON,
         ProjectPostType::META_FEATURED,
         ProjectPostType::META_THUMB_HERO,

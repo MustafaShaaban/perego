@@ -19,7 +19,9 @@ import {
 	CLIENT_SUBTITLE_KEY,
 	PORTFOLIO_MODE_OPTIONS,
 	PROJECT_ICON_OPTIONS,
+	PROJECT_GALLERY_KEY,
 	PROJECT_PANELS,
+	PROJECT_PDFS_KEY,
 	PROJECT_THUMB_FIELDS,
 	SERVICE_PANELS,
 	LEGAL_PANEL,
@@ -207,5 +209,26 @@ describe( 'per-shape crops are offered only where they render', () => {
 				expect.arrayContaining( [ '_perego_project_icon', '_perego_project_featured' ] )
 			)
 		);
+	} );
+} );
+
+/*
+ * The two standalone media pickers. They are not schema fields — each is its own panel with its own
+ * control — so the field-key sweep above cannot see them, and a key that lives only at its call site
+ * is one nothing checks against the sanitizer that will actually receive it.
+ */
+describe( 'standalone media keys ↔ PHP meta constants', () => {
+	test( 'the gallery and document keys are real ProjectPostType constants', () => {
+		const constants = php( 'PostTypes/ProjectPostType.php' );
+
+		[ PROJECT_GALLERY_KEY, PROJECT_PDFS_KEY ].forEach( ( key ) =>
+			expect( constants ).toContain( `'${ key }'` )
+		);
+	} );
+
+	test( 'documents are a separate key, not folded into the gallery', () => {
+		// Deliberate: widening META_GALLERY to typed rows would be a migration for every project to
+		// buy something only the document picker needs.
+		expect( PROJECT_PDFS_KEY ).not.toBe( PROJECT_GALLERY_KEY );
 	} );
 } );

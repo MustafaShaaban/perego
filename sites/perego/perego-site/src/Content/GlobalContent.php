@@ -116,6 +116,11 @@ final class GlobalContent
                 'close' => 'Close',
                 'prev' => 'Previous',
                 'next' => 'Next',
+                'zoomIn' => 'Zoom in',
+                'zoomOut' => 'Zoom out',
+                'zoomReset' => 'Reset zoom',
+                'fullscreen' => 'Full screen',
+                'openDocument' => 'Open the document',
             ],
         ],
         'ar' => [
@@ -207,6 +212,11 @@ final class GlobalContent
                 'close' => 'إغلاق',
                 'prev' => 'السابق',
                 'next' => 'التالي',
+                'zoomIn' => 'تكبير',
+                'zoomOut' => 'تصغير',
+                'zoomReset' => 'إعادة ضبط التكبير',
+                'fullscreen' => 'ملء الشاشة',
+                'openDocument' => 'فتح المستند',
             ],
         ],
     ];

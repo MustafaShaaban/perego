@@ -12,6 +12,16 @@ import { __ } from '@wordpress/i18n';
 
 /** Mirror of `ProjectPostType::POST_TYPE` / `::TAXONOMY` / `::SITE_TYPES` / `::CATEGORIES`. */
 export const PROJECT_POST_TYPE = 'perego_project';
+
+/**
+ * Mirror of `ProjectPostType::META_GALLERY` / `::META_PDFS`.
+ *
+ * Declared here rather than beside their panels in `index.js` so the PHP-mirror test covers them:
+ * both are standalone media pickers rather than schema fields, and a key that lives only at its call
+ * site is a key nothing checks against the sanitizer that will actually receive it.
+ */
+export const PROJECT_GALLERY_KEY = '_perego_gallery_attachment_ids';
+export const PROJECT_PDFS_KEY = '_perego_project_pdf_ids';
 export const PROJECT_TAXONOMY = 'perego_project_category';
 export const WEB_CATEGORY_SLUG = 'web';
 

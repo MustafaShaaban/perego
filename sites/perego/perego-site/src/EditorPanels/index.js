@@ -49,7 +49,9 @@ import {
 	CLIENT_TYPE_INDIVIDUAL,
 	LEGAL_PANEL,
 	PORTFOLIO_MODE_OPTIONS,
+	PROJECT_GALLERY_KEY,
 	PROJECT_PANELS,
+	PROJECT_PDFS_KEY,
 	PROJECT_POST_TYPE,
 	PROJECT_TAXONOMY,
 	SERVICE_PANELS,
@@ -58,8 +60,6 @@ import {
 } from './schema';
 import './style.scss';
 
-/** Mirror of `ProjectPostType::META_GALLERY`. */
-const PROJECT_GALLERY_KEY = '_perego_gallery_attachment_ids';
 /** Mirror of `ServicePostType::META_PORTFOLIO_*`. */
 const PORTFOLIO_MODE_KEY = '_perego_service_portfolio_mode';
 const PORTFOLIO_PROJECTS_KEY = '_perego_service_portfolio_project_ids';
@@ -120,6 +120,60 @@ function GalleryPanel( { ids, onChange } ) {
 	);
 }
 
+/**
+ * The project's documents — a case study, a spec sheet, a brand book (owner, 2026-07-28).
+ *
+ * A list rather than the gallery's thumbnail grid, because a PDF has no useful thumbnail: what tells
+ * one apart from another is its name. Order is the order they open in the lightbox, after the artwork.
+ */
+function DocumentsPanel( { ids, onChange } ) {
+	const documents = useSelect(
+		( select ) => ids.map( ( id ) => select( 'core' ).getMedia( id ) ).filter( Boolean ),
+		[ ids ]
+	);
+
+	return (
+		<div className="perego-panel-documents">
+			{ documents.length > 0 && (
+				<ul className="perego-panel-documents__list">
+					{ documents.map( ( item ) => (
+						<li key={ item.id }>
+							<span className="perego-panel-documents__name">
+								{ decodeEntities( item.title?.rendered || '' ) || __( 'Untitled document', 'perego-site' ) }
+							</span>
+							<Button size="small" isDestructive variant="tertiary"
+								onClick={ () => onChange( ids.filter( ( id ) => id !== item.id ) ) }>
+								{ __( 'Remove', 'perego-site' ) }
+							</Button>
+						</li>
+					) ) }
+				</ul>
+			) }
+			<MediaUploadCheck>
+				<MediaUpload
+					multiple
+					allowedTypes={ [ 'application/pdf' ] }
+					value={ ids }
+					onSelect={ ( selected ) =>
+						// `multiple` hands back an array, but a single pick still arrives as one object.
+						onChange( ( Array.isArray( selected ) ? selected : [ selected ] ).map( ( item ) => item.id ) )
+					}
+					render={ ( { open } ) => (
+						<Button variant="secondary" onClick={ open }>
+							{ ids.length > 0 ? __( 'Edit documents', 'perego-site' ) : __( 'Add a PDF', 'perego-site' ) }
+						</Button>
+					) }
+				/>
+			</MediaUploadCheck>
+			<p className="perego-editor-help">
+				{ ids.length === 0
+					? __( 'Optional. A PDF added here opens in the lightbox from the project’s card, after its images.', 'perego-site' )
+					: __( 'These open in the lightbox after the project’s images.', 'perego-site' ) }
+			</p>
+		</div>
+	);
+}
+
 function ProjectPanels() {
 	const [ meta, setMeta ] = usePostMeta( PROJECT_POST_TYPE );
 	const [ terms ] = useEntityProp( 'postType', PROJECT_POST_TYPE, PROJECT_TAXONOMY );
@@ -143,6 +197,7 @@ function ProjectPanels() {
 	}, [ terms ] );
 
 	const galleryIds = Array.isArray( meta[ PROJECT_GALLERY_KEY ] ) ? meta[ PROJECT_GALLERY_KEY ] : [];
+	const pdfIds = Array.isArray( meta[ PROJECT_PDFS_KEY ] ) ? meta[ PROJECT_PDFS_KEY ] : [];
 
 	return (
 		<>
@@ -158,6 +213,11 @@ function ProjectPanels() {
 				title={ __( 'Project gallery', 'perego-site' ) } className="perego-panel">
 				<GalleryPanel ids={ galleryIds }
 					onChange={ ( next ) => setMeta( { [ PROJECT_GALLERY_KEY ]: next } ) } />
+			</PluginDocumentSettingPanel>
+			<PluginDocumentSettingPanel name="perego-project-documents"
+				title={ __( 'Project documents', 'perego-site' ) } className="perego-panel">
+				<DocumentsPanel ids={ pdfIds }
+					onChange={ ( next ) => setMeta( { [ PROJECT_PDFS_KEY ]: next } ) } />
 			</PluginDocumentSettingPanel>
 		</>
 	);

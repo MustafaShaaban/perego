@@ -28,6 +28,17 @@ final class ProjectPostType
     public const META_ROLE = '_perego_role';
     public const META_DELIVERABLES = '_perego_deliverables';
     public const META_GALLERY = '_perego_gallery_attachment_ids';
+
+    /**
+     * Documents a client supplies alongside the artwork — a case study, a spec sheet, a brand book
+     * (owner, 2026-07-28).
+     *
+     * A separate key rather than typed rows inside {@see META_GALLERY}: that meta is a flat id list
+     * read in six places, and widening it to `{type,id,url}` would be a migration for every project to
+     * buy something only this feature needs. The lightbox does not care either way — it resolves each
+     * slide's own type from the URL, so documents ride the same list as images at render time.
+     */
+    public const META_PDFS = '_perego_project_pdf_ids';
     public const META_SITE_TYPE = '_perego_site_type';
     public const META_SITE_URL = '_perego_site_url';
     public const META_VIDEO_URL = '_perego_video_url';
@@ -143,6 +154,15 @@ final class ProjectPostType
                 'auth_callback' => [self::class, 'authEdit'],
             ],
             self::META_GALLERY => [
+                'type' => 'array',
+                'single' => true,
+                'show_in_rest' => [
+                    'schema' => ['type' => 'array', 'items' => ['type' => 'integer']],
+                ],
+                'sanitize_callback' => [self::class, 'sanitizeIntList'],
+                'auth_callback' => [self::class, 'authEdit'],
+            ],
+            self::META_PDFS => [
                 'type' => 'array',
                 'single' => true,
                 'show_in_rest' => [

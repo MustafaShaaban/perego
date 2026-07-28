@@ -53,6 +53,46 @@ final class ProjectRepository
     }
 
     /**
+     * A project's documents, as URLs the lightbox can open.
+     *
+     * Same English fallback as the gallery: an Arabic project carries no media of its own, and a PDF
+     * is language-neutral data rather than prose. `wp_get_attachment_url()` rather than the image
+     * helpers, which answer nothing for a non-image attachment.
+     *
+     * @return list<array{src: string, title: string}>
+     */
+    public function pdfsFor(WP_Post $project): array
+    {
+        $ids = $this->pdfIds($project);
+
+        return array_values(array_filter(array_map(static function (int $id): ?array {
+            $src = wp_get_attachment_url($id);
+            if (! is_string($src) || $src === '') {
+                return null;
+            }
+
+            return ['src' => $src, 'title' => (string) get_the_title($id)];
+        }, $ids)));
+    }
+
+    /**
+     * A project's document attachment ids, falling back to its linked EN translation's.
+     *
+     * @return list<int>
+     */
+    private function pdfIds(WP_Post $project): array
+    {
+        $ids = $this->normalizeGalleryIds(get_post_meta($project->ID, ProjectPostType::META_PDFS, true));
+        if ($ids !== []) {
+            return $ids;
+        }
+
+        $enId = $this->enTranslationId($project);
+
+        return $enId === 0 ? [] : $this->normalizeGalleryIds(get_post_meta($enId, ProjectPostType::META_PDFS, true));
+    }
+
+    /**
      * @return array{previous: ?WP_Post, next: ?WP_Post}
      */
     public function adjacentFor(WP_Post $project): array
@@ -180,7 +220,10 @@ final class ProjectRepository
      * was a framework upgrade Perego took part in rather than a site it owned, and a portfolio has to
      * say so. Any project can carry one; only that card sets it today.
      *
-     * @return array{id: int, icon: string, title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
+     * `pdfSrcs` carries any documents the client supplied (owner 2026-07-28) — appended after the
+     * artwork so a case study opens from the same card, without displacing what the card leads with.
+     *
+     * @return array{id: int, icon: string, title: string, url: string, category: string, categoryLabel: string, excerpt: string, thumbUrl: string, thumbAlt: string, gallerySrcs: list<string>, pdfSrcs: list<string>, videoUrl: string, logoUrl: string, logoAlt: string, siteUrl: string, role: string}
      */
     public function toGridCard(WP_Post $post, PortfolioContent $content): array
     {
@@ -215,6 +258,7 @@ final class ProjectRepository
             'thumbUrl' => $thumbUrl,
             'thumbAlt' => $thumbAlt !== '' ? $thumbAlt : get_the_title($post),
             'gallerySrcs' => array_column($this->galleryFor($post), 'src'),
+            'pdfSrcs' => array_column($this->pdfsFor($post), 'src'),
             'videoUrl' => $this->videoUrlFor($post),
             'logoUrl' => $logoUrl,
             'logoAlt' => $logoAlt !== '' ? $logoAlt : get_the_title($post),

@@ -257,26 +257,62 @@ final class PortfolioGridRenderer
     private function lightboxTrigger(array $project): string
     {
         $videoUrl = (string) ($project['videoUrl'] ?? '');
+        $documents = $project['pdfSrcs'] ?? [];
+        $slides = $this->mediaSlides($project);
+        $all = [...$slides, ...$documents];
+
+        if ($all === []) {
+            return '';
+        }
+
+        // media-lightbox/view.js picks a renderer per slide (`mediaType()` -> embed / video / pdf /
+        // img), so one data-gallery list can carry images, a video and a document together.
+        if (count($all) > 1) {
+            return 'data-gallery="' . esc_attr(implode(',', $all)) . '"';
+        }
+
+        // A lone slide names its own type so the lightbox drops its next/previous chrome. A document
+        // has no dedicated attribute — a one-entry gallery already renders without that chrome, and
+        // inventing `data-pdf` would mean widening the delegated selector for no behavioural gain.
+        if ($documents !== []) {
+            return 'data-gallery="' . esc_attr($all[0]) . '"';
+        }
+
+        return $videoUrl !== ''
+            ? 'data-video="' . esc_attr($all[0]) . '"'
+            : 'data-image="' . esc_attr($all[0]) . '"';
+    }
+
+    /**
+     * The artwork the card leads with, before any documents are appended.
+     *
+     * A project with both a video and a real gallery becomes one mixed list rather than hiding its
+     * stills behind the video; a video with at most one still stays a video, which is the card the
+     * design intends.
+     *
+     * @param array{thumbUrl: string, gallerySrcs: list<string>, videoUrl?: string} $project
+     * @return list<string>
+     */
+    private function mediaSlides(array $project): array
+    {
+        $videoUrl = (string) ($project['videoUrl'] ?? '');
         $gallery = $project['gallerySrcs'];
 
-        // A project with BOTH becomes one mixed gallery rather than hiding its stills behind the video.
-        // media-lightbox/view.js picks a renderer per slide (`mediaType()` -> embed / video / img), so a
-        // single data-gallery list can carry images and a video together.
         if ($videoUrl !== '' && count($gallery) > 1) {
-            return 'data-gallery="' . esc_attr(implode(',', [...$gallery, $videoUrl])) . '"';
+            return [...$gallery, $videoUrl];
         }
 
         if ($videoUrl !== '') {
-            return 'data-video="' . esc_attr($videoUrl) . '"';
+            return [$videoUrl];
         }
 
         if (count($gallery) > 1) {
-            return 'data-gallery="' . esc_attr(implode(',', $gallery)) . '"';
+            return $gallery;
         }
 
-        $image = $project['thumbUrl'] !== '' ? $project['thumbUrl'] : ($project['gallerySrcs'][0] ?? '');
+        $image = $project['thumbUrl'] !== '' ? $project['thumbUrl'] : ($gallery[0] ?? '');
 
-        return $image !== '' ? 'data-image="' . esc_attr($image) . '"' : '';
+        return $image !== '' ? [$image] : [];
     }
 
     /**
