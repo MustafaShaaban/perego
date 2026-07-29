@@ -160,35 +160,6 @@ function initParallax() {
 	wide.addEventListener( 'change', render );
 }
 
-/**
- * A toast when client-side validation stops a submission.
- *
- * The runtime emits `corex:form:error` when the *server* rejects, but its client-side branch
- * returns early without emitting anything. Since round 7 moved the visual channel from the status
- * line (now clipped, screen-reader only) to the toast, that left a failed submit with no banner at
- * all — only the inline field errors, which are below the fold on a phone.
- *
- * Capture phase plus a next-tick read makes this independent of listener order: whenever the
- * runtime's handler runs, it has already written its errors by the time this looks. A submission
- * that passes leaves no `aria-invalid`, and the server path emits the real event later, so neither
- * case double-toasts.
- */
-function initClientValidationToasts() {
-	document.addEventListener(
-		'submit',
-		( event ) => {
-			const form = event.target;
-			if ( ! form?.classList?.contains( 'corex-form' ) ) return;
-
-			setTimeout( () => {
-				if ( ! form.querySelector( '[aria-invalid="true"]' ) ) return;
-				form.dispatchEvent( new CustomEvent( 'corex:form:error', { bubbles: true } ) );
-			}, 0 );
-		},
-		true
-	);
-}
-
 document.addEventListener( 'DOMContentLoaded', () => {
 	initReveals();
 	initLegalToc();
@@ -209,6 +180,10 @@ document.addEventListener( 'DOMContentLoaded', () => {
 
 	// Form outcomes as a toast. The framework's status line sits under the form, which on a phone
 	// is off-screen after a long form — a successful send looked like nothing had happened.
+	//
+	// A second listener used to sit here, re-dispatching `corex:form:error` when client-side
+	// validation stopped a submission, because the runtime's client branch returned early without
+	// emitting. CoreX v0.40.0 adopted that fix upstream (corex-runtime.js, `onSubmit`), so the
+	// shim became a duplicate emitter and every rejected submit raised two identical toasts.
 	initFormToasts();
-	initClientValidationToasts();
 } );

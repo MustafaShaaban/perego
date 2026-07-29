@@ -22,6 +22,15 @@ reverted to English (our map keys on exact English strings, upstream reworded th
 its client rule, phone loosened. All fixed, and the Arabic one now has a test that fails on the next
 rewording instead of going quiet.
 
+**A fourth surfaced from the client's phone, and it is the mirror image of the other three: not a
+patch lost, a patch arriving twice.** v0.40.0 adopted our #148 fix, so `corex-runtime.js` now emits
+`corex:form:error` from its own client-validation branch — while the theme still ran
+`initClientValidationToasts()`, written when it did not. Every rejected submit raised **two identical
+toasts** (measured on the live contact form: 2 events, 2 toasts, one click). The shim is deleted;
+`initFormToasts()` alone now carries the visual channel. Removing a compensating patch is part of
+taking the upstream one — the checklist for the next update should ask, for each adopted commit,
+what we wrote *around* it.
+
 > **⚠ Two things to carry forward.** `RuleRegistry::register()` **throws** on a duplicate and has no
 > unregister — there is no override seam, and assuming one took the site down at `init`. And the
 > `?ver` allowance is now **two** assets: upstream fixed the spinner shorthand, so `corex-runtime.css`
