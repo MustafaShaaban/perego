@@ -2,7 +2,44 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-29, latest) — Round 15: CoreX v0.35.1 → v0.40.0
+## RESUME HERE (2026-07-29, latest) — Round 16: the client's phone
+
+**Branch `fix/025-mobile-client-fixes`** (off `chore/corex-v0.40.0-update`), spec
+`specs/025-mobile-client-fixes/`. Two defects from an iPhone 13/14 Pro Max, both presentation.
+
+**"Our Process" stacked wrong on iOS and right on Android.** WordPress applies
+`.is-layout-flex{flex-wrap:wrap}` to the seeded step group, and a *column* flex container that
+wraps breaks into several columns once its height is definite — icon, label and description side by
+side, description off the right edge. Force a height in the inspector and it happens on demand. But
+**the client's rendering does not reproduce on any WebKit here** (Playwright WebKit 26.5, 320 → 900,
+against the live unfixed CSS), so `flex-wrap: nowrap` — which does close that path — was not enough
+on its own. The step is now a **single-column grid at every width**: no direction to lose, no wrap to
+inherit, and the photographed layout is not expressible by the rule. Rendering is unchanged
+everywhere it was already right.
+
+**The toast stopped fighting the keyboard.** Below 620px it is a solid banner at the top, tracking
+the *visual* viewport via `--perego-toast-vv-offset` (written by `toast.js`, read only by the phone
+stylesheet, `0px` fallback without the API), one at a time, at bar scale — 16px radius, 26px
+medallion, no backdrop blur. It was pinned bottom-right against the *layout* viewport, and every
+rejected submit focuses a field, so on iOS it arrived with the keyboard and floated over mid-page.
+
+**Theme version 0.1.0 → 0.1.1**, because `main.css` busts on it and it had not moved since launch: a
+returning phone would have kept the old stylesheet and the old bug.
+
+- **Verified:** Perego Jest **47 suites / 312** (9 new for `toast.js`) · WebKit **and** Chromium,
+  EN + `/ar/`, 375 → 1440: every step `display: grid`, children stacked on one centre line, no
+  overflow, list column ≤620 / row above · WebKit 428×926, two rejected submits: **one** banner at
+  `top: 8px`, 412px wide, solid.
+- **Not verified, and it is the whole report:** neither defect's device condition reproduces here.
+  **Ask the client to re-test on their own iPhone after deploy** before this is called closed.
+
+### Next
+
+1. **Deploy and get the client's iPhone re-test** — the process section and a rejected submit with
+   the keyboard open.
+2. Then the Round 15 items below.
+
+## Round 15: CoreX v0.35.1 → v0.40.0
 
 **Branch `chore/corex-v0.40.0-update`** (off `feature/023`), spec `specs/024-corex-v0.40.0-update/`.
 25 commits, 339 framework files, 0 deletions, 0 renames.

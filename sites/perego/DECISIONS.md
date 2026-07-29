@@ -1,5 +1,34 @@
 # Perego — Decision Log
 
+## 2026-07-29 — A layout the component cannot express, and a toast that stops fighting the keyboard
+
+**When the mechanism reproduces but the client's screen does not, fix the shape, not the path.** The
+process step laid its icon, label and description side by side on the client's iPhone and stacked
+them correctly on Android. The mechanism is certain: WordPress's `.is-layout-flex{flex-wrap:wrap}`
+applies to the seeded group, and a *column* flex container that wraps breaks into several columns once
+its height is definite — force a height in the inspector and the failure appears on demand.
+`flex-wrap: nowrap` closes that path, and it was the first patch written. It did not ship alone,
+because the client's rendering **does not reproduce on any WebKit here**, at any width from 320 to
+900. A fix aimed at one path into a layout we cannot re-create is a guess with good manners. The step
+is now a single-column grid at every width, which is what it has always been describing: no direction
+to lose, no wrap to inherit, and the photographed layout is not expressible by the rule. **The general
+form: when a diagnosis explains a symptom you cannot reproduce, prefer the change that removes the
+symptom from the component's vocabulary over the one that patches the mechanism you happened to find.**
+
+**A phone's bottom edge belongs to the keyboard.** The toast was pinned bottom-right against the
+*layout* viewport, and every rejected submit focuses the first invalid field — so on iOS the toast
+arrived exactly as the keyboard did and was left floating across the middle of the page. Below 620px
+it is now a solid banner at the top, tracking the *visual* viewport through
+`--perego-toast-vv-offset`, one at a time. Two details worth keeping: the custom property is written
+by JS but **only read by the phone stylesheet**, so desktop cannot regress and a browser without
+`visualViewport` degrades to the old anchoring; and the banner is opaque rather than glass, because
+it is the one panel on this site that crosses the sticky header — the client's screenshot has the
+logo reading straight through the message.
+
+**Nothing moved in the accessible channel.** The status paragraph is still the live region, the stack
+is still `aria-hidden`, the close button still has its 44px target. The visual layer was the defect;
+the announced layer was never part of it.
+
 ## 2026-07-29 — CoreX updated to v0.40.0; our four patches were upstreamed, two defects were not
 
 **The framework moves v0.35.1 → v0.40.0.** 25 commits, 339 framework files, 0 deletions and 0 renames.
