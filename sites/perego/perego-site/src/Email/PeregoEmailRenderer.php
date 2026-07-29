@@ -180,11 +180,11 @@ final class PeregoEmailRenderer
             . '<p style="margin:0;font-size:15px;line-height:1.6;color:' . self::INK . ';">' . $message . '</p>'
         );
 
-        $inner = $this->checkHeading($heading, $intro) . $summary . $this->ctaRow($this->siteUrl . '/work', $cta);
+        $inner = $this->checkHeading($heading, $intro) . $summary . $this->ctaRow($this->siteUrl . '/#work', $cta);
 
         $text = $this->stripTitle($heading) . "\n\n" . $intro . "\n\n"
             . $msgLabel . ": " . ($ctx['message'] ?? '')
-            . "\n\n" . $cta . ": " . $this->siteUrl . '/work';
+            . "\n\n" . $cta . ": " . $this->siteUrl . '/#work';
 
         return ['subject' => $subject, 'eyebrow' => $ar ? 'استوديو إبداعي' : 'Creative Studio', 'inner' => $inner, 'text' => $text];
     }
@@ -231,14 +231,14 @@ final class PeregoEmailRenderer
             . '<p style="margin:0;font-size:15px;line-height:1.6;color:' . self::INK . ';">' . $this->esc($ctx['message'] ?? '') . '</p>'
         );
 
-        $inner = $this->checkHeading($heading, $intro) . $summary . $this->ctaRow($this->siteUrl . '/work', $cta);
+        $inner = $this->checkHeading($heading, $intro) . $summary . $this->ctaRow($this->siteUrl . '/#work', $cta);
 
         $text = $this->stripTitle($heading) . "\n\n" . $intro . "\n\n";
         foreach ($details as $label => $value) {
             $text .= $label . ': ' . $value . "\n";
         }
         $text .= $lbl['message'] . ': ' . ($ctx['message'] ?? '')
-            . "\n\n" . $cta . ": " . $this->siteUrl . '/work';
+            . "\n\n" . $cta . ": " . $this->siteUrl . '/#work';
 
         return ['subject' => $subject, 'eyebrow' => $ar ? 'ابدأ مشروعك' : 'Start a Project', 'inner' => $inner, 'text' => $text];
     }
@@ -271,12 +271,12 @@ final class PeregoEmailRenderer
             . '<p style="margin:0;font-size:15px;color:' . self::INK . ';">' . $lbl['cv'] . ': ' . $cv . '</p>'
         );
 
-        $inner = $this->checkHeading($heading, $intro) . $summary . $this->ctaRow($this->siteUrl . '/services', $cta);
+        $inner = $this->checkHeading($heading, $intro) . $summary . $this->ctaRow($this->siteUrl . '/#services', $cta);
 
         $text = $this->stripTitle($heading) . "\n\n" . $intro . "\n\n"
             . ($portfolio !== '' ? $lbl['pf'] . ": " . $portfolio . "\n" : '')
             . $lbl['cv'] . ": " . ($ctx['cv_filename'] ?? '—')
-            . "\n\n" . $cta . ": " . $this->siteUrl . '/services';
+            . "\n\n" . $cta . ": " . $this->siteUrl . '/#services';
 
         return ['subject' => $subject, 'eyebrow' => $ar ? 'انضم إلى الفريق' : 'Join the team', 'inner' => $inner, 'text' => $text];
     }
