@@ -112,6 +112,27 @@ function bindMessageCounter( form, wordsLabel ) {
 		field.classList.toggle( 'is-limit', used > limit );
 	};
 	textarea.addEventListener( 'input', update );
+
+	/*
+	 * Stop an over-limit submission here, because since CoreX v0.40.0 nothing else will.
+	 *
+	 * The framework runtime dropped its `max_words` client rule — its comment says there is no server
+	 * rule either, which is true of CoreX and false of Perego, where `Forms\Rules\MaxWords` is
+	 * registered. Without this the brief submits, the server answers 422, and the runtime falls back
+	 * to the generic "Please check this field." for a limit this counter has been showing all along.
+	 *
+	 * Capture phase, so it runs before the runtime's own submit handler and its network call. Not a
+	 * re-fork of `corex-runtime.js`: that file carried most of the v0.40.0 conflicts.
+	 */
+	form.addEventListener( 'submit', ( event ) => {
+		if ( countWords( textarea.value ) <= limit ) return;
+
+		event.preventDefault();
+		event.stopImmediatePropagation();
+		update();
+		textarea.focus();
+	}, true );
+
 	update();
 }
 

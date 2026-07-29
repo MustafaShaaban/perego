@@ -18,12 +18,40 @@ function bindMessageCounter( form ) {
 
 	if ( ! textarea || ! field || ! limit ) return;
 
-	const update = () => field.setAttribute( 'data-perego-counter', `${ countWords( textarea.value ) } / ${ limit } words` );
+	const update = () => {
+		const words = countWords( textarea.value );
+		field.setAttribute( 'data-perego-counter', `${ words } / ${ limit } words` );
+		field.classList.toggle( 'is-limit', words > limit );
+	};
+
 	textarea.addEventListener( 'input', update );
 
 	// The shared CoreX runtime calls form.reset() on a successful submission; the reset event fires
 	// before values revert, so resync on the next tick.
 	form.addEventListener( 'reset', () => setTimeout( update, 0 ) );
+
+	/*
+	 * Stop an over-limit submission here, because since CoreX v0.40.0 nothing else will.
+	 *
+	 * The framework runtime dropped its `max_words` client rule — its own comment says there is no
+	 * server rule either, which is true of CoreX and false of Perego: `Forms\Rules\MaxWords` is
+	 * registered in `PeregoSiteServiceProvider`. So the form used to submit, the server would answer
+	 * 422, and the runtime — finding no `max_words` entry in its message map — would fall back to the
+	 * generic "Please check this field.", after a round trip, for a limit this counter has been
+	 * displaying all along.
+	 *
+	 * Capture phase, so this runs before the runtime's own submit handler and its network call.
+	 * Deliberately NOT a re-fork of `corex-runtime.js`: that file carried most of this update's
+	 * conflicts, and a fork edit on it guarantees the same fight at the next version.
+	 */
+	form.addEventListener( 'submit', ( event ) => {
+		if ( countWords( textarea.value ) <= limit ) return;
+
+		event.preventDefault();
+		event.stopImmediatePropagation();
+		update();
+		textarea.focus();
+	}, true );
 
 	update();
 }

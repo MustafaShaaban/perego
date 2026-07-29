@@ -62,6 +62,9 @@ use Corex\Config\Data\SubmissionsSource;
 use Corex\Config\Data\TableDataSource;
 use Corex\Config\Data\WpSubmissionsReader;
 use Corex\Config\Data\WpTableDataReader;
+use Corex\Config\Data\WpTableDataWriter;
+use Corex\Config\Data\WritableTableDataSource;
+use Corex\Config\DataModels\WpMigrationTableRunner;
 use Corex\Config\Data\WpDataAccessPolicy;
 use Corex\Config\Data\WpDataMutationPreviewStore;
 use Corex\Config\DataModels\DataModelsCatalog;
@@ -117,7 +120,6 @@ use Corex\Config\Submissions\WpSubmissionBulkPreviewStore;
 use Corex\Config\Submissions\WpSubmissionExportJobQueue;
 use Corex\Config\Submissions\WpSubmissionExportStore;
 use Corex\Config\Retention\SubmissionRetentionStore;
-use Corex\Database\Schema\ManagedTable;
 use Corex\Database\Schema\ManagedTables;
 use Corex\Database\Schema\Migrator;
 use Corex\Config\Insights\InsightRegistry;
@@ -183,7 +185,12 @@ final class ConfigServiceProvider extends ServiceProvider
         );
 
         $this->container->singleton(AdminBranding::class);
-        $this->container->singleton(CorexAdminAssets::class);
+        $this->container->singleton(
+            CorexAdminAssets::class,
+            static fn ($c): CorexAdminAssets => new CorexAdminAssets(
+                $c->make(\Corex\Support\DateTime\AdminDateTime::class),
+            ),
+        );
 
         // The shared append-only activity stream (spec 068) is the authoritative audit source for
         // every CoreX product area. Persistence remains behind the core repository contract.
@@ -282,7 +289,29 @@ final class ConfigServiceProvider extends ServiceProvider
         );
         $this->container->singleton(AbilityCompatibility::class);
         $this->container->singleton(RolePluginCompatibility::class);
+        $this->container->singleton(\Corex\Config\Access\PendingAccessRequests::class);
         $this->container->singleton(AccessController::class);
+
+        // Spec 079: the denied surface renders its own state — already requested, or the form,
+        // plain or carrying the last submission's problem. AdminPage lives in corex-core and is
+        // resolved by several screens through the container, so the reader is bound onto it here
+        // rather than passed at each call site.
+        $this->container->singleton(\Corex\Config\Access\AccessRequestFlash::class);
+        $this->container->singleton(
+            \Corex\Access\AccessRequestSurfaceState::class,
+            static fn (ContainerInterface $c): \Corex\Access\AccessRequestSurfaceState
+                => new \Corex\Config\Access\CurrentUserAccessRequests(
+                    $c->make(AccessRequestStore::class),
+                    $c->make(\Corex\Config\Access\AccessRequestFlash::class),
+                ),
+        );
+        $this->container->singleton(
+            \Corex\Admin\AdminPage::class,
+            static fn (ContainerInterface $c): \Corex\Admin\AdminPage => new \Corex\Admin\AdminPage(
+                $c->make(\Corex\Access\AccessRequestSurfaceState::class),
+            ),
+        );
+        $this->container->singleton(\Corex\Config\Access\AccessRequestFormController::class);
 
         $this->container->singleton(JobTable::class);
         $this->container->singleton(WpJobRepository::class);
@@ -346,6 +375,12 @@ final class ConfigServiceProvider extends ServiceProvider
             static fn (ContainerInterface $c): \Corex\Config\Forms\FlowFilterOptions =>
                 new \Corex\Config\Forms\FlowFilterOptions($c),
         );
+        // Supplies the form catalog with real submission counts. corex-config owns the WordPress
+        // data boundary, so the query lives here and corex-forms only knows the contract.
+        $this->container->singleton(
+            \Corex\Forms\Catalog\SubmissionCounts::class,
+            static fn (): \Corex\Forms\Catalog\SubmissionCounts => new \Corex\Config\Forms\WpSubmissionCounts(),
+        );
         $this->container->singleton(\Corex\Config\Security\LoginProtection\LoginAttemptTable::class);
         $this->container->singleton(\Corex\Config\Security\LoginProtection\LoginProtectionSettingsStore::class);
         $this->container->bind(
@@ -394,6 +429,7 @@ final class ConfigServiceProvider extends ServiceProvider
             static fn (ContainerInterface $c): FormsFlowsScreen => new FormsFlowsScreen(
                 $c->make(\Corex\Security\Admin\AdminGuard::class),
                 $c->make(\Corex\Admin\AdminPage::class),
+                $c,
             ),
         );
 
@@ -427,13 +463,23 @@ final class ConfigServiceProvider extends ServiceProvider
             $registry->register(new SubmissionsSource($c->make(SubmissionsReader::class)));
 
             // Every table an app marked managed appears as its own source — no admin code (spec 038).
-            // Deferred, not looped in here: this singleton is built during boot, so reading ManagedTables
-            // now would freeze the list before apps that boot later have registered theirs.
-            $registry->defer(static function () use ($c): array {
-                $reader = new WpTableDataReader($c->make(Migrator::class));
+            // A table that declared writable fields or migrations gets the source that can honour
+            // them; everything else stays read-only, which is the default and the safe answer for
+            // the audit and system tables that make up most of this list (spec 074).
+            //
+            // Deferred, because this registry is built while corex-config boots and an add-on
+            // declares its tables on `init` — building the sources here and now excluded every
+            // add-on model from the admin while leaving it visible to WP-CLI.
+            $registry->registerDeferred(static function () use ($c): array {
+                $migrator = $c->make(Migrator::class);
+                $reader   = new WpTableDataReader($migrator);
+                $writer   = new WpTableDataWriter($migrator);
+                $runner   = new WpMigrationTableRunner($migrator);
 
                 return array_map(
-                    static fn (ManagedTable $table): TableDataSource => new TableDataSource($table, $reader),
+                    static fn ($table) => $table->isWritable() || $table->supportsMigrations()
+                        ? new WritableTableDataSource($table, $reader, $writer, $runner)
+                        : new TableDataSource($table, $reader),
                     $c->make(ManagedTables::class)->all(),
                 );
             });
@@ -610,6 +656,22 @@ final class ConfigServiceProvider extends ServiceProvider
         $this->container->singleton(\Corex\Config\Access\AccessDeniedGate::class);
         $this->container->singleton(\Corex\Config\Access\AccessScreen::class);
 
+        // One admin error model for every refusal (spec 083). StandalonePage takes its asset paths
+        // from the core plugin file rather than autowiring two strings, so it is bound explicitly
+        // and everything downstream of it resolves on its own.
+        $this->container->singleton(
+            \Corex\Admin\StandalonePage::class,
+            static fn (): \Corex\Admin\StandalonePage => \Corex\Admin\StandalonePage::fromCore(),
+        );
+        $this->container->singleton(\Corex\Admin\Errors\AdminErrorClassifier::class);
+        $this->container->singleton(\Corex\Admin\Errors\AdminErrorPresenter::class);
+        $this->container->singleton(\Corex\Admin\Errors\AdminDieHandler::class);
+
+        // The only way to read a file stored by AttachmentStore (spec 081). Bound here rather than
+        // in corex-forms or corex-careers because both of them — and any add-on that stores a file
+        // — need the same single route; two would be two capability checks to keep in step.
+        $this->container->singleton(\Corex\Security\Upload\AttachmentDelivery::class);
+
         // Blog Pro analytics (spec 068): consented first-party events persist only pseudonymous
         // visitor hashes and aggregate through this injected store.
         $this->container->singleton(ReadingEventTable::class);
@@ -711,6 +773,17 @@ final class ConfigServiceProvider extends ServiceProvider
         add_action('rest_api_init', function (): void {
             $this->container->make(AccessController::class)->register();
         });
+        // Spec 079: the browser's half of the same endpoint. Resolved when the action fires, for
+        // the same reason AccessController is resolved inside rest_api_init — building this graph
+        // at plugin-load time reaches a translated string before `init` and WordPress reports
+        // `_load_textdomain_just_in_time` on every admin page. A handler for one specific POST has
+        // no business being constructed on page loads that will never reach it.
+        add_action(
+            'admin_post_' . \Corex\Config\Access\AccessRequestFormController::ACTION,
+            function (): void {
+                $this->container->make(\Corex\Config\Access\AccessRequestFormController::class)->handle();
+            },
+        );
 
         $this->container->make(AdminBranding::class)->register();
         $this->container->make(CorexAdminAssets::class)->register();
@@ -724,6 +797,11 @@ final class ConfigServiceProvider extends ServiceProvider
         $this->container->make(OperationsSecurityScreen::class)->register();
         $this->container->make(\Corex\Config\Access\AccessAuditLog::class)->register();
         $this->container->make(\Corex\Config\Access\AccessDeniedGate::class)->register();
+        // Registered after the gate so that, on a CoreX page, the gate's richer surface — which has
+        // the access-request form in it — is the one that answers. Everywhere else this catches the
+        // refusal that used to reach WordPress's white box (spec 083).
+        $this->container->make(\Corex\Admin\Errors\AdminDieHandler::class)->register();
+        $this->container->make(\Corex\Security\Upload\AttachmentDelivery::class)->register();
         $this->container->make(\Corex\Config\Access\AccessScreen::class)->register();
         $this->container->make(\Corex\Config\Blog\BlogProScreen::class)->register();
         $this->container->make(\Corex\Config\Operations\OperationsModeController::class)->register();

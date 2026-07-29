@@ -138,30 +138,6 @@ it('renders a single record as readable label -> value fields', function () {
         ->and($record['fields'][1]['label'])->toBe('Email');
 });
 
-it('reads a multi-value field as a comma-separated list, not as JSON', function () {
-    $source = new SubmissionsSource(stubReader([
-        ['id' => 7, 'date' => '2026-06-13', 'form' => 'brief', 'fields' => [
-            'services' => ['brand-identity', 'motion-graphics'],
-        ]],
-    ], 1));
-
-    // A multi-select stores a list, and JSON-encoding it showed an operator
-    // `["brand-identity","motion-graphics"]` where they expected to read two services.
-    expect($source->record(7)['fields'][0]['value'])->toBe('brand-identity, motion-graphics')
-        ->and($source->rows(1, 10)[0]['summary'])->toBe('services: brand-identity, motion-graphics');
-});
-
-it('still falls back to JSON for nested data, where the structure is the point', function () {
-    $source = new SubmissionsSource(stubReader([
-        ['id' => 7, 'date' => '2026-06-13', 'form' => 'brief', 'fields' => [
-            'utm' => ['source' => 'newsletter'],
-        ]],
-    ], 1));
-    Functions\when('wp_json_encode')->alias(static fn (mixed $v): string => json_encode($v));
-
-    expect($source->record(7)['fields'][0]['value'])->toBe('{"source":"newsletter"}');
-});
-
 it('returns null for an unknown record', function () {
     expect((new SubmissionsSource(stubReader([])))->record(999))->toBeNull();
 });

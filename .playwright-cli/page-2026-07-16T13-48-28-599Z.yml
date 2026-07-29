@@ -1,0 +1,214 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - link "Skip to content" [ref=e5] [cursor=pointer]:
+        - /url: "#main"
+      - banner [ref=e6]:
+        - generic [ref=e7]:
+          - link "Perego — home" [ref=e8] [cursor=pointer]:
+            - /url: http://perego.local/
+          - navigation "Primary" [ref=e9]:
+            - list [ref=e10]:
+              - listitem [ref=e11]:
+                - link "Home" [ref=e12] [cursor=pointer]:
+                  - /url: http://perego.local/
+              - listitem [ref=e13]:
+                - link "About Us" [ref=e14] [cursor=pointer]:
+                  - /url: http://perego.local/#about
+              - listitem [ref=e15]:
+                - link "Services" [ref=e16] [cursor=pointer]:
+                  - /url: http://perego.local/#services
+              - listitem [ref=e19]:
+                - link "Work" [ref=e20] [cursor=pointer]:
+                  - /url: http://perego.local/work
+              - listitem [ref=e21]:
+                - link "Journal" [ref=e22] [cursor=pointer]:
+                  - /url: http://perego.local/journal/
+              - listitem [ref=e23]:
+                - link "Clients" [ref=e24] [cursor=pointer]:
+                  - /url: http://perego.local/#clients
+              - listitem [ref=e25]:
+                - link "Contact Us" [ref=e26] [cursor=pointer]:
+                  - /url: http://perego.local/contact/
+          - link "Start a Project" [ref=e27] [cursor=pointer]:
+            - /url: http://perego.local/contact/
+          - group "Language" [ref=e28]:
+            - link "AR" [ref=e29] [cursor=pointer]:
+              - /url: http://perego.local/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/
+            - generic [ref=e30]: EN
+    - paragraph [ref=e39]: بيريجو · PEREGO
+    - main [ref=e40]:
+      - region "Introduction" [ref=e41]:
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - heading "What We Believe" [level=1] [ref=e45]
+            - paragraph [ref=e46]: Not every artist holds a brush. A brush is only a tool; what truly matters are the ideas you bring to life. You can be an artist through your mindset, your dedication, your passion, and the way you shape your priorities. Art lives in what you have mastered or in what you have yet to discover, but it is already within you.
+          - link "Say Hello!" [ref=e48] [cursor=pointer]:
+            - /url: http://perego.local/contact/
+        - tablist "Hero slides" [ref=e49]:
+          - tab "Slide 1" [selected] [ref=e50] [cursor=pointer]
+          - tab "Slide 2" [ref=e51] [cursor=pointer]
+          - tab "Slide 3" [ref=e52] [cursor=pointer]
+        - paragraph [ref=e53]: Slide 1 of 3
+      - region [ref=e54]:
+        - generic [ref=e58]:
+          - article [ref=e59]:
+            - heading "About Us" [level=2] [ref=e60]
+            - paragraph [ref=e61]: Perego is a leading creative agency specializing in advertising and digital production, serving a diverse client base across the Arab region. We offer a wide range of innovative services, including brand identity design, motion graphics with full storyboard development, diverse video editing solutions, and much more all crafted to elevate your business or digital presence.
+          - article [ref=e62]:
+            - heading "Our mission" [level=2] [ref=e63]
+            - paragraph [ref=e64]: deliver impactful marketing results that meet your specific needs with exceptional quality and reliable, on-time delivery.
+      - region [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - heading "Services we can help you with" [level=2] [ref=e68]
+            - link "See All Services" [ref=e69] [cursor=pointer]:
+              - /url: http://perego.local/services
+          - generic [ref=e72]:
+            - link "Video editing timeline Video Editing" [ref=e73] [cursor=pointer]:
+              - /url: http://perego.local/services/video-editing/
+              - img "Video editing timeline" [ref=e74]
+              - generic [ref=e76]: Video Editing
+            - link "2D motion graphics workspace 2D Motion Graphics" [ref=e77] [cursor=pointer]:
+              - /url: http://perego.local/services/motion-graphics/
+              - img "2D motion graphics workspace" [ref=e78]
+              - generic [ref=e80]: 2D Motion Graphics
+            - link "Graphic design on a laptop Graphic Design" [ref=e81] [cursor=pointer]:
+              - /url: http://perego.local/services/graphic-design/
+              - img "Graphic design on a laptop" [ref=e82]
+              - generic [ref=e84]: Graphic Design
+            - link "Website code editor Website Making" [ref=e85] [cursor=pointer]:
+              - /url: http://perego.local/services/website-making/
+              - img "Website code editor" [ref=e86]
+              - generic [ref=e88]: Website Making
+      - region [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - heading "Corporate Clients" [level=2] [ref=e92]
+            - paragraph [ref=e93]: Organizations and companies we've collaborated with on professional projects.
+          - generic [ref=e94]:
+            - button "Previous clients" [ref=e95] [cursor=pointer]
+            - list "Corporate client logos" [ref=e98]:
+              - listitem "Sample Corporate Client A" [ref=e99] [cursor=pointer]
+              - listitem "Sample Corporate Client B" [ref=e102] [cursor=pointer]
+              - listitem "Sample Corporate Client C" [ref=e105] [cursor=pointer]
+              - listitem "Sample Corporate Client D" [ref=e108] [cursor=pointer]
+            - button "More clients" [ref=e111] [cursor=pointer]
+          - generic [ref=e114]:
+            - heading "Individual Clients" [level=2] [ref=e115]
+            - paragraph [ref=e116]: Professionals and individuals we've worked with.
+          - generic [ref=e117]:
+            - button "Previous" [ref=e118] [cursor=pointer]
+            - list "Individual clients" [ref=e121]:
+              - listitem [ref=e122] [cursor=pointer]:
+                - generic [ref=e123]:
+                  - heading "Sample Creator One" [level=3] [ref=e124]
+                  - paragraph [ref=e125]: Example stat
+              - listitem [ref=e128]:
+                - generic [ref=e129]:
+                  - heading "Sample Creator Two" [level=3] [ref=e130]
+                  - paragraph [ref=e131]: Example stat
+              - listitem [ref=e133]:
+                - generic [ref=e134]:
+                  - heading "Sample Creator Three" [level=3] [ref=e135]
+                  - paragraph [ref=e136]: Example stat
+              - listitem [ref=e138]:
+                - generic [ref=e139]:
+                  - heading "Sample Creator Four" [level=3] [ref=e140]
+                  - paragraph [ref=e141]: Example stat
+            - button "More" [ref=e143] [cursor=pointer]
+    - contentinfo [ref=e146]:
+      - contentinfo [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - link "Perego — home" [ref=e150] [cursor=pointer]:
+              - /url: http://perego.local/
+            - heading "Contact us" [level=2] [ref=e151]
+            - list [ref=e152]:
+              - listitem [ref=e153]:
+                - link "mostafa.emam3313@gmail.com" [ref=e154] [cursor=pointer]:
+                  - /url: mailto:mostafa.emam3313@gmail.com
+              - listitem [ref=e156]:
+                - link "yehemam2@gmail.com" [ref=e157] [cursor=pointer]:
+                  - /url: mailto:yehemam2@gmail.com
+              - listitem [ref=e159]:
+                - link "+996 56 293 2759" [ref=e160] [cursor=pointer]:
+                  - /url: tel:+996562932759
+              - listitem [ref=e162]:
+                - link "+20 111 54 855 72" [ref=e163] [cursor=pointer]:
+                  - /url: tel:+201115485572
+            - paragraph [ref=e165]: We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.
+            - list "Social media" [ref=e166]:
+              - listitem [ref=e167]:
+                - link "Perego on Instagram" [ref=e168] [cursor=pointer]:
+                  - /url: https://www.instagram.com/
+              - listitem [ref=e171]:
+                - link "Perego on Facebook" [ref=e172] [cursor=pointer]:
+                  - /url: https://www.facebook.com/
+              - listitem [ref=e175]:
+                - link "Perego on LinkedIn" [ref=e176] [cursor=pointer]:
+                  - /url: https://www.linkedin.com/
+              - listitem [ref=e179]:
+                - link "Perego on YouTube" [ref=e180] [cursor=pointer]:
+                  - /url: https://www.youtube.com/
+              - listitem [ref=e183]:
+                - link "Perego on WhatsApp" [ref=e184] [cursor=pointer]:
+                  - /url: https://wa.me/
+          - generic [ref=e188]:
+            - generic [ref=e189]:
+              - generic [ref=e190]: Full name
+              - textbox "Full name" [ref=e191]:
+                - /placeholder: Put your name here
+              - alert
+            - generic [ref=e192]:
+              - generic [ref=e193]: E-mail
+              - textbox "E-mail" [ref=e194]:
+                - /placeholder: Put your E-mail here
+              - alert
+            - generic [ref=e195]:
+              - generic [ref=e196]: Your message
+              - textbox "Your message" [ref=e197]:
+                - /placeholder: Say hello.
+              - alert
+              - text: 0 / 1200
+            - textbox [ref=e198]
+            - button "Send" [ref=e199] [cursor=pointer]
+            - status
+          - generic [ref=e200]:
+            - heading "Join us" [level=2] [ref=e201]
+            - paragraph [ref=e202]: We’re constantly evolving. If you’re ready to grow with us, share your CV and portfolio.
+            - generic [ref=e203]:
+              - generic [ref=e204]:
+                - generic [ref=e205]: Full name
+                - textbox "Full name" [ref=e206]:
+                  - /placeholder: Put your name here
+                - alert
+              - generic [ref=e207]:
+                - generic [ref=e208]: Email
+                - textbox "Email" [ref=e209]:
+                  - /placeholder: Put your Email here
+                - alert
+              - generic [ref=e210]:
+                - generic [ref=e211]: Portfolio/website link
+                - textbox "Portfolio/website link" [ref=e212]:
+                  - /placeholder: Put your Portfolio/website link
+                - alert
+              - generic [ref=e213]:
+                - generic [ref=e214]: CV
+                - generic [ref=e215] [cursor=pointer]: Upload your CV here
+                - paragraph [ref=e217]: Upload your CV here
+                - alert
+              - textbox [ref=e218]
+              - button "Apply now" [ref=e219] [cursor=pointer]
+              - status [ref=e220]
+        - generic [ref=e221]:
+          - paragraph [ref=e222]: © 2026 Perego Creative Studio — بيريجو. All rights reserved.
+          - navigation "Legal" [ref=e223]:
+            - link "Journal" [ref=e224] [cursor=pointer]:
+              - /url: http://perego.local/journal/
+            - link "Terms & Conditions" [ref=e225] [cursor=pointer]:
+              - /url: http://perego.local/terms/
+            - link "Privacy Policy" [ref=e226] [cursor=pointer]:
+              - /url: http://perego.local/privacy/

@@ -84,6 +84,34 @@
 	font-size: var(--corex-admin-font-md);
 }
 
+/*
+ * What the original caller said, kept below CoreX's own explanation
+ * (spec 083, FR-008).
+ *
+ * Start-aligned inside a centred card on purpose: this is the only part
+ * of the page that can be a sentence or two of somebody else's prose,
+ * sometimes carrying a link, and centred prose is harder to read the
+ * longer it gets. The start border marks it as quoted rather than ours.
+ */
+.corex-standalone__detail {
+	inline-size: 100%;
+	padding: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	border-inline-start: 2px solid var(--corex-admin-border-strong);
+	background: var(--corex-admin-surface-alt);
+	border-radius: var(--corex-admin-radius-sm);
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-sm);
+	text-align: start;
+}
+
+.corex-standalone__detail p {
+	margin: 0;
+}
+
+.corex-standalone__detail p + p {
+	margin-block-start: var(--corex-admin-space-xs);
+}
+
 .corex-standalone__status {
 	display: inline-flex;
 	align-items: center;
@@ -268,6 +296,57 @@
 .corex-standalone .corex-denied__meta {
 	font-family: var(--corex-admin-font-mono);
 	letter-spacing: var(--corex-admin-letter-wide);
+}
+
+/* Spec 079 — the three states the request area can be in besides
+   the plain form. "Sent" replaces the form entirely: offering
+   someone a second copy of a form they have already submitted is
+   how duplicate requests get made. */
+.corex-standalone .corex-denied__sent {
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	inline-size: min(100%, 30rem);
+	padding: var(--corex-admin-space-md);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-success);
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-surface);
+	text-align: start;
+}
+
+.corex-standalone .corex-denied__sent-title {
+	margin: 0;
+	color: var(--corex-admin-success);
+	font-weight: 600;
+}
+
+.corex-standalone .corex-denied__sent-detail {
+	margin: 0;
+	color: var(--corex-admin-text-subtle);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-standalone .corex-denied__error {
+	inline-size: min(100%, 30rem);
+	margin: 0;
+	padding: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-warning);
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-surface);
+	color: var(--corex-admin-text);
+	font-size: var(--corex-admin-font-sm);
+	text-align: start;
+}
+
+.corex-standalone .corex-denied__field-error {
+	margin: 0;
+	color: var(--corex-admin-warning);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-standalone .corex-denied__request [aria-invalid="true"] {
+	border-color: var(--corex-admin-warning);
 }
 
 @media (max-width: 30rem) {

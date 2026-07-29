@@ -83,30 +83,63 @@ final class FieldRenderer
             esc_attr($type),
             esc_attr($this->controlClass($field)),
             esc_attr($this->describedBy($id, $field)),
+            $this->inputAffordances($field),
             $this->requiredAttr($field),
             $this->placeholderAttr($field),
             $this->valueAttr($field),
             $this->extraAttrs($field),
-            $this->inputModeAttrs($field->type),
         );
     }
 
     /**
-     * Input-mode hints a bare `type` does not carry.
+     * Keyboard, autofill and direction for the field types where the browser needs telling
+     * (#148 item 6).
      *
-     * `dir="ltr"` on a phone is not cosmetic: a number is read left to right in every locale, so on
-     * the Arabic (RTL) page an unmarked `tel` input puts the `+` on the wrong end and reorders the
-     * groups as the visitor types. The keypad and autofill hints are the other half — a `tel` type
-     * alone gets neither on several mobile browsers.
+     * `dir` is the correctness half, not a nicety. A phone number reads left-to-right in every
+     * locale, so on an RTL page an unmarked `tel` input puts the `+` on the wrong end and visibly
+     * reorders digit groups as the visitor types — the number they see is not the number they are
+     * entering. Same for a URL.
+     *
+     * `inputmode` and `autocomplete` are the affordances a bare `type="tel"` does not get on
+     * several mobile browsers: no numeric keypad, no autofill.
      */
-    private function inputModeAttrs(string $type): string
+    private function inputAffordances(FieldSchema $field): string
     {
-        return match ($type) {
+        return match ($field->type) {
             'phone' => ' inputmode="tel" autocomplete="tel" dir="ltr"',
             'email' => ' inputmode="email" autocomplete="email"',
             'url' => ' inputmode="url" dir="ltr"',
+            'file' => $this->acceptAttribute($field),
             default => '',
         };
+    }
+
+    /**
+     * `accept`, derived from the field's own `mime:` rule (spec 081).
+     *
+     * A hint, never a check: it filters the file picker's default view and a visitor can still
+     * choose "all files". The refusal that matters happens server-side, where
+     * {@see \Corex\Forms\Validation\Rules\MimeType} reads the bytes. Deriving it from the rule
+     * rather than a second setting means the picker and the validator cannot disagree.
+     */
+    private function acceptAttribute(FieldSchema $field): string
+    {
+        foreach ($field->rules as $rule) {
+            // A resolved rule is `['rule' => 'mime', 'params' => ['application/pdf']]`, not the
+            // `'mime:application/pdf'` string the form declared — `SchemaResolver` parses it before
+            // this ever sees it. The first version of this method matched on the string and
+            // therefore matched nothing, silently: a file picker with no filter still works, so
+            // there was no symptom to notice. Found by standing up a real consumer.
+            if (! is_array($rule) || ($rule['rule'] ?? '') !== 'mime') {
+                continue;
+            }
+
+            $types = implode(',', array_map('strval', (array) ($rule['params'] ?? [])));
+
+            return $types === '' ? '' : ' accept="' . esc_attr($types) . '"';
+        }
+
+        return '';
     }
 
     private function textarea(string $id, FieldSchema $field): string

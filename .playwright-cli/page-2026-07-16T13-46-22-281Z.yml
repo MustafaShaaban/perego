@@ -1,0 +1,37 @@
+- generic [active] [ref=e1]:
+  - heading "Log In" [level=1] [ref=e2]
+  - generic [ref=e3]:
+    - link "Powered by WordPress" [ref=e4] [cursor=pointer]:
+      - /url: http://perego.local/
+    - paragraph [ref=e5]: Sign in to your workspace
+    - generic [ref=e6]:
+      - paragraph [ref=e7]:
+        - generic [ref=e8]: Username or Email Address
+        - textbox "Username or Email Address" [ref=e10]
+      - generic [ref=e11]:
+        - generic [ref=e12]: Password
+        - generic [ref=e13]:
+          - textbox "Password" [ref=e14]
+          - button "Show password" [ref=e15] [cursor=pointer]:
+            - generic [ref=e16]: 
+      - paragraph [ref=e17]:
+        - checkbox "Remember Me" [ref=e18] [cursor=pointer]
+        - generic [ref=e19]: Remember Me
+      - paragraph:
+        - button "Log In" [ref=e20] [cursor=pointer]
+    - paragraph [ref=e21]:
+      - link "Lost your password?" [ref=e22] [cursor=pointer]:
+        - /url: http://perego.local/wp-login.php?action=lostpassword
+    - paragraph [ref=e23]:
+      - link "← Go to Perego Creative Studio" [ref=e24] [cursor=pointer]:
+        - /url: http://perego.local/
+    - link "Privacy Policy" [ref=e26] [cursor=pointer]:
+      - /url: http://perego.local/privacy/
+  - generic [ref=e28]:
+    - generic [ref=e29]:
+      - generic [ref=e30]: 
+      - generic [ref=e31]: Language
+    - combobox "Language" [ref=e32] [cursor=pointer]:
+      - option "English (United States)" [selected]
+      - option "العربية"
+    - button "Change" [ref=e33] [cursor=pointer]

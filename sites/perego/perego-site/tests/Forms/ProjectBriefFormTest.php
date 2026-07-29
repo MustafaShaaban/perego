@@ -73,7 +73,12 @@ it('keeps the handoff validation limits on every field', function () {
         ->and($fields['email']['rules'])->toBe(['required', 'email', 'max:120'])
         // E.164, not a character count: `max:24` accepted "01016999700", a number nobody outside
         // Egypt can dial, which for a studio serving EG/SA/AE defeats the point of asking.
-        ->and($fields['phone']['rules'])->toBe(['phone'])
+        //
+        // Two rules since CoreX v0.40.0. Upstream introduced its own `phone` and made the country code
+        // optional, so `01016999700` passes it again — and `RuleRegistry::register()` throws on a
+        // duplicate name, so the built-in cannot be replaced. Perego's `strict_phone` is layered on top
+        // instead: upstream's gives client-side feedback, ours is what actually requires the `+`.
+        ->and($fields['phone']['rules'])->toBe(['phone', 'strict_phone'])
         ->and($fields['subject']['rules'])->toBe(['required', 'min:3', 'max:120'])
         ->and($fields['message']['rules'])->toBe(['required', 'min:10', 'max_words:200'])
         ->and($fields['message']['attrs'])->toBe(['data-max-words' => '200'])

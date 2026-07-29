@@ -24,9 +24,16 @@ final class FrameworkFormStrings
     private const AR = [
         'Send' => 'إرسال',
         'Thank you — your message has been sent.' => 'شكرًا لك — تم إرسال رسالتك.',
-        'Please review the highlighted fields and try again.' => 'يرجى مراجعة الحقول المميزة والمحاولة مرة أخرى.',
         'Unknown form.' => 'نموذج غير معروف.',
         'Submission rejected.' => 'تم رفض الإرسال.',
+
+        // CoreX v0.40.0 reworded the submission-level strings. `Validation failed.` replaced
+        // `Please review the highlighted fields and try again.`, and file storage is new with
+        // spec 081. The old source is kept below so an Arabic page served from a stale opcache
+        // during deploy still resolves rather than flashing English.
+        'Validation failed.' => 'يرجى مراجعة الحقول المميزة والمحاولة مرة أخرى.',
+        'The file could not be stored.' => 'تعذّر حفظ الملف.',
+        'Please review the highlighted fields and try again.' => 'يرجى مراجعة الحقول المميزة والمحاولة مرة أخرى.',
 
         // Per-field validation. These reach the browser through the form's `data-corex-messages`
         // attribute, which the engine renders with `__()` precisely so this filter can localize
@@ -35,12 +42,26 @@ final class FrameworkFormStrings
         'This field is required.' => 'هذا الحقل مطلوب.',
         'Enter a valid email address.' => 'يرجى إدخال بريد إلكتروني صحيح.',
         'Enter a number.' => 'يرجى إدخال رقم.',
-        'Enter a valid link.' => 'يرجى إدخال رابط صحيح.',
-        'Enter a phone number including its country code.' => 'يرجى إدخال رقم الهاتف مع رمز الدولة.',
         'This value is too long.' => 'هذه القيمة طويلة جدًا.',
         'This value is too short.' => 'هذه القيمة قصيرة جدًا.',
-        'This message is too long.' => 'هذه الرسالة تتجاوز الحد المسموح من الكلمات.',
         'This value is not in the expected format.' => 'صيغة هذه القيمة غير صحيحة.',
+
+        // Reworded by CoreX v0.40.0's new `Block\ValidationMessages`. Because this map keys on the
+        // exact English source, a rewording upstream does not fail — it silently serves English on
+        // the Arabic pages, which is the worst way for a translation to break. `FrameworkFormStringsTest`
+        // now asserts every key of `ValidationMessages::all()` has an entry here, so the next rewording
+        // is a red test instead.
+        'Enter a valid web address.' => 'يرجى إدخال رابط صحيح.',
+        'Enter a valid phone number.' => 'يرجى إدخال رقم الهاتف مع رمز الدولة.',
+        'Please check this field.' => 'يرجى مراجعة هذا الحقل.',
+
+        // Pre-v0.40.0 sources, kept for the same stale-opcache reason as above.
+        'Enter a valid link.' => 'يرجى إدخال رابط صحيح.',
+        'Enter a phone number including its country code.' => 'يرجى إدخال رقم الهاتف مع رمز الدولة.',
+
+        // Perego's own `Forms\Rules\MaxWords` message. CoreX has no `max_words` rule, so this never
+        // appears in `ValidationMessages::all()` and the coverage test does not look for it.
+        'This message is too long.' => 'هذه الرسالة تتجاوز الحد المسموح من الكلمات.',
     ];
 
     public function register(): void

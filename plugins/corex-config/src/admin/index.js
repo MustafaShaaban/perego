@@ -31,7 +31,11 @@ if ( notificationsMount ) {
 
 const accessMount = document.getElementById( 'corex-access-app' );
 if ( accessMount ) {
-	const config = window.corexAccess || { matrix: {}, requests: [], audit: [] };
+	const config = window.corexAccess || {
+		matrix: {},
+		requests: [],
+		audit: [],
+	};
 	const app = <AccessWorkspace config={ config } />;
 	if ( typeof createRoot === 'function' ) {
 		createRoot( accessMount ).render( app );
@@ -42,8 +46,23 @@ if ( accessMount ) {
 
 const securityMount = document.getElementById( 'corex-security-app' );
 if ( securityMount ) {
-	const config = window.corexSecurity || { mode: 'staging', readiness: {}, loginPolicy: {}, lockouts: [], activity: [] };
-	const app = <SecurityCenter config={ config } />;
+	const config = window.corexSecurity || {
+		mode: 'staging',
+		readiness: {},
+		loginPolicy: {},
+		lockouts: [],
+		activity: [],
+	};
+	// The screen is sectioned now (spec 077), and this app's panels belong to three different
+	// sections. The mount node says which one it is standing in; the app renders only those panels.
+	// One app and one state module rather than three, so a change to the security state still has
+	// one home.
+	const app = (
+		<SecurityCenter
+			config={ config }
+			section={ securityMount.dataset.section || 'all' }
+		/>
+	);
 	if ( typeof createRoot === 'function' ) {
 		createRoot( securityMount ).render( app );
 	} else {
@@ -53,7 +72,13 @@ if ( securityMount ) {
 
 const blogMount = document.getElementById( 'corex-blog-pro-app' );
 if ( blogMount ) {
-	const config = window.corexBlogPro || { posts: [], analytics: {}, comments: [], authors: [], shareControls: [] };
+	const config = window.corexBlogPro || {
+		posts: [],
+		analytics: {},
+		comments: [],
+		authors: [],
+		shareControls: [],
+	};
 	const app = <BlogProApp config={ config } />;
 	if ( typeof createRoot === 'function' ) {
 		createRoot( blogMount ).render( app );

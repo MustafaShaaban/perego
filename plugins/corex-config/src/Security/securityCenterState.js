@@ -1,4 +1,15 @@
-export const MODES = [ 'development', 'staging', 'production', 'maintenance' ];
+/**
+ * State for the Operations & Security panels.
+ *
+ * This used to also drive a client-side mode-change preview — a target-mode selector, a typed
+ * PRODUCTION phrase and a maintenance confirmation. That preview applied nothing: the real mode
+ * change is a nonce- and capability-gated server form (OperationsSecurityScreen::modeCard()) on the
+ * same page, so the page carried the same three controls twice, one of them inert. The preview and
+ * every piece of state that existed only to serve it are gone.
+ */
+
+/** The operations modes the server recognises; used only to keep a reported mode in range. */
+const MODES = [ 'development', 'staging', 'production', 'maintenance' ];
 
 export function securityEndpoint( root, path = '' ) {
 	const base = String( root || '' ).replace( /\/$/, '' );
@@ -10,10 +21,7 @@ export function initialSecurityState() {
 	return {
 		status: 'idle',
 		mode: 'staging',
-		selectedMode: 'staging',
 		readiness: normalizeReadiness( {} ),
-		productionPhrase: '',
-		maintenanceConfirmed: false,
 		loginPolicy: normalizeLoginPolicy( {} ),
 		lockouts: [],
 		recovery: null,
@@ -41,6 +49,12 @@ export function normalizeReadiness( snapshot = {} ) {
 }
 
 export function normalizeLoginPolicy( policy = {} ) {
+	// Either casing may carry the list, and only an actual array is usable — `find( Array.isArray )`
+	// says exactly that, where the nested conditional it replaces had to be read twice.
+	const proxies = [ policy.trustedProxies, policy.trusted_proxies ].find(
+		Array.isArray
+	);
+
 	return {
 		// Defaults mirror the server (LoginProtectionSettingsStore). They used to disagree —
 		// `enabled` defaulted to true here and false there, `windowSeconds` to 900 against 300 —
@@ -72,11 +86,7 @@ export function normalizeLoginPolicy( policy = {} ) {
 			60,
 			604800
 		),
-		trustedProxies: Array.isArray( policy.trustedProxies )
-			? policy.trustedProxies.map( String )
-			: Array.isArray( policy.trusted_proxies )
-			? policy.trusted_proxies.map( String )
-			: [],
+		trustedProxies: proxies ? proxies.map( String ) : [],
 		retentionDays: clampInteger(
 			policy.retentionDays ?? policy.retention_days,
 			30,
@@ -99,7 +109,6 @@ export function securityReducer( state = initialSecurityState(), action = {} ) {
 				...state,
 				status: 'ready',
 				mode,
-				selectedMode: mode,
 				readiness: normalizeReadiness( action.payload?.readiness ),
 				loginPolicy: normalizeLoginPolicy(
 					action.payload?.loginPolicy
@@ -109,23 +118,6 @@ export function securityReducer( state = initialSecurityState(), action = {} ) {
 				notice: null,
 			};
 		}
-		case 'selectMode':
-			return {
-				...state,
-				selectedMode: normalizeMode( action.mode ),
-				productionPhrase: '',
-				maintenanceConfirmed: false,
-			};
-		case 'setProductionPhrase':
-			return {
-				...state,
-				productionPhrase: String( action.phrase || '' ),
-			};
-		case 'setMaintenanceConfirmed':
-			return {
-				...state,
-				maintenanceConfirmed: action.confirmed === true,
-			};
 		case 'setLoginPolicy':
 			return {
 				...state,
@@ -174,32 +166,6 @@ export function securityReducer( state = initialSecurityState(), action = {} ) {
 		default:
 			return state;
 	}
-}
-
-export function modeActionState( state ) {
-	const selected = normalizeMode( state?.selectedMode );
-	if ( selected === 'production' ) {
-		return {
-			requiresPhrase: true,
-			requiredPhrase: 'PRODUCTION',
-			ready: String( state?.productionPhrase || '' ) === 'PRODUCTION',
-			blockingCount: state?.readiness?.blockingCount || 0,
-		};
-	}
-	if ( selected === 'maintenance' ) {
-		return {
-			requiresPhrase: false,
-			requiredPhrase: '',
-			ready: state?.maintenanceConfirmed === true,
-			blockingCount: 0,
-		};
-	}
-	return {
-		requiresPhrase: false,
-		requiredPhrase: '',
-		ready: true,
-		blockingCount: 0,
-	};
 }
 
 export function buildLoginPolicyPayload( policy ) {

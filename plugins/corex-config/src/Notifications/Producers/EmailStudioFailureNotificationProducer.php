@@ -14,6 +14,7 @@ use Corex\Access\CorexAbility;
 use Corex\Email\Studio\EmailStudioDeliveryFailedEvent;
 use Corex\Events\ListenerProvider;
 use Corex\Notifications\Notification;
+use Corex\Notifications\NotificationAction;
 use Corex\Notifications\NotificationCategory;
 use Corex\Notifications\NotificationProducer;
 use Corex\Notifications\NotificationRecipient;
@@ -64,11 +65,14 @@ final class EmailStudioFailureNotificationProducer implements NotificationProduc
             titleKey: 'notifications.email.delivery_failed.title',
             messageKey: 'notifications.email.delivery_failed.body',
             rendered: [
-                'title' => __('Email delivery failed', 'corex'),
-                'body'  => sprintf(
-                    /* translators: 1: the delivery provider, 2: a short, secret-free reason. */
-                    __('An email through %1$s could not be delivered: %2$s', 'corex'),
+                'title' => sprintf(
+                    /* translators: %s: the delivery provider. */
+                    __('Email delivery through %s is failing', 'corex'),
                     $event->provider,
+                ),
+                'body'  => sprintf(
+                    /* translators: %s: a short, secret-free reason. */
+                    __('The provider said: %s. Check the connection in Email Studio.', 'corex'),
                     $event->safeReason,
                 ),
             ],
@@ -78,6 +82,13 @@ final class EmailStudioFailureNotificationProducer implements NotificationProduc
             sourceType: 'email_attempt',
             sourceId: $event->attemptId,
             metadata: ['provider' => $event->provider, 'retryable' => $event->retryable],
+            // The body says "check the connection in Email Studio"; this is that (spec 087, FR-014).
+            action: NotificationAction::to(
+                'notifications.email.delivery_failed.action',
+                add_query_arg(['page' => 'corex-email-studio'], admin_url('admin.php')),
+                CorexAbility::MANAGE_EMAIL,
+                __('Open Email Studio', 'corex'),
+            ),
         );
     }
 }

@@ -74,6 +74,20 @@ final class WebpConverter
         return strtolower($mime) === 'image/png' ? ['png'] : ['jpg', 'jpeg'];
     }
 
+    /**
+     * GD's WebP encoder accepts truecolour images only.
+     *
+     * Handed a palette (indexed-colour) image it raises `Palette image not supported by webp` as an
+     * **E_ERROR**, which ends the request. Because this runs on `wp_generate_attachment_metadata`,
+     * the request it ends is a media upload: the uploader gets WordPress's critical-error page and
+     * the file never arrives. Palette PNGs are ordinary — "PNG-8" is what most design tools export
+     * a flat-colour logo or icon as — so this is a routine upload, not an edge case.
+     *
+     * `convert()` wraps this in `catch (Throwable)`, and that catch **cannot** fire: a GD E_ERROR is
+     * not a Throwable. Verified by reproduction — the process dies with the catch in place. So the
+     * safety here is a precondition check, not a handler: promote first, and refuse to call the
+     * encoder at all unless the image is truecolour by the time we reach it.
+     */
     private function convertWithGd(string $source, string $mime, string $output): bool
     {
         $image = strtolower($mime) === 'image/png'
@@ -84,17 +98,27 @@ final class WebpConverter
             return false;
         }
 
-        // `imagewebp()` throws a FATAL "Palette image not supported by webp" on an indexed-colour
-        // image — it is not a warning and not a false return, so it takes the whole request down
-        // mid-upload. Palette PNGs are exactly what an exported logo or flat-colour graphic usually
-        // is, so this is a routine upload, not an edge case. Promoting to truecolour first is what
-        // the function needs; alpha is preserved explicitly because the default for a new truecolour
-        // canvas is to flatten it, and a logo without transparency is a white box on a dark page.
-        if (! imageistruecolor($image)) {
-            imagepalettetotruecolor($image);
+        if (! imageistruecolor($image) && ! @imagepalettetotruecolor($image)) {
+            // Cannot promote it, so cannot encode it. Returning false keeps the original, which is
+            // what the fail-safe promised and could not previously deliver.
+            imagedestroy($image);
+
+            return false;
         }
+
+        // Defensive, and honestly labelled: on the GD build this was verified against (PHP 8.3,
+        // libwebp) `imagewebp()` preserved the alpha channel with or without these two calls, for
+        // both a promoted palette source and a truecolour one. The reporter observed transparency
+        // loss on theirs, GD builds differ in this behaviour, and stating the intent costs nothing —
+        // but it is not what fixes the fatal, and it should not be described as if it were.
         imagealphablending($image, false);
         imagesavealpha($image, true);
+
+        if (! imageistruecolor($image)) {
+            imagedestroy($image);
+
+            return false;
+        }
 
         $ok = imagewebp($image, $output, $this->quality);
         imagedestroy($image);

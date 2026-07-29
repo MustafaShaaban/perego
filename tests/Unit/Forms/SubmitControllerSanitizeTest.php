@@ -34,6 +34,137 @@ use Corex\Http\Middleware\Request;
 use Corex\Http\Middleware\Response;
 use Corex\Support\BootLogger;
 
+/**
+ * A headless `WP_REST_Request`: the controller only ever reads a url param, the JSON body and a
+ * header off it.
+ *
+ * Defined here rather than in `tests/bootstrap.php` because this is a fork-only contract test and the
+ * bootstrap belongs to upstream — v0.40.0 rebuilt it and doubles only `WP_Post`. A fork test that
+ * needs a double upstream does not provide should carry it, or the next framework update breaks the
+ * test for a reason that has nothing to do with the behaviour it guards.
+ */
+if (! class_exists('WP_REST_Request')) {
+    /** ArrayAccess because the controller reads the route slug as `$request['slug']`, as WP's own does. */
+    class WP_REST_Request implements ArrayAccess
+    {
+        /** @var array<string,mixed> */
+        private array $urlParams = [];
+
+        /** @var array<string,mixed> */
+        private array $jsonParams = [];
+
+        /** @var array<string,string> */
+        private array $headers = [];
+
+        public function __construct(private string $method = 'GET', private string $route = '')
+        {
+        }
+
+        /** @param array<string,mixed> $params */
+        public function set_url_params(array $params): void
+        {
+            $this->urlParams = $params;
+        }
+
+        /** @param array<string,mixed> $params */
+        public function set_json_params(array $params): void
+        {
+            $this->jsonParams = $params;
+        }
+
+        public function set_header(string $name, string $value): void
+        {
+            $this->headers[strtolower($name)] = $value;
+        }
+
+        public function get_header(string $name): ?string
+        {
+            return $this->headers[strtolower($name)] ?? null;
+        }
+
+        /** @return mixed */
+        public function get_param(string $name)
+        {
+            return $this->urlParams[$name] ?? $this->jsonParams[$name] ?? null;
+        }
+
+        /** @return array<string,mixed> */
+        public function get_json_params(): array
+        {
+            return $this->jsonParams;
+        }
+
+        /** @return array<string,mixed> */
+        public function get_params(): array
+        {
+            return $this->jsonParams + $this->urlParams;
+        }
+
+        public function get_method(): string
+        {
+            return $this->method;
+        }
+
+        /**
+         * Always empty: these tests submit JSON, and v0.40.0's spec-081 upload pass reads this on every
+         * request. An empty set is the honest answer for a body with no files.
+         *
+         * @return array<string,mixed>
+         */
+        public function get_file_params(): array
+        {
+            return [];
+        }
+
+        public function get_route(): string
+        {
+            return $this->route;
+        }
+
+        public function offsetExists(mixed $offset): bool
+        {
+            return $this->get_param((string) $offset) !== null;
+        }
+
+        public function offsetGet(mixed $offset): mixed
+        {
+            return $this->get_param((string) $offset);
+        }
+
+        public function offsetSet(mixed $offset, mixed $value): void
+        {
+            $this->jsonParams[(string) $offset] = $value;
+        }
+
+        public function offsetUnset(mixed $offset): void
+        {
+            unset($this->jsonParams[(string) $offset], $this->urlParams[(string) $offset]);
+        }
+    }
+}
+
+if (! class_exists('WP_REST_Response')) {
+    /** The controller only ever constructs one and reads nothing back; these assertions read the event. */
+    class WP_REST_Response
+    {
+        /** @param mixed $data */
+        public function __construct(public mixed $data = null, public int $status = 200)
+        {
+        }
+
+        /** @return mixed */
+        public function get_data()
+        {
+            return $this->data;
+        }
+
+        public function get_status(): int
+        {
+            return $this->status;
+        }
+    }
+}
+
 final class BriefTestForm extends Form
 {
     public string $slug = 'brief';
@@ -155,19 +286,34 @@ it('sanitizes each value of a multi-select individually', function () {
     expect($dispatched[0]->values['services'])->toBe(['video-editing', 'graphic-design']);
 });
 
-it('rejects a non-array multi-select value instead of smuggling it through as a string', function () {
+/*
+ * ⚠ UPSTREAM BEHAVIOUR, not ours. Reported.
+ *
+ * Our fork rejected a scalar sent to a list-typed field with a 422, on the reasoning that it means a
+ * spoofed or malformed payload. Upstream v0.40.0's `SubmitController::sanitizeList()` instead returns
+ * `sanitize_text_field((string) $value)` for anything non-array, so the submission is accepted and the
+ * field is stored as a STRING where every other submission of that field stores a list.
+ *
+ * We take upstream's version rather than re-forking `SubmitController` — carrying a fork edit on a file
+ * upstream actively develops is what this whole update exists to stop doing. The case is kept, inverted,
+ * so the behaviour is pinned and visible: if upstream tightens this later, this test goes red and we
+ * find out deliberately rather than by noticing an odd row in the inbox.
+ *
+ * Impact is a data-shape inconsistency, not a vulnerability: the value is still sanitized, and Perego's
+ * only multi-select (`services` on the project brief) renders a scalar readably.
+ */
+it('accepts a scalar for a list field and stores it as a string — upstream behaviour, reported', function () {
     $dispatched = [];
 
-    // A scalar here means a spoofed or malformed payload. It sanitizes to an empty list, which
-    // `required` then rejects — the honest outcome for a list-typed field.
     $response = sanitizingController($dispatched)->submit(briefRequest([
         'email' => 'a@b.com',
         'message' => 'Hi',
         'services' => 'video-editing',
     ]));
 
-    expect($response->get_status())->toBe(422)
-        ->and($dispatched)->toBe([]);
+    expect($response->get_status())->toBe(200)
+        ->and($dispatched)->toHaveCount(1)
+        ->and($dispatched[0]->values['services'])->toBe('video-editing');
 });
 
 it('still applies the scalar sanitizers and still drops undeclared keys', function () {

@@ -79,6 +79,62 @@ export function inboxReducer( state, action ) {
 	}
 }
 
+/**
+ * The filters the inbox should open with, read from the address it was opened at.
+ *
+ * Forms & Flows links to "the submissions for this form", and a link that lands on an unfiltered
+ * inbox is a control that does nothing. `corex_form` carries either a numeric flow id or
+ * `slug:<slug>` for a form registered in code — the same two shapes the form filter itself sends,
+ * so a deep link and a picked filter cannot mean different things.
+ *
+ * @param {string} url The current address.
+ * @return {Object} Filter overrides to merge into the initial state.
+ */
+export function inboxFiltersFromUrl( url ) {
+	let form = '';
+	try {
+		form =
+			new URL( String( url ), 'http://localhost' ).searchParams.get(
+				'corex_form'
+			) || '';
+	} catch {
+		return {};
+	}
+
+	if ( ! /^(\d+|slug:[a-z0-9_-]+)$/i.test( form ) ) {
+		return {};
+	}
+
+	return { flow: form };
+}
+
+/**
+ * The one submission the inbox should open with its detail already showing, or 0.
+ *
+ * An assignment notification says "a submission needs your reply", and until this existed the only
+ * link it could honestly offer was the unfiltered inbox — which hands somebody a list and asks them
+ * to find the row the notification was already holding (spec 087, FR-014).
+ *
+ * Returns 0 rather than null for anything unparseable, so a caller tests one falsy value and a
+ * hand-edited address opens the plain inbox instead of an error.
+ *
+ * @param {string} url The current address.
+ * @return {number} The submission id to open, or 0.
+ */
+export function inboxSubmissionFromUrl( url ) {
+	let id = '';
+	try {
+		id =
+			new URL( String( url ), 'http://localhost' ).searchParams.get(
+				'corex_submission'
+			) || '';
+	} catch {
+		return 0;
+	}
+
+	return /^\d+$/.test( id ) ? Number( id ) : 0;
+}
+
 export function buildInboxUrl( base, filters ) {
 	const params = new URLSearchParams();
 	const values = [
@@ -139,7 +195,9 @@ export function buildExportPayload( options ) {
 		scope: options.scope,
 		selected_ids:
 			options.scope === 'selected'
-				? [ ...options.selectedIds ].map( Number ).sort( ( a, b ) => a - b )
+				? [ ...options.selectedIds ]
+						.map( Number )
+						.sort( ( a, b ) => a - b )
 				: [],
 		columns: [ ...options.columns ],
 		query: options.scope === 'filtered' ? { ...options.filters } : {},

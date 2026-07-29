@@ -61,11 +61,17 @@ final class SubmitController
             nonce: (string) $request->get_header('X-WP-Nonce'),
             nonceAction: 'wp_rest',
             throttleKey: 'corex_form_' . $slug . '_' . $this->clientFingerprint(),
+            files: $this->uploads($request),
         );
 
         $response = $this->pipeline->run(
             $corexRequest,
-            fn (Request $r): Response => $this->service->handle($slug, $r->input, FormSubmissionService::HONEYPOT_KEY),
+            fn (Request $r): Response => $this->service->handle(
+                $slug,
+                $r->input,
+                FormSubmissionService::HONEYPOT_KEY,
+                $r->files,
+            ),
             ...$this->middlewareFor($slug),
         );
 
@@ -90,7 +96,7 @@ final class SubmitController
      *
      * @param array<string,FieldSchema> $schema
      *
-     * @return array<string,callable|string> key => sanitizer (callable or WP function name)
+     * @return array<string,string> key => WP sanitizer function name
      */
     private function sanitizeShape(array $schema): array
     {
@@ -100,10 +106,7 @@ final class SubmitController
             $shape[$name] = match ($field->type) {
                 'email'    => 'sanitize_email',
                 'textarea' => 'sanitize_textarea_field',
-                // Multi-value fields arrive as arrays, and `sanitize_text_field` returns '' for an
-                // array — so a multi-select submitted through this controller was blanked entirely.
-                // Same arms the flow controller already uses; the two paths must agree.
-                'multi-select', 'checkbox-group' => $this->sanitizeList(...),
+                'multi-select' => self::sanitizeList(...),
                 default    => 'sanitize_text_field',
             };
         }
@@ -111,10 +114,32 @@ final class SubmitController
         return $shape;
     }
 
-    /** @return list<string> */
-    private function sanitizeList(mixed $value): array
+    /**
+     * Sanitize a value that may legitimately be a list (#148 item 1).
+     *
+     * Every arm above maps to a scalar sanitizer, and `sanitize_text_field()` returns `''` for an
+     * array — so before this, a `<select multiple>` had two possible outcomes and both were wrong:
+     * the runtime sent only the first selection and one value was stored, or the runtime sent the
+     * real list and the field was blanked entirely. The browser fix and this one only make sense
+     * shipped together.
+     *
+     * A scalar still passes through, so a multi-select with one selection, or a schema whose
+     * control was swapped for a single select, behaves exactly as before.
+     *
+     * @return list<string>|string
+     */
+    private static function sanitizeList(mixed $value): array|string
     {
-        return array_values(array_map('sanitize_text_field', is_array($value) ? $value : []));
+        if (! is_array($value)) {
+            return sanitize_text_field((string) $value);
+        }
+
+        // Values only. A list is what a multi-select submits; preserving submitted keys would let
+        // a caller shape the stored array, and nothing downstream reads them.
+        return array_values(array_map(
+            static fn (mixed $item): string => sanitize_text_field(is_scalar($item) ? (string) $item : ''),
+            $value,
+        ));
     }
 
     /**
@@ -125,6 +150,44 @@ final class SubmitController
         $json = $request->get_json_params();
 
         return is_array($json) ? $json : (array) $request->get_body_params();
+    }
+
+    /**
+     * The uploaded files, normalised to one descriptor per field (spec 081, FR-002).
+     *
+     * Read through `WP_REST_Request::get_file_params()` rather than `$_FILES` directly, because the
+     * REST server is what populated it and reaching around the object would mean this route behaved
+     * differently when driven from a test than from a browser.
+     *
+     * Only the browser-supplied `name` and `type` are sanitized. `tmp_name` is a path PHP created,
+     * verified later by `wp_handle_upload()`'s own `is_uploaded_file()` check; running it through a
+     * text sanitizer can alter a legitimate path and break the move for a perfectly good file.
+     *
+     * A multi-file input (`name="cv[]"`) yields arrays in every slot. Those are skipped rather than
+     * half-handled: one file per field is the decided scope, and a descriptor whose `tmp_name` is
+     * an array would reach the store as nonsense.
+     *
+     * @return array<string,array{name:string,type:string,tmp_name:string,error:int,size:int}>
+     */
+    private function uploads(WP_REST_Request $request): array
+    {
+        $files = [];
+
+        foreach ($request->get_file_params() as $field => $descriptor) {
+            if (! is_array($descriptor) || is_array($descriptor['tmp_name'] ?? null)) {
+                continue;
+            }
+
+            $files[sanitize_key((string) $field)] = [
+                'name'     => sanitize_file_name((string) ($descriptor['name'] ?? '')),
+                'type'     => sanitize_mime_type((string) ($descriptor['type'] ?? '')),
+                'tmp_name' => (string) ($descriptor['tmp_name'] ?? ''),
+                'error'    => (int) ($descriptor['error'] ?? UPLOAD_ERR_NO_FILE),
+                'size'     => (int) ($descriptor['size'] ?? 0),
+            ];
+        }
+
+        return $files;
     }
 
     private function clientFingerprint(): string

@@ -55,11 +55,11 @@ function deferredSource(string $key): DataSource
     };
 }
 
-it('includes sources registered after defer() but before the first read', function () {
+it('includes sources registered after registerDeferred() but before the first read', function () {
     $registry = new DataRegistry();
     $late = [];
 
-    $registry->defer(static function () use (&$late): array {
+    $registry->registerDeferred(static function () use (&$late): array {
         return array_map(deferredSource(...), $late);
     });
 
@@ -74,7 +74,7 @@ it('resolves the deferred provider exactly once, however many reads happen', fun
     $registry = new DataRegistry();
     $calls = 0;
 
-    $registry->defer(static function () use (&$calls): array {
+    $registry->registerDeferred(static function () use (&$calls): array {
         $calls++;
 
         return [deferredSource('applications')];
@@ -89,7 +89,7 @@ it('resolves the deferred provider exactly once, however many reads happen', fun
 
 it('finds a deferred source by key without a prior all() call', function () {
     $registry = new DataRegistry();
-    $registry->defer(static fn (): array => [deferredSource('applications')]);
+    $registry->registerDeferred(static fn (): array => [deferredSource('applications')]);
 
     expect($registry->find('applications'))->not->toBeNull()
         ->and($registry->find('nope'))->toBeNull();
@@ -98,7 +98,7 @@ it('finds a deferred source by key without a prior all() call', function () {
 it('keeps eagerly registered sources alongside deferred ones', function () {
     $registry = new DataRegistry();
     $registry->register(deferredSource('submissions'));
-    $registry->defer(static fn (): array => [deferredSource('applications')]);
+    $registry->registerDeferred(static fn (): array => [deferredSource('applications')]);
 
     expect(array_map(static fn (DataSource $s): string => $s->key(), $registry->all()))
         ->toBe(['submissions', 'applications']);

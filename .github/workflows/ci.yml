@@ -42,19 +42,34 @@ jobs:
         run: composer test
 
   js:
-    name: JS unit tests (Jest)
+    name: Lint + JS unit tests (Jest)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
 
       - name: Install dependencies
         run: npm ci
+
+      # Both linters run here rather than in a job of their own: this job already has the Node
+      # install they need, and a separate job would pay for a second `npm ci` on every PR to say
+      # the same thing. They run BEFORE Jest so a formatting failure is reported as a formatting
+      # failure rather than as a red test job.
+      #
+      # Neither was gated until now, which is how spec 074 introduced 44 stylelint errors that had
+      # to be found by hand, and how `lint:js` accumulated 2589 problems: `wp-scripts lint-js` with
+      # no project config walked `wp/` and `dist/` — tens of thousands of files that are not ours —
+      # and never finished, so it could not be gated at all until eslint.config.js scoped it.
+      - name: Lint styles
+        run: npm run lint:css
+
+      - name: Lint JavaScript
+        run: npm run lint:js
 
       # Covers the block/admin JS *and* the generated-artifact contracts — the token inventory
       # test regenerates from source and fails if a committed artifact drifted. Nothing in CI ran
@@ -137,6 +152,20 @@ jobs:
             wp post meta set "$id" corex_field_message "Seeded for CI run ${i}." --path=wp
           done
 
+          # A real low-privilege user, for the access-request specs (spec 079). The whole flow is
+          # about what somebody without access sees, and an administrator with a capability
+          # filtered away is not that — the menu gate, the 403 and the request form all branch on
+          # what WordPress registered for this user at admin_menu time.
+          wp user create corex-requester requester@example.test \
+            --role=subscriber --user_pass='CorexE2E!requester1' --path=wp
+
+          # An editor, for the admin-error matrix (spec 083). Two roles only prove the extremes —
+          # everything refused, or nothing refused. The interesting case is the middle: an editor
+          # opens edit.php normally and is refused at plugins.php, so a handler that over-brands a
+          # page the viewer may actually see fails here and nowhere else.
+          wp user create corex-editor editor@example.test \
+            --role=editor --user_pass='CorexE2E!editor1' --path=wp
+
           # Turn off the editor welcome guide. It overlays the inserter the first time a user opens
           # the block editor and then stays dismissed, so without this the first editor spec fails
           # however long it waits while every later one passes — which is exactly what CI showed.
@@ -148,7 +177,7 @@ jobs:
           wp post list --path=wp --post_type=corex_submission --post_status=private --fields=ID,post_title
 
       - name: Set up Node
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: npm
@@ -211,7 +240,7 @@ jobs:
 
       - name: Upload the report when the browser tests fail
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: |
