@@ -616,6 +616,99 @@ form.corex-is-loading .corex-form__submit::after {
 	}
 }
 
+/* Phones: the toast becomes a banner at the top (client report
+ * 2026-07-29).
+ *
+ * Two faults at once on iOS. `position: fixed` resolves against the
+ * *layout* viewport, so when the keyboard opens — and it opens on every
+ * rejected submit, because the runtime focuses the first invalid field —
+ * a bottom-pinned toast is left floating across the middle of the page,
+ * over the next section's heading. And at 380px wide with a 29px card
+ * radius and a 40px medallion it was a desktop card on a phone: glass
+ * over glass, the message barely readable.
+ *
+ * The top edge is the one the keyboard never takes, and it is where both
+ * platforms put transient notifications. `--perego-toast-vv-offset`
+ * (toast.js) re-anchors the stack to the *visual* viewport so the banner
+ * rides with the visible area; a browser without that API falls back to
+ * 0px and keeps the top of the layout viewport, which is where it wanted
+ * to be anyway.
+ *
+ * Declared before the reduced-motion block below, which must keep
+ * winning on source order. */
+@media (max-width: 620px) {
+
+	.perego-toasts {
+		inset-block: calc(env(safe-area-inset-top, 0px) + 8px) auto;
+		inset-inline: 8px;
+		inline-size: auto;
+		/* Centred rather than stretched, so a large phone in landscape
+		   gets a banner and not a rule across the whole screen. */
+		max-inline-size: 520px;
+		margin-inline: auto;
+		transform: translateY(var(--perego-toast-vv-offset, 0px));
+	}
+
+	.perego-toast {
+		align-items: center;
+		gap: 10px;
+		padding: 12px 14px 14px;
+		border-radius: 16px;
+
+		/* Solid, and the only place on the site where a panel is.
+		   Everywhere else the glass sits over the page's own gradients;
+		   this banner crosses the sticky header, so at 55% — and still
+		   at 92% — the logo and the menu read straight through the
+		   message. A notification is not a surface to see through, and
+		   dropping `backdrop-filter` also drops a full-width blur a
+		   phone would recompute on every scrolled frame underneath it.
+		   The accent hairline, the state glow and the drain bar carry
+		   the brand at this size. */
+		background: var(--panel-overlay, #160435);
+		backdrop-filter: none;
+		-webkit-backdrop-filter: none;
+
+		/* It arrives from the edge it is pinned to. `.is-visible` (two
+		   classes) still wins for the settled state, so only the
+		   enter/exit position changes here. */
+		transform: translateY(-10px) scale(0.98);
+	}
+
+	/* A 40px disc is a third of the banner's height; at bar scale the
+	   icon carries the state on its own, helped by the tinted glow and
+	   the drain bar. */
+	.perego-toast__medallion {
+		inline-size: 26px;
+		block-size: 26px;
+	}
+
+	.perego-toast__medallion svg {
+		inline-size: 15px;
+		block-size: 15px;
+	}
+
+	.perego-toast__body {
+		padding-block-start: 0;
+	}
+
+	.perego-toast__title {
+		font-size: 14px;
+	}
+
+	.perego-toast__message {
+		margin-block-start: 2px;
+		font-size: 13px;
+	}
+
+	/* The negative margin aligned the button with a card's top padding;
+	   in a centred bar it just pushes it off the row. The 36px box plus
+	   its ::after keeps the 44px target. */
+	.perego-toast__close,
+	[dir="rtl"] .perego-toast__close {
+		margin: 0;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 
 	.perego-toast {
@@ -1207,10 +1300,33 @@ form.corex-is-loading .corex-form__submit::after {
 	inline-size: 100%;
 }
 
+/* A step is a vertical stack — icon, label, description — at every width.
+ * The row on desktop is the *list's* doing, not the step's, so the step is
+ * written as a single-column grid rather than the column flex box it used
+ * to be.
+ *
+ * That is a fix, not a preference (client report 2026-07-29, iPhone 13/14
+ * Pro Max: every step rendered as icon | label | description side by side,
+ * the description off the right edge, while the same page was correct on
+ * Android). The seeded group carries `is-layout-flex`, so WordPress's own
+ * global styles apply `.is-layout-flex{flex-wrap:wrap;align-items:center}`
+ * to it, and a *column* flex container that wraps breaks into several
+ * columns the moment its height is definite — which is exactly the
+ * failure, and reproducible from this CSS by giving the step a height. A
+ * single-column grid has no direction to lose and no wrap to inherit; it
+ * cannot express that layout at all. `display: grid` also outranks
+ * WordPress's own `body .is-layout-flex{display:flex}`.
+ *
+ * The alternative was `flex-wrap: nowrap`, which does fix the mechanism
+ * above. It is not what shipped, because the mechanism is where the
+ * diagnosis stops: the client's rendering does not reproduce on any WebKit
+ * here, at any width from 320 to 900. Repairing one path into a layout the
+ * component should never have been able to reach would have been a guess
+ * wearing a fix's clothes. */
 .process .process-step {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	justify-items: center;
 	gap: 12px;
 	flex: 1 1 0;
 	min-inline-size: 0;
@@ -1264,10 +1380,18 @@ form.corex-is-loading .corex-form__submit::after {
 		align-items: center;
 	}
 
-	/* The @900 rule fixes each step at 128px to fit four across a horizontal row; once the list
-	 * stacks into a column that width leaves a cramped ~128px ribbon with big side gaps. Let the
-	 * stacked cards use the column width, and relax the enlarged @900 icon back toward its base. */
+	/* The @900 rule fixes each step at 128px to fit four across a
+	 * horizontal row; once the list stacks into a column that width
+	 * leaves a cramped ~128px ribbon with big side gaps. Let the stacked
+	 * cards use the column width, and relax the enlarged @900 icon back
+	 * toward its base.
+	 *
+	 * `flex` is reset with it: the list's main axis is now vertical, so
+	 * growing a step along it only stretches its height, and a stretched
+	 * height is what let the old column flex box wrap into columns at all
+	 * (see the base rule). Steps size to their content here. */
 	.process .process-step {
+		flex: 0 0 auto;
 		inline-size: auto;
 		max-inline-size: 360px;
 	}

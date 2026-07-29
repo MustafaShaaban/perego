@@ -15,6 +15,38 @@
 const DISMISS_MS = 6000;
 const CONTAINER_ID = 'perego-toasts';
 
+/** Matches the stylesheet's phone breakpoint, where the stack becomes a single top banner. */
+const PHONE = '(max-width: 620px)';
+
+/** How long the same message stays a repeat rather than a second, separate outcome. */
+const REPEAT_MS = 1000;
+
+/**
+ * Keep the stack with the *visible* area, not the layout viewport.
+ *
+ * A rejected submit focuses the first invalid field, so on iOS the toast arrives with the keyboard
+ * opening. `position: fixed` is resolved against the layout viewport, which the keyboard does not
+ * resize — the toast was left floating over the middle of the page (client report 2026-07-29). The
+ * visual viewport's own offset is the correction, and only the phone stylesheet consumes it, so
+ * desktop is untouched. No API, no property, and the CSS fallback keeps the old position.
+ */
+function trackVisualViewport( stack ) {
+	const viewport = window.visualViewport;
+	if ( ! viewport ) {
+		return;
+	}
+
+	const follow = () =>
+		stack.style.setProperty(
+			'--perego-toast-vv-offset',
+			`${ Math.max( 0, viewport.offsetTop ) }px`
+		);
+
+	follow();
+	viewport.addEventListener( 'resize', follow );
+	viewport.addEventListener( 'scroll', follow );
+}
+
 /** One shared, lazily created stack, so several forms on a page cannot each build their own. */
 function container() {
 	let stack = document.getElementById( CONTAINER_ID );
@@ -25,6 +57,7 @@ function container() {
 		// The live region is the form's own status paragraph; announcing this too would repeat it.
 		stack.setAttribute( 'aria-hidden', 'true' );
 		document.body.appendChild( stack );
+		trackVisualViewport( stack );
 	}
 	return stack;
 }
@@ -94,11 +127,42 @@ function element( tag, className, text ) {
 	return node;
 }
 
+/**
+ * Is this the same outcome the visitor is already looking at?
+ *
+ * One submit can be announced twice: the framework emits `corex:form:error` from both its client
+ * and server branches, and a block that runs its own submit (join-form/view.js) emits its own. Two
+ * identical cards read as two failures. A repeat inside a second is the same event; a genuinely
+ * different message, or the same one after the visitor tried again, still gets its own toast.
+ */
+function isRepeat( stack, signature ) {
+	const latest = stack.lastElementChild;
+
+	return (
+		!! latest &&
+		latest.dataset.signature === signature &&
+		Date.now() - Number( latest.dataset.shownAt ) < REPEAT_MS
+	);
+}
+
 function show( message, kind, copy ) {
 	const text = String( message || '' ).trim();
 	if ( text === '' ) return;
 
+	const stack = container();
+	const signature = `${ kind }:${ text }`;
+	if ( isRepeat( stack, signature ) ) return;
+
+	// One at a time on a phone: the banner spans the screen, so a second card under it covers the
+	// fields the visitor has been sent back to fix. The newest outcome is the true one, and the old
+	// card leaves without its exit transition — two banners crossing reads as a glitch, not a queue.
+	if ( window.matchMedia( PHONE ).matches ) {
+		Array.from( stack.children ).forEach( ( node ) => node.remove() );
+	}
+
 	const toast = element( 'div', `perego-toast perego-toast--${ kind }` );
+	toast.dataset.signature = signature;
+	toast.dataset.shownAt = String( Date.now() );
 
 	const medallion = element( 'span', 'perego-toast__medallion' );
 	medallion.setAttribute( 'aria-hidden', 'true' );
@@ -124,7 +188,7 @@ function show( message, kind, copy ) {
 	timerBar.style.animationDuration = `${ DISMISS_MS }ms`;
 
 	toast.append( medallion, body, close, timerBar );
-	container().appendChild( toast );
+	stack.appendChild( toast );
 
 	// Next frame, so the element is in the DOM with its start state before the class flips and the
 	// transition has something to animate from.

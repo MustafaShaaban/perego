@@ -1,6 +1,6 @@
 {
 	"name": "perego-theme",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"private": true,
 	"description": "Frontend assets for the Perego theme (Corex client site).",
 	"scripts": {
