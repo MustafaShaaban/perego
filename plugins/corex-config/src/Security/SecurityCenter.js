@@ -1,52 +1,67 @@
-import { useReducer } from '@wordpress/element';
+import { useId, useReducer } from '@wordpress/element';
 import { __, sprintf } from '@wordpress/i18n';
-import CorexSelect from '../admin/components/CorexSelect.js';
+import CorexTime from '../admin/components/CorexTime.js';
 import {
 	buildLoginPolicyPayload,
 	initialSecurityState,
 	lockoutSummary,
-	modeActionState,
 	securityEndpoint,
 	securityReducer,
 } from './securityCenterState.js';
 
-const MODES = [
-	{ value: 'development', label: __( 'Development', 'corex' ) },
-	{ value: 'staging', label: __( 'Staging', 'corex' ) },
-	{ value: 'production', label: __( 'Production', 'corex' ) },
-	{ value: 'maintenance', label: __( 'Maintenance', 'corex' ) },
-];
+/**
+ * Which panels belong to which section of the screen (spec 077, FR-001).
+ *
+ * `all` keeps the pre-077 behaviour — every panel in one mount — so the component stays usable
+ * outside the sectioned screen and its existing tests keep describing something real.
+ */
+const SECTION_PANELS = {
+	environment: [ 'readiness' ],
+	login: [ 'loginPolicy', 'lockouts', 'recovery' ],
+	activity: [ 'activity' ],
+	all: [ 'readiness', 'loginPolicy', 'lockouts', 'recovery', 'activity' ],
+};
 
-export default function SecurityCenter( { config = {} } ) {
+export default function SecurityCenter( { config = {}, section = 'all' } ) {
 	const [ state, dispatch ] = useReducer(
 		securityReducer,
 		initialSecurityState(),
 		( initial ) =>
 			securityReducer( initial, { type: 'loaded', payload: config } )
 	);
-	const action = modeActionState( state );
 	const lockouts = lockoutSummary( state.lockouts );
 	const policyPayload = buildLoginPolicyPayload( state.loginPolicy );
+	const panels = SECTION_PANELS[ section ] || SECTION_PANELS.all;
+	const shows = ( panel ) => panels.includes( panel );
 
 	return (
 		<div className="corex-security" data-testid="corex-security-center">
-			<LaunchChecklist
-				state={ state }
-				action={ action }
-				dispatch={ dispatch }
-			/>
-			<LoginPolicy
-				policy={ state.loginPolicy }
-				policyPayload={ policyPayload }
-				dispatch={ dispatch }
-				config={ config }
-				saving={ state.status === 'saving' }
-			/>
-			<div className="corex-security__grid">
-				<Lockouts lockouts={ state.lockouts } summary={ lockouts } />
-				<Recovery config={ config } />
-				<Activity activity={ state.activity } />
-			</div>
+			{ shows( 'readiness' ) && <LaunchChecklist state={ state } /> }
+			{ shows( 'loginPolicy' ) && (
+				<LoginPolicy
+					policy={ state.loginPolicy }
+					policyPayload={ policyPayload }
+					dispatch={ dispatch }
+					config={ config }
+					saving={ state.status === 'saving' }
+				/>
+			) }
+			{ ( shows( 'lockouts' ) ||
+				shows( 'recovery' ) ||
+				shows( 'activity' ) ) && (
+				<div className="corex-security__grid">
+					{ shows( 'lockouts' ) && (
+						<Lockouts
+							lockouts={ state.lockouts }
+							summary={ lockouts }
+						/>
+					) }
+					{ shows( 'recovery' ) && <Recovery config={ config } /> }
+					{ shows( 'activity' ) && (
+						<Activity activity={ state.activity } />
+					) }
+				</div>
+			) }
 			{ state.notice && (
 				<p
 					className={ `corex-security__notice is-${ state.notice.tone }` }
@@ -59,7 +74,25 @@ export default function SecurityCenter( { config = {} } ) {
 	);
 }
 
-function LaunchChecklist( { state, action, dispatch } ) {
+/**
+ * Production readiness — evidence, not a control.
+ *
+ * It used to carry a target-mode selector, a "Type PRODUCTION" box and a maintenance confirmation,
+ * none of which applied anything: the real, nonce- and capability-gated mode form is rendered by
+ * OperationsSecurityScreen::modeCard() further down the same page. Two identical sets of controls,
+ * one inert, sat one above the other.
+ *
+ * Removing them also fixes what they hid. The blocker badge read its count from `modeActionState`,
+ * which reports zero for every mode except production — so the header claimed "Ready" while real
+ * blockers were listed directly beneath it, unless you happened to pick Production in the preview.
+ * It now reads the readiness snapshot itself, which is what it was always describing.
+ *
+ * @param {Object} root0       Props.
+ * @param {Object} root0.state The security-center state.
+ */
+function LaunchChecklist( { state } ) {
+	const blockingCount = state.readiness?.blockingCount || 0;
+
 	return (
 		<section className="corex-surface corex-security__panel">
 			<header className="corex-security__head">
@@ -70,15 +103,13 @@ function LaunchChecklist( { state, action, dispatch } ) {
 					<h2>{ __( 'Production readiness', 'corex' ) }</h2>
 				</div>
 				<span
-					className={
-						action.blockingCount > 0 ? 'is-warning' : 'is-ready'
-					}
+					className={ blockingCount > 0 ? 'is-warning' : 'is-ready' }
 				>
-					{ action.blockingCount > 0
+					{ blockingCount > 0
 						? sprintf(
 								/* translators: %d: number of blocking readiness checks. */
 								__( '%d blocker(s)', 'corex' ),
-								action.blockingCount
+								blockingCount
 						  )
 						: __( 'Ready', 'corex' ) }
 				</span>
@@ -91,71 +122,6 @@ function LaunchChecklist( { state, action, dispatch } ) {
 					</li>
 				) ) }
 			</ul>
-			<div
-				className="corex-security__mode-preview"
-				role="group"
-				aria-label={ __( 'Mode change preview', 'corex' ) }
-			>
-				<div className="corex-field">
-					<span>{ __( 'Target mode', 'corex' ) }</span>
-					<CorexSelect
-						label={ __( 'Target mode', 'corex' ) }
-						value={ state.selectedMode }
-						options={ MODES }
-						onChange={ ( mode ) =>
-							dispatch( { type: 'selectMode', mode } )
-						}
-						block
-					/>
-				</div>
-				{ state.selectedMode === 'production' && (
-					<div
-						className="corex-security__modal"
-						role="dialog"
-						aria-label={ __( 'Production confirmation', 'corex' ) }
-					>
-						<label>
-							{ __( 'Type PRODUCTION', 'corex' ) }
-							<input
-								type="text"
-								value={ state.productionPhrase }
-								onChange={ ( event ) =>
-									dispatch( {
-										type: 'setProductionPhrase',
-										phrase: event.target.value,
-									} )
-								}
-							/>
-						</label>
-						<p>
-							{ action.ready
-								? __( 'Typed confirmation is ready.', 'corex' )
-								: __(
-										'Production requires the exact phrase before the server form can apply it.',
-										'corex'
-								  ) }
-						</p>
-					</div>
-				) }
-				{ state.selectedMode === 'maintenance' && (
-					<label className="corex-security__confirm">
-						<input
-							type="checkbox"
-							checked={ state.maintenanceConfirmed }
-							onChange={ ( event ) =>
-								dispatch( {
-									type: 'setMaintenanceConfirmed',
-									confirmed: event.target.checked,
-								} )
-							}
-						/>
-						{ __(
-							'I understand Maintenance affects real visitors.',
-							'corex'
-						) }
-					</label>
-				) }
-			</div>
 		</section>
 	);
 }
@@ -167,6 +133,10 @@ function LoginPolicy( {
 	config = {},
 	saving = false,
 } ) {
+	// Each control is named by its own `for`/`id` pair rather than by being wrapped: a
+	// wrapping <label> is not announced by every assistive technology WordPress supports.
+	const fieldId = useId();
+
 	const save = async () => {
 		if ( ! window.Corex || ! window.Corex.api || ! config.restUrl ) {
 			dispatch( {
@@ -228,8 +198,9 @@ function LoginPolicy( {
 				</p>
 			) }
 			<div className="corex-security__policy">
-				<label>
+				<label htmlFor={ `${ fieldId }-enabled` }>
 					<input
+						id={ `${ fieldId }-enabled` }
 						type="checkbox"
 						checked={ policy.enabled }
 						onChange={ ( event ) =>
@@ -241,8 +212,9 @@ function LoginPolicy( {
 					/>
 					{ __( 'Enable failed-login protection', 'corex' ) }
 				</label>
-				<label>
+				<label htmlFor={ `${ fieldId }-block-default` }>
 					<input
+						id={ `${ fieldId }-block-default` }
 						type="checkbox"
 						checked={ policy.blockDefaultEndpoints }
 						onChange={ ( event ) =>
@@ -256,9 +228,10 @@ function LoginPolicy( {
 					/>
 					{ __( 'Hide wp-login.php and wp-admin', 'corex' ) }
 				</label>
-				<label>
+				<label htmlFor={ `${ fieldId }-custom-slug` }>
 					{ __( 'Custom login address', 'corex' ) }
 					<input
+						id={ `${ fieldId }-custom-slug` }
 						type="text"
 						value={ policy.customSlug }
 						onChange={ ( event ) =>
@@ -269,9 +242,10 @@ function LoginPolicy( {
 						}
 					/>
 				</label>
-				<label>
+				<label htmlFor={ `${ fieldId }-max-attempts` }>
 					{ __( 'Max attempts', 'corex' ) }
 					<input
+						id={ `${ fieldId }-max-attempts` }
 						type="number"
 						min="1"
 						max="50"
@@ -364,16 +338,15 @@ function Lockouts( { lockouts, summary } ) {
 							</span>
 							<small>
 								{ lockout.active
-									? sprintf(
-											/* translators: %s: date and time the lockout ends. */
-											__( 'Locked until %s', 'corex' ),
-											lockout.lockedUntil
-									  )
-									: sprintf(
-											/* translators: %s: date and time the lockout ended. */
-											__( 'Expired %s', 'corex' ),
-											lockout.lockedUntil
-									  ) }
+									? __( 'Locked until', 'corex' )
+									: __( 'Expired', 'corex' ) }{ ' ' }
+								<CorexTime
+									value={ lockout.lockedUntil }
+									absent={ __(
+										'no expiry recorded',
+										'corex'
+									) }
+								/>
 							</small>
 						</li>
 					) ) }
@@ -390,8 +363,10 @@ function Lockouts( { lockouts, summary } ) {
  * effect. Recovery necessarily runs from the CLI: it exists for the case where the admin cannot be
  * reached, so a button inside the admin could not perform it even in principle. Showing the command
  * is the honest whole of what this panel can do.
- * @param root0
- * @param root0.config
+ *
+ * @param {Object} props        Component props.
+ * @param {Object} props.config The localized security config.
+ * @return {Element} The recovery panel.
  */
 function Recovery( { config } ) {
 	const command = config.recoveryCommand || 'wp corex security reset-login';
@@ -426,7 +401,15 @@ function Activity( { activity } ) {
 					{ activity.map( ( event ) => (
 						<li key={ event.id }>
 							<span>{ event.label }</span>
-							<small>{ event.occurredAt }</small>
+							<small>
+								<CorexTime
+									value={ event.occurredAt }
+									absent={ __(
+										'Time not recorded',
+										'corex'
+									) }
+								/>
+							</small>
 						</li>
 					) ) }
 				</ul>

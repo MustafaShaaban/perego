@@ -1,12 +1,9 @@
 /**
- * FieldValue — a captured value an operator can act on.
+ * FieldValue — what an operator may click, and what must stay inert (#149 item 2).
  *
- * The careers form stores the applicant's CV as a URL. Every admin surface stringified it, so the
- * reviewer had a document they could see but not open (client report 2026-07-27). These pin the
- * link behaviour and, just as importantly, that a visitor-supplied `javascript:` string never
- * becomes an anchor.
- *
- * No @testing-library in this repo, so the component is driven through a real jsdom root.
+ * The refusals matter more than the link. These values come from visitors, and the person reading
+ * them is the one user on the site whose session is worth stealing, so every test below that
+ * asserts something is NOT an anchor is guarding a stored-XSS path into the admin.
  */
 import { createRoot } from '@wordpress/element';
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -14,16 +11,7 @@ import { act } from 'react';
 
 import FieldValue from '../components/FieldValue.js';
 
-function render( props ) {
-	const container = document.createElement( 'div' );
-	document.body.appendChild( container );
-	act( () => {
-		createRoot( container ).render( <FieldValue { ...props } /> );
-	} );
-	return container;
-}
-
-beforeAll( () => {
+beforeEach( () => {
 	global.IS_REACT_ACT_ENVIRONMENT = true;
 } );
 
@@ -31,48 +19,97 @@ afterEach( () => {
 	document.body.innerHTML = '';
 } );
 
-it( 'renders an http(s) value as a link that opens away from the admin session', () => {
-	const container = render( { value: 'https://perego.local/wp-content/uploads/cv.pdf' } );
+function render( value ) {
+	const container = document.createElement( 'div' );
+	document.body.appendChild( container );
+	act( () => {
+		createRoot( container ).render( <FieldValue value={ value } /> );
+	} );
+	return container;
+}
+
+it( 'links an absolute http(s) url so a stored file can be opened', () => {
+	const container = render( 'https://example.test/cv.pdf' );
 	const link = container.querySelector( 'a' );
 
-	expect( link ).not.toBeNull();
-	expect( link.getAttribute( 'href' ) ).toBe( 'https://perego.local/wp-content/uploads/cv.pdf' );
-	expect( link.getAttribute( 'target' ) ).toBe( '_blank' );
-	// Without noopener the opened tab can reach back into the admin session through window.opener.
+	expect( link.getAttribute( 'href' ) ).toBe( 'https://example.test/cv.pdf' );
 	expect( link.getAttribute( 'rel' ) ).toBe( 'noopener noreferrer' );
+	expect( link.getAttribute( 'target' ) ).toBe( '_blank' );
 } );
 
 it.each( [
-	[ 'javascript:alert(1)' ],
-	[ 'data:text/html,<script>alert(1)</script>' ],
-	[ 'ftp://example.test/file' ],
-] )( 'leaves %s as inert text rather than an anchor', ( value ) => {
-	const container = render( { value } );
+	[ 'a javascript: url', 'javascript:alert(1)' ],
+	[ 'a data: url', 'data:text/html,<script>alert(1)</script>' ],
+	[ 'a protocol-relative url', '//example.test/cv.pdf' ],
+	[ 'a bare domain', 'example.test/cv.pdf' ],
+	[ 'a file path', '/wp-content/uploads/cv.pdf' ],
+	[ 'prose that mentions a url', 'see https://example.test for details' ],
+	// The anchoring case: a value whose *prefix* is a valid URL must not match on it.
+	[
+		'a url followed by a second scheme',
+		'https://example.test javascript:alert(1)',
+	],
+] )( 'leaves %s as inert text', ( _label, value ) => {
+	const container = render( value );
 
 	expect( container.querySelector( 'a' ) ).toBeNull();
 	expect( container.textContent ).toBe( value );
 } );
 
-it( 'does not link a sentence that merely contains a URL', () => {
-	const container = render( { value: 'see https://example.test for details' } );
+it.each( [
+	[ 'null', null ],
+	[ 'undefined', undefined ],
+	[ 'an empty string', '' ],
+	[ 'whitespace', '   ' ],
+] )(
+	'renders %s as an em dash rather than an empty cell',
+	( _label, value ) => {
+		expect( render( value ).textContent ).toBe( '—' );
+	}
+);
 
-	// Anchoring the whole string would produce a broken href; the value is prose, not a link.
+it( 'renders a number as text without trying to link it', () => {
+	const container = render( 42 );
+
+	expect( container.textContent ).toBe( '42' );
 	expect( container.querySelector( 'a' ) ).toBeNull();
 } );
 
-it( 'shows the empty marker for a missing value, and honours an override', () => {
-	expect( render( { value: '' } ).textContent ).toBe( '—' );
-	expect( render( { value: null } ).textContent ).toBe( '—' );
-	expect( render( { value: undefined, empty: '' } ).textContent ).toBe( '' );
-} );
+describe( 'a stored file', () => {
+	it( 'links to the delivery route, by name', () => {
+		const container = render( {
+			id: 4242,
+			name: 'cv.pdf',
+			url: 'https://example.test/wp-admin/admin-post.php?action=corex_attachment&id=4242',
+			missing: false,
+		} );
 
-it( 'keeps an object as JSON, because the structure is the value', () => {
-	const container = render( { value: { source: 'newsletter' } } );
+		const link = container.querySelector( 'a' );
 
-	expect( container.textContent ).toBe( '{"source":"newsletter"}' );
-} );
+		// Before this, a stored file rendered as the bare integer 4242 — an operator could see
+		// that something had been uploaded and had no way to open it (#138 item 6).
+		expect( link.textContent ).toContain( 'cv.pdf' );
+		expect( link.getAttribute( 'href' ) ).toContain( 'corex_attachment' );
+		expect( link.getAttribute( 'rel' ) ).toBe( 'noopener noreferrer' );
+	} );
 
-it( 'renders a plain scalar unchanged', () => {
-	expect( render( { value: 'Mustafa Shaaban' } ).textContent ).toBe( 'Mustafa Shaaban' );
-	expect( render( { value: 42 } ).textContent ).toBe( '42' );
+	it( 'says a file is missing rather than showing an em dash', () => {
+		const container = render( {
+			id: 4242,
+			name: '',
+			url: '',
+			missing: true,
+		} );
+
+		// "Nobody uploaded anything" and "the file this record points at is gone" are different
+		// facts, and only one of them is somebody's problem.
+		expect( container.textContent ).not.toBe( '—' );
+		expect( container.querySelector( 'a' ) ).toBeNull();
+	} );
+
+	it( 'does not treat an arbitrary object as an attachment', () => {
+		const container = render( { id: 'not-a-number', name: 'x' } );
+
+		expect( container.querySelector( 'a' ) ).toBeNull();
+	} );
 } );

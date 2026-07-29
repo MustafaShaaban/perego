@@ -156,11 +156,24 @@ it('ignores a slug no registered form owns, such as a database flow', function (
     expect(ListenerSpy::$ran)->toBe([]);
 });
 
-it('runs a duplicated listener id once', function () {
+/*
+ * ⚠ UPSTREAM BEHAVIOUR, not ours. Reported.
+ *
+ * Our fork deduplicated listener ids before dispatch. Upstream v0.40.0's `registerListeners()` is a bare
+ * `foreach ($form->listeners() as $listenerId)`, so a form that names the same listener twice runs it
+ * twice — which for Perego's `StoreSubmissionListener` would mean two stored rows and two notification
+ * emails for one submission.
+ *
+ * Latent, not live: both Perego forms declare exactly one listener, and
+ * `tests/Unit/Forms/PeregoFormListenersTest` (Perego side) now asserts that stays true. We take
+ * upstream's version rather than re-forking `FormsServiceProvider`, and pin the behaviour here so a
+ * future upstream dedupe turns this red on purpose.
+ */
+it('runs a duplicated listener id twice — upstream behaviour, reported', function () {
     $registry = new FormRegistry();
     $registry->register(new SpyForm('dupe', [StoreSpy::class, StoreSpy::class]));
 
     listenerRoutingDispatcher($registry)->dispatch(new FormSubmittedEvent('dupe', ['email' => 'a@b.com']));
 
-    expect(ListenerSpy::$ran)->toBe(['store']);
+    expect(ListenerSpy::$ran)->toBe(['store', 'store']);
 });

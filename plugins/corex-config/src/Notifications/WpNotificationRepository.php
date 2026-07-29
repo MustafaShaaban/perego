@@ -10,11 +10,14 @@ namespace Corex\Config\Notifications;
 
 defined('ABSPATH') || exit;
 
+use Corex\Access\CorexAbility;
 use Corex\Database\Schema\Migrator;
 use Corex\Notifications\Notification;
+use Corex\Notifications\NotificationAction;
 use Corex\Notifications\NotificationQuery;
 use Corex\Notifications\NotificationRepository;
 use Corex\Notifications\NotificationStatus;
+use Corex\Notifications\NotificationView;
 use DateTimeImmutable;
 use DateTimeZone;
 use RuntimeException;
@@ -134,18 +137,32 @@ final class WpNotificationRepository implements NotificationRepository
             ));
         }
 
-        // A status filter is per-user, so it cannot be a WHERE clause on the shared record — it needs
-        // this actor's state row. Applied before pagination so `total` and the page agree; the state
-        // read is bounded by the same MAX_CANDIDATES cap the candidate scan already enforces.
-        if ($query->status !== null) {
+        // Status and view are both per-user, so neither can be a WHERE clause on the shared record —
+        // they need this actor's state row. Applied before pagination so `total` and the page agree;
+        // the state read is bounded by the same MAX_CANDIDATES cap the candidate scan enforces.
+        if ($query->status !== null || $query->view !== null) {
             $allState = $this->stateFor(
                 array_map(static fn (Notification $n): int => (int) $n->id, $visible),
                 $actorId,
             );
-            $visible = array_values(array_filter(
-                $visible,
-                fn (Notification $n): bool => $this->statusOf($n, $allState) === $query->status,
-            ));
+
+            if ($query->status !== null) {
+                $visible = array_values(array_filter(
+                    $visible,
+                    fn (Notification $n): bool => $this->statusOf($n, $allState) === $query->status,
+                ));
+            }
+
+            if ($query->view !== null) {
+                $visible = array_values(array_filter(
+                    $visible,
+                    fn (Notification $n): bool => NotificationView::of(
+                        $this->statusOf($n, $allState),
+                        $n->severity,
+                        $n->action !== null,
+                    ) === $query->view,
+                ));
+            }
         }
 
         $total = count($visible);
@@ -405,16 +422,66 @@ final class WpNotificationRepository implements NotificationRepository
     {
         $s = $state[(int) $notification->id] ?? null;
         $data = $notification->toArray();
+        $status = $this->statusOf($notification, $state);
+
+        // The action this actor may actually be offered. NotificationAction has documented since
+        // spec 072 (FR-012) that "a link renders only when the actor passes the optional ability",
+        // and nothing enforced it: the whole action went out verbatim and the client rendered on
+        // the URL alone, so a viewer could be handed a link to a screen that would refuse them on
+        // arrival. Withheld here rather than hidden in the client, because a payload the client is
+        // trusted to conceal is not a permission check (spec 087, FR-011).
+        $hasAction = $this->visibleAction($notification) !== null;
+
+        if (! $hasAction) {
+            unset($data['action']);
+        }
+
         $data['user_state'] = [
             'read' => $s !== null && $s['read_at'] !== null,
             'dismissed' => $s !== null && $s['dismissed_at'] !== null,
             'snoozed_until' => $s['snoozed_until'] ?? null,
             // The single derived status, so a consumer never has to re-implement the precedence
             // between resolved / expired / dismissed / snoozed / read.
-            'status' => $this->statusOf($notification, $state),
+            'status' => $status,
+            // Which named view this item belongs to, decided once on the server. The screen and the
+            // drawer both read it, so neither can drift into treating "read" as "dealt with".
+            // Derived from the *visible* action so a row is never filed under "needs action" on the
+            // strength of an action it will not be offered (spec 087, FR-012).
+            'view' => NotificationView::of($status, $notification->severity, $hasAction),
+            'needs_action' => NotificationView::needsAction(
+                $status,
+                $notification->severity,
+                $hasAction,
+            ),
         ];
+        // Whether this actor may end the condition for everyone, so the control is hidden rather
+        // than shown and refused (spec 074, FR-4.6). Deliberately the same ability the REST route's
+        // `canManage` enforces — if these two ever disagree the UI is lying about what it can do.
+        $data['can_resolve'] = current_user_can(CorexAbility::MANAGE_NOTIFICATIONS);
 
         return $data;
+    }
+
+    /**
+     * The action this actor may be offered, or null.
+     *
+     * An action with no declared ability is open to anybody who can see the notification at all —
+     * the recipient targeting has already decided that. An action that declares one is offered only
+     * to an actor who holds it.
+     */
+    private function visibleAction(Notification $notification): ?NotificationAction
+    {
+        $action = $notification->action;
+
+        if ($action === null) {
+            return null;
+        }
+
+        if ($action->ability !== null && $action->ability !== '' && ! current_user_can($action->ability)) {
+            return null;
+        }
+
+        return $action;
     }
 
     /**

@@ -13,11 +13,21 @@ function engagement( reads, views ) {
 	return views > 0 ? Math.round( ( reads / views ) * 1000 ) / 10 : 0;
 }
 
+/**
+ * The aggregate, in the shape the panel renders.
+ *
+ * It used to also shape a `chart` series and a `topPosts` list. Nothing on the server has ever sent
+ * either — `BlogAnalyticsService::aggregate()` returns one post's counts for one window — so both were
+ * permanently empty, and displaying them would have needed analytics capability spec 075 §10 excludes.
+ * Shaping data that never arrives is the same dead-code defect as a reducer nothing dispatches to,
+ * just quieter, so they are gone rather than carried (spec 075, T052).
+ *
+ * @param {Object} payload The `/blog/analytics` response body.
+ * @return {Object} The card values the screen renders.
+ */
 export function normalizeAnalytics( payload = {} ) {
 	const views = numberValue( payload.views );
 	const reads = numberValue( payload.reads );
-	const averageReadSeconds = numberValue( payload.average_read_seconds );
-	const topPosts = Array.isArray( payload.top_posts ) ? payload.top_posts : [];
 
 	return {
 		cards: {
@@ -25,27 +35,9 @@ export function normalizeAnalytics( payload = {} ) {
 			reads,
 			shareClicks: numberValue( payload.share_clicks ),
 			uniqueVisitors: numberValue( payload.unique_visitors ),
-			averageReadSeconds,
+			averageReadSeconds: numberValue( payload.average_read_seconds ),
 			engagement: engagement( reads, views ),
 		},
-		chart: ( Array.isArray( payload.chart ) ? payload.chart : [] ).map( ( row ) => ( {
-			date: String( row.date || '' ),
-			views: numberValue( row.views ),
-			reads: numberValue( row.reads ),
-		} ) ),
-		topPosts: topPosts.map( ( post ) => {
-			const postViews = numberValue( post.views );
-			const postReads = numberValue( post.reads );
-			return {
-				id: numberValue( post.id ),
-				title: String( post.title || '' ),
-				views: postViews,
-				reads: postReads,
-				comments: numberValue( post.comments ),
-				averageReadSeconds: numberValue( post.average_read_seconds ),
-				engagement: engagement( postReads, postViews ),
-			};
-		} ),
 	};
 }
 
@@ -56,15 +48,6 @@ export function buildTransitionPayload( draft = {} ) {
 		due_at: String( draft.dueAt || '' ),
 		scheduled_at: String( draft.scheduledAt || '' ),
 		note: String( draft.note || '' ).trim(),
-	};
-}
-
-export function buildShareClickPayload( draft = {} ) {
-	return {
-		post_id: numberValue( draft.postId ),
-		target: targetKey( draft.target ),
-		visitor_key: String( draft.visitorKey || '' ),
-		consented: Boolean( draft.consented ),
 	};
 }
 
@@ -88,35 +71,48 @@ export function blogReducer( state, action ) {
 				status: 'ready',
 				analytics: normalizeAnalytics( action.payload?.analytics ),
 				editorial: action.payload?.editorial || null,
-				comments: Array.isArray( action.payload?.comments ) ? action.payload.comments : [],
-				authors: Array.isArray( action.payload?.authors ) ? action.payload.authors : [],
-				shareControls: Array.isArray( action.payload?.shareControls ) ? action.payload.shareControls : [],
+				comments: Array.isArray( action.payload?.comments )
+					? action.payload.comments
+					: [],
+				authors: Array.isArray( action.payload?.authors )
+					? action.payload.authors
+					: [],
+				shareControls: Array.isArray( action.payload?.shareControls )
+					? action.payload.shareControls
+					: [],
 			};
 		case 'transitioned':
 			return {
 				...state,
 				editorial: action.editorial,
-				notice: { tone: 'success', message: 'Editorial state updated.' },
+				notice: {
+					tone: 'success',
+					message: 'Editorial state updated.',
+				},
 			};
 		case 'commentModerated':
 			return {
 				...state,
 				comments: state.comments.map( ( comment ) =>
-					numberValue( comment.comment_id ) === numberValue( action.commentId )
+					numberValue( comment.comment_id ) ===
+					numberValue( action.commentId )
 						? { ...comment, state: action.state }
 						: comment
 				),
 				notice: { tone: 'success', message: 'Comment updated.' },
 			};
-		case 'shareRecorded':
-			return {
-				...state,
-				notice: { tone: 'success', message: 'Share click recorded.' },
-			};
+		// There was a `shareRecorded` case here, and a `buildShareClickPayload` above. Both are gone:
+		// `POST /blog/share-click` records that a *visitor* shared a post, and the only caller that
+		// could honestly make that claim is the visitor-facing surface, which spec 075 §10 excludes.
+		// Firing it from the admin screen would have written analytics nobody generated — a button
+		// that reports a click that never happened is worse than no button (spec 075, T053).
 		case 'error':
 			return {
 				...state,
-				notice: { tone: 'error', message: action.message || 'Blog update failed.' },
+				notice: {
+					tone: 'error',
+					message: action.message || 'Blog update failed.',
+				},
 			};
 		default:
 			return state;

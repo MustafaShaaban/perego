@@ -1,5 +1,67 @@
 # Perego — Decision Log
 
+## 2026-07-29 — CoreX updated to v0.40.0; our four patches were upstreamed, two defects were not
+
+**The framework moves v0.35.1 → v0.40.0.** 25 commits, 339 framework files, 0 deletions and 0 renames.
+`upstream/main` and tag `v0.40.0` are the same commit, so the tag-vs-main judgement the v0.35 update
+needed did not arise. Landed on `chore/corex-v0.40.0-update` → PR into `feature/023`, mirroring how
+v0.34.0 and v0.35.0 landed.
+
+**The reconciliation map recorded a day earlier was already obsolete — in our favour.** It promised
+five superseded patches and **eleven fixes to re-apply**. At v0.40.0 all four fork commits have been
+upstreamed: spec 080 took our per-form listener routing, #146 took the palette-PNG fix and improved it,
+`defer()` came back as `registerDeferred()`, and `corex-runtime.js:444` now reads *"`wp.i18n` alone was
+a trap"* with `:453` using `form.dataset.corexMessages` — **our fix and our reasoning, verbatim**. The
+edits are deleted rather than carried, per the 2026-07-23 rule that a fork edit on top of an upstreamed
+feature guarantees the same conflict next version. **Lesson: re-derive the map at merge time. An
+assessment written against one version is a description of that version, not a plan for the next.**
+
+**Two framework files stay ours, and both are live upstream defects.** `MailService::deliver()`
+rebuilds the message for sanitisation with seven constructor arguments, dropping position 8 (`$from`)
+and 9 (`$attachments`) at the single point every send passes through — so the sender upstream threaded
+through six files never reaches the driver. Perego's three mailboxes would have silently become one.
+Ours passes both **by name, not position**, so a future reorder fails loudly instead of misfiling.
+`SubmissionsSource::readable()` is untouched upstream, so an operator still reads raw JSON in the inbox.
+
+**The auto-merge trap, handled by assertion rather than checklist.** 27 files conflicted; eleven more
+changed on both sides and merged clean, including two where both sides added the same `from` handling —
+the same shape that produced a duplicated meta clause at v0.35. The defence is
+`git diff upstream/main --name-only -- addons plugins packages theme tests` printing **exactly** the
+files we chose to keep. Anything else is a file the merge touched that nobody decided about. That is
+stronger than a per-file review because it cannot miss a file.
+
+**Three regressions landed in `sites/perego/`, where nothing conflicts.** Arabic validation messages
+reverted to English because our map keys on exact English source strings and upstream reworded three of
+them; `max_words` lost its client rule; phone validation loosened. All three fixed client-side, and the
+Arabic one now has a test asserting every framework message has an Arabic entry — turning the next
+rewording from a silent regression into a red test.
+
+**The mistake worth recording.** `RuleRegistry::register()` **throws** on a duplicate name and offers no
+unregister — there is no override seam, contrary to what the plan assumed. Registering `StrictPhone` as
+`phone` took the whole site down with an uncaught `InvalidArgumentException` at `init`. It was found by
+loading the site, because no test boots the container. The rule is layered as `strict_phone` alongside
+upstream's instead. **A framework extension point that is not exercised by a test is an assumption.**
+
+**Reported upstream, and pinned by tests that assert *upstream's* behaviour** so a future fix goes red
+on purpose: the `MailService` drop; `registerListeners()` running a duplicated listener twice;
+`sanitizeList()` accepting a scalar for a list field; and a mojibaked `corex-config/package.json`.
+
+- **Spec:** `specs/024-corex-v0.40.0-update/`.
+- **Verified:** Framework Pest **1723** (was 1479) · Perego Pest **594** (was 582) · Perego Jest **303**
+  (was 300) · `npm audit --omit=dev` and `verify:dependencies` clean on upstream's lockfile ·
+  `@wordpress/scripts` 32→33 rebuilt Perego with no breakage · `verify-a11y` **0 serious** ·
+  `verify-editor-sorting` green.
+- **Framework Jest reads 52 suites / 431 tests, down from "191 / 1092" — that is a correction, not a
+  loss.** `jest.config.js` was sweeping in two `.claude/worktrees/` copies: 158 duplicate files, 76
+  phantom failures, and the same 52 suites run three times. Now excluded.
+- **Live:** every public route byte-identical EN and AR apart from the two asset `?ver` values,
+  upstream's `novalidate`/`enctype`, and an attribute **reorder** on form inputs — attribute sets
+  compared as sets across all 12 routes, **zero differences**. A brief submission returns `ok:true` with
+  its multi-value field stored as a list; `01016999700` is rejected and `+201016999700` accepted; all
+  nine validation messages render Arabic on `/ar/`.
+- **Note for next time:** the `?ver` allowance is now **two** values — upstream fixed the spinner
+  shorthand, so `corex-runtime.css` moves as well as `corex-runtime.js`.
+
 ## 2026-07-28 — Query blocks may be live canvases when the query result IS the editing surface
 
 **Decision (owner).** Projects are reordered by dragging the real cards on the editor canvas, on the
@@ -300,6 +362,12 @@ inset-stretching and falls back to intrinsic size, which is the very failure bei
 Re-tested with 3000×100, 100×3000 and 4000×4000 logos: identical tile heights, no overflow.
 
 ## 2026-07-28 — CoreX v0.37.0 assessed and deliberately deferred
+
+> **⚠ SUPERSEDED 2026-07-29 by the v0.40.0 update below.** Kept because the reasoning is still sound and
+> the method is worth repeating — but **do not work from the reconciliation map in this entry.** By
+> v0.40.0 upstream had adopted all four of our fork commits, so the "eleven fixes to re-apply" became
+> zero, and the two files that genuinely diverge are not the five this entry names. The deferral itself
+> was honoured: the update landed on its own branch, not inside PR #37.
 
 Upstream published v0.36.0 and v0.37.0 (`b486ff5` → `77524df`, 341 files). Assessed before
 installing, per the standing rule that a framework update must not silently undo a client fix.

@@ -191,6 +191,11 @@ body.corex-admin-screen .corex-admin__shell {
 	mask-image: url(../icons/nav-setup.svg);
 }
 
+.corex-admin__nav-icon--guides {
+	-webkit-mask-image: url(../icons/nav-guides.svg);
+	mask-image: url(../icons/nav-guides.svg);
+}
+
 .corex-admin__nav-icon--forms {
 	-webkit-mask-image: url(../icons/nav-forms.svg);
 	mask-image: url(../icons/nav-forms.svg);
@@ -209,6 +214,12 @@ body.corex-admin-screen .corex-admin__shell {
 .corex-admin__nav-icon--mail {
 	-webkit-mask-image: url(../icons/nav-mail.svg);
 	mask-image: url(../icons/nav-mail.svg);
+}
+
+/* The header bell's glyph, so rail entry and bell read as one place. */
+.corex-admin__nav-icon--notifications {
+	-webkit-mask-image: url(../icons/nav-notifications.svg);
+	mask-image: url(../icons/nav-notifications.svg);
 }
 
 .corex-admin__header {
@@ -251,7 +262,8 @@ body.corex-admin-screen .corex-admin__shell {
 	font-size: var(--corex-admin-font-md);
 }
 
-/* Notification bell — the header-actions region on CoreX screens (spec 072 FR-016). */
+/* Notification bell — the header-actions region on CoreX screens
+   (spec 072 FR-016). */
 .corex-admin__header-actions {
 	display: flex;
 	align-items: center;
@@ -291,17 +303,26 @@ body.corex-admin-screen .corex-admin__shell {
 
 .corex-notification-bell__badge {
 	position: absolute;
+
+	/* The count is centred by the box itself. This used to be
+	   `line-height: 1.1rem` doing double duty as the badge's height and its
+	   vertical centring — a length on line-height, which the token rules
+	   disallow because it does not scale with the text it is setting. An
+	   explicit block-size plus flex centring says the same thing directly and
+	   holds the pill square for a single digit. */
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
 	inset-block-start: 0.2rem;
 	inset-inline-end: 0.2rem;
 	min-inline-size: 1.1rem;
+	block-size: 1.1rem;
 	padding-inline: 0.3rem;
 	color: var(--corex-admin-action-ink);
 	background: var(--corex-admin-action);
 	border-radius: var(--corex-admin-radius-pill);
 	font-size: var(--corex-admin-font-xs);
 	font-weight: 700;
-	line-height: 1.1rem;
-	text-align: center;
 }
 
 /* Notification drawer — the panel the bell opens (spec 072 FR-016). */
@@ -344,12 +365,28 @@ body.corex-admin-screen .corex-admin__shell {
 	font-weight: 700;
 }
 
+/* A close control is not secondary information. This was
+   --corex-admin-text-muted with no box around it, which on the raised surface
+   read as a faint mark rather than a button, and gave a pointer target the
+   size of the glyph (spec 087, FR-017). */
 .corex-notification-drawer__close {
-	color: var(--corex-admin-text-muted);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-inline-size: var(--corex-admin-touch-target);
+	min-block-size: var(--corex-admin-touch-target);
+	color: var(--corex-admin-text);
 	background: transparent;
 	border: 0;
+	border-radius: var(--corex-admin-radius-sm);
 	font-size: var(--corex-admin-font-lg);
+	line-height: var(--corex-admin-line-tight);
 	cursor: pointer;
+}
+
+.corex-notification-drawer__close:hover {
+	color: var(--corex-admin-text);
+	background: var(--corex-admin-surface-alt);
 }
 
 .corex-notification-drawer__state {
@@ -367,7 +404,6 @@ body.corex-admin-screen .corex-admin__shell {
 }
 
 .corex-notification-drawer__item {
-	padding: var(--corex-admin-space-md);
 	background: var(--corex-admin-surface);
 	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
 	border-radius: var(--corex-admin-radius-md);
@@ -464,26 +500,153 @@ body.corex-admin-screen .corex-admin__shell {
 }
 
 .corex-notifications-screen__item {
-	display: flex;
-	align-items: flex-start;
-	justify-content: space-between;
-	gap: var(--corex-admin-space-md);
-	padding: var(--corex-admin-space-md);
+	padding: 0;
 	background: var(--corex-admin-surface-raised);
 	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
 	border-radius: var(--corex-admin-radius-md);
 }
 
-.corex-notifications-screen__item-title {
-	margin: 0 0 var(--corex-admin-space-xs);
+/* One notification, shared by the screen and the header drawer (spec 074).
+   Icon, then everything the record knows, then the controls this actor may
+   use. */
+.corex-notification {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	gap: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	padding: var(--corex-admin-space-md);
+}
+
+/* An item that still needs somebody keeps a visible edge — reinforcing the
+   "Still needs action" label rather than replacing it, so the state survives
+   a monochrome display. */
+.corex-notification.needs-action {
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-warning);
+	border-start-start-radius: var(--corex-admin-radius-sm);
+	border-end-start-radius: var(--corex-admin-radius-sm);
+}
+
+.corex-notification[data-severity="critical"].needs-action,
+.corex-notification[data-severity="error"].needs-action {
+	border-inline-start-color: var(--corex-admin-error);
+}
+
+/* Sizing and colour only: the glyph itself comes from the
+   `.corex-admin__nav-icon--*` mask the element also carries, so the rail and
+   the notification list cannot show different marks for the same area of the
+   product. */
+.corex-notification__icon {
+	margin-block-start: var(--corex-admin-space-2xs);
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-notification.needs-action .corex-notification__icon {
+	color: var(--corex-admin-warning);
+}
+
+.corex-notification[data-severity="critical"] .corex-notification__icon,
+.corex-notification[data-severity="error"] .corex-notification__icon {
+	color: var(--corex-admin-error);
+}
+
+.corex-notification__body {
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	min-inline-size: 0;
+}
+
+.corex-notification__title {
+	margin: 0;
 	color: var(--corex-admin-text);
 	font-weight: 600;
 }
 
-.corex-notifications-screen__item-body {
+/* When a notification has a destination its title is the way there — the
+   button beside it says the same thing, and the title is what people reach
+   for first. It keeps the body's ink rather than the link colour: a list
+   where some titles are brass and some are not reads as two kinds of record
+   (spec 087, FR-013). */
+.corex-admin .corex-notification__title a,
+.corex-admin .corex-notification__title a:visited {
+	color: var(--corex-admin-text);
+	text-decoration: none;
+}
+
+.corex-admin .corex-notification__title a:hover,
+.corex-admin .corex-notification__title a:focus {
+	color: var(--corex-admin-link-hover);
+	text-decoration: underline;
+}
+
+.corex-notification__text {
 	margin: 0;
 	color: var(--corex-admin-text-muted);
 	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-notification__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-xs);
+	margin: var(--corex-admin-space-2xs) 0 0;
+	color: var(--corex-admin-text-muted);
+	font-size: var(--corex-admin-font-xs);
+}
+
+.corex-notification__severity {
+	padding: 0 var(--corex-admin-space-xs);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-pill);
+	font-weight: 700;
+	text-transform: uppercase;
+}
+
+.corex-notification__severity.is-critical,
+.corex-notification__severity.is-error {
+	color: var(--corex-admin-error);
+	border-color: var(--corex-admin-error);
+}
+
+.corex-notification__severity.is-warning,
+.corex-notification__severity.is-action {
+	color: var(--corex-admin-warning);
+	border-color: var(--corex-admin-warning);
+}
+
+.corex-notification__severity.is-success {
+	color: var(--corex-admin-success);
+	border-color: var(--corex-admin-success);
+}
+
+.corex-notification__unread {
+	color: var(--corex-admin-action);
+	font-weight: 700;
+}
+
+.corex-notification__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-xs);
+	grid-column: 2;
+}
+
+.corex-notification__actions button {
+	color: var(--corex-admin-action);
+	background: transparent;
+	border: 0;
+	font-size: var(--corex-admin-font-sm);
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.corex-notification__actions button.is-destructive {
+	color: var(--corex-admin-error);
+}
+
+.corex-notification__actions button:focus-visible {
+	outline: var(--corex-admin-focus-width) solid var(--corex-admin-focus);
+	outline-offset: var(--corex-admin-focus-offset);
 }
 
 .corex-notifications-screen__mark {
@@ -503,6 +666,38 @@ body.corex-admin-screen .corex-admin__shell {
 	margin-block-start: var(--corex-admin-space-lg);
 	color: var(--corex-admin-text-muted);
 	font-size: var(--corex-admin-font-sm);
+}
+
+/* The pager renders plain <button> elements and the rule above styles only
+   the container, so Previous and Next arrived with raw user-agent chrome on
+   a dark surface (spec 087, FR-016). */
+/* stylelint-disable-next-line no-descending-specificity */
+.corex-notifications-screen__pager button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-block-size: var(--corex-admin-control-height);
+	padding-block: var(--corex-admin-space-xs);
+	padding-inline: var(--corex-admin-space-md);
+	color: var(--corex-admin-text);
+	background: var(--corex-admin-surface-raised);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-sm);
+	font-family: var(--corex-admin-font-body);
+	font-size: var(--corex-admin-font-sm);
+	font-weight: 600;
+	line-height: var(--corex-admin-line-tight);
+	cursor: pointer;
+}
+
+.corex-notifications-screen__pager button:focus-visible {
+	outline: var(--corex-admin-focus-width) solid var(--corex-admin-focus);
+	outline-offset: var(--corex-admin-focus-offset);
+}
+
+.corex-notifications-screen__pager button:hover:not(:disabled) {
+	background: var(--corex-admin-surface-alt);
+	border-color: var(--corex-admin-border-strong);
 }
 
 .corex-notifications-prefs {
@@ -539,6 +734,29 @@ body.corex-admin-screen .corex-admin__shell {
 
 .corex-admin__content {
 	padding: var(--corex-admin-space-xl);
+}
+
+/* Baseline vertical rhythm for text that no component styles.
+   Measured across the screens, prose was falling back to browser
+   defaults — paragraphs at 14px/14px on Operations & Security and
+   Access, 13px on Insights, an h2 at 16.9px — sitting beside
+   tokenized text at 0/8px, so the same element was spaced
+   differently depending on the screen it appeared on.
+   `:where()` is deliberate: zero specificity, so this only ever
+   replaces the user-agent default and every component rule still
+   wins. A plain `> * + *` flow rule here would have been wrong —
+   the top-level blocks already sit at a consistent 24px on every
+   multi-block screen, and it would have doubled them. */
+.corex-admin__content :where(p) {
+	margin-block: 0 var(--corex-admin-space-sm);
+}
+
+.corex-admin__content :where(h2, h3, h4, h5, h6) {
+	margin-block: var(--corex-admin-space-lg) var(--corex-admin-space-sm);
+}
+
+.corex-admin__content :where(ul, ol, dl) {
+	margin-block: 0 var(--corex-admin-space-sm);
 }
 
 .corex-admin h1,
@@ -611,6 +829,30 @@ body.corex-admin-screen .corex-admin__shell {
 	border-color: var(--corex-admin-border-strong);
 }
 
+/* wp-admin paints its focus ring on `:focus`, not `:focus-visible`, so it
+   fires on a mouse click — and `.wp-core-ui .button:focus` is (0,3,0) while
+   the CoreX rule meant to answer it sits inside `:where()` at (0,2,0) and
+   never won. The blue halo after every click is that, and it cannot be fixed
+   from inside `:where()`. Answered here at matching specificity; the outline
+   below restores the CoreX ring for the keyboard, which is who a focus ring
+   was ever for (spec 087, FR-018/FR-019). */
+.corex-admin .button:focus,
+.corex-admin .button-secondary:focus,
+.corex-admin button.button:focus,
+.corex-admin input.button:focus {
+	color: var(--corex-admin-text);
+	border-color: var(--corex-admin-border-strong);
+	box-shadow: none;
+}
+
+.corex-admin .button:focus-visible,
+.corex-admin .button-secondary:focus-visible,
+.corex-admin button.button:focus-visible,
+.corex-admin input.button:focus-visible {
+	outline: var(--corex-admin-focus-width) solid var(--corex-admin-focus);
+	outline-offset: var(--corex-admin-focus-offset);
+}
+
 .corex-admin .button-primary,
 .corex-admin button.button-primary,
 .corex-admin input.button-primary {
@@ -626,6 +868,18 @@ body.corex-admin-screen .corex-admin__shell {
 	color: var(--corex-admin-action-ink);
 	background: var(--corex-admin-action-hover);
 	border-color: var(--corex-admin-action-hover);
+
+	/* This rule already overrode wp-admin's focus background, border and
+	   colour, and never its box-shadow — so the blue ring survived
+	   underneath the brass button. */
+	box-shadow: none;
+}
+
+.corex-admin .button-primary:focus-visible,
+.corex-admin button.button-primary:focus-visible,
+.corex-admin input.button-primary:focus-visible {
+	outline: var(--corex-admin-focus-width) solid var(--corex-admin-focus);
+	outline-offset: var(--corex-admin-focus-offset);
 }
 
 .corex-admin .button-link {
@@ -641,7 +895,42 @@ body.corex-admin-screen .corex-admin__shell {
 	color: var(--corex-admin-error);
 }
 
-/* Gutenberg @wordpress/components buttons used by the Data screen. */
+/* Gutenberg @wordpress/components buttons, used by the Data screen, the
+   Submissions inbox and the notification screens.
+
+   Only the variants below were styled, so a <Button> with no variant kept
+   Gutenberg's own #1e1e1e ink — which on the dark CoreX surface is very
+   nearly the background. That is what made the Submissions detail close X,
+   its two Close buttons and the inbox pager invisible rather than merely
+   unstyled (spec 087, FR-016). The variant rules that follow are more
+   specific and still win wherever they apply. */
+.corex-admin .components-button {
+	color: var(--corex-admin-text);
+}
+
+/* An icon-only button draws a dashicon SVG that takes its `fill` from
+   Gutenberg, not from `color` — so setting the ink above is not on its own
+   enough to make the X appear. */
+.corex-admin .components-button svg {
+	fill: currentcolor;
+}
+
+.corex-admin .components-button:focus-visible {
+	outline: var(--corex-admin-focus-width) solid var(--corex-admin-focus);
+	outline-offset: var(--corex-admin-focus-offset);
+}
+
+/* Same fight as `.button` above, against
+   `.components-button:focus:not(:active)` (0,3,0). */
+.corex-admin .components-button:focus:not(:active) {
+	box-shadow: none;
+}
+
+.corex-admin .components-button:hover:not(:disabled) {
+	color: var(--corex-admin-text);
+	background: var(--corex-admin-surface-alt);
+}
+
 .corex-admin .components-button.is-primary {
 	color: var(--corex-admin-action-ink);
 	background: var(--corex-admin-action);
@@ -666,12 +955,23 @@ body.corex-admin-screen .corex-admin__shell {
 	box-shadow: inset 0 0 0 var(--corex-admin-border-width) var(--corex-admin-border-strong);
 }
 
+/* This variant draws its border with an inset shadow, so the blanket
+   `box-shadow: none` above would erase the border along with the ring.
+   Restated at the specificity the reset has to be undone at. */
+.corex-admin .components-button.is-secondary:focus:not(:active) {
+	box-shadow: inset 0 0 0 var(--corex-admin-border-width) var(--corex-admin-border);
+}
+
 .corex-admin .components-button.is-link {
 	color: var(--corex-admin-link);
 }
 
+/* Stated explicitly because the base hover above now gives an unvarianted
+   button a surface, and a button styled as a link must not grow a box under
+   the pointer. */
 .corex-admin .components-button.is-link:hover:not(:disabled) {
 	color: var(--corex-admin-link-hover);
+	background: transparent;
 }
 
 .corex-admin .components-button.is-destructive,
@@ -939,6 +1239,18 @@ body.corex-admin-screen .corex-admin__shell {
 	border-radius: var(--corex-admin-radius-md);
 }
 
+/* Alerts and empty states carry padding but no outer margin, so one
+   placed between two sections touched both. Scoped to a direct child
+   of the content area: inside a grid or a card the parent's gap
+   already spaces it, and a margin there would double it. */
+.corex-admin__content > .corex-state {
+	margin-block: var(--corex-admin-space-md);
+}
+
+.corex-admin__content > .corex-state:first-child {
+	margin-block-start: 0;
+}
+
 .corex-admin .corex-state .dashicons {
 	color: var(--corex-admin-info);
 }
@@ -977,6 +1289,119 @@ body.corex-admin-screen .corex-admin__shell {
 .corex-admin .corex-state--error .dashicons,
 .corex-admin .corex-state--permission-denied .dashicons {
 	color: var(--corex-admin-error);
+}
+
+/*
+ * CorexErrorState (spec 083) — the React failure surface at four scales.
+ *
+ * Deliberately not `.corex-state`: that one is server-rendered and
+ * covers success, warning, empty and loading as well. This is only ever
+ * a failure, and the thing it must get right is that a field error and
+ * a screen error do not shout at the same volume — the four modifiers
+ * below are that difference and nothing else.
+ */
+.corex-admin .corex-error-state {
+	display: flex;
+	flex-direction: column;
+	gap: var(--corex-admin-space-xs);
+	color: var(--corex-admin-text);
+}
+
+.corex-admin .corex-error-state__title {
+	margin: 0;
+	font-weight: 600;
+	font-size: var(--corex-admin-font-md);
+}
+
+.corex-admin .corex-error-state__message,
+.corex-admin .corex-error-state__detail {
+	margin: 0;
+	color: var(--corex-admin-text-muted);
+}
+
+.corex-admin .corex-error-state__detail {
+	font-family: var(--corex-admin-font-mono);
+	font-size: var(--corex-admin-font-xs);
+	overflow-wrap: anywhere;
+}
+
+.corex-admin .corex-error-state__icon {
+	display: inline-flex;
+	inline-size: 1.5rem;
+	block-size: 1.5rem;
+	color: var(--corex-admin-error);
+}
+
+.corex-admin .corex-error-state__icon svg {
+	inline-size: 100%;
+	block-size: 100%;
+}
+
+.corex-admin .corex-error-state__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--corex-admin-space-xs);
+	margin-block-start: var(--corex-admin-space-2xs);
+}
+
+/* Field: sits under the control it belongs to and takes no more room
+   than a line of help text. */
+.corex-admin .corex-error-state--field {
+	gap: var(--corex-admin-space-2xs);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-error-state--field .corex-error-state__message {
+	color: var(--corex-admin-error);
+}
+
+/* Action: one row beside or beneath the control that failed. */
+.corex-admin .corex-error-state--action {
+	flex-direction: row;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--corex-admin-space-sm);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-error-state--action .corex-error-state__actions {
+	margin-block-start: 0;
+}
+
+/* Panel: replaces the contents of the card it could not fill. */
+.corex-admin .corex-error-state--panel {
+	align-items: flex-start;
+	padding: var(--corex-admin-space-lg);
+	background: var(--corex-admin-surface-raised);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-error);
+	border-radius: var(--corex-admin-radius-md);
+}
+
+/* Page: the screen did not mount, so the message is the screen. */
+.corex-admin .corex-error-state--page {
+	align-items: center;
+	gap: var(--corex-admin-space-md);
+	padding: var(--corex-admin-space-2xl) var(--corex-admin-space-xl);
+	text-align: center;
+	background: var(--corex-admin-surface-raised);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border);
+	border-radius: var(--corex-admin-radius-lg);
+	box-shadow: var(--corex-admin-shadow-sm);
+}
+
+.corex-admin .corex-error-state--page .corex-error-state__icon {
+	inline-size: 2.25rem;
+	block-size: 2.25rem;
+}
+
+.corex-admin .corex-error-state--page .corex-error-state__title {
+	font-family: var(--corex-admin-font-display);
+	font-size: var(--corex-admin-font-xl);
+}
+
+.corex-admin .corex-error-state--page .corex-error-state__message {
+	max-inline-size: 46ch;
 }
 
 .corex-admin .corex-state--loading .dashicons {
@@ -1294,6 +1719,57 @@ body.corex-admin-screen .corex-admin__shell {
 .corex-admin .corex-denied__meta {
 	font-family: var(--corex-admin-font-mono);
 	letter-spacing: var(--corex-admin-letter-wide);
+}
+
+/* Spec 079 — the three states the request area can be in besides
+   the plain form. "Sent" replaces the form entirely: offering
+   someone a second copy of a form they have already submitted is
+   how duplicate requests get made. */
+.corex-admin .corex-denied__sent {
+	display: grid;
+	gap: var(--corex-admin-space-2xs);
+	inline-size: min(100%, 34rem);
+	padding: var(--corex-admin-space-md);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-success);
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-surface);
+	text-align: start;
+}
+
+.corex-admin .corex-denied__sent-title {
+	margin: 0;
+	color: var(--corex-admin-success);
+	font-weight: 600;
+}
+
+.corex-admin .corex-denied__sent-detail {
+	margin: 0;
+	color: var(--corex-admin-text-subtle);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-denied__error {
+	inline-size: min(100%, 34rem);
+	margin: 0;
+	padding: var(--corex-admin-space-sm) var(--corex-admin-space-md);
+	border: var(--corex-admin-border-width) solid var(--corex-admin-border-soft);
+	border-inline-start: var(--corex-admin-state-border) solid var(--corex-admin-warning);
+	border-radius: var(--corex-admin-radius-md);
+	background: var(--corex-admin-surface);
+	color: var(--corex-admin-text);
+	font-size: var(--corex-admin-font-sm);
+	text-align: start;
+}
+
+.corex-admin .corex-denied__field-error {
+	margin: 0;
+	color: var(--corex-admin-warning);
+	font-size: var(--corex-admin-font-sm);
+}
+
+.corex-admin .corex-denied__request [aria-invalid="true"] {
+	border-color: var(--corex-admin-warning);
 }
 
 /* Toast — transient confirmation (design: Blocks & Components, C / admin).

@@ -3084,3 +3084,911 @@ failure mode was *reporting*, not code: an empty check-rollup on a stacked PR is
 "pre-existing" is a claim that must be verified against the base branch before it is written down.
 
 Status: Final.
+
+## #155 — CoreX admin shell chrome is echoed directly, never re-filtered through `wp_kses_post()`
+Date: 2026-07-26
+Decision: A CoreX screen echoes the return value of `AdminPage::open()`/`close()`/`state()`/`tabs()`/
+`permissionDenied()` directly. It must not wrap that markup in `wp_kses_post()` (spec 073, `DataModelsScreen`).
+Why: `AdminPage` escapes every dynamic value at the point it interpolates it (`esc_attr`/`esc_html`/`esc_url`),
+and its header/rail contributors escape their own inline-SVG content — the same discipline the WordPress admin
+bar uses. Its output is therefore trusted, already-escaped chrome, not request data. `wp_kses_post()`'s allowed-
+tags list excludes `<svg>`, so re-filtering that markup silently deleted every inline glyph on the Data Models
+screen (brand mark, rail icons, an empty notification bell) — it removed correct output rather than adding
+safety. Escaping belongs at interpolation, once; a second blanket filter over trusted chrome is a defect.
+Alternatives considered: extend the kses allowed tags to include `svg` and its children (rejected: a large,
+attribute-sensitive allowlist to maintain, applied to markup that is already escaped and needs no filtering);
+render icons as `<img>`/mask CSS only (rejected: the shell already uses inline SVG deliberately, and the other
+screens render it correctly without kses). Scope: trusted CoreX chrome only — request/user data is still
+escaped/sanitized at its own boundary.
+Status: Final.
+
+## #156 — The Production-readiness badge reads the readiness snapshot, not a target-mode preview
+Date: 2026-07-26
+Decision: Operations & Security shows one mode control — the nonce- and capability-gated server form
+(`OperationsSecurityScreen::modeCard()`). The client "mode preview" (target-mode selector, typed-PRODUCTION
+box, maintenance checkbox) and the `modeActionState` derivation are removed; the readiness badge reads
+`state.readiness.blockingCount` directly (spec 073).
+Why: the preview applied nothing — the real mode change is the server form on the same page — so the page
+carried the same controls twice, one inert, which the "no dead/inert control" rule (Spec 068 / ROADMAP §17)
+forbids. And `modeActionState` reported zero blockers for every mode except Production, so the badge said
+**Ready** over blockers that were listed directly beneath it unless the preview happened to be set to
+Production. The badge was always describing production readiness; it now reads that snapshot, so the header and
+the list beneath it can no longer disagree.
+Alternatives considered: keep the preview but wire it to apply the mode client-side (rejected: duplicates the
+gated server form and moves a security-sensitive action off its nonce); keep `modeActionState` but fix its
+per-mode zeroing (rejected: it existed only to serve the removed preview — deleting it removes the divergence
+at the source). CorexSelect dropdown changes in the same spec defer to #141 and are not re-decided here.
+Status: Final.
+
+## #157 — Read is a fact about the person; needing action is a fact about the condition
+Date: 2026-07-27
+Decision: A notification's view membership is derived on the server from its *status* and *severity*
+(`NotificationView::of()`), never from whether the actor has read it. `read` and `resolved` are separate
+fields with separate controls. Snoozing moves an item to **Updates**, not History, and it returns on its own
+when the snooze elapses (spec 074, FR-4.1/FR-4.3).
+Why: v0.35.0's "Requires attention" filtered on the actor's unread state, so opening a production-readiness
+blocker took it off the attention list while the blocker was still true. That is the whole defect: reading is
+something you did, not something that happened to the condition. Deriving the view once on the server means
+the screen and the drawer cannot drift into disagreeing about what still needs somebody — the drawer used to
+show a shorter, differently-worded version of the same record.
+Alternatives considered: keep read-as-attention and add a separate "unresolved" filter (rejected: leaves the
+default view lying, and the default is what people act on); derive the view in the client from the raw fields
+(rejected: two consumers, two implementations, one eventual divergence — which is the bug being fixed).
+Enforcement: the derivation is covered by `tests/Unit/Notifications/NotificationViewTest.php`, and the
+rendered consequence by `notificationItem.test.js`, whose read-vs-resolved spec was mutation-checked —
+reintroducing `needs_action && ! read` fails that test and no other.
+Status: Final.
+
+## #158 — The eight saved notification views collapse to three; the rest were always filters
+Date: 2026-07-27
+Decision: The Notifications screen offers **Action needed · Updates · History**, plus Preferences. Inbox,
+Requires attention, Assigned to me, Submissions, Security, and System are gone as tabs; category, severity,
+and assignment are refines that apply within whichever view is active (spec 074, FR-4.2).
+Why: those tabs competed with the only question the screen exists to answer — does this still need me?
+Submissions/Security/System were category filters wearing tab clothing, and "Assigned to me" is an axis that
+is useful *inside* Action needed, not instead of it. Three views map one-to-one onto the three states a
+condition can be in, so the IA carries the model rather than a menu of saved searches.
+Alternatives considered: keep the tabs and re-point "Requires attention" at the derived status (rejected:
+fixes the lie but keeps five near-duplicate lists); make the views user-configurable (rejected: YAGNI, and it
+would re-admit the drift the fixed set removes).
+Enforcement: `tests/e2e/notification-center.spec.js` asserts the retired tabs are **absent** — every other
+assertion in that file would still pass after a revert, so the absence is the guard.
+Status: Final.
+
+## #159 — A control the actor may not use is hidden, not shown and refused
+Date: 2026-07-27
+Decision: "Mark resolved" renders only when the record's `can_resolve` is true, which is the same ability
+(`MANAGE_NOTIFICATIONS`) the REST route's own permission callback enforces. The same rule governs the Data
+workspace tabs: `allowedTabs()` requires the permission **and** an eligible source (spec 074, FR-4.6/FR-3).
+Why: offering a control that answers with a permission error teaches people the product is broken rather than
+that they lack an ability. Deriving the flag from the same ability the route enforces means the two cannot
+disagree — if they ever did, the UI would be lying about what it can do.
+Alternatives considered: render disabled with a tooltip (rejected: a disabled control still advertises a
+capability this actor does not have, and tooltips are not reliably reachable); let the route refuse and show
+the error (rejected: that is the behaviour being removed).
+Status: Final.
+
+## #160 — Capability is summarised where the question is asked, and a secret-shaped fact is dropped, not redacted
+Date: 2026-07-27
+Decision: `CapabilityReport` (pure) + `CapabilityFacts` (the WordPress boundary) render a read-only summary
+beneath the Data Models catalog: registered forms and where each came from, per-model capabilities, add-on
+state, wired notification producers, and configuration that is selected but unfinished. Any fact carrying a
+credential-shaped key is **dropped entirely**, and summaries are stripped of file paths and stack frames
+(spec 074, FR-5).
+Why: capability was only discoverable by walking into it — you learned a model could not be imported into by
+opening Import and reading a sentence about adapters, and that a captcha driver had no keys when forms quietly
+stopped accepting submissions. The summary sits under the Models catalog because that is where the question
+arises, and every gap links to the screen that fixes it rather than fixing it in place. Dropping rather than
+redacting is deliberate: a redaction still tells a reader *where to look*, and diagnostics are exactly what
+gets screenshotted into a support thread.
+Alternatives considered: a full Capability Inspector / System Map screen (deferred — ROADMAP §17 candidate;
+this spec closes the truthfulness gap, not the tooling ambition); redact secret values in place (rejected per
+above); resolve the facts inside the pure reporter (rejected: it would make the summary untestable without
+WordPress and able to invent state).
+Scope: `AddonManager::state()`/`isInstalled()` moved off `AddonsScreen` for this — "which add-ons are running"
+is a fact about the site, not about that screen, and two derivations would be two chances to disagree.
+Status: Final.
+
+## #161 — Blog Pro's screen offers what the services support, and nothing they cannot honestly do
+Date: 2026-07-27
+Decision: Blog Pro's React screen wires the existing services and REST routes into a working editorial
+workspace (spec 075). It adds **no** service, route, table, or state-machine rule. Where a requirement appeared
+to need one, the constraint is recorded instead: `EditorialWorkflowService` has **no transition graph**, so the
+panel offers every state but the current one rather than implying a rule the service does not enforce; and the
+moderation queue offers **approve / spam / trash** only, because `queue()` returns just comments held for
+review, so "unapprove" has nothing to act on.
+Why: the screen was a read-only reference dashboard over a complete back end — `BlogProApp` called
+`useReducer` and discarded the dispatch, so the whole client state module was unreachable while fully covered
+by tests, and all seven routes had no caller in the product. Inventing domain rules to fill the UI would have
+made the screen confidently wrong, which is the defect Spec 074 spent itself removing.
+Alternatives considered: build a real transition graph (rejected: new domain logic, and the owner has not
+decided what the graph should be); add a `GET /blog/editorial/{id}` so selection could refetch without a page
+load (rejected: out of plan — instead the selection *is* `?post=<id>` and the server renders it, which FR-1
+wanted anyway for linkability).
+Status: Final.
+
+## #162 — Unreachable code with passing tests is deleted, not carried
+Date: 2026-07-27
+Decision: Spec 075's Definition of Done item 6 — "no dead export remains in `blogProState.js`" — was enforced
+literally. `buildShareClickPayload` and the reducer's `shareRecorded` case are **deleted**, as are the `chart`
+and `topPosts` branches of `normalizeAnalytics`, along with their tests.
+Why: `POST /blog/share-click` records that a *visitor* shared a post; the only caller that could honestly make
+that claim is the visitor-facing surface, which spec 075 §10 excludes. Firing it from the admin screen would
+have written analytics nobody generated — a control reporting a click that never happened is worse than no
+control. Separately, no server path has ever sent `chart` or `top_posts`: `BlogAnalyticsService::aggregate()`
+returns one post's counts for one window, so both branches were permanently empty, and rendering them would
+need analytics capability §10 excludes. Shaping data that never arrives is the same defect as a reducer nothing
+dispatches to, only quieter — and a green suite over unreachable code is precisely what let Blog Pro sit
+unfinished through two releases.
+Alternatives considered: keep them for the future front-end spec (rejected: that spec can add what it needs,
+and dead code with passing tests reads as working software); mark them `@deprecated` (rejected: the tests would
+still be green and the next reader would still believe them).
+Scope: the routes themselves are untouched — `/blog/share-click` stays for the visitor-facing spec that will
+own it. This is about the admin client's exports, not the API surface.
+Status: Final.
+
+## #163 — The 1px RTL admin overflow is WordPress core's, and is asserted comparatively
+Date: 2026-07-27
+Decision: The horizontal overflow PROGRESS.md recorded as "the CoreX admin shell overflows by 1px in RTL at
+375px on every CoreX screen" is **not a CoreX defect and is not fixed in CoreX**. The browser assertion added
+in its place is comparative: no CoreX route may scroll sideways any further than stock wp-admin already does
+(`tests/e2e/admin-command-center.spec.js`).
+Why: measured against the real local install at 375px with `dir=rtl`, wp-admin's own Dashboard, Settings and
+Plugins screens scroll by exactly the same 1px, with no CoreX CSS on the page. Hiding `#wpadminbar` takes every
+one of those screens — and every CoreX screen — to 0px. The cause is core's visually-hidden admin-bar chrome:
+`position:absolute; margin:-1px; width:1px` with no inset, whose static position in RTL sits one pixel outside
+the inline edge, and left-of-origin content extends `scrollWidth` in RTL where it does not in LTR. The reading
+in PROGRESS.md was correct; the attribution was not.
+Alternatives considered: override the offending core elements from `corex-admin-shell.css` (tried, then
+reverted — an `inset-inline-end: 0 !important` on `.a11y-speak-region` does move that element back inside the
+viewport, but the admin bar still contributes the same pixel, so the override bought no observable change while
+adding an `!important` against core's inline styles); put `overflow-x: clip` on `body.corex-admin-screen`
+(rejected: that hides genuine CoreX layout bugs rather than fixing them, which is the defect this branch exists
+to stop); assert `scrollWidth <= clientWidth` outright (rejected: cannot pass, for a pixel CoreX does not cause).
+Scope: the comparative assertion is a real gate, not a weakened one — injecting `min-inline-size: 120vw` into
+`.corex-admin` makes it fail, which is how it was verified before it was trusted.
+Status: Final.
+
+## #164 — Both linters gate CI, and the tooling looks at one tree
+Date: 2026-07-27
+Decision: `lint:css` and `lint:js` run in CI, as steps of the existing `js` job rather than a job of their own.
+`eslint.config.js` scopes ESLint to CoreX source, and `jest.config.js` now excludes `dist/` and `build/` for the
+same reason the linters do.
+Why: nothing ran either linter in CI, which is how spec 074 introduced 44 stylelint errors that had to be found
+by hand and how ESLint accumulated 2589 problems. `lint:js` could not have been gated even if someone had
+tried: `wp-scripts lint-js` with no project config lints `.` under the WordPress default flat config, whose only
+global ignores are `build`, `node_modules` and `vendor` — so it walked the full WordPress install at `wp/` and
+the generated bundle at `dist/`, and never finished. `@wordpress/*` imports are declared as build-time externals
+(`import/core-modules`) because `dependency-extraction-webpack-plugin` rewrites them to the `window.wp.*`
+globals WordPress already serves; installing them would be the actual mistake, since a bundled copy would shadow
+the version the host runs. Jest had the same blind spot in reverse: it *included* `dist/`, so 17 suites ran
+twice against generated copies, and the local suite count (62 suites / 385 tests) disagreed with CI's (45 / 331)
+purely because `dist/` is git-ignored and never exists there.
+Alternatives considered: a separate `lint` job (rejected: a second `npm ci` on every PR to say the same thing);
+relaxing the rules that failed rather than fixing the code (rejected — with one recorded exception: nothing was
+silenced, `jsx-a11y/label-has-associated-control` was satisfied by giving 25 controls real `for`/`id` pairs).
+Status: Final.
+
+## #165 — One dictionary: PHP owns the localized words, the browser composes with them
+Date: 2026-07-27
+Decision: The browser half of the CoreX date contract (`adminDateTime.js`) never translates a date. Month
+names, meridiem markers and the **format patterns themselves** arrive already translated from PHP through one
+localized payload, and the browser interprets the same pattern string the server does. `Intl` is used only to
+extract numeric calendar parts in the site's timezone.
+Why: FR-001 requires server and browser output to be character-identical. `Intl.DateTimeFormat` with the site
+timezone and locale gets the timezone right and the *words* wrong — it reads CLDR while WordPress reads the
+`corex` translation files, and in Arabic those disagree (`أغسطس` against `آب`). Two implementations reading two
+dictionaries cannot be reconciled by testing; they can only be reconciled by having one dictionary. Shipping the
+pattern too means a translator who reorders `j F Y`, or writes the connector as `%2$s — %1$s`, reorders both
+sides at once — which is why the connector is a `sprintf` pattern rather than `\a\t` escaped inside a date
+format, a trap for any translator who does not know `a` means meridiem and `t` means days-in-month.
+Alternatives considered: `Intl` for everything (rejected: the Arabic divergence above); the server pre-formatting
+every date into the payload (rejected: relative time and freshly-created records have no server render to carry).
+Scope: proven by `tests/Fixtures/datetime-parity.json` — 16 instants read by both suites and compared against
+the same expected strings, including both Cairo DST transitions. Verified load-bearing by breaking it.
+Status: Final.
+
+## #166 — CoreX admin dates do not follow Settings → General
+Date: 2026-07-27
+Decision: CoreX admin screens render dates in one fixed presentation — `1 August 2026 at 10:20 PM` in English —
+rather than in the site's configured `date_format`/`time_format`. Owner-confirmed.
+Why: a per-site format and a guaranteed server/browser match are mutually exclusive, and the previous behaviour
+demonstrated it: three server-side surfaces built their format from those options and produced
+`July 27, 2026 8:53 am`, which no browser-side renderer was ever going to reproduce. The format is still fully
+translatable — `j F Y`, `g:i A` and the connector are `_x()` strings — so a locale changes it once for both
+sides. The front end and the rest of wp-admin are unaffected.
+Alternatives considered: honour Settings → General and drop the parity requirement (rejected by the owner: the
+required presentation is fixed, and two colleagues reading different times for one event was the defect).
+Status: Final.
+
+## #167 — A value that is not credibly a timestamp is an absence, not a date
+Date: 2026-07-27
+Decision: `Instant` (and its JS mirror) refuse: a non-positive integer, a bare integer below 2000-01-01, a
+truncated date such as `2026-08`, and a relative expression such as `now` or `+1 day`. All render the calling
+field's absent phrase.
+Why: each of these parses into a *convincing* date, which is the dangerous kind of wrong. `0` becomes
+1 January 1970. `'2026'` is all digits, so read as seconds it becomes a January 1970 date — a year arriving in a
+timestamp field and rendering as one. `new DateTimeImmutable('2026-08')` is a valid 1 August, and
+`new Date('2026-08')` agrees. `'now'` renders as today and looks exactly like a working feature. FR-018 forbids
+`Invalid Date`, `NaN` and the epoch; these are the same failure wearing better clothes.
+The asymmetry is deliberate: integer `0` is an absence but `'1969-07-20T20:17:00Z'` still parses, because a
+written-out date is a statement and a sentinel integer is not.
+Scope: the `'2026'` case was found by widening the parity fixture's absent list, not by review — both
+implementations had it, identically wrong. The centralised rule replaces a hand-written `$entry['time'] > 0`
+guard that `OperationsSecurityScreen` already applied at one call site out of many.
+Status: Final.
+
+## #168 — The screen's sections are links, not an ARIA tablist
+Date: 2026-07-27
+Decision: Operations & Security is divided by `AdminPage::tabs()` — ordinary `?tab=` anchors carrying
+`aria-current="page"` — rather than by a `role="tablist"` with in-page panels.
+Why: every behavioural requirement the sectioning had to meet is a property links already have. The
+address reflects the section, so a view can be bookmarked and shared; Back and Forward work; a
+Post/Redirect/Get can land on the section the form was submitted from; keyboard navigation is the
+browser's own; and all of it works with JavaScript disabled, which FR-013 requires. A tablist would
+have to reimplement each of those — `aria-selected`, roving tabindex, focus management, history
+entries — and still could not satisfy the no-JavaScript case without duplicating the server render.
+Alternatives considered: an ARIA tablist with client-side panels (rejected above); progressive
+disclosure within one column (rejected: it keeps the ~3,500px page the spec exists to break up).
+Scope: `AdminPage::tabs()` already existed and Add-ons already used it, so this is reuse rather than
+a new primitive. Spec 078 adds its Cache & Performance section to the same list.
+Status: Final.
+
+## #169 — Progressive disclosure degrades to a second step, never to a wrong form
+Date: 2026-07-27
+Decision: The mode form renders all four mode blocks with three `hidden` **and their inputs
+`disabled`**, showing the block for a *proposed* mode carried in `?mode=`, defaulting to the current
+one. JavaScript swaps blocks on change; without it, submitting a mode whose confirmation was not on
+screen redirects back proposing that mode with its confirmation shown.
+Why: the form is a plain server POST with no client behaviour, so "show only what this mode needs"
+had to work where the browser cannot react to the select. Disabling — not merely hiding — is what
+makes it safe: a hidden input is still submitted, so without it the server could receive a
+confirmation belonging to a mode nobody chose.
+Alternatives considered: fetch the right block over REST on change (rejected: adds a route, a
+spinner and a failure mode to a form that has none); render only the current mode's block and
+validate server-side alone (rejected: the operator would submit blind and be refused, with no way
+to see what was being asked).
+Scope: one bug worth recording, because only a browser test found it. The first implementation
+synced from `select.value` on load — the mode the site is IN — so arriving at `?mode=production`
+after a redirect, the script hid the production block the server had deliberately rendered and
+showed the current mode instead. That silently closed the no-JavaScript path *for JavaScript users*:
+submit Production, get redirected to the form that asks for the phrase, watch the phrase field
+disappear. The server's rendering is the instruction; the selection follows it.
+Status: Final.
+
+## #170 — A well-formed login address is not necessarily a free one
+Date: 2026-07-27
+Decision: `LoginSlug` keeps answering shape and reserved names, unchanged and still pure. A new
+`LoginSlugAvailability` answers whether anything already responds at that address — a published page
+or post of any public type, or a rewrite rule that claims the path by name. The settings controller
+asks both.
+Why: `about` passes every rule in `LoginSlug` and is one of the most common page slugs there is. The
+collision does not appear at save time; it appears later, as a login serving somebody's About page.
+The two classes stay separate because `LoginSlug` runs on `plugins_loaded` before translations
+exist, and its lack of a database dependency is why it has held since DECISIONS #140.
+Alternatives considered: running the slug against every registered rewrite pattern (implemented
+first, then removed — WordPress's page rule is the catch-all `(.?.+?)/?$`, which matches every path
+by design, so it answered "taken" for every slug and no custom login address could have been saved
+at all; two obviously-should-pass tests caught it). Only rules whose pattern begins with a literal
+segment — `category/`, `author/`, a post type archive — actually claim a path, and the catch-all is
+already covered more precisely by the published-page check.
+Status: Final.
+
+## #171 — Cache is classified, and clearing walks declarations rather than matching patterns
+Date: 2026-07-28
+Decision: Every value CoreX caches is declared in `CacheRegistry` with an owner, a classification, a
+lifetime and an invalidation path. `CacheManager::clear()` iterates declared entries and skips those
+whose classification forbids removal. **No code path in this feature deletes by key pattern.**
+Why: `ThrottleMiddleware` stores rate-limit counters as `corex_throttle_*` transients and
+`TokenReplayGuard` stores spent captcha tokens as `corex_captcha_seen_*`. Both are security controls
+that look exactly like cache from the outside. The obvious implementation of "clear CoreX's caches"
+— a sweep of `corex_*` — would reset brute-force protection and re-open the replay window, silently,
+at the moment an operator is most likely to run it. A guard placed in the CLI would protect the CLI;
+a guard in the registry protects every caller that will ever clear a cache. A `DELETE ... LIKE
+'corex_%'` is not refactorable into this design, which is the point.
+Alternatives considered: a documented list of keys not to clear (rejected: FR-002 requires the
+classification in code, because the risk is a future contributor adding a prefix to a list, and a
+comment does not stop that while `mayBeClearedRoutinely()` returning false does); clearing by pattern
+with an exclusion list (rejected: the exclusion list is the thing that silently falls out of date).
+Scope: verified by tests that iterate `CacheScope::cases()`, so a scope added later cannot ship
+without satisfying them. Verified load-bearing by deliberately misclassifying the throttle entry.
+Status: Final.
+
+## #172 — CoreX refuses to flush a persistent object cache
+Date: 2026-07-28
+Decision: `wp corex cache:clear --scope=object` is refused outright on a site where WordPress is
+using a persistent object cache, with the reason stated and `wp cache flush` named as the operator's
+own route. Where there is no persistent object cache, it proceeds.
+Why: with a drop-in installed, WordPress stores transients **in** the object cache. `wp_cache_flush()`
+would therefore remove `corex_throttle_*` and `corex_captcha_seen_*` as collateral — not by walking
+them, not by matching them, but by emptying the place they live. FR-003 says no cache operation may
+remove security state, and removing it indirectly is still removing it. The registry guarantee
+cannot cover this case, because the operation does not go through the registry at all.
+Alternatives considered: preserve and restore the protected entries around the flush (rejected: the
+protected families are key *prefixes* and object caches cannot be enumerated, so they cannot be read
+back); warn and proceed (rejected: a warning that protection was removed is not the same as not
+removing it); drop the scope entirely (rejected: it is legitimate where nothing durable is lost).
+Scope: found by asking why a test failed for an unrelated reason on a site with no persistent object
+cache — the failure was a type artifact, and the question exposed what would happen on a site that
+had one.
+Status: Final.
+
+## #173 — Presence is not use, and "cannot look" is not "off"
+Date: 2026-07-28
+Decision: The object-cache layer reports `active` only when `wp_using_ext_object_cache()` is true,
+and `available` when a drop-in exists but WordPress is not using it. OPcache reports `unknown` — a
+distinct state — when the host disables `opcache_get_status()`.
+Why: a running Redis container is a fact about the server; whether WordPress uses it is the fact that
+affects the site, and reporting the first as the second tells an operator their site is faster than
+it is with no error to correct the impression. Equally, answering "off" because CoreX was not
+permitted to look would send someone to fix a problem that does not exist. Seven states exist rather
+than a boolean because every interesting case is in the middle.
+Scope: also why `manageable` and `safeToClear` are separate fields on a layer — CoreX *can* flush the
+object cache and it is not safe to; CoreX *cannot* purge a CDN where doing so would be perfectly
+safe. One flag would produce a control either missing when it should be present or dangerous when it
+looks routine.
+Status: Final.
+
+## #174 — A browser form never posts to a REST route, and the REST route never becomes a page
+Date: 2026-07-28
+Decision: The denied screen's access-request form posts to a dedicated `admin_post` endpoint that
+calls the same `AccessService::requestAccess()` the REST route calls, then redirects. The REST route
+is unchanged and still answers JSON. Nothing in CoreX inspects `Accept` to choose between HTML and
+JSON, and no global `wp_die_handler` filter is installed.
+Why: the form's action was `rest_url('corex/v1/access/requests')`, so submitting navigated the
+browser to a JSON document — and the request *succeeded*, so a person asking for help was shown an
+operation envelope with no way to know anyone would see it. The tempting fix is content negotiation
+on the existing route: it makes the symptom disappear and silently changes what every API consumer
+receives. Two doors onto one service cannot drift; one door that behaves differently per caller can.
+Scope: the posted field is the **section**, not the ability — the browser says which screen refused
+it and the server decides what that screen requires, so nobody can request an arbitrary ability from
+an arbitrary screen and have it look legitimate in the queue.
+Status: Final.
+
+## #175 — The confirmation is read from stored state, not carried in the redirect
+Date: 2026-07-28
+Decision: After a successful request the redirect carries no arguments at all. The denied surface
+asks the database whether this user has an open request and renders the confirmation from that. Only
+the two failure paths use a flash, stored in a short-lived, single-use, user-bound transient — never
+a query string.
+Why: it makes refresh-safety, back-button safety, duplicate suppression and forgery resistance
+properties of the data model rather than of flash-message discipline. A `?sent=1` can be typed by
+anyone, is lost on a bookmark, and says nothing tomorrow. The reason text stays out of the query
+string because it is the requester's own words, and query strings are logged by the web server, kept
+in browser history and forwarded in `Referer`.
+Status: Final.
+
+## #176 — Not found is not denied
+Date: 2026-07-28
+Decision: `admin_page_access_denied` fires for two different causes, and CoreX distinguishes them
+using the same globals in the same order as WordPress's own `user_can_access_admin_page()`. A
+registered CoreX screen the viewer may not open answers 403 with the designed denied surface; a
+`corex-` address with no screen behind it answers 404, with no capability explanation and no request
+form.
+Why: matching the prefix alone told an administrator, at 403, that their role lacked
+`manage_options` — false, wrong status, and it offered them a form to request access to a screen
+with no ability behind it. Once the request workflow worked, that form would have created a real,
+auditable request nobody could ever grant.
+Scope: `$_registered_pages` alone is not the check. `add_submenu_page()` records a page the viewer
+may not open in `$_wp_submenu_nopriv` and returns before touching `$_registered_pages`, so
+registration is not viewer-independent — reading only that global reports every real CoreX screen as
+missing to exactly the people the gate exists for.
+Status: Final.
+
+## #177 — A workflow is not shipped until both ends of it work
+Date: 2026-07-28
+Decision: Pending access requests are listed by the REST route and the Access screen from
+`AccessRequestStore::pending()`, rendered with requester, ability, date and reason, and decided with
+Approve and Deny. The Access Overview names how many people are waiting and links to the panel, and
+renders nothing when nobody is.
+Why: the route returned a hardcoded `[]`, the screen localized a hardcoded `[]`, and `pending()` had
+no production caller — so a request was created, audited and notified, and then no surface in the
+product ever read the table, while the denied screen told the requester an administrator would
+review it. Fixing only the requester's side would have delivered people into that silence more
+convincingly than before, because the confirmation would have looked right.
+Scope: found by trying to write a test fixture, not by reading the code — the browser spec needed to
+clear pending requests between runs and the only route that could do it returns nothing by
+construction. A test that needs a capability the product claims to have is a good way to find out it
+does not.
+Status: Final.
+
+## #178 — Dependency updates land as one deliberate refresh, not thirteen open PRs
+Date: 2026-07-28
+Decision: Dependabot's proposals are applied on a single branch, gated once, and merged as one
+commit. The individual PRs are then closed as superseded, each with a comment naming the commit
+that carries it.
+Why: thirteen PRs had accumulated, every one based on a `main` old enough that its CI ran against a
+four-check pipeline instead of six, and six of them reported a failure that was really staleness.
+Rebasing and merging them one at a time is thirteen rebases and thirteen CI runs to reach a state
+one run can prove. Closing them without applying anything is worse: Dependabot re-creates them
+within a week, which is exactly how the backlog formed.
+Scope: this is the *handling* policy. Whether a given bump is taken is decided per bump, on
+evidence — see #179–#181 for the three that were not.
+Status: Final.
+
+## #179 — @wordpress/scripts 33 and @wordpress/components 37 are taken; the tree is proven, not assumed
+Date: 2026-07-28
+Decision: both majors land. `@wordpress/scripts` 32.6.0 → 33.0.0 and `@wordpress/components`
+36.1.0 → 37.0.0.
+Why: each was attempted and measured rather than deferred for being a major. The block and admin
+builds compile, `lint:js` and `lint:css` are clean, and Jest is unchanged at 381/381. A major that
+passes every gate is not a risk being taken; it is a risk that was checked.
+Scope: `@wordpress/i18n` and `@wordpress/element` moved with them inside their existing ranges.
+Neither `@wordpress/components` nor `@wordpress/i18n` is declared in the root manifest — they belong
+to `plugins/corex-config/package.json`, which is why Dependabot's PRs for them looked rootless.
+Status: Final.
+
+## #180 — Pest stays on 2 because Pest 4 is right about 21 of our tests
+Date: 2026-07-28
+Decision: `pestphp/pest` is held below 3.0, with a Dependabot ignore and this entry.
+Why: Pest 4 installs cleanly and runs the entire suite — **1572 passing, 0 failing**. It fails only
+because it reports 21 tests as RISKY, and it is correct to: those tests exercise the boot logger and
+the block and event error paths, so the code under test deliberately writes diagnostics, and the
+tests let that output escape instead of asserting it. Pest 2 did not notice. The right fix is to
+assert the output — which improves the tests, since a test of a logger that never checks what was
+logged is barely a test — and that is a 21-test rewrite across several files.
+Scope: bundling that rewrite into a dependency refresh would mix a test-quality change into a
+lockfile change, and a revert of one would be a revert of the other. The migration is its own piece
+of work, and this entry is the head start: the affected files are `tests/Unit/Blocks/BlockMapTest`,
+`RenderDelegationTest`, `Events/EventDispatcherTest` and `Foundation/BootLoggerTest`.
+Status: Final — revisit as its own task.
+
+## #181 — Astro 7 is not blocked by Astro; it is blocked by `file:..`
+Date: 2026-07-28
+Decision: `astro` is held below 7 and `@astrojs/starlight` below 0.41, both by Dependabot ignore.
+Why: the framework side is ready and was verified on 2026-07-22 — starlight 0.41.3 peers astro
+^7.0.2, and the site builds to the same 284 pages with no config change. The blocker is packaging:
+`docs-app/package.json` declares `"corex-framework": "file:.."`, so npm cannot resolve the bump in
+place (ERESOLVE against the pinned lock), and regenerating `docs-app/package-lock.json` makes npm
+expand the framework root into the docs tree — the npm-docs audit then covers root's dev tooling and
+goes from 5 findings to 17.
+Scope: recording it here because the two are repeatedly confused. Nothing about Astro 7 needs
+waiting for; what needs deciding is whether docs-app keeps the `file:..` link at all. Until then the
+hold is honest and the ignore stops the PR returning weekly.
+Status: Final — revisit with the docs-app packaging decision.
+
+## #182 — The advisory gate was failing on `main`, and the path filter is why nobody saw it
+Date: 2026-07-28
+Decision: the policy is reconciled against the real tree and the gate passes for the first time —
+composer 0/0, npm-docs 6/6, npm-root 18/18.
+Why: `verify-dependency-security.mjs` was reporting FAIL on `main` before this branch existed: three
+`minimatch` entries whose recorded paths no longer matched the tree, plus two unbounded findings
+(`postcss` in docs, `brace-expansion` in root) with no exception at all. It went unnoticed because
+`.github/workflows/dependency-security.yml` is path-filtered to manifest and policy changes, so no
+ordinary PR runs it — the gate is only consulted by the PRs least likely to be looking for it.
+Scope: five of the six violations predate this work; one (`@opentelemetry/core`) arrived with
+`@wordpress/env` 11.11.0 and its bundled Sentry instrumentation. All are dev or build-time
+transitives under eslint, markdownlint-cli, rimraf and wp-env — none is in a distributed artifact,
+which is what the new exceptions record with a stated control and a review date.
+Note: the paths in the first attempt were wrong because they were written from a probe truncated to
+three entries when the audit reported four. Read the whole list before encoding it in policy.
+Status: Final.
+
+## #183 — A fail-safe that cannot catch its own failure mode is not a fail-safe
+Date: 2026-07-28
+Decision: `WebpConverter::convertWithGd()` promotes an indexed-colour image to truecolour and
+refuses to call `imagewebp()` unless the image is truecolour by the time it gets there. The
+`catch (Throwable)` in `convert()` stays, but it is no longer what protects this path.
+Why: GD raises `Palette image not supported by webp` as an **E_ERROR**, which no `catch (Throwable)`
+can intercept — verified by reproduction, the process dies with the catch in place. The class
+documents itself as a "fail-safe boundary… never a fatal", and for the encoder it was neither. A
+palette PNG is what design tools export a flat-colour logo as, so the affected upload is routine;
+the reporter's 24-logo migration stopped on the first one. Because the conversion runs on
+`wp_generate_attachment_metadata`, the request that died was the upload itself.
+Scope: the general lesson is the reason this is written down. Where a library signals failure
+outside the exception system, safety has to be a **precondition** the caller can check, not a
+handler the caller hopes will fire. `imageistruecolor()` is that check here.
+Note: the explicit `imagealphablending(false)` / `imagesavealpha(true)` pair is kept but is *not*
+what fixes the fatal — on the GD build this was verified against, `imagewebp()` preserved alpha with
+or without it, for both promoted-palette and truecolour sources. The reporter saw transparency loss
+on theirs and GD builds differ, so it stays as a stated intent; it is deliberately not described as
+load-bearing, because measuring it here showed it was not.
+Status: Final.
+
+## #184 — A form's listeners are resolved per submission, not registered per site
+Date: 2026-07-28
+Decision: `FormsServiceProvider` registers **one** listener on `FormSubmittedEvent`, which resolves
+the submitted form by slug and runs that form's list. It no longer walks every form at boot
+registering each distinct listener id once.
+Why: the old registration produced a **global** list. Deduplication was across all forms, so as soon
+as any form declared a listener, that listener ran for every submission on the site.
+`Form::listeners()` documents itself as overridable, and overriding it to *remove* a listener was a
+no-op, because some other form had already registered it — a site replacing the built-in
+notification with its own sent two emails per submission, with no way to stop it. Found on a real
+build, not by reading the code (issue #138, item 1).
+Scope: laziness is preserved deliberately — the listener graph reaches the mail stack, and building
+it at boot loads translations before `init`. A slug matching no registered `Form` (a database-defined
+flow) runs nothing, which is the correct answer; falling back to "every listener" would be the same
+bug wearing a different hat.
+Note: only two of the four tests covering this fail against the old code. The removal and
+unknown-slug cases pass under it too, because the fixture forms register after boot and the old
+boot-time sweep never saw them. Two-of-four green is not partial success here; it is the shape of the
+defect.
+Status: Final.
+
+## #185 — A body sent as text/html is written as HTML
+Date: 2026-07-28
+Decision: `NotificationDispatcher::htmlBody()` is added **beside** `plainTextBody()`, and the
+submission notification uses it. The plain-text builder stays.
+Why: every CoreX transport sets `Content-Type: text/html`, and the notification body was built by
+joining `label: value` lines with newlines. HTML collapses whitespace, so the whole submission
+arrived as one unbroken run — in an email whose own header promised markup. Replacing
+`plainTextBody()` in place was rejected: a genuinely plain-text transport still wants it, and
+silently returning HTML from a method named for plain text is how the mismatch arose.
+Scope: the notification also now carries `Reply-To` from the submission, validated with `is_email()`
+before it reaches a header. `MailRequest` has accepted `replyTo` all along and `WpMailDriver` has
+always emitted it — the missing piece was one argument, not a feature. No usable address means no
+header, which is the previous behaviour and the right answer for a form that never asked for one.
+Status: Final.
+
+## #186 — A manual reply is the same product as an automated one
+Date: 2026-07-28
+Decision: `EmailStudioSubmissionGateway::reply()` wraps the operator's HTML in the brand `Layout` and
+uses the configured reply-to. `MailServiceProvider::brand()` supplies a `logo` — the theme's custom
+logo, falling back to the site icon, both absolute.
+Why: `reply()` sent the operator's raw textarea content as the entire message body with `replyTo`
+hard-coded to `null`, while `resend()` immediately below it looked up the template version and layout
+and rendered through them. So a site's automated email was branded and its human reply was not, from
+the same screen. Separately, `Layout::wrap()` has always had an `<img>` branch for `$brand['logo']`
+and nothing anywhere wrote that key, so the branch was unreachable and every framework email was
+text-branded.
+Scope: the reply is deliberately **not** run through a template — there is no template for "whatever
+the operator typed". The logo URL must be absolute because an email client has no page context to
+resolve a relative path against. This is a visible change to shipped behaviour, not a pure bug fix,
+and is recorded as such rather than presented as invisible.
+Status: Final.
+
+## #187 — The wp_die HTML handler is CoreX's, and the five machine handlers are not
+Date: 2026-07-28
+Decision: CoreX filters `wp_die_handler` and renders every human-facing admin refusal as a branded
+document. It subscribes to none of `wp_die_ajax_handler`, `wp_die_json_handler`,
+`wp_die_jsonp_handler`, `wp_die_xmlrpc_handler` or `wp_die_xml_handler`, and a test asserts that.
+This amends #174, which stated as part of a different decision that "no global `wp_die_handler`
+filter is installed".
+Why: #174's subject was the access-request form posting a browser at a REST route, and its finding —
+that content negotiation on one endpoint silently changes what every API consumer receives — still
+stands and is untouched here; no route changed. But the sentence was read as scope for spec 079's
+error work, and the result was measured before this decision was written: nine of eleven admin
+addresses still rendered WordPress's white box to a real subscriber, two of them screens CoreX
+itself registers (`specs/083-admin-error-surface/evidence/before/refusal-matrix.md`). A framework
+that owns the admin experience cannot own only the eleven percent of it reachable by
+`admin.php?page=corex-*`.
+Scope: the boundary is core's, not ours. `wp_die()` selects its handler by request type *before* any
+filter runs (`wp-includes/functions.php:3791-3849`), so a machine caller can never arrive on the
+branch CoreX filters — the safety is structural rather than a check we have to remember. Nothing
+inspects `Accept` anywhere. `wp-login.php` and front-end `wp_die()` are outside `is_admin()` and stay
+WordPress's, as does the logout confirmation, which reaches `wp_die()` at 403 but is a prompt.
+Status: Final.
+
+## #188 — A refusal names the ability it can ask for, not a capability it cannot know
+Date: 2026-07-28
+Decision: the denied surface no longer names a WordPress capability. It names the CoreX ability an
+access request from that screen resolves to, framed as what will be requested.
+Why: it said "your role doesn't include the `manage_options` capability" on every screen. That is
+false on `corex-notifications` (`corex_manage_notifications`), `corex-submissions`
+(`corex_manage_submissions`), `corex-data-models` and every `corex-page-*` option page — a false
+statement made at HTTP 403 to somebody trying to work out why they were stopped. A unit test
+asserted the string was present, so the assertion was holding the falsehood in place; it is the
+third time in this project a test has been the reason a defect survived.
+Scope: the true value is genuinely unavailable, not merely inconvenient — `add_submenu_page()`
+records a refused page in `$_wp_submenu_nopriv` as a bare `true` and discards the capability, so it
+is gone before any CoreX code runs. Restating it from a second map beside the screens' own
+declarations is what would drift; the ability, by contrast, comes from `requestAbilityFor()`, the
+same resolution the submission handler performs, so the sentence and the queued request cannot
+disagree.
+Status: Final.
+
+## #189 — The user manual is a registry, not a document
+Date: 2026-07-28
+Decision: The dashboard user manual ships as `addons/corex-guides`, an add-on owning a public
+`GuideRegistry`. CoreX registers its own guides through it; a site plugin registers its own through
+the same API and they render on the same screen. Spec 082, which designed the manual as Markdown in
+a docs tree, is superseded.
+Why: a client's guide is about the client's site — their post types, their flows — so it ships with
+their plugin, versions with their plugin, and has to appear without anybody editing CoreX. A
+Markdown file in `docs-app/` can express CoreX's manual and can never express Perego's. 082 also
+left "where does the manual live" as an open decision and asked in its own US3 where somebody would
+look; for a person handed a finished site the answer is wp-admin, not a documentation website they
+were never told about.
+Scope: what 082 got right is kept — the content rules (name the control, state the expected result,
+warn before anything hard to undo) and the screenshot discipline (captured by a script driving the
+real admin, one regeneration command, loud failure on a missing screen). Registration is
+`registerDeferred()` rather than `register()` because CoreX and a site plugin both boot on
+`plugins_loaded` at priority 10 and the winner depends on the plugin's directory name; resolving on
+first read removes the race rather than documenting it. Sections order alphabetically by key, which
+is deliberate: a separate section-order registry would be a second thing to register, get wrong, and
+disagree about. Availability needs no `is_active()` check anywhere — an add-on registers its guides
+from its own provider, so an inactive add-on contributes nothing by construction.
+## #190 — A reported defect is a hypothesis until the tree is read
+Date: 2026-07-28
+Decision: Every item in issues #148, #149 and #150 was re-verified against the current tree before
+any code was written. Two turned out not to need work: #150's "Correction to #138 item 3" (reply-to
+still null) is stale — `EmailStudioSubmissionGateway::reply()` calls `replyToAddress()`, and the
+reporter's own later comment on #149 says so — and #149 item 1b was already fixed by spec 080.
+Neither was "fixed" again.
+Why: this is the third round of production reports and the second time verification changed the
+work. Spec 080 found #138 item 2 already solved by spec 074 and would have added a second deferral
+mechanism beside a working one. A report is evidence that something looked broken to a careful
+person at a point in time; it is not a statement about the tree in front of you, particularly when
+the tree has moved since.
+Scope: the corollary matters as much. #149's own report shows the modal rendering em dashes, but on
+the current tree it renders "This record has no readable fields" — spec 080's better empty state
+made the same bug read as a true statement about the record instead of as a failure. **A fix that
+improves an error message can make an unrelated defect harder to see**, so a report's *symptom*
+ages faster than its *cause*.
+Status: Final.
+
+## #191 — Two halves of a data-loss fix ship together or not at all
+Date: 2026-07-28
+Decision: `collect()` reading `selectedOptions` and `sanitizeShape()` gaining a list arm are one
+change, in one commit, with one test file covering both.
+Why: a `<select multiple>` stored only its first selected value, because `el.value` on a multiple
+select is the first selected option. The obvious one-line fix — send the real list — makes it worse:
+every arm of `sanitizeShape()` maps to a scalar sanitizer and `sanitize_text_field()` returns `''`
+for an array, so the field is blanked entirely. Storing one of three answers is bad; storing none of
+them, indistinguishable in the inbox from a visitor who answered nothing, is worse.
+Scope: the test asserts the wrong outcome explicitly (`not->toBe('')`) rather than only the right
+one, because that is the failure a future refactor of the sanitize shape would reintroduce, and it
+is silent.
+Status: Final.
+
+## #192 — A protected file is protected by a capability check, not by a deny file
+Date: 2026-07-28
+Decision: uploads land in `uploads/corex-private/` with Apache and IIS deny rules, and the only way
+to read one is `AttachmentDelivery` — an `admin-post` route that verifies a nonce and then
+`current_user_can()` before reading a byte. The deny files are defence in depth; the route is the
+guarantee.
+Why: a `.htaccess` is a promise about server configuration that CoreX cannot verify. nginx ignores
+it entirely, and plenty of hosts disable `AllowOverride`. Shipping only deny rules would mean the
+protection of somebody's CV depended on a file the framework writes and never checks the effect of.
+Scope: deliberately not signed URLs with an expiry — a signed URL is a bearer token that ends up in
+browser history, a referrer header and a forwarded email, and the viewer is already logged in, so
+asking who they are is cheaper and does not leak. Deliberately not `X-Sendfile`/`X-Accel-Redirect`,
+which are faster and hand the file back to the web-server configuration this exists because we
+cannot trust. `Content-Disposition: attachment` always, so a visitor-supplied SVG cannot execute on
+the admin's own origin. The route refuses any id it did not itself store (`_corex_protected`), or it
+would be a general file reader.
+Status: Final.
+
+## #193 — Validate the descriptor, then store; never store, then clean up
+Date: 2026-07-28
+Decision: `FormSubmissionService` validates uploaded descriptors in place — `mime` and `max_size`
+read the temporary file — and only stores once the whole submission has passed. A form with two file
+fields whose second upload fails gives the first one back.
+Why: FR-005 says a refused submission leaves no stored file. The alternative — store first, delete on
+rejection — is correct only for as long as nobody adds an early return between the two, and the
+failure it produces is silent: bytes in a protected directory with no record pointing at them, which
+no retention sweep can find because nothing knows they are there.
+Scope: the same ordering in `ApplicationService`, where the row is written only after the file is
+down. A row pointing at an id that does not resolve is indistinguishable, later, from the `0` that
+issue #138 item 8 was about.
+Status: Final.
+
+## #194 — A file input's value is a lie, and Content-Type must not be set for FormData
+Date: 2026-07-28
+Decision: `corex-runtime.js` skips file inputs in `collect()` and switches the request body to
+`FormData` only when the form actually carries a file; every other form keeps sending JSON.
+Why: two independent reasons uploads could not work, neither mentioned in issue #138. `el.value` for
+a file input is `C:\fakepath\name.pdf` — the browser's deliberate lie — so the file never reached
+`collect()` at all. And `viaFetch` set `Content-Type: application/json` unconditionally, which
+overrides the multipart boundary the browser generates and produces a body the server cannot parse.
+Scope: scoped to forms that carry a file because this is a build-free asset enqueued on every page
+with a form, and switching everything to FormData would have been a smaller diff and a much larger
+change — every endpoint, test and theme currently expects JSON. `collect()` is now exposed on
+`window.Corex.forms` so a theme reads a form the same way the runtime does; the two disagreeing is
+the class of bug the multi-select defect was.
+Status: Final.
+
+## #195 — A framework a site cannot safely reach is not extensible
+Date: 2026-07-28
+Decision: `Boot::booted()` is public, `Boot::boot()` fires a `corex_booted` action, and
+`Corex::onReady(callable)` is the documented way for a site plugin to reach the container. The
+guides documentation now tells sites to wrap their registration in it.
+Why: found by standing up a plugin that followed the published documentation exactly. CoreX boots on
+`plugins_loaded` at priority 10 and the site starter this framework *generates* boots there too, so
+which one WordPress runs first depends on the plugin's directory name. The loser called
+`Corex::make()`, reached `Boot::app()`, and got a `RuntimeException` — not a silent no-op but a
+fatal, on every request, taking the whole site down. And it could not be guarded against:
+`app()` throws rather than returning null, so `Boot::app() === null` — the check a developer
+naturally writes — *is* the crash.
+Scope: `onReady()` covers both orderings, so there is no ordering left for a caller to get wrong;
+that is the point, rather than documenting the hazard and expecting care. Perego had independently
+worked around it by deferring to `init`, which is evidence the trap is real and that the workaround
+is something each site has to discover for itself. Spec 084 shipped a registry whose deferred
+resolution solved the *registry* race while leaving the *boot* race open — solving half a problem
+and documenting the half that remained.
+Status: Final.
+
+## #196 — An acceptance matrix measures; it does not photograph
+Date: 2026-07-28
+Decision: `capture-denied-acceptance.mjs` asserts `scrollWidth <= clientWidth` in all 16 cells and
+exits non-zero on any overflow. Four corners are photographed for design review; the other twelve
+are measured only.
+Why: the defect this repository keeps meeting is a **one-pixel** horizontal overflow, still open on
+`corex-access`. No screenshot review has ever caught one, and asking a person to spot a pixel across
+sixteen images is asking them to fail. The screenshots are for judging whether it looks right; the
+measurement is for knowing whether it fits.
+Scope: the record states plainly what the RTL cells do *not* prove. They force `dir="rtl"` onto
+English strings, so trailing punctuation lands at the visual left — a property of the fixture, not
+the product. Recording that is what stops somebody later "fixing" correct code, and what makes clear
+that Arabic typography still needs an Arabic catalogue and its own pass.
+Status: Final.
+
+## #197 — A translation key is not a label, and both are carried
+Date: 2026-07-28
+Decision: `NotificationAction` gains an already-translated `label` beside `labelKey`, and
+`toArray()` emits both. The client reads `label`.
+Why: the server serialized `label_key` and the card read `item.action.label`, so every
+server-produced action fell through to a hardcoded "Open" and no authored label had ever been seen.
+The obvious fix — rename one side — is wrong: `labelKey` *is* a translation key, nothing in the
+pipeline resolves keys to strings, and renaming it would have made the payload claim to carry a
+label while carrying a key. Adding the resolved string is the honest shape; the key stays for a
+resolver that may exist one day.
+Scope: the Jest test that "covered" this fed `{ label: … }` — a payload shape the server has never
+sent — so it passed against fiction while every real notification was broken. It now builds its
+fixture from what `present()` actually emits. A fixture invented to match the component is not
+coverage of the component.
+Status: Final.
+
+## #198 — A permission the client is trusted to honour is not a permission
+Date: 2026-07-28
+Decision: `WpNotificationRepository::present()` omits an action from the payload entirely when the
+actor does not hold its declared `ability`, and derives `view` / `needs_action` from the action that
+survived that check.
+Why: `NotificationAction` had documented since spec 072 that "a link renders only when the actor
+passes the optional `ability`", and nothing enforced it — the whole action went out on the wire and
+the card rendered on `action.url` alone. Two consequences, and the second is the worse one: a viewer
+could be handed a link to a screen that would refuse them on arrival, and a row could be filed under
+"Action needed" on the strength of an action that viewer would never be offered.
+Scope: withheld rather than hidden. A payload the client is trusted to conceal is a disclosure with
+a style rule in front of it. Producers now name the ability the destination screen itself enforces —
+so the notification and the screen cannot disagree about who may go there.
+Status: Final.
+
+## #199 — CoreX answers wp-admin's focus ring instead of out-specifying it from inside `:where()`
+Date: 2026-07-28
+Decision: explicit `:focus` resets for `.button`, `.button-primary` and `.components-button`, each
+paired with a `:focus-visible` outline at matching specificity. The `:where()` rule stays as the
+floor for everything else.
+Why: the blue halo after every click was `.wp-core-ui .button:focus` at **(0,3,0)** beating
+`.corex-admin :where(a, button, …):focus-visible` at **(0,2,0)** — `:where()` contributes zero, so
+the rule meant to answer it never could. wp-admin paints on `:focus`, not `:focus-visible`, which is
+why a mouse click triggered it at all. CoreX's own `.button-primary:focus` had overridden the
+background, the border and the colour and never the `box-shadow`, so the ring survived underneath
+the brass button.
+Scope: both directions are asserted in a browser, because removing a click ring without keeping the
+keyboard one trades a cosmetic complaint for a WCAG 2.4.7 failure. Also added the missing base
+`.components-button` rule: only the variants were styled, so a `<Button>` with no variant kept
+Gutenberg's own `#1e1e1e` ink — invisible rather than unstyled on the dark surface, and the reason
+the submissions close X and the inbox pager could not be seen.
+Status: Final.
+
+## #200 — The Guides support form depends on no optional plugin
+Date: 2026-07-28
+Decision: `addons/corex-guides` ships its own two-rung `SupportMailer` — a nullable
+`Corex\Mail\Mailer` injected by the provider, falling back to `wp_mail()` — rather than importing
+`Corex\Forms\Submission\NotificationDispatcher`, which is the same ladder one plugin over.
+Why: `NotificationDispatcher` lives in `plugins/corex-forms` and `Mailer` is bound only by
+`addons/corex-email`. Both are optional, and Principle IX forbids either becoming a hard dependency.
+A help form is the last thing that should stop working because a site does not use forms.
+Scope: the cost is one small class. `NotificationDispatcher` depends only on core `Corex\Mail\*`
+seams and belongs in `corex-core`; promoting it is the right fix and is deliberately **not** in this
+spec, because it is a refactor across two plugins and this is a help form. Recorded here so the next
+person meets the decision rather than the duplication.
+Status: Final.
+
+## #201 — A test that cannot fail reports coverage it does not have
+Date: 2026-07-28
+Decision: every browser assertion in `tests/e2e/admin-controls.spec.js` was checked against the
+unfixed stylesheet before being kept, and the spec states which assertions reproduced a defect and
+which are only guards.
+Why: four of them passed against the broken CSS on the first attempt, for four different reasons,
+and each would have shipped as evidence of a fix it had not verified. The versioned stylesheet was
+served from cache, so the "before" run measured the "after" file. "The first visible button" on that
+screen is the notification bell — a control CoreX styles itself, which never had a WordPress ring to
+lose. `document.activeElement` after clicking the pager is `<body>`, which has no shadow, so the
+assertion measured the document. And the ring assertion was written as
+`shadow === 'none' || shadow.includes('inset')`, which accepts wp-admin's
+`rgb(56,88,233) 0 0 0 2px, rgb(255,255,255) 0 0 0 1px inset` — the exact broken value it existed to
+reject.
+Scope: the honest result is asymmetric and is recorded as such. Five assertions reproduce a defect
+and now pass; four are guards that were already green — the drawer close already cleared 3:1, the
+detail glyph was legible on a light surface because the defect was dark-only, and the keyboard ring
+had to keep working. Claiming nine verified fixes would have been the same category of error as the
+bugs this spec closes.
+Status: Final.
+
+## #202 — One repository URL, and the one that mattered was `Update URI`
+Date: 2026-07-28
+Decision: every repository reference — `composer.json`, `theme/style.css`, four plugin headers and
+two docs pages — now names `github.com/MustafaShaaban/corex`.
+Why: twelve references said `bseit/corex` while `docs-app` and the release links said
+`MustafaShaaban/corex`. Eleven of those are cosmetic. The twelfth is not: `Update URI` is how
+WordPress decides where a plugin's update comes from, so this was a functional defect shipping in
+every installed copy — and it had been there long enough to be invisible.
+Scope: found while auditing the repository for public release, not by a bug report, which is the
+argument for the audit. A URL that appears in a header is not documentation; it is configuration that
+happens to look like documentation.
+Status: Final.
+
+## #203 — A public repository states what it has not built
+Date: 2026-07-28
+Decision: `PROJECT-STATUS.md` at the repository root lists every module as stable, partial or
+planned, names what is missing for anything not stable, and cites the file that records each gap.
+Mirrored into the docs site as the second sidebar entry, above Getting Started.
+Why: the information already existed and was scattered across ROADMAP §15/§17, the
+"open, worth picking up" block in `PROGRESS.md`, 24 entries in
+`.github/dependency-security-policy.json`, and three exclusions in `tests/e2e/playwright.config.js`.
+A developer evaluating this cannot be asked to assemble that, and a project that leaves it assembled
+only in its own head reads as one that has not looked.
+Scope: placed *above* Getting Started deliberately. Somebody deciding whether to adopt a framework
+should meet its limits before its tutorial. The 24 dependency advisories are listed rather than
+resolved — fixing them is behaviour-changing upgrade work under its own policy and review dates, and
+burying that inside a documentation diff is the kind of thing this file exists to prevent.
+Status: Final.
+
+## #204 — The docs guard found three false numbers in the document announcing our accuracy
+Date: 2026-07-28
+Decision: recorded rather than quietly fixed.
+Why: `PROJECT-STATUS.md` and the rewritten `README.md` were written to argue that this project's
+claims are checkable. The docs-guard pass over them found that `specs/` holds 86 directories and not
+40, `DECISIONS.md` holds 201 entries and not 200, and `PROGRESS.md` is 420 KB and not 424 KB — three
+numbers written from a glance rather than from a count, inside the two files whose entire purpose is
+that they can be checked.
+Scope: this is the same failure the last four specs each closed one instance of, arriving one level
+up — in the documentation rather than in the code. It is written down because "we verified the docs"
+is worth exactly as much as the verification, and the verification is what caught it. Also removed: a
+paragraph promising entries the page did not contain, and a source type cited in an introduction and
+never used.
+Status: Final.
+
+## #205 — The release command now stamps everything its docblock already promised
+Date: 2026-07-29
+Decision: `wp corex version` also stamps `package.json`, `README.md`, `ROADMAP.md`,
+`PROJECT-STATUS.md` and the docs-site status mirror, using patterns anchored to the sentence that
+declares the *current* version.
+Why: the command's docblock said the version-bearing files are stamped together "so none of them
+drifts from the release tag", and five files carrying a version were outside its reach and bumped by
+hand. That is exactly how `ROADMAP.md` came to sit three releases behind a correct `README.md` — the
+drift spec 088 had just spent a session correcting by hand, caused by the tool whose purpose is to
+prevent it. Found while cutting the release that shipped 088.
+Scope: anchored patterns, not a bare version search. `ROADMAP.md` §17 and the entire `CHANGELOG.md`
+are statements about the past — "released as v0.38.1" is true and rewriting it would corrupt the
+record rather than update it. Seven tests cover this, one of them specifically the
+historical-reference case, and one asserting that a dependency pinned to the same version as the
+package root is left alone.
+Status: Final.
+
+## #206 — `overrides`, because npm's "fix" was a downgrade
+Date: 2026-07-29
+Decision: the 24 bounded dependency exceptions are closed with npm `overrides` raising transitive
+dependencies in place, not by taking the upgrade `npm audit` proposed.
+Why: `npm audit` reported a fix available for every finding. For 37 of them the "fix" was
+`@wordpress/scripts@19.2.4` against an installed `^33.0.0`, and `@wordpress/env@11.8.0` against
+`^11.11.0` — **downgrades**, which `CONTRIBUTING.md` forbids. For the other 27 it reported
+`fixAvailable: true` and `npm audit fix` moved none of them, because each was a transitive dependency
+its parent pinned below the patched version. Neither of npm's two suggestions was usable, which is
+the precise reason the exceptions existed — and the policy file had recorded it only as "a pinned
+wp-scripts constraint".
+Scope: `overrides` is the mechanism for exactly this and is neither `--force` nor a downgrade. One
+override was backed out: `minimatch@^10` removes the CommonJS default export `eslint-plugin-jsx-a11y`
+calls, and `lint:js` was the only check that caught it — the block build and all 431 Jest tests
+passed with the broken linter dependency in place. That is why an override has to be proven by the
+parent's own tooling rather than by the advisory count going down.
+Status: Final.
+
+## #207 — Two exceptions recorded as independent were one
+Date: 2026-07-29
+Decision: the Astro 7 migration landed as a consequence of clearing the root workspace, not as
+separate work.
+Why: the docs-site exceptions were held by a measured, specific packaging problem — regenerating
+`docs-app/package-lock.json` makes npm expand the `corex-framework "file:.."` workspace root into the
+docs tree, taking npm-docs from 5 findings to 17. That measurement was correct and its conclusion
+was time-limited: the expansion only hurts while the root tooling is dirty. With the root at zero
+there is nothing for it to drag in, and the regenerated lockfile contains no `webpack`, `jest` or
+`eslint` at all.
+Scope: worth recording because the policy file described the two groups as independent blockers with
+separate review dates, and the cheapest route to closing six of them was to fix eighteen others
+first. A blocker measured once stays in the record as a fact long after it has stopped being one;
+re-measuring before believing it is the actual lesson.
+Status: Final.

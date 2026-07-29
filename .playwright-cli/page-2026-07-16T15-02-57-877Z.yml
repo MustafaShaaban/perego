@@ -1,0 +1,214 @@
+- generic [active] [ref=e1]:
+  - link "تخطى إلى المحتوى" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - link "Skip to content" [ref=e5] [cursor=pointer]:
+        - /url: "#main"
+      - banner [ref=e6]:
+        - generic [ref=e7]:
+          - link "بيريجو — الرئيسية" [ref=e8] [cursor=pointer]:
+            - /url: http://perego.local/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/
+          - navigation "التنقل الرئيسي" [ref=e9]:
+            - list [ref=e10]:
+              - listitem [ref=e11]:
+                - link "الرئيسية" [ref=e12] [cursor=pointer]:
+                  - /url: http://perego.local/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/
+              - listitem [ref=e13]:
+                - link "من نحن" [ref=e14] [cursor=pointer]:
+                  - /url: http://perego.local/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/#about
+              - listitem [ref=e15]:
+                - link "خدماتنا" [ref=e16] [cursor=pointer]:
+                  - /url: http://perego.local/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/#services
+              - listitem [ref=e19]:
+                - link "أعمالنا" [ref=e20] [cursor=pointer]:
+                  - /url: http://perego.local/ar/work/
+              - listitem [ref=e21]:
+                - link "المدونة" [ref=e22] [cursor=pointer]:
+                  - /url: http://perego.local/ar/%d8%a7%d9%84%d9%85%d8%af%d9%88%d9%86%d8%a9/
+              - listitem [ref=e23]:
+                - link "عملاؤنا" [ref=e24] [cursor=pointer]:
+                  - /url: http://perego.local/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/#clients
+              - listitem [ref=e25]:
+                - link "تواصل معنا" [ref=e26] [cursor=pointer]:
+                  - /url: http://perego.local/ar/contact-2/
+          - link "ابدأ مشروعًا" [ref=e27] [cursor=pointer]:
+            - /url: http://perego.local/ar/contact-2/
+          - group "Language" [ref=e28]:
+            - generic [ref=e29]: AR
+            - link "EN" [ref=e30] [cursor=pointer]:
+              - /url: http://perego.local/
+    - paragraph [ref=e39]: بيريجو · PEREGO
+    - main [ref=e40]:
+      - region "مقدمة" [ref=e41]:
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - heading "بماذا نؤمن" [level=1] [ref=e45]
+            - paragraph [ref=e46]: ليس كل فنان يمسك فرشاة؛ فالفرشاة مجرد أداة، وما يهم حقًا هو الأفكار التي تمنحها الحياة. يمكنك أن تكون فنانًا بعقليتك وتفانيك وشغفك وطريقتك في ترتيب أولوياتك. الفن يكمن فيما أتقنته أو فيما لم تكتشفه بعد، لكنه موجود بداخلك بالفعل.
+          - link "قل مرحبًا!" [ref=e48] [cursor=pointer]:
+            - /url: http://perego.local/ar/contact-2/
+        - tablist "الشرائح الرئيسية" [ref=e49]:
+          - tab "الشريحة 1" [selected] [ref=e50] [cursor=pointer]
+          - tab "الشريحة 2" [ref=e51] [cursor=pointer]
+          - tab "الشريحة 3" [ref=e52] [cursor=pointer]
+        - paragraph [ref=e53]: الشريحة 1 من 3
+      - region [ref=e54]:
+        - generic [ref=e58]:
+          - article [ref=e59]:
+            - heading "من نحن" [level=2] [ref=e60]
+            - paragraph [ref=e61]: بيريجو وكالة إبداعية رائدة متخصصة في الإعلان والإنتاج الرقمي، تخدم قاعدة عملاء متنوعة في جميع أنحاء المنطقة العربية. نقدم مجموعة واسعة من الخدمات المبتكرة، تشمل تصميم الهوية التجارية، والموشن جرافيك مع تطوير كامل للستوري بورد، وحلول متنوعة لمونتاج الفيديو، وغير ذلك الكثير — كل ذلك مصمم للارتقاء بأعمالك أو حضورك الرقمي.
+          - article [ref=e62]:
+            - heading "مهمتنا" [level=2] [ref=e63]
+            - paragraph [ref=e64]: تحقيق نتائج تسويقية مؤثرة تلبي احتياجاتك الخاصة، بجودة استثنائية وتسليم موثوق في الموعد المحدد.
+      - region [ref=e65]:
+        - generic [ref=e66]:
+          - generic [ref=e67]:
+            - heading "خدمات يمكننا مساعدتك بها" [level=2] [ref=e68]
+            - link "عرض كل الخدمات" [ref=e69] [cursor=pointer]:
+              - /url: http://perego.local/ar/services/
+          - generic [ref=e72]:
+            - link "Video editing timeline مونتاج الفيديو" [ref=e73] [cursor=pointer]:
+              - /url: http://perego.local/ar/services/video-editing-2/
+              - img "Video editing timeline" [ref=e74]
+              - generic [ref=e76]: مونتاج الفيديو
+            - link "2D motion graphics workspace موشن جرافيك ثنائي الأبعاد" [ref=e77] [cursor=pointer]:
+              - /url: http://perego.local/ar/services/motion-graphics-2/
+              - img "2D motion graphics workspace" [ref=e78]
+              - generic [ref=e80]: موشن جرافيك ثنائي الأبعاد
+            - link "Graphic design on a laptop التصميم الجرافيكي" [ref=e81] [cursor=pointer]:
+              - /url: http://perego.local/ar/services/graphic-design-2/
+              - img "Graphic design on a laptop" [ref=e82]
+              - generic [ref=e84]: التصميم الجرافيكي
+            - link "Website code editor إنشاء المواقع" [ref=e85] [cursor=pointer]:
+              - /url: http://perego.local/ar/services/website-making-2/
+              - img "Website code editor" [ref=e86]
+              - generic [ref=e88]: إنشاء المواقع
+      - region [ref=e89]:
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - heading "عملاء الشركات" [level=2] [ref=e92]
+            - paragraph [ref=e93]: مؤسسات وشركات تعاونّا معها في مشاريع احترافية.
+          - generic [ref=e94]:
+            - button "Previous clients" [ref=e95] [cursor=pointer]
+            - list "Corporate client logos" [ref=e98]:
+              - listitem "عميل مؤسسي تجريبي د" [ref=e99] [cursor=pointer]
+              - listitem "عميل مؤسسي تجريبي ج" [ref=e102] [cursor=pointer]
+              - listitem "عميل مؤسسي تجريبي ب" [ref=e105] [cursor=pointer]
+              - listitem "عميل مؤسسي تجريبي أ" [ref=e108] [cursor=pointer]
+            - button "More clients" [ref=e111] [cursor=pointer]
+          - generic [ref=e114]:
+            - heading "عملاء أفراد" [level=2] [ref=e115]
+            - paragraph [ref=e116]: محترفون وأفراد عملنا معهم.
+          - generic [ref=e117]:
+            - button "السابق" [ref=e118] [cursor=pointer]
+            - list "Individual clients" [ref=e121]:
+              - listitem [ref=e122]:
+                - generic [ref=e123]:
+                  - heading "منشئ محتوى تجريبي ٤" [level=3] [ref=e124]
+                  - paragraph [ref=e125]: Example stat
+              - listitem [ref=e127]:
+                - generic [ref=e128]:
+                  - heading "منشئ محتوى تجريبي ٣" [level=3] [ref=e129]
+                  - paragraph [ref=e130]: Example stat
+              - listitem [ref=e132]:
+                - generic [ref=e133]:
+                  - heading "منشئ محتوى تجريبي ٢" [level=3] [ref=e134]
+                  - paragraph [ref=e135]: Example stat
+              - listitem [ref=e137]:
+                - generic [ref=e138]:
+                  - heading "منشئ محتوى تجريبي ١" [level=3] [ref=e139]
+                  - paragraph [ref=e140]: Example stat
+            - button "More" [ref=e142] [cursor=pointer]
+    - contentinfo [ref=e145]:
+      - contentinfo [ref=e146]:
+        - generic [ref=e147]:
+          - generic [ref=e148]:
+            - link "بيريجو — الرئيسية" [ref=e149] [cursor=pointer]:
+              - /url: http://perego.local/ar/%d8%a7%d9%84%d8%b1%d8%a6%d9%8a%d8%b3%d9%8a%d8%a9/
+            - heading "تواصل معنا" [level=2] [ref=e150]
+            - list [ref=e151]:
+              - listitem [ref=e152]:
+                - link "mostafa.emam3313@gmail.com" [ref=e153] [cursor=pointer]:
+                  - /url: mailto:mostafa.emam3313@gmail.com
+              - listitem [ref=e155]:
+                - link "yehemam2@gmail.com" [ref=e156] [cursor=pointer]:
+                  - /url: mailto:yehemam2@gmail.com
+              - listitem [ref=e158]:
+                - link "+996 56 293 2759" [ref=e159] [cursor=pointer]:
+                  - /url: tel:+996562932759
+              - listitem [ref=e161]:
+                - link "+20 111 54 855 72" [ref=e162] [cursor=pointer]:
+                  - /url: tel:+201115485572
+            - paragraph [ref=e164]: يسعدنا التواصل معك لتقديم حلول تقنية إبداعية والمساعدة والتوصيات المخصصة التي تناسب احتياجاتك على أفضل وجه.
+            - list "وسائل التواصل الاجتماعي" [ref=e165]:
+              - listitem [ref=e166]:
+                - link "بيريجو على Instagram" [ref=e167] [cursor=pointer]:
+                  - /url: https://www.instagram.com/
+              - listitem [ref=e170]:
+                - link "بيريجو على Facebook" [ref=e171] [cursor=pointer]:
+                  - /url: https://www.facebook.com/
+              - listitem [ref=e174]:
+                - link "بيريجو على LinkedIn" [ref=e175] [cursor=pointer]:
+                  - /url: https://www.linkedin.com/
+              - listitem [ref=e178]:
+                - link "بيريجو على YouTube" [ref=e179] [cursor=pointer]:
+                  - /url: https://www.youtube.com/
+              - listitem [ref=e182]:
+                - link "بيريجو على WhatsApp" [ref=e183] [cursor=pointer]:
+                  - /url: https://wa.me/
+          - generic [ref=e187]:
+            - generic [ref=e188]:
+              - generic [ref=e189]: الاسم الكامل
+              - textbox "الاسم الكامل" [ref=e190]:
+                - /placeholder: أدخل اسمك هنا
+              - alert
+            - generic [ref=e191]:
+              - generic [ref=e192]: البريد الإلكتروني
+              - textbox "البريد الإلكتروني" [ref=e193]:
+                - /placeholder: أدخل بريدك الإلكتروني هنا
+              - alert
+            - generic [ref=e194]:
+              - generic [ref=e195]: رسالتك
+              - textbox "رسالتك" [ref=e196]:
+                - /placeholder: قل مرحبًا.
+              - alert
+              - text: 0 / 200 words
+            - textbox [ref=e197]
+            - button "إرسال" [ref=e198] [cursor=pointer]
+            - status
+          - generic [ref=e199]:
+            - heading "انضم إلينا" [level=2] [ref=e200]
+            - paragraph [ref=e201]: نحن في تطوّر مستمر. إن كنت مستعدًا للنمو معنا، شاركنا سيرتك الذاتية وأعمالك.
+            - generic [ref=e202]:
+              - generic [ref=e203]:
+                - generic [ref=e204]: الاسم الكامل
+                - textbox "الاسم الكامل" [ref=e205]:
+                  - /placeholder: أدخل اسمك هنا
+                - alert
+              - generic [ref=e206]:
+                - generic [ref=e207]: البريد الإلكتروني
+                - textbox "البريد الإلكتروني" [ref=e208]:
+                  - /placeholder: أدخل بريدك الإلكتروني هنا
+                - alert
+              - generic [ref=e209]:
+                - generic [ref=e210]: رابط ملف الأعمال / الموقع
+                - textbox "رابط ملف الأعمال / الموقع" [ref=e211]:
+                  - /placeholder: أدخل رابط ملف أعمالك أو موقعك
+                - alert
+              - generic [ref=e212]:
+                - generic [ref=e213]: السيرة الذاتية
+                - generic [ref=e214] [cursor=pointer]: ارفع سيرتك الذاتية هنا
+                - paragraph [ref=e216]: ارفع سيرتك الذاتية هنا
+                - alert
+              - textbox [ref=e217]
+              - button "قدّم الآن" [ref=e218] [cursor=pointer]
+              - status [ref=e219]
+        - generic [ref=e220]:
+          - paragraph [ref=e221]: © 2026 Perego Creative Studio — بيريجو. All rights reserved.
+          - navigation "الشؤون القانونية" [ref=e222]:
+            - link "المدونة" [ref=e223] [cursor=pointer]:
+              - /url: http://perego.local/ar/%d8%a7%d9%84%d9%85%d8%af%d9%88%d9%86%d8%a9/
+            - link "الشروط والأحكام" [ref=e224] [cursor=pointer]:
+              - /url: http://perego.local/ar/terms-2/
+            - link "سياسة الخصوصية" [ref=e225] [cursor=pointer]:
+              - /url: http://perego.local/ar/privacy-2/

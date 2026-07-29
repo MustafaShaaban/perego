@@ -1,12 +1,20 @@
 # Corex Product and Engineering Roadmap
 
-This roadmap is the durable, owner-friendly view of where Corex is, what must happen next, and what is intentionally deferred. It tracks milestones and dependencies rather than repeating completed Spec Kit history.
+**Currently released: v0.40.0.** This roadmap is the durable, owner-friendly view of where Corex is,
+what must happen next, and what is intentionally deferred. It tracks milestones and dependencies
+rather than repeating completed Spec Kit history.
+
+> **Looking for what is finished and what is not?** [`PROJECT-STATUS.md`](PROJECT-STATUS.md) is the
+> per-module summary, with every claim traced to the file that records it. This roadmap is the plan
+> behind it. If the two ever disagree, `PROJECT-STATUS.md` is describing the code and this file is
+> describing the intention — fix the one that is wrong rather than reading past it.
 
 ## 1. Roadmap purpose
 
 Corex uses distinct documents for distinct planning needs:
 
 - `ROADMAP.md` is the durable product and engineering roadmap: completed foundation, active milestones, dependencies, priorities, and future boundaries.
+- `PROJECT-STATUS.md` is the public, per-module state: stable / partial / planned, and what is missing.
 - `PROGRESS.md` is the immediate session/resume file: the latest verified state and one recommended next action.
 - `CHANGELOG.md` records actual released and unreleased product changes, not plans.
 - `DECISIONS.md` records important architectural and product decisions and their rationale, not task status.
@@ -39,15 +47,19 @@ Approved design work moves from design inventory to a focused handoff, then to a
 - **Done:** the core framework foundations, stable-client readiness work, Spec 056 dependency/security remediation,
   CI and CodeQL verification, GitHub branch-protection review, and the repository-side design inventory/handoff
   structure.
-- **Active now:** nothing. Spec 069 shipped in **v0.34.0**; specs 070–072 shipped in **v0.35.0**, followed by
-  the **v0.35.1** correction release (all 2026-07-22). No feature spec is open, and the next one is an owner
+- **Active now:** nothing. Specs 069–072 shipped in v0.34.0/v0.35.0; **080–086 shipped in v0.38.0 and
+  v0.38.1** (2026-07-28); **087** merged after it. No feature spec is open, and the next one is an owner
   decision — see §17.
-- **Verification baseline (v0.35.0):** CI gates **four** suites on every pull request — PHP unit, JS, integration
-  against a WordPress it provisions itself, and Playwright in a browser. Before this release only the PHP unit
-  job ran, and only on PRs based on `main`/`develop`, so a stacked PR was never checked at all. Local counts on
-  `main`: unit 1452, JS 306. **CI is the authority for integration and browser runs**: a long-lived dev install
-  accumulates state a freshly provisioned one does not, which is why two Forms integration specs fail locally
-  and pass in CI.
+- **Verification baseline (v0.38.1 + spec 087):** CI gates **four** suites on every pull request — PHP unit,
+  JS, integration against a WordPress it provisions itself, and Playwright in a browser, plus CodeQL. Counts
+  on `main`: **unit 1704, integration 356, JS 431, Playwright 120**. Before v0.35.0 only the PHP unit job ran,
+  and only on PRs based on `main`/`develop`, so a stacked PR was never checked at all.
+  **CI is the authority for integration and browser runs**: a long-lived dev install accumulates state a
+  freshly provisioned one does not, which is why three integration specs fail locally and pass in CI.
+- **Known open, and not hidden:** three browser specs excluded from a fresh-install run, a 1px RTL overflow
+  on `corex-access`, and Arabic typography proved for layout but not for type. Each is listed with its source
+  in [`PROJECT-STATUS.md`](PROJECT-STATUS.md). The 24 bounded dependency exceptions that stood here were
+  closed by spec 089; the policy file now holds none.
 - **Blocked:** M3 cannot enter engineering without an approved navigation handoff and the reviewed M2 token
   contract. M4 cannot start until the minimum M2/M3 foundations and selected M5 components are ready.
 - **Not authorized:** roadmap presence does not authorize implementation, Pro work, builders, or bulk spec creation.
@@ -398,11 +410,28 @@ These items require later validation and dedicated specs. They must not leak int
 
 ## 17. Current and next recommended specs
 
-> **Status (2026-07-22): no spec is active.** Spec 068's completion audit passed, and specs 069–072 have
-> shipped in v0.34.0/v0.35.0. The standing rule below still governs everything built since — the approved
-> current design is the functional contract, and a required control may not remain a placeholder — but it is
-> no longer an *active direction*, because there is nothing open under it. Choosing the next spec is an owner
-> decision; candidates are listed at the end of this section.
+> **Status (2026-07-28): specs 080–085 are merged and released as v0.38.0**, taking the repository
+> to **zero open issues and zero open PRs**. The thread running through them is that a framework can
+> describe a capability it does not have: 083 completed an error experience whose unifying half was
+> never built, 084 turned a planned documentation page into an add-on a client site extends, 085
+> closed three production reports, and 081 built the file uploads the documentation already
+> promised. **Verification changed the work in every one of them** — two of eleven reported items
+> turned out to be already fixed, and `Table::managed()` did not exist at all.
+>
+> **Status (2026-07-28): specs 076–079 are merged and released as v0.37.0.** Four specs about
+> telling the truth on screen, each begun by reproducing the defect on a running install — which
+> changed the work three times. 076 gave the admin one date and time contract shared by PHP and
+> JavaScript (PR **#138**). 077 made every operations mode disclose what it will do before it does it
+> (PR **#140**, `f32de72`). 078 replaced a four-line cache command with a classified inventory that
+> **cannot** delete a security control, because `corex_throttle_*` and `corex_captcha_seen_*` are
+> rate-limit and captcha-replay state wearing a transient's clothes (PR **#141**, `7fa8215`). 079
+> fixed an access request that *succeeded* while showing the requester an operation envelope, and
+> then found the larger hole behind it: the request went into a table no product surface read
+> (PR **#143**, `81bc773`).
+>
+> Specs 069–072 shipped in v0.34.0/v0.35.0; 073–075 in v0.36.0. Nothing is in flight. The standing
+> rule still governs: the approved current design is the functional contract, and a required control
+> may not remain a placeholder.
 >
 > **Superseded framing, kept because the rule it states still applies (2026-07-03, owner correction):
 > Spec 068 — Product Functional Completion.**
@@ -450,25 +479,112 @@ Create and implement one reviewed spec at a time:
    job, and the Dashboard Command Center. **T021 (`NotificationChannelPolicy`) is deliberately unbuilt** — it
    guards an email-notification loop, and no email delivery channel for notifications exists to guard yet.
    Source: `specs/072-*/`.
+10. **Spec 073 - Admin polish and correctness** — done, merged via PR **#129** (`9b5939f`). Seven truthful-surface
+    fixes: the Add-ons state filter, the Data Models inline-SVG loss, the inert Operations mode preview, the
+    record-detail em-dash bug, `CorexSelect` on the remaining dropdowns, the doubled toolbar count, and the
+    admin prose rhythm baseline. Source: `specs/073-*/`.
+11. **Spec 074 - Core admin truthfulness and integration closure** — done, merged via PR **#130** (`d243b7f`). A unified form
+    catalog so a form registered in `FormRegistry` is discoverable everywhere without a site-specific filter hook;
+    capability-aware Data Models tabs plus `corex_subscribers` as the first genuinely import- and
+    migration-capable managed model; the Submission Inbox heading rhythm; a Notifications action center that
+    separates *read* from *resolved* and collapses eight saved views to three; and a capability summary that
+    answers "what can this site do" where the question is asked. Decisions #157–#160. Source:
+    `specs/074-core-admin-truthfulness-and-integration-closure/`.
+12. **Spec 075 - Blog Pro functional completion** — done, merged via PR **#132**. Blog Pro's services and REST
+    existed but its React screen was a read-only reference dashboard that called `useReducer` and discarded
+    the dispatch, leaving the whole client state module unreachable and all seven routes without a caller.
+    It is now a workspace: choose the post (the choice is the URL), move it through review with a note, and
+    approve/spam/trash the comments waiting on it — with "no data yet" distinguished from zero, and two
+    exports deleted rather than wired to something that could not honestly call them. Decisions #161–#162.
+    Source: `specs/075-blog-pro-functional-completion/`.
+13. **Spec 076 - Admin date & time foundation** — done, merged via PR **#138**. One formatting contract for the
+    whole admin, shared by PHP and JavaScript against a common fixture: site timezone as the single source of
+    truth, active WordPress locale, semantic `<time>` markup, relative times whose exact value is readable
+    rather than hover-only, and truthful fallbacks — a non-positive integer is an absence, not 1970.
+    Source: `specs/076-admin-datetime-foundation/`.
+14. **Spec 077 - Operations & security UX and safety completion** — done, merged via PR **#140** (`f32de72`).
+    Every operations mode discloses what changing to it will do and the confirmation it requires, before it is
+    applied; a no-op change stops reporting "Saved"; a login slug colliding with an existing page or route is
+    refused. The screen is sectioned, and the server's render is the instruction the no-JavaScript path follows.
+    Source: `specs/077-operations-security-completion/`.
+15. **Spec 078 - Cache architecture and performance management** — done, merged via PR **#141** (`7fa8215`).
+    Classification first, because the obvious implementation — a sweep of `corex_*` transients — would have
+    reset brute-force protection and re-opened the captcha replay window at exactly the moment an operator
+    reaches for it. Nothing in the feature deletes by pattern; clearing walks declared entries. Seven layers
+    reported from real checks, with "cannot look" distinguished from "off". Decisions #171–#173.
+    Source: `specs/078-cache-architecture/`.
+16. **Spec 079 - Unified admin error and access request experience** — done, merged via PR **#143** (`81bc773`).
+    The denied screen's form posted the browser at a REST endpoint, so asking for access rendered a JSON
+    document — and the request had *succeeded*, so this was a success displayed as an operation envelope.
+    Reproducing it found two worse things: a CoreX address with no screen behind it told administrators they
+    lacked `manage_options` at HTTP 403, and `AccessRequestStore::pending()` had no production caller at all,
+    so requests landed in a table no surface read. Decisions #174–#177.
+    Source: `specs/079-admin-errors-access-request/`.
+17. **Spec 083 - Every admin refusal is a CoreX page** — done, merged via PR **#151** (`77524df`).
+    Spec 079 shipped titled "unified admin error experience" with the unifying half unbuilt, and nothing
+    caught it because the only browser test touching a refusal visited the one URL that could not fail.
+    Measured first: nine of eleven admin addresses rendered WordPress's white box to a real subscriber,
+    including CoreX's own Careers screen. Decisions #187–#188.
+    Source: `specs/083-admin-error-surface/`.
+18. **Spec 084 - An extendable user-guide add-on** — done, merged via PR **#152** (`e6ec188`).
+    `addons/corex-guides` ships CoreX's own in-admin guides and the registry a client site extends with
+    guides for its own content types. Registration defers to first read, because CoreX and a site plugin
+    both boot on `plugins_loaded` at priority 10. Supersedes spec 082. Decision #189.
+    Source: `specs/084-guides-addon/`.
+19. **Spec 085 - Production findings from a live build** — done, merged via PR **#153** (`7439ddc`).
+    Issues #148, #149 and #150. Two of the eleven reported items needed no work, and the most instructive
+    finding was that spec 080's better empty state made an unrelated defect *harder* to see.
+    Decisions #190–#191.
+    Source: `specs/085-production-findings/`.
+20. **Spec 081 - Files, end to end** — done, merged via PR **#154** (`47d040d`). Issue #138 items 6–9.
+    The framework had no upload handling at all: a repo-wide search for `wp_handle_upload` found two
+    comments describing one and no code. A protected file is now protected by a capability check rather
+    than a deny file. Decisions #192–#194.
+    Source: `specs/081-forms-files-end-to-end/`.
+21. **Spec 086 - Consumer validation against a real fork** — done, merged via PR **#156** (`211e710`),
+    released as **v0.38.1**. Standing up a site plugin that followed the published documentation found four
+    defects, none visible from the code — including one where a site plugin following our own guides could
+    take the whole site down, because CoreX and the starter this framework *generates* both boot on
+    `plugins_loaded` at priority 10 and `Boot::app()` throws rather than returning null. Decisions #195–#196.
+    No durable spec directory; the branch identifier is retained so 086 is not reused.
+22. **Spec 087 - Reaching a human, notifications that lead somewhere, controls you can see** — done, merged
+    via PR **#158**. Five owner-reported items, four of which sat behind code that reads correctly: the Guides
+    add-on had no way to contact anybody; the notification call-to-action existed end to end and was dark three
+    ways at once (the server sent `label_key` while the client read `label`, the documented `ability` gate was
+    never enforced, and seven of eight producers set no action at all); every snooze click answered 422; a
+    `<Button>` with no variant kept Gutenberg's ink on the dark surface; and the blue focus ring was a
+    specificity loss to `.wp-core-ui .button:focus` at (0,3,0) against a CoreX rule inside `:where()` at
+    (0,2,0). Decisions #197–#201. Source: `specs/087-guides-support-and-admin-controls/`.
+23. **Spec 088 - Public release readiness** — this one. One canonical repository URL (the plugin `Update URI`
+    headers had been pointing update checks at an organisation that does not publish releases — a functional
+    defect shipping in every installed copy), a roadmap that matches the released version, and
+    `PROJECT-STATUS.md`: every module with a status, and every gap traced to the file that records it.
+    Source: `specs/088-public-release-readiness/`.
 
-### Candidates for the next spec — owner decision
+### Candidates for a later spec — owner decision
 
 Nothing is authorized by appearing here (§16). Listed so the choice is informed, roughly by cost:
 
-- **Astro 7 migration for `docs-app`.** The original blocker is gone: `@astrojs/starlight@0.41.3` peers
-  `astro ^7`, and astro 7.1.3 builds the docs to the same 284 pages with no config change. It is held only by a
-  packaging question — regenerating `docs-app/package-lock.json` makes npm expand the `corex-framework`
-  `file:..` workspace root into the docs tree, taking npm-docs from 5 advisories to 17. Resolving that also
-  retires four of the bounded exceptions in `.github/dependency-security-policy.json`, whose review dates fall
-  2026-09-30.
+- **Capability Inspector / System Map.** Spec 074 adds a bounded capability summary to the Models screen
+  (what is registered, what it can do, what is missing, where to act). A full cross-module system map — every
+  provider, seam, job, and integration with live health — is the natural successor and is deliberately *not*
+  in 074's scope.
+
+- ~~**Astro 7 migration for `docs-app`.**~~ Done in spec 089 — `astro@7.1.5` + `@astrojs/starlight@0.41.5`,
+  286 pages, no config change. The packaging question that held it turned out not to be independent: expanding
+  the `corex-framework` `file:..` workspace root into the docs tree only mattered while the *root* tooling was
+  dirty, so fixing the root removed the blocker. The regenerated lockfile contains no root dev tooling at all.
 - **The three excluded browser specs.** Two block-editor specs trade a first-open failure between them, and one
   flow-builder spec times out mid-interaction; each carries its ruled-out causes in
   `tests/e2e/playwright.config.js`. Real coverage gaps, already diagnosed down to "needs fresh eyes".
-- ~~**`wp corex version` completeness.**~~ Closed by PR #126 in **v0.35.1** — the command now stamps 17 files
-  including `docs-app/src/version.ts`, so a release can no longer ship with the docs site advertising the
-  previous version.
+- ~~**`wp corex version` completeness.**~~ Closed twice. PR #126 in **v0.35.1** brought `docs-app/src/version.ts`
+  into reach; cutting **v0.39.0** found that `package.json`, `README.md`, `ROADMAP.md` and both status pages were
+  still stamped by hand — which is how this file came to sit three releases behind a correct README. All are
+  stamped now (DECISIONS #205).
+- ~~**The 24 bounded dependency exceptions.**~~ Closed by spec 089. The policy file holds none, and
+  `verify:dependencies` passes across Composer, npm-root and npm-docs.
 - **M3/M4 product tracks** (§6–§7), which remain the substantive product direction and are the only items here
   that would be a *feature* spec rather than remediation.
 
-Spec number 056 remains unavailable. Specs 066 and 067 are historical branch/decision identifiers without durable
+Spec number 056 remains unavailable. Specs 066, 067 and **086** are historical branch/decision identifiers without durable
 feature directories; do not reuse them.

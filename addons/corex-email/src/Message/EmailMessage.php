@@ -20,7 +20,6 @@ final class EmailMessage
      * @param list<string>         $cc
      * @param list<string>         $bcc
      * @param array<string,string> $headers
-     * @param string|null          $from sender address for this message; null uses the configured identity
      */
     public function __construct(
         public readonly array $to,
@@ -30,7 +29,26 @@ final class EmailMessage
         public readonly string $subject,
         public readonly string $body,
         public readonly array $headers = [],
+        /**
+         * The mailbox this one message should be sent from, or null for the configured default
+         * (#150).
+         *
+         * Last, and nullable, so every existing positional caller is untouched — this is additive.
+         *
+         * The address only, never the display name. The name is the brand and is the same whichever
+         * mailbox a message leaves from; a per-message display name would be a different and more
+         * dangerous feature, since a sender name that varies per message is how a spoof reads.
+         */
         public readonly ?string $from = null,
+        /**
+         * Attachment ids, resolved to paths at the driver (spec 081, FR-010).
+         *
+         * Ids rather than paths, all the way through: a message that carried a path could carry
+         * one a request supplied, and `wp_mail()` would happily read it.
+         *
+         * @var list<int>
+         */
+        public readonly array $attachments = [],
     ) {
     }
 }

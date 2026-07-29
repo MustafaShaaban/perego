@@ -2,7 +2,56 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-28, latest) — Round 14: documents, zoom, and dragging the real cards
+## RESUME HERE (2026-07-29, latest) — Round 15: CoreX v0.35.1 → v0.40.0
+
+**Branch `chore/corex-v0.40.0-update`** (off `feature/023`), spec `specs/024-corex-v0.40.0-update/`.
+25 commits, 339 framework files, 0 deletions, 0 renames.
+
+**The recorded plan was obsolete in our favour.** The v0.37.0 assessment promised eleven fixes to
+re-apply; by v0.40.0 upstream had adopted **all four** of our fork commits — including our
+`data-corex-messages` fix *and its reasoning, verbatim*, at `corex-runtime.js:444`. The edits were
+deleted rather than carried. That entry is now marked superseded in place.
+
+**Two framework files stay ours, both live upstream defects.** `MailService::deliver()` rebuilds the
+message with seven constructor arguments and drops `$from` and `$attachments` at the one point every
+send passes through — Perego's three mailboxes would have silently become one. `SubmissionsSource` is
+untouched upstream. Ours now passes by name, not position.
+
+**Three regressions landed in `sites/perego/`, where nothing conflicts:** Arabic validation messages
+reverted to English (our map keys on exact English strings, upstream reworded three), `max_words` lost
+its client rule, phone loosened. All fixed, and the Arabic one now has a test that fails on the next
+rewording instead of going quiet.
+
+**A fourth surfaced from the client's phone, and it is the mirror image of the other three: not a
+patch lost, a patch arriving twice.** v0.40.0 adopted our #148 fix, so `corex-runtime.js` now emits
+`corex:form:error` from its own client-validation branch — while the theme still ran
+`initClientValidationToasts()`, written when it did not. Every rejected submit raised **two identical
+toasts** (measured on the live contact form: 2 events, 2 toasts, one click). The shim is deleted;
+`initFormToasts()` alone now carries the visual channel. Removing a compensating patch is part of
+taking the upstream one — the checklist for the next update should ask, for each adopted commit,
+what we wrote *around* it.
+
+> **⚠ Two things to carry forward.** `RuleRegistry::register()` **throws** on a duplicate and has no
+> unregister — there is no override seam, and assuming one took the site down at `init`. And the
+> `?ver` allowance is now **two** assets: upstream fixed the spinner shorthand, so `corex-runtime.css`
+> moves alongside `corex-runtime.js`.
+
+- **Verified:** Framework Pest **1723** (was 1479) · Perego Pest **594** (was 582) · Perego Jest **303**
+  (was 300) · audit + `verify:dependencies` clean · `@wordpress/scripts` 32→33 rebuilt Perego cleanly ·
+  `verify-a11y` **0 serious** · `verify-editor-sorting` green · every route byte-identical EN/AR bar
+  the declared changes, attribute sets compared as sets with **zero differences** · live submission
+  `ok:true` with the multi-value field stored as a list · all nine messages Arabic on `/ar/`.
+- **Framework Jest now reads 52 suites / 431 tests, down from "191 / 1092" — a correction, not a loss.**
+  `jest.config.js` was sweeping in two `.claude/worktrees/` copies: 158 duplicate files and 76 phantom
+  failures, the same 52 suites run three times.
+
+### Next
+
+1. **Open the four upstream issues** listed in `specs/024-corex-v0.40.0-update/spec.md`.
+2. **Content, not code:** Graphic Design and Motion still need real projects — the seeded ones are
+   clearly-labelled "Example NN" placeholders.
+
+## Round 14: documents, zoom, and dragging the real cards
 
 **Branch `feature/023-project-media-and-canvas-ordering`** (off `feature/022`), spec
 `specs/023-project-media-and-canvas-ordering/`. The remaining three owner items.

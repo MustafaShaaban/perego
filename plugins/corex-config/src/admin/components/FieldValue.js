@@ -1,47 +1,97 @@
 /**
- * FieldValue — one captured value, rendered so an operator can act on it.
+ * FieldValue — one stored value, rendered for an operator (#149 item 2).
  *
- * Every admin surface that shows a submission's payload stringified the value and stopped there, so
- * a stored URL arrived as text an operator had to select and paste. That is fine for a name and
- * useless for a document: the careers form records the applicant's CV as a link, and the reviewer
- * looking at the submission had no way to open it from the screen they were on (client report
- * 2026-07-27). Anything that is an http(s) URL is therefore a real anchor here.
+ * A careers form records the applicant's CV as a URL on the submission. Before this, the reviewer
+ * looking at that submission had a document they could see and not open: every admin surface
+ * stringified and stopped, so the link was text to select and paste into the address bar. That was
+ * a client report, not a hypothetical.
  *
- * Only http and https are linked. The values are visitor-supplied, so a `javascript:` or `data:`
- * string must render as inert text — and `rel="noopener noreferrer"` keeps a followed link from
- * reaching back into the admin session.
+ * **Only `http(s)` becomes a link, and that restriction is the point.** These values are supplied by
+ * visitors. A `javascript:` or `data:` string that became an anchor would be a stored-XSS vector
+ * aimed squarely at the person reviewing submissions — the one user on the site with a session
+ * worth stealing. Anything that is not an absolute http(s) URL stays inert text.
+ *
+ * `rel="noopener noreferrer"` for the same reason: a followed link must not reach back into the
+ * admin session through `window.opener`, and the admin URL is not a referrer worth leaking.
  */
 import { __ } from '@wordpress/i18n';
 
-const HTTP_URL = /^https?:\/\/\S+$/i;
+/**
+ * An absolute http(s) URL and nothing else.
+ *
+ * Anchored at both ends, and no whitespace anywhere: a value like
+ * `https://example.test javascript:alert(1)` must not match on its prefix.
+ */
+const LINKABLE = /^https?:\/\/\S+$/i;
 
-/** The display text for a value of any shape. Objects keep their JSON — structure is the point. */
-export function toText( value ) {
-	if ( value === null || value === undefined ) {
-		return '';
-	}
-	return typeof value === 'object' ? JSON.stringify( value ) : String( value );
+/**
+ * A stored file, as `TableDataSource::describeAttachment()` sends it.
+ *
+ * @param {Object} value `{ id, name, url, missing }`.
+ * @return {boolean} Whether this value is a described attachment.
+ */
+function isAttachment( value ) {
+	return (
+		value !== null &&
+		typeof value === 'object' &&
+		typeof value.id === 'number' &&
+		'missing' in value
+	);
 }
 
-export default function FieldValue( { value, empty = '—' } ) {
-	const text = toText( value );
+export default function FieldValue( { value } ) {
+	// An attachment id used to render as a bare integer — a file an operator could see the
+	// existence of and not open (#138 item 6). The server resolves it to a name and a
+	// capability-checked delivery address; this renders that.
+	if ( isAttachment( value ) ) {
+		if ( value.missing ) {
+			// Not an em dash. "Nobody uploaded anything" and "the file this record points at is
+			// gone" are different facts, and only one of them is somebody's problem.
+			return (
+				<span className="corex-field-value is-missing">
+					{ __( 'File missing', 'corex' ) }
+				</span>
+			);
+		}
 
-	if ( text === '' ) {
-		return empty;
+		return (
+			<a
+				className="corex-field-value corex-field-value--file"
+				href={ value.url }
+				target="_blank"
+				rel="noopener noreferrer"
+			>
+				{ value.name }
+				<span className="screen-reader-text">
+					{ ' ' }
+					{ __( '(opens in a new tab)', 'corex' ) }
+				</span>
+			</a>
+		);
 	}
 
-	if ( ! HTTP_URL.test( text ) ) {
-		return text;
+	const text = value === null || value === undefined ? '' : String( value );
+
+	if ( text.trim() === '' ) {
+		return <span className="corex-field-value is-empty">—</span>;
+	}
+
+	if ( ! LINKABLE.test( text.trim() ) ) {
+		return <span className="corex-field-value">{ text }</span>;
 	}
 
 	return (
 		<a
-			href={ text }
+			className="corex-field-value corex-field-value--link"
+			href={ text.trim() }
 			target="_blank"
 			rel="noopener noreferrer"
-			title={ __( 'Opens in a new tab', 'corex' ) }
 		>
-			{ text }
+			{ text.trim() }
+			<span className="screen-reader-text">
+				{ ' ' }
+				{ __( '(opens in a new tab)', 'corex' ) }
+			</span>
 		</a>
 	);
 }

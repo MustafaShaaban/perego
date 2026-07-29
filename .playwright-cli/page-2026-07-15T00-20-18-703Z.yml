@@ -1,0 +1,182 @@
+- generic [active] [ref=e1]:
+  - link "Skip to content" [ref=e2] [cursor=pointer]:
+    - /url: "#main"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - link "Skip to content" [ref=e5] [cursor=pointer]:
+        - /url: "#main"
+      - banner [ref=e6]:
+        - generic [ref=e7]:
+          - link "Perego — home" [ref=e8] [cursor=pointer]:
+            - /url: http://perego.local/
+          - navigation "Primary" [ref=e9]:
+            - list [ref=e10]:
+              - listitem [ref=e11]:
+                - link "Home" [ref=e12] [cursor=pointer]:
+                  - /url: http://perego.local/
+              - listitem [ref=e13]:
+                - link "About Us" [ref=e14] [cursor=pointer]:
+                  - /url: http://perego.local/#about
+              - listitem [ref=e15]:
+                - link "Services" [ref=e16] [cursor=pointer]:
+                  - /url: http://perego.local/#services
+              - listitem [ref=e19]:
+                - link "Work" [ref=e20] [cursor=pointer]:
+                  - /url: http://perego.local/work
+              - listitem [ref=e21]:
+                - link "Journal" [ref=e22] [cursor=pointer]:
+                  - /url: http://perego.local/journal
+              - listitem [ref=e23]:
+                - link "Clients" [ref=e24] [cursor=pointer]:
+                  - /url: http://perego.local/#clients
+              - listitem [ref=e25]:
+                - link "Contact Us" [ref=e26] [cursor=pointer]:
+                  - /url: http://perego.local/contact
+          - link "Start a Project" [ref=e27] [cursor=pointer]:
+            - /url: http://perego.local/contact
+          - group "Language" [ref=e28]:
+            - link "AR" [ref=e29] [cursor=pointer]:
+              - /url: http://perego.local/ar/terms-2/
+            - generic [ref=e30]: EN
+    - main [ref=e31]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - navigation "Breadcrumb" [ref=e35]:
+            - link "Home" [ref=e36] [cursor=pointer]:
+              - /url: http://perego.local/
+            - generic [ref=e37]: /
+            - generic [ref=e38]: Terms & Conditions
+          - heading "Terms & Conditions" [level=1] [ref=e39]
+          - paragraph [ref=e40]: "Last updated: July 1, 2026"
+        - generic [ref=e41]:
+          - complementary "On this page" [ref=e42]:
+            - heading "On this page" [level=2] [ref=e43]
+            - list [ref=e44]:
+              - listitem [ref=e45]:
+                - link "1. Acceptance of Terms" [ref=e46] [cursor=pointer]:
+                  - /url: "#s1"
+              - listitem [ref=e47]:
+                - link "2. Services We Provide" [ref=e48] [cursor=pointer]:
+                  - /url: "#s2"
+              - listitem [ref=e49]:
+                - link "3. Client Responsibilities" [ref=e50] [cursor=pointer]:
+                  - /url: "#s3"
+              - listitem [ref=e51]:
+                - link "4. Intellectual Property" [ref=e52] [cursor=pointer]:
+                  - /url: "#s4"
+              - listitem [ref=e53]:
+                - link "5. Payments & Refunds" [ref=e54] [cursor=pointer]:
+                  - /url: "#s5"
+              - listitem [ref=e55]:
+                - link "6. Limitation of Liability" [ref=e56] [cursor=pointer]:
+                  - /url: "#s6"
+              - listitem [ref=e57]:
+                - link "7. Changes to These Terms" [ref=e58] [cursor=pointer]:
+                  - /url: "#s7"
+              - listitem [ref=e59]:
+                - link "8. Contact" [ref=e60] [cursor=pointer]:
+                  - /url: "#s8"
+          - generic [ref=e63]:
+            - paragraph [ref=e64]:
+              - emphasis [ref=e65]: Draft for design/layout purposes — the section bodies below are placeholder guidance and must be written and reviewed by legal counsel before publication.
+            - heading "1. Acceptance of Terms" [level=2] [ref=e66]
+            - paragraph [ref=e67]: Draft section — replace with the reviewed legal text for “Acceptance of Terms”. Do not publish placeholder legal copy.
+            - heading "2. Services We Provide" [level=2] [ref=e68]
+            - paragraph [ref=e69]: Draft section — replace with the reviewed legal text for “Services We Provide”. Do not publish placeholder legal copy.
+            - heading "3. Client Responsibilities" [level=2] [ref=e70]
+            - paragraph [ref=e71]: Draft section — replace with the reviewed legal text for “Client Responsibilities”. Do not publish placeholder legal copy.
+            - heading "4. Intellectual Property" [level=2] [ref=e72]
+            - paragraph [ref=e73]: Draft section — replace with the reviewed legal text for “Intellectual Property”. Do not publish placeholder legal copy.
+            - heading "5. Payments & Refunds" [level=2] [ref=e74]
+            - paragraph [ref=e75]: Draft section — replace with the reviewed legal text for “Payments & Refunds”. Do not publish placeholder legal copy.
+            - heading "6. Limitation of Liability" [level=2] [ref=e76]
+            - paragraph [ref=e77]: Draft section — replace with the reviewed legal text for “Limitation of Liability”. Do not publish placeholder legal copy.
+            - heading "7. Changes to These Terms" [level=2] [ref=e78]
+            - paragraph [ref=e79]: Draft section — replace with the reviewed legal text for “Changes to These Terms”. Do not publish placeholder legal copy.
+            - heading "8. Contact" [level=2] [ref=e80]
+            - paragraph [ref=e81]: Draft section — replace with the reviewed legal text for “Contact”. Do not publish placeholder legal copy.
+    - contentinfo [ref=e82]:
+      - contentinfo [ref=e83]:
+        - generic [ref=e84]:
+          - generic [ref=e85]:
+            - link "Perego — home" [ref=e86] [cursor=pointer]:
+              - /url: http://perego.local/
+            - heading "Contact us" [level=2] [ref=e87]
+            - list [ref=e88]:
+              - listitem [ref=e89]:
+                - link "mostafa.emam3313@gmail.com" [ref=e90] [cursor=pointer]:
+                  - /url: mailto:mostafa.emam3313@gmail.com
+              - listitem [ref=e92]:
+                - link "yehemam2@gmail.com" [ref=e93] [cursor=pointer]:
+                  - /url: mailto:yehemam2@gmail.com
+              - listitem [ref=e95]:
+                - link "+996 56 293 2759" [ref=e96] [cursor=pointer]:
+                  - /url: tel:+996562932759
+              - listitem [ref=e98]:
+                - link "+20 111 54 855 72" [ref=e99] [cursor=pointer]:
+                  - /url: tel:+201115485572
+            - paragraph [ref=e101]: We would be delighted to hear from you to provide creative technical solutions, assistance, and tailored recommendations that best suit your needs.
+            - list "Social media" [ref=e102]:
+              - listitem [ref=e103]:
+                - link "Perego on Instagram" [ref=e104] [cursor=pointer]:
+                  - /url: https://www.instagram.com/
+              - listitem [ref=e107]:
+                - link "Perego on Facebook" [ref=e108] [cursor=pointer]:
+                  - /url: https://www.facebook.com/
+              - listitem [ref=e111]:
+                - link "Perego on LinkedIn" [ref=e112] [cursor=pointer]:
+                  - /url: https://www.linkedin.com/
+              - listitem [ref=e115]:
+                - link "Perego on YouTube" [ref=e116] [cursor=pointer]:
+                  - /url: https://www.youtube.com/
+              - listitem [ref=e119]:
+                - link "Perego on WhatsApp" [ref=e120] [cursor=pointer]:
+                  - /url: https://wa.me/
+          - generic [ref=e124]:
+            - generic [ref=e125]:
+              - generic [ref=e126]: Full name
+              - textbox "Full name" [ref=e127]:
+                - /placeholder: Put your name here
+              - alert
+            - generic [ref=e128]:
+              - generic [ref=e129]: E-mail
+              - textbox "E-mail" [ref=e130]:
+                - /placeholder: Put your E-mail here
+              - alert
+            - generic [ref=e131]:
+              - generic [ref=e132]: Your message
+              - textbox "Your message" [ref=e133]:
+                - /placeholder: Say hello.
+              - alert
+            - textbox [ref=e134]
+            - button "Send" [ref=e135] [cursor=pointer]
+            - status
+          - generic [ref=e136]:
+            - heading "Join us" [level=2] [ref=e137]
+            - paragraph [ref=e138]: We’re constantly evolving. If you’re ready to grow with us, share your CV and portfolio.
+            - generic [ref=e139]:
+              - generic [ref=e140]:
+                - generic [ref=e141]: Full name
+                - textbox "Full name" [ref=e142]:
+                  - /placeholder: Put your name here
+              - generic [ref=e143]:
+                - generic [ref=e144]: Email
+                - textbox "Email" [ref=e145]
+              - generic [ref=e146]:
+                - generic [ref=e147]: Portfolio / website link
+                - textbox "Portfolio / website link" [ref=e148]:
+                  - /placeholder: Put your Portfolio/website link
+              - generic [ref=e149]:
+                - generic [ref=e150]: CV
+                - generic [ref=e151] [cursor=pointer]: Upload your CV here
+                - paragraph [ref=e153]: Upload your CV here
+              - textbox [ref=e154]
+              - button "Apply now" [ref=e155] [cursor=pointer]
+              - status [ref=e156]
+        - generic [ref=e157]:
+          - paragraph [ref=e158]: © 2026 Perego
+          - navigation "Legal" [ref=e159]:
+            - link "Terms & Conditions" [ref=e160] [cursor=pointer]:
+              - /url: http://perego.local/terms
+            - link "Privacy Policy" [ref=e161] [cursor=pointer]:
+              - /url: http://perego.local/privacy

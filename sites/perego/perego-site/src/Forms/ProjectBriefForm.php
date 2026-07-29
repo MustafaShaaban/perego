@@ -75,7 +75,11 @@ final class ProjectBriefForm extends Form
                 // the number are two controls in one field, and a half-width slot sized for one left
                 // the number ~151px for a ~190px placeholder, clipping the hint at every desktop
                 // width (client report 2026-07-28).
-                'rules' => ['phone'],
+                // `phone` is CoreX's, and gives immediate client-side feedback on obvious junk.
+                // `perego_phone` is Perego's, and is the one that actually requires a country code —
+                // CoreX v0.40.0 loosened its rule so a bare local number passes, and the registry has
+                // no way to replace a built-in. Server-side only, which is where it has to hold anyway.
+                'rules' => ['phone', 'perego_phone'],
                 'label' => __('Phone', 'perego-site'),
                 'placeholder' => __('Best number to reach you', 'perego-site'),
             ],

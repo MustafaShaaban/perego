@@ -47,6 +47,21 @@ final class MailService
             return $this->result('rejected', $rejection, $message);
         }
 
+        /*
+         * ⚠ FORK DIVERGENCE from upstream v0.40.0 — deliberate, and the only one in this addon.
+         *
+         * Upstream rebuilds the message here with SEVEN arguments, which silently drops `$from` and
+         * `$attachments`. Every send passes through this method, so a sender threaded all the way from
+         * `MailRequest` → `EmailMessage` → `MessageBuilder` → `RequestMailer` → the dispatcher arrives
+         * at the driver as null. Upstream's own spec-081 attachments feature is dead for the same
+         * reason, and Perego's three-mailbox routing (`PeregoMailbox`: info@ / contact@ / noreply@)
+         * collapses to the single configured identity with nothing logged. Reported upstream.
+         *
+         * Named arguments, not positional: this file has to survive upstream reordering the tail of a
+         * constructor it owns, and a positional 8th/9th argument would put the wrong value in the wrong
+         * slot with no error. Named binding fails loudly instead — which is the behaviour you want in
+         * the one place that cannot be allowed to lose data quietly.
+         */
         $clean = new EmailMessage(
             $this->valid($message->to),
             $this->valid($message->cc),
@@ -55,7 +70,8 @@ final class MailService
             $message->subject,
             $message->body,
             $message->headers,
-            $message->from,
+            from: $message->from,
+            attachments: $message->attachments,
         );
 
         if ($clean->to === []) {

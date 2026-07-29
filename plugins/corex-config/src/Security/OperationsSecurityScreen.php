@@ -10,6 +10,7 @@ namespace Corex\Config\Security;
 
 use Corex\Admin\AdminPage;
 use Corex\Config\AdminUi\ScreenAsset;
+use Corex\Config\Operations\ModeDisclosure;
 use Corex\Config\Operations\OperationsMode;
 use Corex\Config\Operations\OperationsModeController;
 use Corex\Config\Operations\OperationsModeStore;
@@ -20,6 +21,8 @@ use Corex\Config\Security\LoginProtection\LoginProtectionSettings;
 use Corex\Config\Security\LoginProtection\LoginProtectionSettingsStore;
 use Corex\Config\Security\LoginProtection\LoginUrl;
 use Corex\Security\Admin\AdminGuard;
+use Corex\Cache\Status\CacheStatusReport;
+use Corex\Support\DateTime\AdminDateTime;
 use DateTimeImmutable;
 
 defined('ABSPATH') || exit;
@@ -42,6 +45,9 @@ final class OperationsSecurityScreen
         private readonly ProductionReadinessSnapshotFactory $readiness,
         private readonly LoginProtectionSettingsStore $loginSettings,
         private readonly LoginLockoutReader $lockouts,
+        private readonly AdminDateTime $dateTime,
+        private readonly ModeDisclosure $disclosure,
+        private readonly CacheStatusReport $cacheStatus,
     ) {
     }
 
@@ -89,6 +95,51 @@ final class OperationsSecurityScreen
         );
         wp_localize_script('corex-operations-security', 'corexSecurity', $this->securityConfig());
         wp_set_script_translations('corex-operations-security', 'corex');
+
+        // The mode form's disclosure. Deliberately a separate, buildless file rather than part of
+        // the React bundle: the form it enhances is server-rendered, and it must keep working when
+        // this script does not load at all (FR-013). Tying it to the app would make a React failure
+        // a form failure.
+        wp_enqueue_script(
+            'corex-operations-mode',
+            plugins_url('assets/operations-mode.js', COREX_CONFIG_FILE),
+            [],
+            ScreenAsset::version(dirname(COREX_CONFIG_FILE) . '/assets/operations-mode.js'),
+            true,
+        );
+    }
+
+    /**
+     * The screen's sections, in the order an operator meets them.
+     *
+     * An allow-list rather than a free `?tab=`: an unrecognised value falls back to the overview
+     * rather than rendering nothing, and nothing here can be reached that is not listed.
+     *
+     * `cache` was deliberately absent until spec 078 had something to put in it: a section
+     * promising cache management and delivering a heading would have been exactly the dead end the
+     * product mandate forbids.
+     *
+     * @return array<string, string>
+     */
+    private function sections(): array
+    {
+        return [
+            'overview'  => __('Overview', 'corex'),
+            'environment' => __('Environment & Maintenance', 'corex'),
+            'login'     => __('Login Protection', 'corex'),
+            'hardening' => __('Hardening', 'corex'),
+            'activity'  => __('Activity', 'corex'),
+            'cache'     => __('Cache & Performance', 'corex'),
+        ];
+    }
+
+    /** The section asked for, when it is one we have. Otherwise the overview. */
+    private function activeSection(): string
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view state.
+        $requested = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : '';
+
+        return array_key_exists($requested, $this->sections()) ? $requested : 'overview';
     }
 
     public function render(): void
@@ -101,6 +152,7 @@ final class OperationsSecurityScreen
 
         $checks   = $this->checks->checks($this->facts());
         $warnings = $this->checks->warnings($checks);
+        $active   = $this->activeSection();
 
         echo $this->page->open(
             'operations-security',
@@ -108,13 +160,247 @@ final class OperationsSecurityScreen
             __('The operating mode, WordPress hardening status, and security posture for this site.', 'corex'),
         );
 
+        // Links, not an ARIA tablist. `AdminPage::tabs()` renders `?tab=` anchors with
+        // `aria-current="page"`, which means the address reflects the section, Back and Forward
+        // work, a redirect can land on the right one, and every bit of it works with JavaScript
+        // off — none of which a tablist gives without writing focus management first.
+        echo $this->page->tabs(
+            'corex-operations-security',
+            $this->sections(),
+            $active,
+            __('Operations sections', 'corex'),
+        );
+
         echo $this->statusNotice();
-        echo '<div id="corex-security-app" aria-live="polite"></div>';
-        echo $this->modeCard();
-        echo $this->checksCard($checks, $warnings);
-        echo $this->auditCard();
-        echo $this->deferralNote();
+        echo '<div class="corex-opsec__sections">';
+        echo $this->section($active, $checks, $warnings);
+        echo '</div>';
         echo $this->page->close();
+    }
+
+    /**
+     * One section's content. Each is a real surface with real state — none renders empty.
+     *
+     * The React island moves with its section rather than mounting once for the whole screen: its
+     * panels belong to three different sections now, so the mount node names the section and the
+     * app renders only that section's panels. One app, one state module, three homes.
+     *
+     * @param list<array<string,mixed>> $checks
+     */
+    private function section(string $active, array $checks, int $warnings): string
+    {
+        return match ($active) {
+            'environment' => $this->securityApp('environment') . $this->modeCard() . $this->auditCard(),
+            'login'       => $this->securityApp('login'),
+            'hardening'   => $this->checksCard($checks, $warnings),
+            'activity'    => $this->securityApp('activity'),
+            'cache'       => $this->cacheCard(),
+            default       => $this->overviewCard($checks, $warnings),
+        };
+    }
+
+
+    /**
+     * Cache & Performance (spec 078, FR-016).
+     *
+     * Every layer, its real state, and — where CoreX can act — a control that performs a real
+     * operation. Where it cannot, the reason is on screen rather than a disabled button with no
+     * explanation, because "why is this greyed out" is the question a disabled control always asks
+     * and rarely answers.
+     */
+    private function cacheCard(): string
+    {
+        $rows = '';
+
+        foreach ($this->cacheStatus->layers() as $layer) {
+            $checked = $this->dateTime->format(
+                $layer->checkedAt,
+                AdminDateTime::FULL,
+                __('Not checked', 'corex'),
+            );
+
+            $action = $layer->manageable && $layer->safeToClear
+                ? '<button type="button" class="button corex-cache__action" data-corex-cache-clear="'
+                    . esc_attr($layer->key) . '">' . esc_html__('Clear', 'corex') . '</button>'
+                : '<span class="corex-cache__no-action">' . esc_html__('No action here', 'corex') . '</span>';
+
+            $rows .= '<li class="corex-cache__layer is-' . esc_attr($layer->state->value) . '">'
+                . '<div class="corex-cache__layer-head">'
+                . '<span class="corex-cache__layer-name">' . esc_html($layer->name) . '</span>'
+                . '<span class="corex-cache__layer-state">' . esc_html($layer->state->label()) . '</span>'
+                . '</div>'
+                . '<p class="corex-cache__layer-purpose">' . esc_html($layer->purpose) . '</p>'
+                . ($layer->detail !== ''
+                    ? '<p class="corex-cache__layer-detail">' . esc_html($layer->detail) . '</p>'
+                    : '')
+                . '<p class="corex-cache__layer-meta">'
+                . ($layer->provider !== ''
+                    ? '<span>' . esc_html($layer->provider) . '</span>'
+                    : '')
+                . '<span>' . esc_html__('Checked', 'corex') . ' ' . $checked->toHtml() . '</span>'
+                . $action
+                . '</p>'
+                . '</li>';
+        }
+
+        return '<section class="corex-surface corex-cache">'
+            . '<p class="corex-admin__eyebrow">' . esc_html__('CACHE & PERFORMANCE', 'corex') . '</p>'
+            . '<h2>' . esc_html__('What is caching on this site', 'corex') . '</h2>'
+            . '<p class="corex-opsec__detail">'
+            . esc_html__('Each layer is checked rather than assumed. CoreX’s own caches are safe to clear; rate limits and pending confirmations are never removed by a cache action.', 'corex')
+            . '</p>'
+            . '<ul class="corex-cache__layers">' . $rows . '</ul>'
+            . '</section>';
+    }
+
+    /** The React mount, told which section it is standing in. */
+    private function securityApp(string $section): string
+    {
+        return '<div id="corex-security-app" aria-live="polite" data-section="'
+            . esc_attr($section) . '"></div>';
+    }
+
+    /**
+     * The overview: everything an operator needs to decide whether to look further (FR-005).
+     *
+     * Every value is read, never assumed — and each links to the section that owns it, so this
+     * summarises rather than duplicating. The environment and the mode appear together here because
+     * this is the first place someone looks to answer "is this site live", and the two answers to
+     * that question have to be visible at the same time.
+     *
+     * @param list<array<string,mixed>> $checks
+     */
+    private function overviewCard(array $checks, int $warnings): string
+    {
+        $current  = $this->store->current();
+        $env      = $this->modes->describe($current);
+        $snapshot = $this->readiness->fromCurrentSite(new DateTimeImmutable('now'));
+        $blockers = count($snapshot->blockingKeys());
+        $policy   = $this->loginSettings->current();
+        $lockouts = $this->lockouts->recentLockouts(new DateTimeImmutable('now'));
+        $active   = 0;
+        $now      = new DateTimeImmutable('now');
+        foreach ($lockouts as $record) {
+            if ($record->lockedUntil !== null && $record->lockedUntil > $now) {
+                $active++;
+            }
+        }
+
+        $rows = [
+            [
+                __('Operations mode', 'corex'),
+                $env['label'],
+                'environment',
+            ],
+            [
+                __('WordPress environment', 'corex'),
+                $this->environmentType(),
+                'environment',
+            ],
+            [
+                __('Production readiness', 'corex'),
+                $blockers === 0
+                    ? __('No blockers', 'corex')
+                    : sprintf(
+                        /* translators: %d: number of blocking readiness checks. */
+                        _n('%d blocker', '%d blockers', $blockers, 'corex'),
+                        $blockers,
+                    ),
+                'environment',
+            ],
+            [
+                __('Maintenance', 'corex'),
+                $current === OperationsMode::MAINTENANCE
+                    ? __('Visitors see the maintenance page', 'corex')
+                    : __('Off', 'corex'),
+                'environment',
+            ],
+            [
+                __('Login protection', 'corex'),
+                $policy->enabled ? __('On', 'corex') : __('Off', 'corex'),
+                'login',
+            ],
+            [
+                __('Default login endpoints', 'corex'),
+                $policy->blockDefaultEndpoints
+                    ? __('Hidden', 'corex')
+                    : __('Reachable', 'corex'),
+                'login',
+            ],
+            [
+                __('Active lockouts', 'corex'),
+                (string) $active,
+                'login',
+            ],
+            [
+                __('Hardening warnings', 'corex'),
+                (string) $warnings,
+                'hardening',
+            ],
+        ];
+
+        $items = '';
+        foreach ($rows as [$label, $value, $section]) {
+            $items .= '<li class="corex-opsec__summary-item">'
+                . '<span class="corex-opsec__summary-label">' . esc_html($label) . '</span>'
+                . '<span class="corex-opsec__summary-value">' . esc_html($value) . '</span>'
+                . '<a class="corex-opsec__summary-link" href="' . esc_url($this->sectionUrl($section)) . '">'
+                . esc_html__('Open', 'corex') . '</a></li>';
+        }
+
+        return '<section class="corex-surface corex-opsec__summary">'
+            . '<p class="corex-admin__eyebrow">' . esc_html__('AT A GLANCE', 'corex') . '</p>'
+            . '<h2>' . esc_html__('Operations summary', 'corex') . '</h2>'
+            . $this->environmentConflictNotice()
+            . '<ul class="corex-opsec__summary-list">' . $items . '</ul>'
+            . '</section>';
+    }
+
+    private function sectionUrl(string $section): string
+    {
+        return add_query_arg(
+            ['page' => 'corex-operations-security', 'tab' => $section],
+            admin_url('admin.php'),
+        );
+    }
+
+    /** What the host and configuration declare, which CoreX reads and never writes. */
+    private function environmentType(): string
+    {
+        return function_exists('wp_get_environment_type')
+            ? (string) wp_get_environment_type()
+            : '';
+    }
+
+    /**
+     * Said out loud when the declared mode and the WordPress environment disagree (FR-014).
+     *
+     * Only when the mode was actually **declared**: a site that has merely inherited its mode from
+     * `wp_get_environment_type()` cannot conflict with it, and warning there would be noise on
+     * every fresh install.
+     *
+     * The wording is careful not to imply CoreX can change the environment. It cannot, and saying
+     * otherwise would invite someone to try to fix a hosting setting from this screen.
+     */
+    private function environmentConflictNotice(): string
+    {
+        $environment = $this->environmentType();
+        $mode        = $this->store->current();
+
+        if (! $this->store->isDeclared() || $environment === '' || $environment === $mode) {
+            return '';
+        }
+
+        return $this->page->state(
+            'warning',
+            __('Environment and mode differ', 'corex'),
+            sprintf(
+                /* translators: 1: WordPress environment type, 2: declared CoreX operations mode. */
+                __('WordPress reports this as a %1$s environment, while CoreX is set to %2$s. Both are shown because they mean different things: the environment is declared by your hosting or wp-config.php, and the CoreX mode is what you have told CoreX about how this site should behave. Changing the mode here does not change the environment.', 'corex'),
+                $environment,
+                $mode,
+            ),
+        );
     }
 
     /** A PRG success/error notice after a mode change (read-only query args; no state change here). */
@@ -128,6 +414,10 @@ final class OperationsSecurityScreen
 
         [$tone, $message] = match ($status) {
             'saved'   => ['success', __('Operations mode updated.', 'corex')],
+            // Distinct from 'saved' on purpose: nothing was written and nothing was logged, and a
+            // success message over a change that did not happen teaches the operator that this
+            // notice means nothing — on the screen where it has to mean something.
+            'unchanged' => ['info', __('No change — the site was already in that mode.', 'corex')],
             'blocked' => ['error', __('Production launch is blocked by readiness checks. Resolve them, or type PRODUCTION to override intentionally.', 'corex')],
             'production_confirm' => ['warning', __('Production mode needs typed confirmation. Type PRODUCTION and try again.', 'corex')],
             'confirm' => ['warning', __('That mode needs confirmation — tick the confirmation box and try again.', 'corex')],
@@ -170,31 +460,114 @@ final class OperationsSecurityScreen
         $inherited = $declared ? '' :
             '<p class="corex-opsec__detail">' . esc_html__('Inherited from the WordPress environment type — declare a mode to override it.', 'corex') . '</p>';
 
-        $productionGate = $blockers === []
-            ? esc_html__('Production launch is ready. Type PRODUCTION to confirm the live-mode change.', 'corex')
-            : sprintf(
-                /* translators: %d: number of blocking readiness checks */
-                esc_html(_n('%d blocking readiness check must be resolved or intentionally overridden by typing PRODUCTION.', '%d blocking readiness checks must be resolved or intentionally overridden by typing PRODUCTION.', count($blockers), 'corex')),
-                count($blockers),
-            );
-
         return '<section class="corex-surface corex-opsec__env is-' . esc_attr($env['tone']) . '">'
             . '<p class="corex-admin__eyebrow">' . esc_html__('OPERATIONS MODE', 'corex') . '</p>'
             . '<h2>' . esc_html($env['label']) . '</h2>'
             . '<p class="corex-opsec__detail">' . esc_html($env['detail']) . '</p>' . $inherited
             . '<ul class="corex-opsec__warnings">' . $warnings . '</ul>'
-            . '<form class="corex-opsec__mode-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '">'
+            . '<form class="corex-opsec__mode-form" method="post" action="' . esc_url(admin_url('admin-post.php')) . '"'
+            . ' data-corex-mode-form data-current-mode="' . esc_attr($current) . '">'
             . '<input type="hidden" name="action" value="' . esc_attr(OperationsModeController::ACTION) . '" />'
             . wp_nonce_field(OperationsModeController::ACTION, OperationsModeController::NONCE, true, false)
             . '<label class="corex-opsec__mode-label" for="corex-mode-select">' . esc_html__('Change mode', 'corex') . '</label>'
-            . '<select id="corex-mode-select" name="corex_mode" data-corex-select>' . $options . '</select>'
-            . '<label class="corex-opsec__mode-label" for="corex-production-confirm">' . esc_html__('Production confirmation', 'corex') . '</label>'
-            . '<input id="corex-production-confirm" type="text" name="corex_confirm_phrase" value="" autocomplete="off" placeholder="' . esc_attr__('Type PRODUCTION', 'corex') . '" />'
-            . '<p class="corex-opsec__detail">' . $productionGate . '</p>'
-            . '<label class="corex-opsec__mode-confirm"><input type="checkbox" name="corex_confirm" value="1" /> '
-            . esc_html__('I understand maintenance affects real visitors.', 'corex') . '</label>'
-            . '<button type="submit" class="button button-primary">' . esc_html__('Apply mode', 'corex') . '</button>'
+            // Both hooks: `data-corex-select` keeps the approved CoreX control (DECISIONS #141),
+            // and `data-corex-mode-select` is what the disclosure binds to. They compose because
+            // the upgrade keeps the native <select> as the submitted value and dispatches `change`
+            // on it — so a listener bound here still hears the custom control's selections.
+            . '<select id="corex-mode-select" name="corex_mode" data-corex-select data-corex-mode-select>'
+            . $options . '</select>'
+            . $this->modeBlocks($this->proposedMode($current), $blockers)
+            . '<button type="submit" class="button button-primary" data-corex-mode-apply>'
+            . esc_html__('Apply mode', 'corex') . '</button>'
             . '</form></section>';
+    }
+
+    /**
+     * The mode the form is currently offering to apply.
+     *
+     * `?mode=` when it names a real mode, otherwise whatever the site is in. The query argument is
+     * what makes the form work without JavaScript: a submission that fails for a missing
+     * confirmation redirects back proposing the same mode, and the confirmation it needs is then on
+     * screen. Read-only, so no nonce — it selects which description is visible and nothing else.
+     */
+    private function proposedMode(string $current): string
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view state.
+        $requested = isset($_GET['mode']) ? sanitize_key(wp_unslash($_GET['mode'])) : '';
+
+        return $this->modes->isValid($requested) ? $requested : $current;
+    }
+
+    /**
+     * One block per mode: what it means, what follows from it, and the confirmation it needs.
+     *
+     * All four are rendered and three are hidden, rather than fetching the right one over REST when
+     * the selection changes. A fetch would add a route, a spinner and a failure mode to a form that
+     * has none of those, to save markup nobody is paying for.
+     *
+     * The inputs in hidden blocks are `disabled`, which is the part that matters: a disabled control
+     * is not submitted, so the server can never receive a confirmation belonging to a mode the
+     * operator did not choose. Hiding alone would still post the field.
+     *
+     * @param list<string> $blockers Readiness blockers, for the production block.
+     */
+    private function modeBlocks(string $proposed, array $blockers): string
+    {
+        $blocks = '';
+
+        foreach ($this->disclosure->describeAll() as $described) {
+            $mode     = $described['mode'];
+            $isActive = $mode === $proposed;
+            $inert    = $isActive ? '' : ' disabled';
+
+            $consequences = '';
+            foreach ($described['consequences'] as $consequence) {
+                $consequences .= '<li>' . esc_html($consequence) . '</li>';
+            }
+
+            $blocks .= '<div class="corex-opsec__mode-block" data-mode="' . esc_attr($mode) . '"'
+                . ($isActive ? '' : ' hidden') . '>'
+                . '<p class="corex-opsec__detail">' . esc_html($described['summary']) . '</p>'
+                . '<ul class="corex-opsec__mode-consequences">' . $consequences . '</ul>'
+                . $this->confirmationControl($described['confirmation'], $mode, $blockers, $inert)
+                . '</div>';
+        }
+
+        return $blocks;
+    }
+
+    /**
+     * The one confirmation this mode asks for — and nothing belonging to any other mode.
+     */
+    private function confirmationControl(
+        string $confirmation,
+        string $mode,
+        array $blockers,
+        string $inert,
+    ): string {
+        if ($confirmation === ModeDisclosure::CONFIRM_PHRASE) {
+            $gate = $blockers === []
+                ? esc_html__('Production launch is ready. Type PRODUCTION to confirm the live-mode change.', 'corex')
+                : sprintf(
+                    /* translators: %d: number of blocking readiness checks */
+                    esc_html(_n('%d blocking readiness check must be resolved or intentionally overridden by typing PRODUCTION.', '%d blocking readiness checks must be resolved or intentionally overridden by typing PRODUCTION.', count($blockers), 'corex')),
+                    count($blockers),
+                );
+
+            return '<label class="corex-opsec__mode-label" for="corex-production-confirm">'
+                . esc_html__('Production confirmation', 'corex') . '</label>'
+                . '<input id="corex-production-confirm" type="text" name="corex_confirm_phrase" value=""'
+                . ' autocomplete="off" placeholder="' . esc_attr__('Type PRODUCTION', 'corex') . '"' . $inert . ' />'
+                . '<p class="corex-opsec__detail">' . $gate . '</p>';
+        }
+
+        if ($confirmation === ModeDisclosure::CONFIRM_ACKNOWLEDGEMENT) {
+            return '<label class="corex-opsec__mode-confirm">'
+                . '<input type="checkbox" name="corex_confirm" value="1"' . $inert . ' /> '
+                . esc_html__('I understand maintenance affects real visitors.', 'corex') . '</label>';
+        }
+
+        return '';
     }
 
     /**
@@ -216,14 +589,19 @@ final class OperationsSecurityScreen
         foreach ($history as $entry) {
             $user = $entry['user'] > 0 ? get_userdata($entry['user']) : false;
             $who  = $user ? $user->display_name : __('system', 'corex');
-            $when = $entry['time'] > 0
-                ? wp_date((string) get_option('date_format') . ' ' . (string) get_option('time_format'), $entry['time'])
-                : '';
+            // The `> 0` guard is gone because `Instant` now owns that rule: a non-positive
+            // timestamp is an absence everywhere, not a check each call site remembers to make.
+            $when = $this->dateTime->format(
+                $entry['time'],
+                AdminDateTime::FULL,
+                __('Time not recorded', 'corex'),
+            );
 
             $rows .= '<li class="corex-opsec__audit-row">'
                 . '<span class="corex-opsec__audit-change"><code>' . esc_html($entry['from']) . '</code> &rarr; <code>'
                 . esc_html($entry['to']) . '</code></span>'
-                . '<span class="corex-opsec__audit-meta">' . esc_html($who) . ' · ' . esc_html($when) . '</span></li>';
+                . '<span class="corex-opsec__audit-meta">' . esc_html($who) . ' · '
+                . $when->toHtml() . '</span></li>';
         }
 
         return '<section class="corex-surface corex-opsec__audit">'
@@ -260,22 +638,6 @@ final class OperationsSecurityScreen
     private function statusLabel(string $status): string
     {
         return $status === HardeningChecks::PASS ? __('Pass', 'corex') : __('Review', 'corex');
-    }
-
-    /**
-     * Recovery note for the implemented login-protection foundation: custom login routing, failed-login
-     * rate limiting, and the CLI reset command are all real; WordPress core files are never renamed.
-     */
-    private function deferralNote(): string
-    {
-        return '<div class="corex-opsec__note corex-surface">'
-            . '<p class="corex-opsec__note-title">' . esc_html__('Login recovery', 'corex') . '</p>'
-            . '<p class="corex-opsec__note-text">'
-            . esc_html__(
-                'Custom login routing and failed-login lockouts use a reversible recovery path: run wp corex security reset-login to restore the default login URL and release active lockouts. CoreX never renames WordPress core files.',
-                'corex',
-            )
-            . '</p></div>';
     }
 
     /**
@@ -324,7 +686,7 @@ final class OperationsSecurityScreen
                 'account' => $this->accountName($record->userId),
                 'reason' => $record->reasonCode,
                 'active' => $lockedUntil !== null && $lockedUntil > $now,
-                'locked_until' => $lockedUntil === null ? '' : $this->formatDate($lockedUntil),
+                'locked_until' => $lockedUntil === null ? '' : $this->machineDate($lockedUntil),
             ];
         }, $this->lockouts->recentLockouts($now));
     }
@@ -341,10 +703,18 @@ final class OperationsSecurityScreen
         return $user === false ? '' : $user->user_login;
     }
 
-    private function formatDate(DateTimeImmutable $date): string
+    /**
+     * The canonical machine value for a lockout expiry, for the React app to present.
+     *
+     * This used to return a *display* string built from the site's date/time options, with
+     * `$date->format('c')` as its fallback — so when `wp_date()` returned an empty string the
+     * screen showed a raw ISO timestamp to the operator. Sending the canonical value and letting
+     * `CorexTime` render it means one formatter decides how a date looks, and the fallback path
+     * cannot produce a different answer from the happy path (FR-015).
+     */
+    private function machineDate(DateTimeImmutable $date): string
     {
-        return wp_date((string) get_option('date_format') . ' ' . (string) get_option('time_format'), $date->getTimestamp())
-            ?: $date->format('c');
+        return gmdate(DATE_ATOM, $date->getTimestamp());
     }
 
     /**
@@ -417,7 +787,14 @@ final class OperationsSecurityScreen
                 'kind' => 'operations.mode.changed',
                 'label' => $label,
                 'tone' => 'info',
-                'occurred_at' => $entry['time'] > 0 ? wp_date(DATE_ATOM, (int) $entry['time']) : '',
+                // `gmdate`, not `wp_date`: both name the same instant, but `wp_date(DATE_ATOM)`
+                // writes it with the site's offset while every other machine value in CoreX —
+                // including `machineDate()` two methods up, and the whole persistence layer — is
+                // UTC. Two conventions in one payload is a question a future reader has to answer
+                // before they can trust either.
+                'occurred_at' => $entry['time'] > 0
+                    ? gmdate(DATE_ATOM, (int) $entry['time'])
+                    : '',
             ];
         }, $this->store->history(8));
     }

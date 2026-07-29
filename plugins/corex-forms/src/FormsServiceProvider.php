@@ -18,6 +18,8 @@ use Corex\Foundation\ServiceProvider;
 use Corex\Forms\Block\FormBlockRenderer;
 use Corex\Forms\Block\FlowBlockRenderer;
 use Corex\Forms\Block\ProtectedFormRegistry;
+use Corex\Forms\Catalog\FormCatalog;
+use Corex\Forms\Catalog\SubmissionCounts;
 use Corex\Forms\Forms\ContactForm;
 use Corex\Forms\Flow\FlowRepository;
 use Corex\Forms\Flow\FlowService;
@@ -68,6 +70,9 @@ use Corex\Mail\Mailer;
 use Corex\Mail\RoutedMailer;
 use Corex\Mail\MailTemplateCatalog;
 use Corex\Security\ChallengeVerifier;
+use Corex\Security\Upload\AttachmentStorage;
+use Corex\Security\Upload\AttachmentStore;
+use Corex\Security\Upload\UploadValidator;
 
 /**
  * Boots the forms engine: binds the headless cores (schema resolver, validator,
@@ -77,6 +82,27 @@ use Corex\Security\ChallengeVerifier;
  */
 final class FormsServiceProvider extends ServiceProvider
 {
+    /**
+     * What a form may accept when its own field does not narrow it (spec 081).
+     *
+     * Documents and images, nothing executable. A framework whose default upload policy accepted
+     * whatever the server's mime map allowed would be handing every site a file-drop endpoint it
+     * did not ask for, and the first person to notice would be whoever found the webshell.
+     *
+     * @var array<string,list<string>>
+     */
+    private const UPLOAD_TYPES = [
+        'application/pdf' => ['pdf'],
+        'image/jpeg' => ['jpg', 'jpeg'],
+        'image/png' => ['png'],
+        'image/webp' => ['webp'],
+        'application/msword' => ['doc'],
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document' => ['docx'],
+    ];
+
+    /** 10 MB. A form that needs more says so with `max_size:`. */
+    private const UPLOAD_MAX_BYTES = 10 * 1024 * 1024;
+
     public function register(): void
     {
         $this->container->singleton(RuleRegistry::class);
@@ -123,6 +149,20 @@ final class FormsServiceProvider extends ServiceProvider
         // Submission lifecycle — autowired from the bindings above plus the core
         // event seam, data layer, and middleware pipeline.
         $this->container->singleton(FormRegistry::class);
+
+        // The one list of every form CoreX knows about, whatever its source (spec 074, FR-1).
+        // Bound here rather than in corex-config because both of its inputs live in this plugin;
+        // the submission counter is optional, so a consumer that has none still gets a catalog —
+        // it just reports each count as unavailable rather than inventing a zero.
+        $this->container->singleton(
+            FormCatalog::class,
+            static fn (ContainerInterface $c): FormCatalog => new FormCatalog(
+                $c->make(FlowRepository::class),
+                $c->make(FormRegistry::class),
+                $c->has(SubmissionCounts::class) ? $c->make(SubmissionCounts::class) : null,
+            ),
+        );
+
         $this->container->singleton(SubmissionRepository::class);
         $this->container->singleton(FlowSchemaFactory::class);
         $this->container->singleton(FlowEmailAddressResolver::class);
@@ -189,7 +229,27 @@ final class FormsServiceProvider extends ServiceProvider
                 $c->make(ConfigInterface::class),
             ),
         );
-        $this->container->singleton(FormSubmissionService::class);
+        // The attachment store is built here rather than autowired: it needs an UploadValidator,
+        // and that needs an allow-list and a size cap, which are policy rather than dependencies.
+        // The defaults are deliberately narrow — a form declaring `mime:` widens them per field,
+        // and a framework that accepted anything by default would be handing every site an upload
+        // endpoint they did not ask for (spec 081).
+        $this->container->singleton(
+            AttachmentStorage::class,
+            static fn (): AttachmentStorage => new AttachmentStore(
+                new UploadValidator(self::UPLOAD_TYPES, self::UPLOAD_MAX_BYTES),
+            ),
+        );
+        $this->container->singleton(
+            FormSubmissionService::class,
+            static fn (ContainerInterface $c): FormSubmissionService => new FormSubmissionService(
+                $c->make(\Corex\Forms\FormRegistry::class),
+                $c->make(\Corex\Forms\Schema\SchemaResolver::class),
+                $c->make(\Corex\Forms\Validation\Validator::class),
+                $c->make(\Corex\Events\EventDispatcher::class),
+                $c->make(AttachmentStorage::class),
+            ),
+        );
         $this->container->singleton(SubmitController::class);
         $this->container->singleton(FormsListController::class);
         // Request-scoped: one registry per page render, shared between the renderer that declares
@@ -256,20 +316,24 @@ final class FormsServiceProvider extends ServiceProvider
     }
 
     /**
-     * Run the submitted form's own listeners, so `Form::listeners()` means what it says.
+     * One listener on the shared event, which runs the listeners of the form that was actually
+     * submitted.
      *
-     * This used to iterate every registered form at boot and register each distinct listener id once on
-     * the shared event, deduplicated across ALL forms. The dedupe made the list global rather than
-     * per-form: as soon as any one form declared a listener, that listener ran for every submission on
-     * the site. A form that overrode `listeners()` to drop, say, the email listener still got it — and a
-     * site that replaced the notification with its own then sent two emails per submission.
+     * This used to walk every registered form at boot and register each distinct listener id once,
+     * **deduplicated across all forms**, onto the shared `FormSubmittedEvent`. The resulting list
+     * was global: as soon as any one form declared a listener, that listener ran for every
+     * submission on the site. `Form::listeners()` documents itself as overridable, and overriding
+     * it to *remove* a listener did nothing at all — a site replacing the built-in notification
+     * with its own sent two emails per submission. Reported from a real build (issue #138, item 1).
      *
-     * One listener now resolves the form by slug at event time and runs only that form's list. An
-     * unknown slug (a DB flow rather than a registered Form) matches nothing and is left alone.
+     * Resolution stays lazy for the reason the original was: the listener graph reaches the mail
+     * stack, including the optional Email Studio router, and building it at boot loads translations
+     * before `init`. Listeners are singletons, so a listener shared by several forms is still
+     * constructed once.
      *
-     * Registration stays lazy for the same reason as before: a listener drags in its whole mail
-     * dependency graph, including the optional Email Studio router, and building that at boot would load
-     * the mail stack's translations before `init`. Listeners are singletons, so each still builds once.
+     * A slug with no registered `Form` — a database-defined flow rather than a code-defined form —
+     * matches nothing and is skipped, which is the correct answer rather than a fallback to
+     * "everything".
      */
     private function registerListeners(): void
     {
@@ -277,17 +341,14 @@ final class FormsServiceProvider extends ServiceProvider
 
         $this->container->make(ListenerProvider::class)->listen(
             FormSubmittedEvent::class,
-            static function (object $event) use ($container): void {
-                if (! $event instanceof FormSubmittedEvent) {
-                    return;
-                }
-
+            static function (FormSubmittedEvent $event) use ($container): void {
                 $form = $container->make(FormRegistry::class)->find($event->formSlug);
+
                 if ($form === null) {
                     return;
                 }
 
-                foreach (array_unique($form->listeners()) as $listenerId) {
+                foreach ($form->listeners() as $listenerId) {
                     ($container->make($listenerId))($event);
                 }
             },

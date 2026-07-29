@@ -4,6 +4,419 @@ All notable changes to Corex are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project adheres to
 [Semantic Versioning](https://semver.org/) (pre-1.0: the API may still move).
 
+## [Unreleased]
+
+## [0.40.0] — 2026-07-29
+
+Every dependency advisory closed. The policy file that held **24 bounded exceptions** now holds none,
+and `npm run verify:dependencies` passes across Composer, the root npm workspace and the docs site.
+
+### Security
+
+- **Root npm workspace: 64 advisories → 0.** Every vulnerable package was a *transitive* dependency
+  whose parent pinned it below the patched version, which is why `npm audit fix` moved none of them.
+  What npm proposed instead was a **downgrade** — `@wordpress/scripts@19.2.4` against an installed
+  `^33.0.0`, and `@wordpress/env@11.8.0` against `^11.11.0` — and `CONTRIBUTING.md` forbids applying a
+  suggested downgrade. The fix is npm `overrides`, which raises a transitive dependency without
+  touching its parent: `brace-expansion`, `serialize-javascript`, `uuid`, `webpack-dev-server`,
+  `@opentelemetry/core`, `markdown-it`, `linkify-it`, `adm-zip`, and a scoped
+  `markdownlint-cli → minimatch` for one nested copy on an old v3 line. (DECISIONS #206)
+- **Docs site npm workspace: 7 advisories → 0**, via the Astro 7 migration below.
+
+### Changed
+
+- **`docs-app` runs on `astro@7.1.5` and `@astrojs/starlight@0.41.5`**, building the same 286 pages
+  with no configuration change. This had been recorded as blocked by a packaging question —
+  regenerating `docs-app/package-lock.json` expands the `corex-framework "file:.."` workspace root
+  into the docs tree, which was measured at taking npm-docs from 5 findings to 17. That was only ever
+  true while the *root* tooling was dirty: with the root at zero there is nothing for the expansion to
+  drag in. The two exception groups had been recorded as independent and were not.
+
+### Fixed
+
+- One override was **backed out**: raising `minimatch` to `^10.2.6` removes its CommonJS default
+  export, which `eslint-plugin-jsx-a11y` calls — `lint:js` died with
+  `TypeError: (0, _minimatch.default) is not a function`. The block build and the whole Jest suite
+  passed with it in place; only the linter caught it. `minimatch` is instead raised only inside
+  `markdownlint-cli`, where the vulnerable copy actually was, and stays on the v3 line its parent
+  expects.
+
+### Verification
+
+Pest unit **1711** · integration **356** · Jest **431** · Playwright **120** · `verify:dependencies`
+PASS with 0 findings and 0 exceptions · docs site 286 pages on Astro 7 · dist builds and verifies ·
+all lints clean.
+
+
+## [0.39.0] — 2026-07-29
+
+Two specs. The first fixed five things an owner reported after using the admin; the second made the
+repository describe itself accurately enough to be handed to somebody who has never seen it.
+
+The thread through both: **four of the five reported defects sat behind code that reads correctly**,
+and the documentation pass then found three false numbers in the very files written to argue that
+this project's claims are checkable.
+
+### Added
+
+- **Contact support from the Guides screen.** A reader who did not find their answer can send a
+  category, a message and their email to the site's support address. The address ships in
+  `addons/corex-guides/config/guides.php` — one line — and is editable at *CoreX Settings → Guides*,
+  which layers over the file. Delivery goes through Corex Mail when it is active and `wp_mail()` when
+  it is not: a help form must not stop working because a site does not use the mail add-on.
+  (DECISIONS #200)
+- **`PROJECT-STATUS.md`** — every module as stable, partial or planned, and every known gap citing the
+  file that records it: the 24 bounded dependency exceptions, the three excluded browser specs with
+  their ruled-out causes, the 1px RTL overflow, Arabic typography proved for layout but not for type,
+  GitHub Pages not enabled, and five of six CI checks not required in branch protection. Mirrored into
+  the docs site **above** Getting Started, because somebody deciding whether to adopt a framework
+  should meet its limits before its tutorial. (DECISIONS #203)
+- **A `corex_submission` deep link** for the Submissions inbox, so an assignment notification opens
+  the row it is about rather than an unfiltered list.
+
+### Fixed
+
+- **Notification call-to-actions never worked, in three independent ways at once.** The server
+  serialized `label_key` while the card read `label`, so every authored label fell through to a
+  hardcoded "Open" — and the JavaScript test covering it fed a payload shape the server has never
+  sent. The `ability` gate documented since spec 072 was never enforced, so a viewer could be handed a
+  link to a screen that would refuse them on arrival. And **seven of eight producers set no action at
+  all**, writing the destination into their body text as prose. All eight now carry a real link, the
+  title is a second route to it, and the server withholds an action the viewer may not use rather
+  than trusting the client to hide it. (DECISIONS #197, #198)
+- **Every snooze click answered HTTP 422.** The client posted `snoozed_until` — the name of the
+  database column — while the route reads `until`, so `futureDate('')` returned null every time. A
+  dead control that looked alive, on a route with no test.
+- **Icon and pager buttons were invisible on the dark admin surface.** Only the `.components-button`
+  variants were styled, so a Gutenberg `<Button>` with no variant kept its own `#1e1e1e` ink — the
+  submissions detail close, its two Close buttons, and the inbox pager.
+- **A blue focus ring appeared after every mouse click.** `.wp-core-ui .button:focus` is specificity
+  (0,3,0) and fires on a mouse click; the CoreX rule meant to answer it sat inside `:where()` at
+  (0,2,0) and never could. Answered explicitly per family, with the keyboard focus ring preserved —
+  removing one without the other would trade a cosmetic complaint for a WCAG 2.4.7 failure.
+  (DECISIONS #199)
+- **The submission retention panel's eyebrow and title collided.** The markup emitted a bare `<div>`
+  where the inbox header emits `<div class="corex-inbox__heading">`; the grid that fixes it already
+  existed and simply never applied.
+- **Plugin `Update URI` headers pointed at a repository that does not publish releases.** Four plugin
+  headers, `composer.json` and `theme/style.css` named an organisation the release pipeline does not
+  use. `Update URI` is how WordPress decides where an update comes from, so this was a functional
+  defect shipping in every installed copy, not a documentation typo. (DECISIONS #202)
+- **`wp corex version` did not stamp everything it promised to.** Its own docblock said the
+  version-bearing files are stamped together "so none of them drifts from the release tag", while
+  `package.json`, `README.md`, `ROADMAP.md` and both status pages were bumped by hand — which is how
+  `ROADMAP.md` came to sit three releases behind a correct `README.md`. All five are stamped now, by
+  patterns anchored to the sentence that declares the *current* version, so historical references
+  ("released as v0.38.1") are left intact.
+
+### Changed
+
+- **`ROADMAP.md` describes the released version again**, with the real verification counts, specs
+  086–088 recorded, and a stated rule for which file wins when it and `PROJECT-STATUS.md` disagree.
+- **`README.md`** leads with current status and a link to `PROJECT-STATUS.md`, and explains what
+  `specs/`, `DECISIONS.md` and `PROGRESS.md` are — so the working record reads as a method rather
+  than as clutter.
+- **`CONTRIBUTING.md`** documents the branch model and CI that actually exist. It had described a
+  `develop` integration branch that does not exist, and a CI running one suite when it runs five.
+- The notification drawer's close control meets the WCAG 2.2 AA target size and carries the body ink
+  rather than a muted one, via a new `--corex-admin-touch-target` token.
+
+### Known open
+
+Listed rather than resolved, with sources, in `PROJECT-STATUS.md`: 24 bounded dependency exceptions
+(6 high severity), three browser specs excluded from a fresh-install run, a one-pixel RTL overflow on
+the access screen, and Arabic typography with layout proof but not type proof. Enabling GitHub Pages
+and marking the remaining CI checks required in branch protection are repository settings, not code.
+
+### Verification
+
+Pest unit **1711** · integration **356** · Jest **431** · Playwright **120** · CodeQL and the
+dependency-advisory gate green · docs site builds 286 pages.
+
+
+## [0.38.1] — 2026-07-28
+
+A patch release for one defect that is worse than the rest put together, plus three found alongside
+it. All four were found by standing up a plugin that followed this project's own published
+documentation, against the real site that reported the issues v0.38.0 closed.
+
+**None of them was visible from the code.** Every one had passing tests around it.
+
+### Fixed
+
+- **A site plugin following the guides documentation could take the whole site down.** `Boot::app()`
+  **throws** when Corex has not booted, and Corex boots on `plugins_loaded` at priority 10 — the same
+  hook and priority as the site starter this framework generates. Which one WordPress runs first
+  depends on the plugin's *directory name*, and the loser got a `RuntimeException` on every request.
+  It could not be guarded against either: `app()` throws rather than returning null, so
+  `Boot::app() === null` — the check a developer naturally writes — *is* the crash.
+  `Boot::booted()`, a `corex_booted` action and `Corex::onReady()` remove the race rather than
+  documenting it. (DECISIONS #195)
+- **A required file field could never be submitted.** The runtime skipped file inputs when collecting
+  values, so `required` saw nothing: the file was attached, the browser said it was missing, and no
+  request ever left. Both halves had passing unit tests; only an end-to-end upload found it.
+- **The `accept` attribute on a file field never applied.** It matched `mime:` against the declared
+  rule *string*, and the schema resolver parses rules into structures long before the renderer sees
+  them. Silent, because a file picker with no filter still works.
+- **The Data list rendered a stored file as a bare integer** while the detail modal for the same
+  column on the same table rendered it as a link. The paged-list path carried its own copy of the
+  row-shaping loop and missed the attachment hydration.
+- **Following a link to a stored file while signed out** reached `admin-post.php`'s generic
+  invalid-action path — HTTP 400 and "Something went wrong" — instead of being told to sign in. The
+  delivery route had no logged-out arm.
+
+### Changed
+
+- **Spec 079 is closed.** Its last two tasks shipped: the Data explorer, Submissions inbox and Access
+  requests panel render failures through `CorexErrorState`, and the denied surface has a real
+  acceptance matrix — 16 cells across 375px/1280px, LTR/RTL, light/dark and 100%/200% zoom, which
+  **measures** horizontal overflow rather than photographing it. None overflows. (DECISIONS #196)
+
+
+## [0.38.0] — 2026-07-28
+
+Four specs, and the thread running through them is that a framework can describe a capability it
+does not have. Spec 083 completed an error experience whose unifying half was never built. Spec 084
+turned a planned documentation page into an add-on a client site extends. Spec 085 closed three
+production reports — and found that two of the eleven items no longer needed work. Spec 081 built
+file uploads, which the framework had documented and could not do.
+
+**Verification changed the work in every one of them.** #150's correction to an earlier issue was
+stale; #149's second defect had already been fixed; `Table::managed()` did not exist and the
+integration suite refused to boot rather than accepting it. The recurring lesson is now recorded
+three times: a reported defect is a hypothesis about a tree that has since moved.
+
+### Added
+
+- **Files, end to end.** A CoreX form can ask for a file, store it, show it and send it. Uploads land
+  in a protected directory as private attachments and are readable only through a capability-checked
+  route — the deny rules are defence in depth, not the guarantee, because `.htaccess` is a promise
+  about server configuration the framework cannot verify. A `file` field type, `mime:` and
+  `max_size:` rules that read the file rather than the browser's description of it, an attachment
+  `DataField` that renders as an openable link, and attachments through to `wp_mail()`'s fifth
+  argument, surviving the queue. (Spec 081, issue #138, DECISIONS #192–#194)
+- **Corex Guides** — an add-on that ships CoreX's own in-admin user guides *and* the registry any
+  site built on CoreX extends with guides for its own content types and flows. Registration is
+  deferred to first read, because CoreX and a site plugin both boot on `plugins_loaded` at priority
+  10 and the winner otherwise depends on the plugin's directory name. Guides gate on capability, and
+  an inactive add-on contributes nothing by construction. Includes contextual Help tabs — a
+  WordPress surface this repository had never used — and `wp corex make:guide`. (Spec 084,
+  DECISIONS #189; supersedes spec 082)
+- **A per-message sender.** `?string $from` threaded end to end, so a site with `info@`, `noreply@`
+  and `contact@` properly configured can actually send from all three: SMTP relays route on the From
+  address. Survives the queue, so an immediate and a queued message leave from the same mailbox.
+  (Spec 085, issue #150)
+- **A `phone` validation rule**, with a client mirror that matches the server exactly, plus the
+  missing `url` client mirror. Formatting characters are stripped before the pattern runs, so
+  `+20 101 699 9700` is not rejected for its spaces.
+
+### Fixed
+
+- **Every human-facing admin refusal is now a CoreX page.** Measured before the fix: nine of eleven
+  admin addresses rendered WordPress's white box to a real subscriber, including CoreX's own Careers
+  screen. Spec 079 shipped titled "Unified Admin Error and Access Request Experience" with the
+  unifying half unbuilt, and nothing caught it because the only browser test touching a refusal
+  visited the one URL that could not fail. (Spec 083, DECISIONS #187)
+- **The Data record detail modal, which had never displayed a value for any source.**
+  `useDataExplorer.detail()` unwrapped a `record` key the endpoint does not send. Spec 080 made it
+  *harder* to see: the modal went from rendering em dashes, which reads as broken, to rendering
+  "This record has no readable fields" — a sentence that reads as a true statement about the record.
+  (Spec 085, issue #149, DECISIONS #190)
+- **Silent data loss on every multi-value field.** A `<select multiple>` stored only its first
+  selected value. Both halves of the fix ship together, because sending the real list alone blanks
+  the field entirely — `sanitize_text_field()` returns `''` for an array. (Spec 085, issue #148,
+  DECISIONS #191)
+- **A validated CV that was thrown away.** `ApplicationService::apply()` took a fourth
+  `int $cvAttachmentId = 0` parameter no caller supplied, so `cv_attachment` was `0` on every
+  application ever submitted. The applications table was also created, migrated and never registered
+  as managed, so the rows went somewhere no admin surface reads. (Spec 081, issue #138 item 8)
+- **Client-side form validation was shadowed by the browser.** Rendered forms had no `novalidate`,
+  so a `required` field produced the native bubble and never the runtime's schema-mirrored
+  validation, its error markup or its `aria-invalid` handling. (Spec 085, issue #148)
+- **Validation messages could not be translated.** They resolved through `wp.i18n`, which needs a
+  built JS catalogue that nothing in this repository generates — so every message stayed English on
+  a translated site and nothing reported why. They now render into the form and go through the
+  site's existing `.mo`. (Spec 085, issue #148)
+- **A stored URL an operator could see and not open**, in the Data detail and the Submissions
+  drawer. Only absolute `http(s)` becomes a link; `javascript:` and `data:` stay inert text.
+  (Spec 085, issue #149)
+- **A denial that named the wrong capability.** The denied surface claimed `manage_options` on every
+  screen, which is false on Notifications, Submissions, Data Models and every option page — and a
+  unit test asserted the string was present, holding the falsehood in place. (Spec 083,
+  DECISIONS #188)
+- **A loading spinner that did not spin** on any theme not defining two non-standard custom
+  properties: an unresolved `var()` inside a shorthand makes CSS discard the whole declaration.
+  (Spec 085, issue #148)
+- **Errors that stayed on screen while being corrected**, and `corex:form:error` firing on the
+  server failure path but not the client one. (Spec 085, issue #148)
+
+### Changed
+
+- **`COREX-EMAIL-ADDON.md` describes what exists.** It documented `attach()`, `attachMedia()`,
+  `attachGenerated()` and an `AttachmentResolver` while `WpMailDriver` called `wp_mail()` with four
+  arguments and could not send a file at all. Two are now built; the other two are recorded as not
+  implemented, with the reason, rather than quietly deleted. (Spec 081)
+- **Spec 082 is superseded by 084.** A Markdown manual in a docs tree can express CoreX's own guide
+  and can never express a client's, which ships with the client's plugin. (DECISIONS #189)
+
+
+## [0.37.0] — 2026-07-28
+
+Four specs about the same thing: telling the truth on screen. Spec 076 gave the admin one date and
+time contract, 077 made the Operations & Security screen say what it will actually do before it does
+it, 078 replaced a four-line cache command with a classified inventory that cannot delete a security
+control, and 079 fixed an access request that succeeded without anyone being able to tell.
+
+Each spec began by reproducing the defect on a running install. Three times that changed the work:
+what looked like a bad error page in 079 was a *successful* request rendered as an operation
+envelope; the "obvious" cache sweep in 078 would have reset brute-force protection; and a CoreX
+address that did not exist was telling administrators they lacked access.
+
+### Added
+
+- **Access requests reach the administrators who decide them.** Pending requests are listed for real,
+  naming who asked, for what, when and why, with working Approve and Deny. Previously
+  `AccessRequestStore::pending()` had no production caller: the REST route and the screen both
+  returned a hardcoded empty array, so a request was created, audited and notified — and no surface
+  ever read the table, while the denied screen promised a review. (Spec 079, DECISIONS #177)
+- **Cache & Performance**, reporting seven layers from real checks, with `wp corex cache:status`,
+  `cache:doctor` and scoped `cache:clear`. Every entry is classified, and clearing walks declarations
+  rather than matching patterns — a `DELETE … LIKE 'corex_%'` is not refactorable into the design.
+  (Spec 078, DECISIONS #171–#173)
+- **One admin date and time contract**, shared by PHP and JavaScript against a common fixture, with
+  semantic `<time>` markup, the site timezone as the single source of truth, and relative times whose
+  exact value is readable rather than hover-only. (Spec 076)
+- **Mode disclosure on Operations & Security**: every operations mode says what changing to it will
+  do, and the confirmation it requires, before it is applied. (Spec 077)
+
+### Fixed
+
+- **Requesting access no longer navigates the browser to a JSON document.** The form posted to
+  `rest_url('corex/v1/access/requests')`; submitting it rendered `operation_id`, `state`,
+  `affected_ids` and `audit_event_id`. The request *succeeded* — the person asking for help simply had
+  no way to know. It now posts to an admin endpoint calling the same service, and the confirmation is
+  read from stored state, so a refresh creates no second request and nothing can be faked in the URL.
+  The REST route is unchanged and still answers JSON. (Spec 079, DECISIONS #174–#175)
+- **A CoreX address with no screen behind it answered 403** and told the viewer — administrators
+  included — that their role lacked `manage_options`, then offered a form to request access to a
+  screen that does not exist. Now 404, with no capability sentence and no form. (Spec 079,
+  DECISIONS #176)
+- **`wp corex cache:clear` deleted one transient and reported success** for "Corex asset cache",
+  under a name that implies all of them. (Spec 078)
+- **A no-op operations-mode change reported "Saved".** It now says what happened. (Spec 077)
+- **A login slug colliding with an existing page or route was accepted.** (Spec 077)
+- **`lint:css` and `lint:js` now gate CI.** Their absence is how 44 stylelint errors entered
+  unnoticed; the 38 outstanding ones are cleared and ESLint is scoped so the run terminates.
+
+### Changed
+
+- `wp_cache_flush()` is refused on sites with a persistent object cache, because it would delete the
+  rate-limit counters and spent-captcha records that live there as transients. (DECISIONS #172)
+- Dates across the admin now read as dates rather than as ISO strings or raw integers.
+
+## [0.36.0] — 2026-07-27
+
+Three specs about the same thing: making the admin do what it looks like it does. Spec 073 was a polish
+and correctness pass, Spec 074 closed the gap between what the CoreX admin claimed and what it could
+actually do, and Spec 075 turned Blog Pro from a read-only dashboard into a workspace you can act in.
+
+No invented capability anywhere in the three. Several surfaces stop misreporting, three workspaces stop
+being dead ends, and where a requirement appeared to need a new service or route, the constraint was
+recorded instead — see DECISIONS #155–#162.
+
+### Fixed
+
+- **Blog Pro looked like a workspace and was a poster.** Its services, seven REST routes, and client
+  state module were complete and tested; the screen used almost none of them. It rendered five
+  read-only cards, called `useReducer` and threw the dispatch away — so the entire client state module
+  was unreachable from the running app while its tests passed — and never called a single one of its
+  own routes. It also computed analytics, editorial state, comments and sharing for whichever post
+  sorted first and named that post nowhere, under a heading that read as a site-wide total. You can now
+  choose the post (and link to it), move it through review with a note, and approve, spam, or trash the
+  comments waiting on it (DECISIONS #161).
+- **Reading a notification was treated as dealing with it.** "Requires attention" filtered on your own
+  unread state, so opening a production-readiness blocker took it off the attention list while the
+  blocker was still true. Whether something still needs somebody is now derived from the record's status
+  and severity on the server, never from whether you have looked at it — and *read* and *resolved* are
+  separate things with separate controls (DECISIONS #157).
+- **A form registered in code was invisible to the framework.** Discovery read database flows only, so a
+  form registered through `Corex\Forms\FormRegistry` reached the submission filters only if the site
+  added a `corex_submission_filter_options` hook, and Forms & Flows never listed it at all. v0.35.1 made
+  such forms *filterable once injected*; the framework now **finds** them. The filter still applies, after
+  the merge, for anything the catalog cannot see.
+- **Data → Import and Data → Migrations were permanent dead ends.** Every registered source declared
+  `import_dry_run` and `migrations` false, so both tabs could only ever print "No registered model
+  provides an import adapter." Managed tables can now declare writable fields, import aliases, validation
+  and a migration path; `corex_subscribers` is the first to do so, with a real dry run → mapping →
+  rejections → commit → audit path and preview → apply → history → rollback. A tab appears only when the
+  actor may open it **and** an eligible source exists.
+- **The Submission Inbox heading lines collided.** The eyebrow, title, and count fought each other with
+  per-element margins that also collapsed differently once a translation wrapped a line. They are one
+  stack with a token grid gap now, which cannot collapse.
+- **The Data Models screen lost its icons.** It alone rendered an empty notification bell and dropped its
+  brand mark and rail glyphs, because it echoed the shell through `wp_kses_post()`, whose allowed-tags list
+  excludes `<svg>`. The CoreX admin chrome is already escaped at the point each dynamic value is interpolated,
+  so filtering it again removed correct output rather than adding safety; the screen now echoes it directly,
+  as every other CoreX screen does (DECISIONS #155).
+- **Operations & Security showed two mode controls and a badge that could lie.** A client-side "mode preview"
+  (target-mode selector, a *Type PRODUCTION* box, a maintenance checkbox) sat above the real, nonce- and
+  capability-gated server form and applied nothing. The "Production readiness" badge read its blocker count
+  from that preview, which reported zero for every mode but Production — so the header could say **Ready**
+  while blockers were listed directly beneath it. The inert preview is gone, the server form is the only mode
+  control, and the badge reads the readiness snapshot it was always describing (DECISIONS #156).
+- **A submission's answers rendered as em dashes in the record detail modal.** The modal read fields off the
+  top level of the record, but a submission nests every answer under `fields`, so the submitted content — the
+  reason for opening the record — never appeared. The record is now authoritative over its own content
+  (declared fields, then the nested pairs, then anything undeclared it still carries), and flat table records
+  are unchanged.
+- **The notification toolbar entry stated its count twice** ("Notifications, 7 unread 7"). The visible label
+  is the plain word now, the count lives in the badge, and the counted phrasing stays on the accessible title.
+
+### Added
+
+- **Blog Pro tells you when it has nothing to tell you.** "No reading data yet" is now a different
+  thing from a zero — a post nobody has opened and a post analytics has never seen called for opposite
+  reactions and looked identical. Every panel names the post and the period it covers, and the
+  editorial and comment states read as words instead of `ready_for_review` and `publish`.
+- **"What this site can do" — a capability summary under the Data Models catalog.** Everything CoreX has
+  registered and where it came from, what each model supports, which add-ons are running, which
+  notification producers are wired, and anything selected but unfinished — a captcha provider with no
+  keys, or a missing update endpoint — each linking to the screen that fixes it. Capability used to be
+  discoverable only by walking into it. A fact carrying a credential-shaped key is dropped rather than
+  redacted, because a redaction still tells a reader where to look (DECISIONS #160).
+- **A notification says what it is, and what you can do about it.** The item now carries category,
+  severity, source module, environment, when it last happened, how many times, and whether the condition
+  is still live — with mark read, mark unread, snooze, dismiss, resolve, and its own primary action. It
+  used to show a title, a body, and "Mark read". The header drawer and the screen share one component, so
+  they can no longer tell different versions of the same record.
+- **A state filter on the Add-ons screen.** Mutually exclusive, exhaustive All / Active / Inactive / Not
+  installed buckets keyed on the same status that prints each card's badge, rendered as the shared CoreX tab
+  strip with a real count on each tab, a distinct "no add-ons in this view" state, and a fallback to All for an
+  unknown filter so a bad query string cannot render an empty grid that reads as "no add-ons".
+
+### Changed
+
+- **Blog Pro's share-click recorder and its unused analytics shaping were removed rather than wired
+  up.** Recording a share click claims a *visitor* shared a post, and only the visitor-facing surface
+  can honestly claim that; firing it from an admin screen would have written analytics nobody
+  generated. The chart and top-posts shaping had no server sending it and never had. Both are gone
+  with their tests — code that cannot be reached but whose tests pass reads as working software
+  (DECISIONS #162).
+- **The Notifications screen offers three views instead of eight.** Action needed · Updates · History,
+  plus Preferences. Inbox, Requires attention, Assigned to me, Submissions, Security, and System are gone
+  as tabs — category, severity, and assignment are refines that apply within whichever view you are in,
+  which is what they always were. Snoozing moves an item to Updates rather than History, and it comes
+  back on its own when the snooze elapses (DECISIONS #158).
+- **A control you may not use is hidden rather than shown and refused.** "Mark resolved" appears only for
+  actors holding the same ability the REST route enforces, so the interface cannot advertise a capability
+  and then answer with a permission error (DECISIONS #159).
+- **The Settings dropdowns and the Notifications severity filter are the approved CoreX control** rather than
+  native `<select>` elements the OS draws its menu for (DECISIONS #141), and the severity filter shows
+  translated labels instead of raw English keys.
+- **Un-styled admin prose has a consistent baseline rhythm.** Zero-specificity `:where()` rules give
+  paragraphs, headings, and lists a tokenized baseline margin that any component rule still overrides, so the
+  same element is no longer spaced differently depending on the screen it appears on.
+
 ## [0.35.1] — 2026-07-22
 
 A correction release. Three fixes, no new capability: a form filter that could not filter the forms a

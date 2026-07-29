@@ -151,3 +151,33 @@ it('prefers the editor-set En/Ar blurb block attribute over the GlobalContent se
     expect($htmlEn)->toContain('A custom English blurb.')
         ->and($htmlAr)->toContain('نص مخصص بالعربية.');
 });
+
+/*
+ * The footer form is CoreX's `wp:corex/form` block run through `do_blocks()`, then class-swapped by
+ * string replacement so it picks up the handoff's footer styling. That coupling is invisible: if
+ * upstream ever reformats its `<form ...>` tag, the needles stop matching, every replacement silently
+ * no-ops, and the footer form loses its layout with nothing failing anywhere.
+ *
+ * Checked against v0.40.0, which added `novalidate` and `enctype` to that tag without disturbing the
+ * `class="corex-form"` substring these depend on.
+ */
+it('rewrites the CoreX form classes onto the footer form', function () {
+    $renderer = new ReflectionClass(\PeregoSite\Blocks\SiteFooterRenderer::class);
+    $source = (string) file_get_contents((string) $renderer->getFileName());
+
+    // The needles, exactly as the renderer looks for them.
+    foreach (['class="corex-form"', 'class="corex-form__submit"'] as $needle) {
+        expect($source)->toContain($needle);
+    }
+
+    // And what upstream actually emits, so the two are compared rather than each assumed. Not cast to
+    // string before the guard: a wrong path returns false, which casts to '' and would let every
+    // `toContain` below pass against nothing.
+    $upstream = file_get_contents(
+        dirname(__DIR__, 5) . '/plugins/corex-forms/src/Block/FormBlockRenderer.php'
+    );
+
+    expect($upstream)->not->toBeFalse()
+        ->and((string) $upstream)->toContain('<form class="corex-form"')
+        ->and((string) $upstream)->toContain('class="corex-form__submit"');
+});

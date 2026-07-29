@@ -27,28 +27,29 @@ final class DataRegistry
     /** @var list<callable():list<DataSource>> */
     private array $deferred = [];
 
+    private bool $resolved = false;
+
     public function register(DataSource $source): void
     {
         $this->sources[$source->key()] = $source;
     }
 
     /**
-     * Contribute sources that are only knowable later, resolved on first read.
+     * Register sources that cannot be built yet, to be built the first time the registry is read.
      *
-     * The managed-table sources used to be looped in while this registry was being constructed. The
-     * registry is a singleton built during boot — the Overview renderer resolves it — so the table list
-     * was sealed at that instant, and any plugin that registered a ManagedTable afterwards (or during
-     * its own boot, which may run after corex-config's) never appeared on the Data screen. There is no
-     * ordering an app can win: the framework boots before the apps that extend it.
+     * Managed tables are the case this exists for. The registry is constructed while corex-config
+     * boots — before `init`, and therefore before an add-on has had a chance to declare its own
+     * table — so anything built eagerly at construction silently excluded every add-on's model.
+     * The newsletter subscribers table, this framework's reference importable model, was invisible
+     * in the admin for exactly that reason while being perfectly visible to WP-CLI, which resolves
+     * the registry long after boot.
      *
-     * Deferring to first read moves the snapshot from build time to use time — an admin request, long
-     * after every plugin has registered. Resolution still happens exactly once.
-     *
-     * @param callable():list<DataSource> $provider
+     * @param callable():list<DataSource> $factory
      */
-    public function defer(callable $provider): void
+    public function registerDeferred(callable $factory): void
     {
-        $this->deferred[] = $provider;
+        $this->deferred[] = $factory;
+        $this->resolved   = false;
     }
 
     /**
@@ -68,18 +69,20 @@ final class DataRegistry
         return $this->sources[$key] ?? null;
     }
 
-    /** Drain the deferred providers once; registering never re-enters because the queue clears first. */
     private function resolveDeferred(): void
     {
-        if ($this->deferred === []) {
+        if ($this->resolved || $this->deferred === []) {
+            $this->resolved = true;
+
             return;
         }
 
-        $providers = $this->deferred;
-        $this->deferred = [];
+        // Set before running the factories: a factory that reads the registry back would otherwise
+        // recurse forever.
+        $this->resolved = true;
 
-        foreach ($providers as $provider) {
-            foreach ($provider() as $source) {
+        foreach ($this->deferred as $factory) {
+            foreach ($factory() as $source) {
                 $this->register($source);
             }
         }

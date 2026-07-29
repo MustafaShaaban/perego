@@ -68,11 +68,16 @@ final class PeregoSiteServiceProvider
             requestUri: $_SERVER['REQUEST_URI'] ?? '/',
         );
 
-        // Must be register(), not boot(): corex-config resolves its DataRegistry during ITS boot (the
-        // Overview renderer pulls it in), and that singleton reads ManagedTables once, at build time. A
-        // table registered in our boot() — let alone on `init` — arrives after the registry is sealed and
-        // never reaches the Data screen. Every provider registers before any provider boots, so this is
-        // the last moment that still counts.
+        // Still register(), not boot() — but for a weaker reason since CoreX v0.40.0.
+        //
+        // The registry used to read ManagedTables once, at build time, so a table registered any later
+        // than this was simply never seen. That is the bug our `DataRegistry::defer()` fixed, and
+        // upstream has since adopted the same design as `registerDeferred()`: the snapshot now happens
+        // on first read, so a later registration would in fact arrive in time.
+        //
+        // Keeping it here anyway. `register()` before any provider boots is the earliest correct moment
+        // and does not depend on how the registry resolves internally — which is exactly the coupling
+        // that made this fragile the first time.
         self::registerApplicationsTable();
     }
 
@@ -190,6 +195,24 @@ final class PeregoSiteServiceProvider
                 $rules = $container->make(\Corex\Forms\Validation\RuleRegistry::class);
                 if (! $rules->has('max_words')) {
                     $rules->register('max_words', new \PeregoSite\Forms\Rules\MaxWords());
+                }
+
+                // CoreX v0.40.0 added its own `phone` rule, but it makes the country code optional and
+                // accepts as few as two digits, so a bare local number passes — the exact complaint the
+                // strict rule was written for (client, 2026-07-27).
+                //
+                // It is registered under a PREFIXED name and applied alongside `phone`, not over it:
+                // `RuleRegistry::register()` throws on a duplicate name and offers no unregister, so
+                // there is no override seam — attempting one fatals the whole site at `init`. Layering
+                // keeps upstream's client-side `phone` arm giving immediate feedback on obvious junk,
+                // while this adds the server-side country-code requirement the client cannot express.
+                // It returns the `phone` message key so the existing Arabic translation is reused.
+                //
+                // The name is prefixed because this registry is shared framework surface — v0.40.0
+                // alone added `phone`, `mime` and `max_size` to it, and an unprefixed name we own is a
+                // collision waiting for the next release to land on it.
+                if (! $rules->has('perego_phone')) {
+                    $rules->register('perego_phone', new \PeregoSite\Forms\Rules\StrictPhone());
                 }
             }
 

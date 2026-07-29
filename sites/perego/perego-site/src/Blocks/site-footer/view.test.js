@@ -79,3 +79,55 @@ test( 'resyncs to zero when the shared CoreX runtime resets the form after a suc
 	expect( field.getAttribute( 'data-perego-counter' ) ).toBe( '0 / 200 words' );
 	jest.useRealTimers();
 } );
+
+/*
+ * Added with the CoreX v0.40.0 update (2026-07-29).
+ *
+ * The framework runtime dropped its `max_words` client rule — its own comment reasons that there is no
+ * server rule either, which is true of CoreX and false of Perego, where `Forms\Rules\MaxWords` is
+ * registered. Without the guard below the form submits, the server answers 422, and the runtime shows
+ * the generic "Please check this field." for a limit this counter has been displaying all along.
+ */
+describe( 'over the word limit', () => {
+	const overLimit = () => {
+		loadFooterView();
+		const textarea = document.querySelector( 'textarea[name="message"]' );
+		textarea.value = Array.from( { length: 201 }, ( _, i ) => `w${ i }` ).join( ' ' );
+		textarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		return textarea;
+	};
+
+	test( 'marks the field so the counter turns red', () => {
+		overLimit();
+		const field = document.querySelector( '[data-corex-field="message"]' );
+
+		expect( field.classList.contains( 'is-limit' ) ).toBe( true );
+		expect( field.getAttribute( 'data-perego-counter' ) ).toBe( '201 / 200 words' );
+	} );
+
+	test( 'blocks the submission instead of letting the server reject it', () => {
+		const textarea = overLimit();
+		const form = document.querySelector( 'form' );
+		const event = new Event( 'submit', { bubbles: true, cancelable: true } );
+
+		form.dispatchEvent( event );
+
+		expect( event.defaultPrevented ).toBe( true );
+		expect( document.activeElement ).toBe( textarea );
+	} );
+
+	test( 'lets a submission within the limit through untouched', () => {
+		loadFooterView();
+		const textarea = document.querySelector( 'textarea[name="message"]' );
+		textarea.value = 'Short and well within budget';
+		textarea.dispatchEvent( new Event( 'input', { bubbles: true } ) );
+
+		const form = document.querySelector( 'form' );
+		const event = new Event( 'submit', { bubbles: true, cancelable: true } );
+		form.dispatchEvent( event );
+
+		expect( event.defaultPrevented ).toBe( false );
+		expect( document.querySelector( '[data-corex-field="message"]' ).classList.contains( 'is-limit' ) ).toBe( false );
+	} );
+} );
