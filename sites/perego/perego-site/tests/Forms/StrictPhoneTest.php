@@ -60,13 +60,15 @@ it('ignores a non-scalar rather than casting it into a false pass', function () 
  * `RuleRegistry::register()` THROWS on a duplicate name and offers no unregister, so a built-in cannot
  * be replaced — registering this as `phone` took the whole site down with an uncaught
  * InvalidArgumentException at `init`, found by loading the site rather than by any test. The rule is
- * therefore registered under its own name and layered onto the field alongside CoreX's.
+ * therefore registered under a prefixed name and layered onto the field alongside CoreX's. Prefixed,
+ * because the registry is shared framework surface — v0.40.0 alone added `phone`, `mime` and
+ * `max_size` to it, so an unprefixed name we own is a collision waiting for the next release.
  */
-it('is registered under its own name, because the registry rejects a duplicate', function () {
+it('is registered under a prefixed name, because the registry rejects a duplicate', function () {
     $provider = file_get_contents(dirname(__DIR__, 2) . '/src/PeregoSiteServiceProvider.php');
 
     expect($provider)->not->toBeFalse()
-        ->and((string) $provider)->toContain("register('strict_phone', new \\PeregoSite\\Forms\\Rules\\StrictPhone())")
+        ->and((string) $provider)->toContain("register('perego_phone', new \\PeregoSite\\Forms\\Rules\\StrictPhone())")
         ->and((string) $provider)->not->toContain("register('phone', new");
 });
 
@@ -75,5 +77,5 @@ it('is actually applied to the brief form, not merely registered', function () {
     $form = file_get_contents(dirname(__DIR__, 2) . '/src/Forms/ProjectBriefForm.php');
 
     expect($form)->not->toBeFalse()
-        ->and((string) $form)->toContain("'rules' => ['phone', 'strict_phone']");
+        ->and((string) $form)->toContain("'rules' => ['phone', 'perego_phone']");
 });

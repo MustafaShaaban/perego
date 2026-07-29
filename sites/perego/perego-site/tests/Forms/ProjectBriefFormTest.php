@@ -76,9 +76,9 @@ it('keeps the handoff validation limits on every field', function () {
         //
         // Two rules since CoreX v0.40.0. Upstream introduced its own `phone` and made the country code
         // optional, so `01016999700` passes it again — and `RuleRegistry::register()` throws on a
-        // duplicate name, so the built-in cannot be replaced. Perego's `strict_phone` is layered on top
+        // duplicate name, so the built-in cannot be replaced. Perego's `perego_phone` is layered on top
         // instead: upstream's gives client-side feedback, ours is what actually requires the `+`.
-        ->and($fields['phone']['rules'])->toBe(['phone', 'strict_phone'])
+        ->and($fields['phone']['rules'])->toBe(['phone', 'perego_phone'])
         ->and($fields['subject']['rules'])->toBe(['required', 'min:3', 'max:120'])
         ->and($fields['message']['rules'])->toBe(['required', 'min:10', 'max_words:200'])
         ->and($fields['message']['attrs'])->toBe(['data-max-words' => '200'])

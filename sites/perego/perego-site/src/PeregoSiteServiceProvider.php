@@ -201,14 +201,18 @@ final class PeregoSiteServiceProvider
                 // accepts as few as two digits, so a bare local number passes — the exact complaint the
                 // strict rule was written for (client, 2026-07-27).
                 //
-                // It is registered UNDER ITS OWN NAME and applied alongside `phone`, not over it:
+                // It is registered under a PREFIXED name and applied alongside `phone`, not over it:
                 // `RuleRegistry::register()` throws on a duplicate name and offers no unregister, so
                 // there is no override seam — attempting one fatals the whole site at `init`. Layering
                 // keeps upstream's client-side `phone` arm giving immediate feedback on obvious junk,
                 // while this adds the server-side country-code requirement the client cannot express.
                 // It returns the `phone` message key so the existing Arabic translation is reused.
-                if (! $rules->has('strict_phone')) {
-                    $rules->register('strict_phone', new \PeregoSite\Forms\Rules\StrictPhone());
+                //
+                // The name is prefixed because this registry is shared framework surface — v0.40.0
+                // alone added `phone`, `mime` and `max_size` to it, and an unprefixed name we own is a
+                // collision waiting for the next release to land on it.
+                if (! $rules->has('perego_phone')) {
+                    $rules->register('perego_phone', new \PeregoSite\Forms\Rules\StrictPhone());
                 }
             }
 
