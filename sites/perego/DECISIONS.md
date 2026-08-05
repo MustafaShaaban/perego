@@ -3367,3 +3367,51 @@ auto-merged correctly in this update — by luck, not by verification.
 **Rejected:** widening the path list to the whole repository. It would print every Perego file on every
 run and the assertion's value is that its output is short enough to read. The narrow list plus a
 by-hand read of each partially-diverged file is the trade being made deliberately.
+
+---
+
+## 2026-08-05 — A framework update is not verified until every client build has been run
+
+**Decision.** After any CoreX update, run the **builds** as well as the suites, before reporting the
+update as done:
+
+```bash
+npm run build                                        # framework workspaces
+cd sites/perego/perego-theme && npm run build        # client theme
+cd sites/perego/perego-site  && npm run build        # client plugin
+```
+
+And declare every package a client source imports in that client's own `package.json`. Never rely on
+a package being present because the framework root happens to install it.
+
+**Why.** The v0.41.0 update reported green on everything the project measures — 1739 framework Pest,
+601 client Pest, 442 Jest, 12 clean `verify-a11y` routes, all CI checks — while **both client builds
+were broken**. `npm run build` in `sites/perego/perego-site` failed with
+`Can't resolve '@wordpress/icons'`.
+
+Nothing in that list runs a client build, so nothing could have caught it. The suites test source;
+the browser tests hit already-built output; the a11y pass reads rendered HTML. A build failure is
+invisible to all three until someone next needs to rebuild — at which point the update that caused it
+is days behind and no longer the obvious suspect.
+
+**The specific fragility.** `perego-site/package.json` had **no `dependencies` block at all**, and
+`src/Editor/RecordPicker.js` and `SortableItem.js` import `@wordpress/icons` directly. It resolved by
+hoisting out of the framework root, where the package sat as a transitive of `@wordpress/scripts` 33
+and `@wordpress/components` 37. Upstream spec 099 bumped those to 34 and 38; the transitive
+disappeared; `npm ci` against the new lockfile removed it. The string is present in the `60dd5a70`
+lockfile and absent from this one — checked, not assumed.
+
+It had to be declared rather than re-hoisted because `DependencyExtractionWebpackPlugin` **bundles**
+`@wordpress/icons` instead of mapping it to a `wp.*` global, the way it does for the other eleven
+`@wordpress/*` imports in this plugin. So it must physically exist in `node_modules` at build time.
+
+**A second reason this took so long to surface.** The stale artefacts were invisible for the same
+class of reason. `build/` is git-ignored everywhere, so a framework update changes PHP and CSS in git
+while every compiled bundle keeps whatever it was last built from — here, **`corex-config/build/admin`
+from 14 July and `build/notification-ui` from 22 July**, against a framework stamped 0.41.0. The admin
+looked wrong because it *was* wrong: new server markup and stylesheet, three-week-old JavaScript.
+
+**Rejected:** adding the client builds to the framework's CI. They are not npm workspaces of the root
+(deliberately — see `jest.config.js`), the client carries its own toolchain, and wiring them into
+upstream's workflow files is a fork edit on an upstreamed file. This is a checklist item in
+`PROGRESS.md`, enforced by the person doing the update.

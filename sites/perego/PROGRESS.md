@@ -4,6 +4,28 @@
 
 ## RESUME HERE (2026-08-05, latest) — CoreX framework updated to the published v0.41.0
 
+> ### ⚠ After ANY CoreX update, run the builds — the suites do not
+>
+> Every compiled bundle lives in a git-ignored `build/`, so an update changes PHP and CSS in git
+> while the JavaScript keeps whatever it was last built from. That is exactly what happened here:
+> `corex-config/build/admin` was from **14 July** and `build/notification-ui` from **22 July** while
+> the framework was stamped 0.41.0 — new markup and stylesheet, three-week-old JS. The admin looked
+> wrong because it *was* wrong.
+>
+> ```bash
+> npm run build                                       # framework workspaces
+> cd sites/perego/perego-theme && npm run build       # client theme
+> cd sites/perego/perego-site  && npm run build       # client plugin
+> ```
+>
+> The client plugin build was **broken** by this update and every suite still passed — see
+> `DECISIONS.md` (2026-08-05, `@wordpress/icons`). Nothing the project measures runs a client build.
+>
+> **`peregoads.com` is served from this working tree** (via Cloudflare), and the WordPress `siteurl`
+> points at it — so the admin you open in a browser is this checkout, not a separate deployment, and
+> a rebuild here changes what you see. Static assets carry `Cache-Control: max-age=14400`, so after
+> a rebuild use a hard refresh (Ctrl+F5) before concluding anything is stale.
+
 **Branch `chore/corex-post-v0.40.0-update`** (off `fix/026-lighthouse-client-performance`), spec
 `specs/027-corex-post-v0.40.0-update/`, which now covers **two merges**. Part 1 took `upstream/main`
 at `60dd5a70` while no tag existed. Upstream then published **v0.41.0**, and Part 2 (`c380e0c3`)
