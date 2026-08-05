@@ -3329,3 +3329,41 @@ here because they explain client behaviour; the canonical record is [corex#138](
 Forms, attachment rendering in the Data/Submissions cells, the unreachable `Layout` logo branch, and
 `corex-careers` discarding the CV on its own route. Until the Data cell renderer lands, the CV column shows
 the bare attachment id — which is why the notification email carries the working download link.
+
+---
+
+## 2026-08-05 — A fork-owned file can diverge from upstream *partially*, and the merge assertion cannot see it
+
+**Decision.** When restoring the files this fork holds after a CoreX merge, `git checkout HEAD -- <path>`
+is the default but not the rule. If upstream changed *different lines* of the same file, the file is
+merged by hand: upstream's lines for what upstream owns, ours for the reason we forked it. Only a file
+upstream did not touch at all may be restored wholesale.
+
+**Why.** Until v0.41.0 every fork-owned file was one upstream had left alone, so "restore ours" and
+"keep our fix" meant the same thing. `plugins/corex-config/package.json` broke that: we hold it for a
+mojibaked `description`, and upstream's spec 099 bumped `@wordpress/components` ^37→^38 and
+`@wordpress/i18n` ^6.24→^6.25 inside it. A blanket restore would have reverted both bumps while the new
+root `package-lock.json` — byte-identical to upstream's — stayed resolved against them.
+
+**What makes it worth writing down** is that the procedure's own safety net would not have caught it.
+The auto-merge assertion —
+
+```bash
+git diff upstream/main --name-only -- addons plugins packages theme tests
+```
+
+— compares **names, not content**. `plugins/corex-config/package.json` was on the expected list before
+the merge and would have been on it after, whether the file held our one line or our one line plus two
+silently reverted dependency bumps. The check answers "did the merge touch a file nobody decided
+about?" and cannot answer "is each decided file still right?". For a partially-diverged file, read the
+diff.
+
+**Second gap, same assertion.** Its path list covers the framework's code directories and was written
+when those were the only places the fork diverged. That is no longer true: root `package.json` carries
+the spec-069 model-routing scripts, and `.gitignore`, `AGENTS.md`, `CLAUDE.md`, `jest.config.js` and
+`composer.lock` are all fork-owned. They sit outside the assertion entirely. Root `package.json`
+auto-merged correctly in this update — by luck, not by verification.
+
+**Rejected:** widening the path list to the whole repository. It would print every Perego file on every
+run and the assertion's value is that its output is short enough to read. The narrow list plus a
+by-hand read of each partially-diverged file is the trade being made deliberately.

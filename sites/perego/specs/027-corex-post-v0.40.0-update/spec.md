@@ -1,9 +1,19 @@
-# Spec 027 — CoreX framework update, v0.40.0 → `upstream/main`
+# Spec 027 — CoreX framework update, v0.40.0 → the published v0.41.0
 
 **Branch:** `chore/corex-post-v0.40.0-update` (off `fix/026-lighthouse-client-performance`)
 **Mode:** CoreX Framework Mode — `sites/perego/` deliberately untouched
 **Status:** Complete (2026-08-05).
 **Precedent:** `specs/024-corex-v0.40.0-update/spec.md`, whose procedure this reuses verbatim.
+
+> **This spec covers two merges on the same day**, not one. Part 1 below took `upstream/main` at
+> `60dd5a70` while no tag existed past v0.40.0. Upstream then published v0.41.0, and **Part 2** (at
+> the end of this document) takes `upstream/main` at `b6eccd49` — the tag plus one post-release
+> correction. Read Part 1 for the procedure; Part 2 records only what the second merge did
+> differently, including the one prediction Part 1 made that turned out wrong.
+
+---
+
+# Part 1 — v0.40.0 → `upstream/main` @ `60dd5a70`
 
 ## Goal
 
@@ -200,3 +210,154 @@ the inert branch emits a nameless `role="img"`.
 
 Left for spec 026, where it originated and where its own verification belongs. Recorded here because
 this branch is what surfaced it.
+
+---
+
+# Part 2 — `60dd5a70` → `upstream/main` @ `b6eccd49` (the published v0.41.0 + 1)
+
+**Merge commit:** `c380e0c3`. **Follow-up:** `00336dca`.
+
+Five commits: upstream specs 097–099, `Release v0.41.0` (`0fc2154a`, tagged), and one post-release
+correction. 116 files, 4 deletions, 4 renames.
+
+## The tag-vs-main judgement, a third time — and Part 1's prediction was wrong
+
+Part 1 pre-committed: *"when upstream tags it, the next update starts from the tag and the stamp
+arrives with it."* The tag now exists, and the next update did **not** start from it.
+
+`v0.41.0` is an **ancestor** of `upstream/main`, so the two are not alternatives the way Part 1
+assumed — taking `main` includes the tag. The single commit past it (`b6eccd49`) is a post-release
+*correction*, not release prep, and it fixes something Part 1 filed as an open defect: the docs-link
+check was reading **55 of the 922 pages** the site publishes, because CI built `docs-app` without
+generating the class reference first. Taking the bare tag would have knowingly re-adopted a defect
+this project had already written down.
+
+So the shape is the v0.35 judgement, not Part 1's: `main` carries a wanted fix the tag lacks. The
+correction Part 1 needed was not to its choice but to its reasoning — it framed tag-vs-main as a
+standing rule when it is a per-release reading of what sits between the two.
+
+## What upstream added
+
+| Commit | What |
+|---|---|
+| `02389ca0` (097) | The WordPress contextual Help tab removed from CoreX admin screens. `ContextualHelp` deleted; `ScreenHelp` + `CorexScreens` added to *positively* strip help tabs other plugins add to CoreX screens. The Guides add-on is otherwise untouched. |
+| `844f276e` (098) | The four `COREX-*.md` guides move from the repo root to `docs/internal/` (R100 renames), and precedence between the instruction files is stated once, in `AGENTS.md`. |
+| `c49bdc99` (099) | Eight dependency bumps; `.github/workflows/e2e.yml` deleted (it never ran); `.gitignore` re-includes `tests/e2e/fixtures/`. |
+| `0fc2154a` | **Release v0.41.0** — the version stamp Part 1 declined. |
+| `b6eccd49` | The published baseline in `PROGRESS.md`; the docs-link fix above; `<code>`/`<pre>` stripped before URL matching, after the full-site run flagged a `DocsUrl` docblock that *documents* a bad href as containing one. |
+
+## Both findings Part 1 left open are now closed
+
+**`verify:dependencies` passes.** Part 1 recorded two high advisories on `npm-root` —
+`brace-expansion` (GHSA-rgw5-rvv9-x895) and `fast-uri` (GHSA-7p8r-x3mc-p8w7) — and declined to bump
+our lockfile, on the reasoning that upstream should close them and that diverging the lockfile is
+what spec 024 avoided. Upstream closed them in spec 099: `brace-expansion` 5.0.9, `fast-uri` 3.1.5
+as a new `overrides` entry. `composer` / `npm-docs` / `npm-root` all report **PASS, 0 findings**.
+The restraint was the right call and cost one day.
+
+**The docs-link check now reads the whole site.** Part 1 recorded that `tests/docs-links.test.js`
+skips itself when `docs-app/dist` is absent and reports the skip as green. That was the smaller half
+of the problem: even when built, CI fed it 55 pages. Verified here by generating the reference
+(868 pages) and building — **922 HTML files**, and the test passes over all of them.
+
+## The lockfile moved, which Part 1's did not
+
+`npm ci` was required. `package-lock.json` is byte-identical to upstream's; `composer.lock` did not
+move upstream in this range. `sites/perego/` has its own lockfile and was not touched.
+
+## The six files that stay ours became seven, and one stopped being a blanket restore
+
+Five of the six restored cleanly — none was touched by any of the five commits. The other two:
+
+**`plugins/corex-config/package.json` was merged by hand.** Upstream bumped `@wordpress/components`
+^37→^38 and `@wordpress/i18n` ^6.24→^6.25 *inside a file we hold*, where our only delta is the
+mojibaked `description`. This is the first time the two sides wanted different lines of the same
+fork-owned file. A blanket `git checkout HEAD --` would have silently reverted a dependency bump the
+new root lockfile is resolved against — and the auto-merge assertion would still have printed the
+expected six names, because it compares names and not content. Resolution: upstream's two versions,
+our one line. Divergence is now one line rather than three.
+
+**`tests/repo-hygiene.test.js` is new, and the fork inverts one of its rules.** Upstream's new
+hygiene suite forbids `sites/` — *"a client site implementation — those live in their own
+repository."* True upstream, which tracks zero files there; false here, where `sites/perego/` is the
+deliverable at 653 tracked files and the repository's own `CLAUDE.md` defines a Client Site Mode
+that edits nothing else.
+
+The rule was dropped rather than the file ignored via `jest.config.js` — which was available and
+cheaper, since `jest.config.js` is already fork-owned and already carries a `sites/` accommodation.
+Ignoring the file would have discarded the checks for committed secrets, private keys,
+`node_modules`, build output, editor artifacts and the canonical root-document list, all of which
+apply to this fork unchanged.
+
+That decision paid immediately. With `sites/` exempted the suite failed on something real:
+**`Perego Creative Studio (1).zip`, 17MB, tracked at the repository root since `b5c41f38` — the
+v0.40.0 update commit**, where an over-broad `git add` swept it in. It survived that update and
+Part 1's, and an upstream guard found it a version later. Untracked with `git rm --cached` (the file
+stays on disk; it remains in history, which is not this branch's to rewrite) and `.gitignore` widened
+from the single `… Final.zip` name to `… *.zip`, since the narrow entry is exactly what `(1)` slipped
+past.
+
+## The auto-merge assertion has a blind spot, found here
+
+```bash
+git diff upstream/main --name-only -- addons plugins packages theme tests
+```
+
+prints exactly the seven expected names. But **root `package.json` is fork-owned too** — it carries
+the spec-069 `verify:model-routing` and `test:model-routing` scripts — and it sits outside that path
+list, so the assertion never spoke about it. It auto-merged correctly here (our two scripts, plus
+upstream's version bump and dependency bumps), but that was luck rather than verification. The path
+list covers the framework's *code* directories and was never widened when the fork started editing
+root files. The same gap covers `.gitignore`, `AGENTS.md`, `CLAUDE.md`, `jest.config.js` and
+`composer.lock`.
+
+## Three conflicts, all in fork-owned root documents
+
+`.gitignore`, `AGENTS.md`, `CLAUDE.md` — all resolved by keeping both sides, none by choosing one.
+In `.gitignore`, upstream's `!tests/e2e/fixtures/` negation was placed directly under the
+`tests/e2e/fix*/` glob it corrects, with the Perego section after it; order matters for that pattern
+and appending blindly would have left the negation ineffective. In `AGENTS.md`/`CLAUDE.md` the
+fork's Model Routing Gate section sits against upstream's rewrite of the `COREX-*.md` paths — both
+kept. `DECISIONS.md` auto-merged; both sides verified present.
+
+The spec-098 rename carried the fork's one-line edit to `COREX-WORKING-GUIDE.md` into
+`docs/internal/` correctly. No **live instruction** file still points at a root `COREX-*.md` path —
+`AGENTS.md`, `CLAUDE.md` and the working guide were all checked. Historical records still name the
+old locations (`sites/perego/DECISIONS.md` #2516, upstream's `specs/001-*` and `specs/028-*`), and
+those are left alone: a decision record describes what was true when it was written, and rewriting
+its paths would make it describe a repository layout that did not exist at the time.
+
+## Verification
+
+| | Part 1 | Part 2 |
+|---|---|---|
+| Framework Pest | 1734 | **1739** |
+| Framework Jest | 53 suites / 434 | **54 suites / 442** |
+| Perego Pest | 599 | **599** (unchanged) |
+| Perego Jest | 312 | **312** (unchanged) |
+
+- `verify:dependencies` **PASS** — it was failing before this merge.
+- `tests/docs-links.test.js` **passes over 922 built pages**, not 55 and not skipped.
+- **The container boots.** `ConfigServiceProvider` gained new admin-boot wiring, and no test boots
+  the container. `admin_init` + `admin_menu` fired through WP-CLI as user 1: no fatal, `ScreenHelp`
+  and `CorexScreens` load, `ContextualHelp` is correctly absent, and the guide registry still holds
+  **16 guides** — spec 097 removed the Help-tab surface without touching the add-on, as it said.
+- Public routes 200 EN and AR (`/`, `/ar`, `/work/`, `/contact/`). No front-end asset moved:
+  `theme/style.css` and the plugin headers are version-stamp-only diffs.
+- `sites/perego/` untouched by the merge, verified rather than assumed.
+
+**The local Pest suite no longer fits in 128MB.** `composer test` died at
+`Tests\Unit\Cli\BlockScaffolderTest` with exit `-1073741819` — a Windows access violation, which
+reads like a crash and is not one. With Xdebug off the same point reports the truth: *Allowed memory
+size of 134217728 bytes exhausted*. The suite passes with `php -d memory_limit=1G`. This is local
+WAMP's `php.ini` at 128M, not a code defect and not CI's problem (setup-php uncaps the CLI), and it
+is recorded because the segfault presentation is actively misleading — the next person will read it
+as a broken test rather than a full heap.
+
+## Still open upstream
+
+All four from Part 1. The three pinning tests still pass, which is what confirms the defects they
+pin still exist. `MailService::deliver()` still drops `$from`/`$attachments` — zero of the five
+commits touched it — and `corex-config`'s description is still mojibaked upstream. The
+fork-divergence banner in `MailService.php` now names v0.41.0, so it keeps naming the version it was
+re-verified against rather than the one it was written against.
