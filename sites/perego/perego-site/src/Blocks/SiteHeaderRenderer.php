@@ -10,6 +10,7 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
+use Corex\Assets\Image;
 use PeregoSite\Services\LanguageService;
 use PeregoSite\PostTypes\ServicePostType;
 use PeregoSite\Theme\SiteRoutes;
@@ -234,11 +235,10 @@ final class SiteHeaderRenderer
             . 'data-wp-init="callbacks.init">';
 
         $html .= '<div class="container site-header__inner">';
-        $logoUrl = $this->logoUrl($attributes);
+        $logo = $this->logoMarkup($attributes);
         $html .= '<a class="logo" href="' . esc_url($driver->localizedUrl('/')) . '" '
             . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
-            . '<img src="' . esc_url($logoUrl) . '" '
-            . 'alt="" class="logo__img" />'
+            . $logo
             . '</a>';
 
         $html .= '<nav id="mainNav" class="main-nav" '
@@ -249,7 +249,7 @@ final class SiteHeaderRenderer
         // one of each is ever rendered to a user or to assistive tech. The logo here is decorative —
         // the panel already lists Home, so a second "Perego — home" link would be redundant noise.
         $html .= '<div class="main-nav__mobile-head" aria-hidden="true">'
-            . '<img src="' . esc_url($logoUrl) . '" alt="" class="logo__img" />'
+            . $logo
             . '</div>';
         $html .= '<ul class="main-nav__list">' . $this->renderNavItems($currentPath, $this->navItems($attributes, $locale)) . '</ul>';
         $html .= '<div class="main-nav__mobile-cta">' . $this->renderCta($attributes, $locale) . '</div>';
@@ -385,18 +385,36 @@ final class SiteHeaderRenderer
         return $html;
     }
 
-    /** The `logoId` attachment's URL when set (MediaUpload in the editor), else the handoff's default logo. */
-    private function logoUrl(array $attributes): string
+    /** The `logoId` attachment markup when set, else the CoreX-managed handoff logo. */
+    private function logoMarkup(array $attributes): string
     {
-        $logoId = (int) ($attributes['logoId'] ?? 0);
-        if ($logoId > 0) {
-            $url = wp_get_attachment_image_url($logoId, 'full');
-            if (is_string($url) && $url !== '') {
-                return $url;
-            }
+        $attachment = $this->attachmentLogo((int) ($attributes['logoId'] ?? 0));
+        if ($attachment !== '') {
+            return $attachment;
         }
 
-        return get_stylesheet_directory_uri() . '/assets/images/logo-full.png';
+        return Image::picture('images/logo-full.png', [
+            'base' => 'perego-theme',
+            'alt' => '',
+            'class' => 'logo__img',
+            'width' => 552,
+            'height' => 170,
+            'loading' => 'eager',
+        ]);
+    }
+
+    private function attachmentLogo(int $logoId): string
+    {
+        if ($logoId <= 0) {
+            return '';
+        }
+
+        return (string) wp_get_attachment_image($logoId, 'full', false, [
+            'class' => 'logo__img',
+            'alt' => '',
+            'loading' => 'eager',
+            'decoding' => 'async',
+        ]);
     }
 
     /**

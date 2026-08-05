@@ -31,6 +31,9 @@ it('renders the locked handoff preloader structure with the Interactivity API wi
         ->and($html)->toContain('preloader__glow')
         ->and($html)->toContain('preloader__logo')
         ->and($html)->toContain('/assets/images/logo-full.png')
+        ->and($html)->toContain('/assets/images/logo-full.webp')
+        ->and($html)->toContain('width="552" height="170"')
+        ->and($html)->toContain('loading="eager"')
         ->and($html)->toContain('preloader__bar')
         ->and($html)->toContain('preloader__word');
 });

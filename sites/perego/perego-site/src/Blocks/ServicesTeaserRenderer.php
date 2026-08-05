@@ -10,6 +10,7 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
+use Corex\Assets\Image;
 use PeregoSite\Content\HomeContent;
 use PeregoSite\Content\ServiceCatalog;
 use PeregoSite\PostTypes\ServicePostType;
@@ -55,7 +56,12 @@ final class ServicesTeaserRenderer
         $html = '<section class="services-teaser" id="services" aria-labelledby="' . self::HEADING_ID . '">';
 
         $html .= '<div class="wavy-bg" aria-hidden="true">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" />'
+            . Image::picture('images/wavy-corners.png', [
+                'base' => 'perego-theme',
+                'alt' => '',
+                'width' => 2560,
+                'height' => 1440,
+            ])
             . '</div>';
 
         $html .= '<div class="container services-teaser__inner">';
@@ -228,7 +234,15 @@ final class ServicesTeaserRenderer
     {
         $href = esc_url($this->languageService->driver()->localizedUrl('/services/' . $service['slug']));
 
-        $media = '<img src="' . esc_url($service['imageUrl']) . '" alt="' . esc_attr($service['alt']) . '" loading="lazy" />';
+        $themeImagesUrl = rtrim(get_stylesheet_directory_uri(), '/') . '/assets/images/';
+        $media = str_starts_with($service['imageUrl'], $themeImagesUrl)
+            ? Image::picture('images/' . basename($service['imageUrl']), [
+                'base' => 'perego-theme',
+                'alt' => $service['alt'],
+                'width' => 560,
+                'height' => 680,
+            ])
+            : '<img src="' . esc_url($service['imageUrl']) . '" alt="' . esc_attr($service['alt']) . '" loading="lazy" />';
 
         return '<a class="service-card reveal"' . ($index > 0 ? ' data-delay="' . esc_attr((string) $index) . '"' : '') . ' href="' . $href . '">'
             . $media

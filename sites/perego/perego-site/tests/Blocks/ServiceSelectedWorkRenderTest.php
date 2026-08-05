@@ -54,7 +54,9 @@ it('renders a work-masonry of real projects, opening the site-wide media lightbo
     expect($html)->toContain('class="portfolio page-section"')
         ->and($html)->toContain('class="work-masonry"')
         ->and($html)->toContain('data-image="https://perego.local/a.jpg"')
-        ->and($html)->toContain('data-gallery="https://perego.local/b.jpg,https://perego.local/b2.jpg"');
+        ->and($html)->toContain('data-gallery="https://perego.local/b.jpg,https://perego.local/b2.jpg"')
+        ->and($html)->toContain('/assets/images/wavy-corners.webp')
+        ->and($html)->toContain('width="2560" height="1440"');
 });
 
 it('assigns the handoff\'s designed mosaic placements (m1, m2, …) in project order', function () {

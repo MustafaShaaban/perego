@@ -22,6 +22,7 @@ beforeEach(function () {
     Functions\when('get_stylesheet_directory_uri')->justReturn('https://perego.local/wp-content/themes/perego-theme');
     Functions\when('wp_json_encode')->alias('json_encode');
     Functions\when('wp_get_attachment_image_url')->justReturn('');
+    Functions\when('wp_get_attachment_image')->justReturn('');
 });
 
 /** @param array<string,mixed> $attributes */
@@ -193,17 +194,26 @@ it('renders position:static inline when the isSticky attribute is turned off', f
 });
 
 it('uses the default logo asset when no logoId attribute is set', function () {
-    expect(renderHeader())->toContain('logo-full.png');
+    $html = renderHeader();
+
+    expect($html)->toContain('logo-full.png')
+        ->and($html)->toContain('logo-full.webp')
+        ->and(substr_count($html, 'width="552" height="170"'))->toBe(2)
+        ->and(substr_count($html, 'loading="eager"'))->toBeGreaterThanOrEqual(2);
 });
 
-it('uses the logoId attribute\'s attachment URL when set', function () {
-    Functions\when('wp_get_attachment_image_url')->alias(
-        fn (int $id) => $id === 42 ? 'https://perego.local/uploads/new-logo.png' : ''
+it('uses WordPress attachment markup and dimensions when a logoId is set', function () {
+    Functions\when('wp_get_attachment_image')->alias(
+        fn (int $id, string $size, bool $icon, array $attributes) => $id === 42
+            ? '<img width="640" height="200" src="https://perego.local/uploads/new-logo.png" class="'
+                . $attributes['class'] . '" alt="' . $attributes['alt'] . '" loading="' . $attributes['loading'] . '" />'
+            : ''
     );
 
     $html = renderHeader('/', ['logoId' => 42]);
 
     expect($html)->toContain('https://perego.local/uploads/new-logo.png')
+        ->and($html)->toContain('width="640" height="200"')
         ->and($html)->not->toContain('logo-full.png');
 });
 

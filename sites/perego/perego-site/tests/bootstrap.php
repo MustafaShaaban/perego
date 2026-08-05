@@ -21,6 +21,17 @@ if (! defined('ABSPATH')) {
     define('ABSPATH', dirname(__DIR__) . '/');
 }
 
+// The Perego renderers consume CoreX's public source-image facade. Register the real client theme
+// asset directory against a deterministic test URL so picture markup can be exercised headlessly.
+$assetRegistry = new \Corex\Assets\AssetRegistry();
+\Corex\Assets\Assets::swap($assetRegistry);
+\Corex\Assets\Assets::registerBase(
+    'perego-theme',
+    dirname(__DIR__) . '/../perego-theme/assets',
+    'https://perego.local/wp-content/themes/perego-theme/assets',
+    'test',
+);
+
 spl_autoload_register(static function (string $class): void {
     $prefix = 'PeregoSite\\';
     if (strncmp($class, $prefix, strlen($prefix)) !== 0) {

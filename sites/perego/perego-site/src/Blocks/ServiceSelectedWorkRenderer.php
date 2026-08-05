@@ -10,6 +10,8 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
+use Corex\Assets\Image;
+
 /**
  * Server-renders the perego-theme/service-selected-work block: the service single's own "Selected
  * work" masonry (handoff `service-*.html`, e.g. `service-video-editing.html:130-256`) — real published
@@ -61,7 +63,12 @@ final class ServiceSelectedWorkRenderer
         // already use, so the grid sits on the brand background rather than flat colour.
         return '<section class="portfolio page-section">'
             . '<div class="wavy-bg" aria-hidden="true">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" />'
+            . Image::picture('images/wavy-corners.png', [
+                'base' => 'perego-theme',
+                'alt' => '',
+                'width' => 2560,
+                'height' => 1440,
+            ])
             . '</div>'
             . '<div class="container">'
             . $masonry

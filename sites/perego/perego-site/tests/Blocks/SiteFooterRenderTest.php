@@ -48,6 +48,15 @@ it('renders the approved contact channels and social links', function () {
         ->and($html)->toContain('footer-social');
 });
 
+it('renders the default footer logo as a lazy CoreX picture with intrinsic dimensions', function () {
+    $html = renderFooter();
+
+    expect($html)->toContain('/assets/images/logo-full.webp')
+        ->and($html)->toContain('/assets/images/logo-full.png')
+        ->and($html)->toContain('width="552" height="170"')
+        ->and($html)->toContain('loading="lazy"');
+});
+
 it('renders the handoff bottom bar: full studio copyright, Journal, and the legal links', function () {
     $html = renderFooter();
 

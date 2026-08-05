@@ -69,7 +69,9 @@ it('gives each card an accessible label region and an alt-described image', func
 
     expect($html)->toContain('service-card__label')
         ->and($html)->toContain('service-card__overlay')
-        ->and($html)->toMatch('/<img [^>]*alt="Video editing timeline"/');
+        ->and($html)->toMatch('/<img [^>]*alt="Video editing timeline"/')
+        ->and($html)->toContain('/assets/images/card-video-editing.webp')
+        ->and($html)->toContain('width="560" height="680"');
 });
 
 it('exposes the heading via aria-labelledby for the section landmark', function () {
@@ -85,6 +87,15 @@ it('preserves the handoff container and staggered reveal contract', function () 
     expect($html)->toContain('class="container services-teaser__inner"')
         ->and($html)->toContain('class="link-arrow services-teaser__link reveal" data-delay="1"')
         ->and($html)->toContain('class="service-card reveal" data-delay="3"');
+});
+
+it('serves its decorative wave through the CoreX picture contract', function () {
+    $html = renderServicesTeaser();
+
+    expect($html)->toContain('/assets/images/wavy-corners.webp')
+        ->and($html)->toContain('/assets/images/wavy-corners.png')
+        ->and($html)->toContain('width="2560" height="1440"')
+        ->and($html)->toContain('loading="lazy"');
 });
 
 it('renders localized Arabic copy when the locale resolves to ar', function () {

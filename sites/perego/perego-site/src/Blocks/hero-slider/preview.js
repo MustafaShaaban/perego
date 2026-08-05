@@ -89,7 +89,7 @@ export function normalizeSlides( attributes ) {
 /** The theme's shipped hero background. `src` is visual-only (parity ignores it). */
 export function prismUrl() {
 	const origin = typeof window !== 'undefined' && window.location ? window.location.origin : '';
-	return `${ origin }/wp-content/themes/perego-theme/assets/images/hero-bg.png`;
+	return `${ origin }/wp-content/themes/perego-theme/assets/images/hero-bg-v2.png`;
 }
 
 /** The tag the front end uses for a slide title: `h1` for the first slide, `p` for the rest. */
