@@ -152,7 +152,7 @@ final class ClientsCarouselRenderer
     private function corporateCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
-        $tags = $this->cardTags($client, 'corp-card', ' aria-label="' . esc_attr($title) . '"');
+        $tags = $this->cardTags($client, 'corp-card', ' aria-label="' . esc_attr($title) . '"', 'img');
         // Follows the English fallback: Polylang gives a translation its own empty thumbnail slot, so
         // an Arabic tile would otherwise drop back to the placeholder its English twin never shows.
         $logo = $this->thumbnailHtml($client, 'medium', ['class' => 'corp-card__logo']);
@@ -176,10 +176,25 @@ final class ClientsCarouselRenderer
      * Link with no destination) degrades to the inert element, because a control that visibly invites
      * a click and then does nothing is worse than a plain tile.
      *
+     * `$inertRole` applies to the inert `<div>` only, and only the corporate tile passes one. It is a
+     * caller's choice rather than a constant here because the two cards hold different things: a
+     * corporate tile is a bare `alt=""` logo, so `role="img"` describes it exactly and
+     * `corporateCard()` supplies the `aria-label` that names it. An individual card holds a heading,
+     * a subtitle and body copy, and `role="img"` on that collapses the whole card into one graphic —
+     * its text stops being reachable by assistive technology at all. It takes no role, because a
+     * plain `<div>` lets its own content speak.
+     *
+     * It is deliberately NOT folded into `$extraAttributes`: those flow to the `<button>` and `<a>`
+     * branches too, where a role would overwrite the interactive semantics that make them work.
+     *
      * @return array{open:string, close:string, opensLightbox:bool}
      */
-    private function cardTags(\WP_Post $client, string $class, string $extraAttributes = ''): array
-    {
+    private function cardTags(
+        \WP_Post $client,
+        string $class,
+        string $extraAttributes = '',
+        ?string $inertRole = null,
+    ): array {
         $tags = match ($this->behavior($client)) {
             'lightbox' => $this->lightboxTags($client, $class, $extraAttributes),
             'link' => $this->linkTags($client, $class, $extraAttributes),
@@ -189,7 +204,9 @@ final class ClientsCarouselRenderer
         // The `?? ` is the degrade-to-inert rule: a behaviour whose data is missing produces null
         // above, and lands here rather than rendering a control that does nothing.
         return $tags ?? [
-            'open' => '<div class="' . $class . '" role="img"' . $extraAttributes . '>',
+            'open' => '<div class="' . $class . '"'
+                . ($inertRole !== null ? ' role="' . esc_attr($inertRole) . '"' : '')
+                . $extraAttributes . '>',
             'close' => '</div>',
             'opensLightbox' => false,
         ];

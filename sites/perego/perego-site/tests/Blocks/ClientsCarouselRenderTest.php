@@ -359,6 +359,39 @@ it('renders a non-interactive card with no play affordance when the behaviour is
         ->and($html)->not->toContain('data-video=');
 });
 
+/**
+ * The inert individual card carries NO role, and that is the whole fix.
+ *
+ * It briefly carried `role="img"`, which axe reported as two serious `role-img-alt` violations
+ * (home EN and AR) because nothing gave it a name. The name was the smaller half of the problem:
+ * `role="img"` makes the element a single graphic to assistive technology, so the `<h3>` title,
+ * the subtitle and the body copy *inside* it stop being reachable at all. An `aria-label` would
+ * have satisfied axe and left the content hidden — a green check over a worse card.
+ *
+ * A plain `<div>` is right because the card's content is real text that reads itself. The lightbox
+ * and link variants already carry no role and have always been fine, which is the shape this
+ * restores.
+ */
+it('gives the inert individual card no role, so its heading and copy stay reachable', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('<div class="indiv-card">')
+        ->and($html)->not->toContain('<div class="indiv-card" role=')
+        ->and($html)->toContain('<h3 class="indiv-card__title">Sample Creator One</h3>');
+});
+
+/**
+ * The corporate tile keeps `role="img"`, and the contrast with the test above is the point: it is a
+ * bare logo with `alt=""`, so it genuinely IS one graphic, and `corporateCard()` passes the client
+ * name as `aria-label` — which is what `role-img-alt` asks for. Same inert branch, different role,
+ * because the two cards hold different things.
+ */
+it('keeps role="img" on the inert corporate tile, which is a named graphic and nothing else', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('<div class="corp-card" role="img" aria-label="Sample Corporate Client A">');
+});
+
 it('renders a lightbox client as a single-action button with the ▶ affordance (handoff C-04: never lightbox + navigation together)', function () {
     perego_lightbox_meta(21, [['type' => 'video', 'id' => 0, 'url' => 'https://www.youtube.com/embed/example']]);
 
