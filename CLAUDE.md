@@ -10,12 +10,16 @@ PHP 8.3+, FSE block themes. Built spec-first with Spec Kit.
    mirrors it for the source-of-truth hierarchy.)
 2. Read `PROGRESS.md` — current status and the recommended next step. Continue from "Next".
 3. Read the active spec in `specs/` for the module you're touching.
-4. Skim `COREX-FRAMEWORK.md` for the architecture if unfamiliar; `COREX-WORKING-GUIDE.md`
-   for how we work. `COREX-EMAIL-ADDON.md` is the Corex Mail spec for when its turn comes.
+4. Skim `docs/internal/COREX-FRAMEWORK.md` for the architecture if unfamiliar; `docs/internal/COREX-WORKING-GUIDE.md`
+   for how we work. `docs/internal/COREX-EMAIL-ADDON.md` is the Corex Mail spec for when its turn comes.
 
-## Source-of-truth hierarchy (top wins) — COREX-WORKING-GUIDE.md §A.1
-1. `specs/constitution.md`  2. `COREX-FRAMEWORK.md`  3. the active module spec
+## Source-of-truth hierarchy (top wins) — docs/internal/COREX-WORKING-GUIDE.md §A.1
+1. `specs/constitution.md`  2. `docs/internal/COREX-FRAMEWORK.md`  3. the active module spec
 4. `PROGRESS.md`  5. the code. If code contradicts the constitution, the code is wrong.
+
+**Precedence between the instruction files** (constitution → `AGENTS.md` → `CONTRIBUTING.md`, with
+`SECURITY.md` authoritative on its own subject) is stated once, in `AGENTS.md`. This file is its
+Claude Code-flavoured mirror and must not diverge from it on anything but tooling.
 
 ## Role Gate — classify the session BEFORE editing (spec 061)
 > Role Gate decides **where** you work · Model Routing Gate decides **capability and provider adapter** · Spec Kit decides **what** · Guard Gate decides **whether it is safe to
@@ -29,7 +33,7 @@ After the Role Gate and before Spec Kit, classify L (read-only exploration), M (
 
 Declare evidence-based changes with `MODEL ROUTE CHANGE — <old> → <new> · <specific trigger>`. Use the lowest reliable route; do not claim the parent model changed, report whether a child was actually spawned, and distinguish configured from runtime-confirmed values. Never run Codex and Claude as simultaneous writers, never assign duplicate work, keep one production writer, and keep delegation at one level. Route H is the sole writer; Route V is read-only. See the shared policy for escalation, overrides, handoff, and rollback.
 
-Pick one mode and stay in it (full detail: COREX-WORKING-GUIDE.md §F; copy/paste prompts:
+Pick one mode and stay in it (full detail: docs/internal/COREX-WORKING-GUIDE.md §F; copy/paste prompts:
 `docs/en/04-team-workflow/ai-agent-start-prompts.md`):
 1. **CoreX Framework Mode** — `plugins/`, `addons/`, `packages/`, root `theme/`/`specs/`/`docs/`, `docs-app/`,
    `ROADMAP.md`, root `PROGRESS.md`, framework UI, release. Must not edit `sites/<client>/` unless authorized.
@@ -38,11 +42,11 @@ Pick one mode and stay in it (full detail: COREX-WORKING-GUIDE.md §F; copy/past
 4. **Docs/Planning Mode** — docs/specs/roadmap/decisions/prompts. No runtime code unless authorized.
 
 Never edit as source: `wp/wp-content/` and `dist/` (runtime/build output; `dist/` is generated + git-ignored).
-End every response with the required SUMMARY/…/NEXT STEP handoff format (see AGENTS.md / COREX-WORKING-GUIDE.md §F).
+End every response with the required SUMMARY/…/NEXT STEP handoff format (see AGENTS.md / docs/internal/COREX-WORKING-GUIDE.md §F).
 
 ## WHILE working
 - Run `git status --short --branch` before edits; work from the active feature branch, never from `main`.
-- **Single workspace (COREX-WORKING-GUIDE.md §A.7):** work only from the normal project root checkout — no
+- **Single workspace (docs/internal/COREX-WORKING-GUIDE.md §A.7):** work only from the normal project root checkout — no
   `.worktrees` without explicit owner approval. Before editing, verify root/branch/status/log/remote/worktree, and
   **stop and report** if you are on the wrong branch, in the wrong checkout, or see uncommitted changes you did not
   create. The active PR branch is the working source of truth — continue from its latest pushed commit; never
@@ -56,7 +60,7 @@ End every response with the required SUMMARY/…/NEXT STEP handoff format (see A
 - All styling via `theme.json` CSS variables. No hardcoded colors/sizes/fonts. No CSS frameworks.
 - Logical CSS properties (RTL-first). No optional plugin (ACF/Woo/Polylang) as a hard dependency.
 
-## AFTER producing any code (Definition of Done — COREX-WORKING-GUIDE.md §D.4)
+## AFTER producing any code (Definition of Done — docs/internal/COREX-WORKING-GUIDE.md §D.4)
 - **Guard Gate:** run the relevant guard skill on the diff BEFORE presenting it. Auto-install
   it first if missing. No diff ships until its guard runs clean.
   - any production code → `clean-code-guard`
@@ -67,12 +71,12 @@ End every response with the required SUMMARY/…/NEXT STEP handoff format (see A
 - Update `PROGRESS.md`; log any non-trivial decision in `DECISIONS.md`.
 - For multi-agent work, final reports and handoffs must name the branch, spec path, completed task IDs,
   files owned, verification commands/results, guard status, and any files being released for another agent.
-- **End every response with a NEXT STEP block** (format in COREX-WORKING-GUIDE.md §A.3 / constitution).
+- **End every response with a NEXT STEP block** (format in docs/internal/COREX-WORKING-GUIDE.md §A.3 / constitution).
 
 ## Spec Kit workflow (commands are namespaced `speckit-*`)
 `/speckit-constitution` → `/speckit-specify` → `/speckit-clarify` → `/speckit-plan`
 → `/speckit-tasks` → `/speckit-implement`. Write the spec before the code; review between tasks.
-Module build order: see `COREX-SPECKIT-START.md` ("The rhythm from here").
+Module build order: see `docs/internal/COREX-SPECKIT-START.md` ("The rhythm from here").
 
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,

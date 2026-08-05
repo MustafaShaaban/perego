@@ -1,6 +1,6 @@
 # Corex — what works, what is partial, what is not built
 
-**Version 0.40.0** · updated 2026-07-29
+**Version 0.41.0** · updated 2026-08-05
 
 This page exists so you do not have to read the git history to find out what you are adopting.
 Everything below is traceable to something in this repository — a spec, a policy file, a test
@@ -154,13 +154,6 @@ project has kept to.
 
 ---
 
-## How this repository records itself
-
-If you are wondering why `PROGRESS.md` is 420 KB and `DECISIONS.md` holds 201 numbered entries: that
-is the method, not clutter. `specs/` holds the reviewed contract for every feature written before its
-code. `DECISIONS.md` holds the reasoning for anything non-obvious, including the ones that turned out
-wrong. `PROGRESS.md` is the running session log.
-
-They are kept because the durable artifact is the record, and because several of the defects this
-project has closed were found by reading what it had previously claimed. `README.md` has the short
-version.
+This page answers one question — *what works today*. `ROADMAP.md` answers what is planned,
+`CHANGELOG.md` what changed, `PROGRESS.md` where to resume, and `DECISIONS.md` why. `README.md`
+carries the table of which is which.
