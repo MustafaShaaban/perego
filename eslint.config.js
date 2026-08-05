@@ -36,6 +36,17 @@ module.exports = [
 			 * from the root install. It is linted by its own toolchain, from its own directory.
 			 */
 			'docs-app/**',
+			/*
+			 * Client sites are a fork-level addition upstream does not have, and the root linters
+			 * are the framework's. Same call `.stylelintignore` and `jest.config.js` make, for the
+			 * same reason: each client site is linted by its own toolchain, from its own directory.
+			 */
+			'sites/**',
+			// Git-excluded and therefore absent in CI: the raw design handoff (vendor CSS/JS nobody
+			// here wrote) and agent worktrees, which are full checkouts and would lint every file in
+			// this repository a second time. Listed so a local run means what a CI run means.
+			'_design_handoff/**',
+			'.claude/**',
 		],
 	},
 	...wpScriptsConfig,
