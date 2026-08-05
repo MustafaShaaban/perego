@@ -1,5 +1,74 @@
 # Perego — Decision Log
 
+## 2026-08-05 — CoreX updated to `upstream/main`; a release branch was declined, and nothing reconciled
+
+**The framework moves v0.40.0 → `upstream/main`.** Nine commits, 62 files, 0 deletions, 0 renames.
+Landed on `chore/corex-post-v0.40.0-update` → PR into `fix/026-lighthouse-client-performance`,
+mirroring how v0.34.0, v0.35.0 and v0.40.0 landed.
+
+**A third option appeared, and was declined.** There is no tag past v0.40.0, but upstream carries an
+unmerged `release/v0.41.0` branch — `main` plus one commit that is nothing but a version stamp across
+**25 files** (its own message claims 23; the commit is the authority). We took `main`. The code is
+identical either way; taking the stamp would make this fork claim a version upstream has not
+published, and diverge us across those files if the release is re-cut. **We have v0.41.0's content
+without its number.** The v0.35 update also took `main` over a tag, but because `main` held a wanted
+fix — here `main` is the conservative choice, not the eager one.
+
+**The reconciliation was empty, and that is a fact about this merge rather than luck.** All four of
+our historical patches were upstreamed at v0.40.0; the six files that remain ours were touched by
+**none** of the nine commits, so nothing was re-forked on top of an upstreamed feature. More
+importantly the merge changed **no front-end runtime file at all** — nothing under `theme/` or
+`packages/`, no `corex-runtime.js`, no `corex-forms`. The whole changed surface is admin-only
+(`corex-guides`, `DocsUrl`, admin shell CSS) plus docs, specs, tests and CI. The three silent
+`sites/perego/` regressions that v0.40.0 produced — Arabic validation messages, `max_words`, phone
+strictness — had no surface to land in. Neither lockfile moved.
+
+**The auto-merge trap, cleared the same way as last time.** Zero files conflicted; root `DECISIONS.md`
+was the one file changed on both sides and merged clean, so both sides were verified present rather
+than assumed. The exhaustive assertion
+`git diff upstream/main --name-only -- addons plugins packages theme tests` printed exactly the six
+files we chose to keep.
+
+**A test that skips is not a test that passes.** `tests/docs-links.test.js` arrived with the merge and
+silently skips itself when `docs-app/dist` is absent — which is how it first ran here, as "2 skipped".
+Building the docs (55 pages) turned them into two real passes. This is precisely the shape of failure
+upstream's spec 092 was written about: a docs check that sampled only the working half while 85 broken
+links shipped. **The next person to run the framework Jest suite must build the docs first, or read a
+skip as a pass.**
+
+**Two findings recorded rather than fixed.** Upstream's `docs.yml` now deploys to GitHub Pages on push
+to `main`; on this fork that is latent, because Pages is not enabled on `MustafaShaaban/perego` and we
+never push to `main`. It is deliberately **not** patched out — editing upstream's workflow is a fork
+edit on top of an upstreamed feature, which guarantees the same conflict next version. Separately,
+`verify:dependencies` now fails on `brace-expansion` (GHSA-rgw5-rvv9-x895) and `fast-uri`
+(GHSA-7p8r-x3mc-p8w7). **This merge did not cause it:** every input to that check — both lockfiles,
+the policy JSON, the policy module and the verifier — is byte-identical across the merge. They are new
+advisories against an unchanged lockfile, and closing them by bumping our lockfile would diverge it
+from upstream's, which spec 024 explicitly avoided.
+
+- **Spec:** `specs/027-corex-post-v0.40.0-update/`.
+- **Verified:** Framework Pest **1734** (was 1723) · Framework Jest **53 suites / 434** (was 52/431,
+  with the docs built) · Perego Pest **599** · Perego Jest **312** · `verify-editor-sorting` green ·
+  `verify-theme-images` 8 contracts · `DocsUrl`'s new published-site URL returns 200 at root and on a
+  deep link.
+- **Live:** eight public routes EN and AR are **byte-identical** before and after — not even the two
+  `?ver` values v0.40.0 needed, because no front-end asset moved.
+- **The container boots:** `admin_init` and `admin_menu` fired through WP-CLI with no fatal, because
+  `GuidesServiceProvider` is new admin-boot code and spec 024's worst defect was a provider throwing
+  at `init` that every test passed through. `http://perego.local/wp-admin/` 404s because this database
+  has `siteurl`/`home` set to `http://peregoads.com`, so the admin was never served at that local path
+  — not an admin failure, and not attributable to a merge that changed no auth or admin-routing code.
+- **The four defects reported upstream are still open, proven mechanically:** the three pinning tests
+  still pass, and a test that asserts a defect passes only while the defect exists. The `MailService`
+  `$from` drop and the mojibaked `package.json` are confirmed by zero of the nine commits touching
+  either file.
+- **Inherited, not caused:** `verify-a11y` reports 2 serious `role-img-alt` violations on the home
+  page EN and AR. Commit `8ef527cc` (spec 026) changed the inert client card from `role="listitem"` to
+  `role="img"`; `individualCard()` passes no `aria-label` where `corporateCard()` does. Worse than the
+  rule name suggests — `role="img"` collapses the card into one image node, hiding its title and body
+  from assistive technology, so a name would satisfy axe without restoring what the role hides. Left
+  for spec 026, where it originated.
+
 ## 2026-07-30 - Client-owned image delivery follows the CoreX contract
 
 **Use CoreX's public picture helper, but keep every change in Perego.** The

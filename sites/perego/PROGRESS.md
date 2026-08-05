@@ -2,7 +2,37 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
-## RESUME HERE (2026-07-30, latest) - Lighthouse client performance
+## RESUME HERE (2026-08-05, latest) — CoreX framework updated to `upstream/main`
+
+**Branch `chore/corex-post-v0.40.0-update`** (off `fix/026-lighthouse-client-performance`), spec
+`specs/027-corex-post-v0.40.0-update/`. The framework moves v0.40.0 → `upstream/main`: nine commits,
+62 files, 0 deletions, 0 renames.
+
+Upstream had no tag past v0.40.0, only an unmerged `release/v0.41.0` branch whose sole delta is a
+25-file version stamp. We took `main`, so we carry **v0.41.0's content without its number**; when
+upstream tags it, the next update starts from the tag.
+
+Nothing needed reconciling on the Perego side. The merge changed no front-end runtime file — the
+changed surface is admin-only (`corex-guides`, `DocsUrl`, admin shell CSS) plus docs, specs, tests and
+CI — and the six files that stay ours were touched by none of the nine commits. Eight public routes
+are byte-identical EN and AR before and after.
+
+**Next:** two things, in this order.
+
+1. **Fix the a11y regression that spec 026 introduced and this branch surfaced.** `verify-a11y` is at
+   2 serious violations against a baseline of 0: `role-img-alt` on `.indiv-card[role="img"]`, home EN
+   and AR. Commit `8ef527cc` changed the inert client card from `role="listitem"` to `role="img"`.
+   Do not just add an `aria-label` — `role="img"` collapses the card into a single image node, so its
+   `<h3>` title and body copy stop being reachable at all; a name would satisfy axe while leaving the
+   content hidden. It belongs on `fix/026`, where it originated.
+2. Then the still-open item from spec 026: deploy and rerun Lighthouse against
+   `https://peregoads.com/` in a clean profile, per the note below.
+
+**Standing gotcha recorded this round:** the framework Jest suite reports "2 skipped" unless
+`docs-app` is built first — `tests/docs-links.test.js` skips itself when `docs-app/dist` is absent.
+Build the docs, or read a skip as a pass.
+
+## (previous, 2026-07-30) - Lighthouse client performance
 
 **Branch `fix/026-lighthouse-client-performance`**, spec
 `specs/026-lighthouse-client-performance/`. The supplied production report's
