@@ -100,10 +100,19 @@ tests/e2e/cur/
 tests/e2e/final/
 tests/e2e/fix*/
 
+# ...but `fixtures/` is a real, tracked directory that the glob above swallows.
+# It cost a CI run to find: `git add` reported nothing, the commit looked complete,
+# and the browser job failed on `cp: No such file or directory` (spec 097).
+!tests/e2e/fixtures/
+!tests/e2e/fixtures/**
+
 # ───────────────────────── Perego-specific (this client site) ───
 # Raw design handoff reference (large binaries) — kept local, not shipped
 /_design_handoff/
-/Perego Creative Studio Final.zip
+# Widened from the single `… Final.zip` entry: `… (1).zip` slipped past it and was committed by the
+# v0.40.0 update commit (b5c41f38), where an over-broad `git add` swept 17MB of design handoff into
+# the repository. Upstream's repo-hygiene suite is what found it, one framework version later.
+/Perego Creative Studio*.zip
 
 # Ad-hoc screenshot/scratch output from local Playwright runs.
 output/

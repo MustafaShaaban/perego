@@ -10,6 +10,10 @@ namespace Corex\Guides\Corex;
 
 defined('ABSPATH') || exit;
 
+use Corex\Guides\Corex\Guides\EverydayScreenGuides;
+use Corex\Guides\Corex\Guides\OrientationGuide;
+use Corex\Guides\Corex\Guides\SettingsGuide;
+use Corex\Guides\Corex\Guides\SpecialistScreenGuides;
 use Corex\Guides\Guide;
 use Corex\Guides\GuideScreenshot;
 use Corex\Guides\GuideStep;
@@ -27,6 +31,11 @@ use Corex\Guides\GuideTopic;
  * inbox is never shown instructions for it. Registered through the same public seam a site plugin
  * uses, so the seam is exercised by the framework and cannot rot unnoticed.
  *
+ * Spec 094 widened this from four guides to ten, and spec 096 to sixteen — every CoreX admin screen.
+ * The guides added there live under `Guides/` rather than in this one: sixteen inline would be a
+ * file nobody reads to change one step. This class is now the composition point and the four
+ * original guides; anything new goes in its own file.
+ *
  * @see \Corex\Guides\GuideRegistry
  */
 final class CorexGuides
@@ -37,6 +46,12 @@ final class CorexGuides
     public static function all(): array
     {
         return [
+            // Orientation first, by `ordered(1)` as well as by position: it is the guide for
+            // somebody who does not yet know which of the others they want.
+            OrientationGuide::guide(),
+            SettingsGuide::guide(),
+            ...EverydayScreenGuides::all(),
+            ...SpecialistScreenGuides::all(),
             self::submissions(),
             self::publishing(),
             self::email(),
