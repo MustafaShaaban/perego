@@ -2,6 +2,44 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-07-30, latest) - Lighthouse client performance
+
+**Branch `fix/026-lighthouse-client-performance`**, spec
+`specs/026-lighthouse-client-performance/`. The supplied production report's
+Perego-owned findings are fixed without changing CoreX, WordPress runtime files,
+uploads, or third-party code.
+
+Perego's theme image build now creates deterministic compressed PNG fallbacks
+and same-stem WebP siblings, verifies dimensions and byte budgets, and renders
+the hero, wave artwork, service cards, and default logos through CoreX's public
+picture contract. After the hero fidelity correction, the three report-targeted
+WebPs total **327,122 bytes**, down from the supplied **3,294,944-byte** baseline
+(about **90.1% smaller**). The full-screen hero is now encoded from a true-colour
+fallback at WebP quality 95, eliminating the visible banding from the earlier
+22 KB palette-derived encode while remaining only 75,380 bytes. The live hero
+now references `hero-bg-v2.webp`, forcing browsers that cached the earlier URL
+under the 30-day policy to fetch the corrected file immediately.
+Default logos and audited images have intrinsic dimensions; hero/preloader/header
+media is eager and below-fold media is lazy. Client carousel controls keep their
+native button/link roles. Perego theme and plugin static assets receive a finite
+30-day cache policy, with no `immutable` directive on stable filenames.
+
+Verification: theme and client-plugin builds pass; **599 Pest tests / 2,086
+assertions** and **47 Jest suites / 312 tests** pass; the final focused renderer
+run passes **132 tests / 399 assertions**. Clean EN/AR browser checks at 375,
+768, and 1440 pixels found no overflow, broken media, hidden reveal content, or
+console errors. An extension-free Lighthouse rerun reaches Accessibility 100
+and SEO 100, clears unsized-image and invalid-ARIA findings, and leaves no
+Perego theme/plugin URL in the cache audit.
+
+**Next:** deploy this client branch and rerun Lighthouse against
+`https://peregoads.com/` in a clean profile. Do not compare the local Performance
+69 / Best Practices 78 scores directly with production: the local audit used
+HTTP, mobile throttling, and Lighthouse 13.3.0 reported a `NO_LCP` trace warning
+under the installed Node 22.14 runtime. Remaining local cache/image findings are
+uploads, WordPress/CoreX assets, or third-party resources and are outside this
+client-only change.
+
 ## RESUME HERE (2026-07-29, latest) — Round 16: the client's phone
 
 **Branch `fix/025-mobile-client-fixes`** (off `chore/corex-v0.40.0-update`), spec

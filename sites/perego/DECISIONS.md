@@ -1,5 +1,43 @@
 # Perego — Decision Log
 
+## 2026-07-30 - Client-owned image delivery follows the CoreX contract
+
+**Use CoreX's public picture helper, but keep every change in Perego.** The
+Perego renderers register the client theme asset base before FSE dynamic blocks
+render, then call `Corex\Assets\Image::picture()` against same-stem PNG/WebP
+pairs. Static FSE templates use equivalent `<picture>` markup. CoreX source and
+runtime output remain untouched.
+
+**Compression follows image content, not one universal quality number.** The
+photo-like hero uses a quality-95 lossy WebP generated from a true-colour PNG;
+palette reduction followed by the former quality-72 encode caused obvious
+banding in its full-screen gradients. The transparent logo and line-art waves
+use lossless WebP because lossy trials introduced visible crossing artifacts.
+Fallback PNGs remain compressed and dimensionally identical. A deterministic
+verification script rejects missing siblings, dimension drift, or target-budget
+regressions.
+
+**Cache stable filenames for 30 days, without `immutable`.** Perego's Apache
+rules cover only client theme/plugin static assets. A finite lifetime improves
+repeat visits while allowing an updated stable filename to become visible
+without a permanent stale-object risk. Production hosts or CDNs that ignore
+distributed `.htaccess` files must apply the equivalent policy.
+
+**Change the public filename when image content changes.** A finite lifetime is
+not immediate revalidation: after the first hero correction, existing browsers
+could legally keep the old `hero-bg.webp` for 30 days. The image profile now
+builds the canonical source as `hero-bg-v2.png` plus `hero-bg-v2.webp`, and the
+Perego renderer references that versioned pair. Future material image revisions
+must advance the output stem; this preserves long-lived caching without showing
+stale artwork.
+
+**Audit ownership before changing code.** Browser-extension findings in the
+supplied report are not site defects. The clean-profile rerun is the reference
+for accessibility and first-party resource checks. Uploads, WordPress/CoreX
+assets, Cloudflare, Google, and local HTTP-only penalties remain classified
+separately; fixing them must not be used as a reason to alter the CoreX
+framework from Client Site Mode.
+
 ## 2026-07-29 — A layout the component cannot express, and a toast that stops fighting the keyboard
 
 **When the mechanism reproduces but the client's screen does not, fix the shape, not the path.** The
