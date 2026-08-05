@@ -4,6 +4,123 @@
 > Updated at the end of every working session.
 
 ---
+## RESUME HERE (2026-07-29) -- **Spec 092: the published docs site had 85 broken links.**
+
+On `spec/092-docs-link-base`, after v0.40.0. Owner reported seven 404s; there were **85, across 29
+files**.
+
+**Spec 090 added `base` and only half the site got it.** Astro rewrites what it owns — asset URLs,
+and Starlight's sidebar, which is declared with `slug:`. It does not touch a hand-written
+`[Getting Started](/getting-started/overview/)`. `dist/index.html` shipped
+`href="/corex/project-status/"` from the sidebar and `href="/project-status/"` from the body, on the
+same page.
+
+**Nothing checked, and that is the actual defect.** Spec 090 verified the deploy against six URLs and
+every one was a form Astro rewrites — a real check that sampled only the working half. So the test is
+the deliverable here and the rewrite is what makes it pass: `tests/docs-links.test.js` walks
+`docs-app/dist`, and was **confirmed failing on 29 files before the fix**. A link test that has never
+failed proves nothing.
+
+**The CI step matters as much as the test.** It skips itself when `docs-app/dist` is absent — right
+for a developer who has never built the docs, worthless in CI. The Jest job now builds the site, so a
+silently skipped link check cannot happen again. `docs.yml` builds too, but only on push to `main`,
+which is after the merge that would publish the breakage.
+
+**Applied at build time, not typed into 84 links** — hardcoding `/corex/` would have made
+`COREX_DOCS_BASE` decorative and left the next author free to reintroduce it. One link *is* literal:
+`index.mdx`'s hero action is frontmatter, never reaches rehype, and Starlight does not prefix it
+either. Commented as the exception. (Decisions #210)
+
+**Also:** `DocsUrl` fell back to a GitHub `blob` URL, so an operator clicking "Documentation" in
+wp-admin got raw Markdown with the front matter showing. It now points at the published site.
+Correct when written — no site existed then. (Decision #211)
+
+**Verified:** the seven reported URLs all carry `/corex/` in the new build · 286 pages · Jest **433**
+(2 new) · Pest **1711** · lints and `php -l` clean · two tests that asserted the old `DocsUrl`
+contract updated rather than deleted.
+
+**Open:** T008 — that the URLs return 200 **after deploy**. `docs.yml` runs on `main`, so it cannot
+be checked from a branch. Same shape as spec 090's T012.
+
+**Next:** spec 093 (branded support email), then 094 (the comprehensive in-admin guide).
+
+---
+## RESUME HERE (2026-07-29) -- **Spec 091: both remaining open items named the wrong cause.**
+
+On `spec/091-rtl-overflow`, after v0.40.0. The last two entries in `PROJECT-STATUS.md`'s *Known open
+items* that were concrete enough to act on. **Neither was where it had been recorded**, and in both
+cases the wrong attribution is what kept it open across several releases.
+
+**"`corex-access` overflows 1px in RTL at 375px" is not the access screen and not CoreX markup.**
+Bisecting the document walks to `#wp-admin-bar-menu-toggle > a.ab-item` at `left: -1`. It carries
+`margin-left: -1px` beside a 1px left border — a border-overlap trick WordPress writes for LTR —
+inside an `li` that floats left. In RTL that lands it one pixel outside the viewport, and one pixel
+outside the viewport is one pixel of document scroll. It happens on **every** CoreX admin screen;
+access was simply the one somebody measured. Flipped to the inline-end side rather than zeroed, so
+the overlap the rule exists for still happens on the side it belongs on.
+
+**"`clearPendingRequests` only clears the current requester's" is not the cause either.** That helper
+is correct, and its comment explains why it deliberately spares other specs' rows. The 311 stuck
+`corex-079-requester-*` users came from `AccessRequestFormTest`, which created a subscriber in
+`beforeEach` and never deleted it — each leaving a pending access request, and the denied surface
+renders its *pending* state when one exists.
+
+**The test is written the way the finding says it should be.** `tests/e2e/rtl-overflow.spec.js`
+measures six screens in both directions — 12 cells — and was verified to fail on **all six** RTL
+cases without the fix. A single-screen test is precisely what let this survive mis-attributed.
+
+**Verified:** Pest **1711** · Jest **431** · 12/12 overflow cells, 6 failing without the fix ·
+`AccessRequestFormTest` 10/10 with the fixture count unchanged across a run that would previously
+have grown it by ten · lints clean.
+
+**Not done, deliberately:** the 311 fixture users already on this development install. Repository
+state is fixed; that install is not repository state, and deleting user accounts on somebody's
+environment is not a spec's call. The command is in `PROJECT-STATUS.md`.
+
+**Also blocked:** pushing `main` to `upstream` (the Azure remote, 7 commits behind) was refused by
+the permission gate. It is a clean fast-forward — `upstream/main` is an ancestor of `origin/main` —
+and needs the owner to run it or to allow the action.
+
+**Known open is now two items**, both needing investigation rather than a fix: the three excluded
+browser specs, and Arabic typography proved for layout but not type.
+
+---
+## RESUME HERE (2026-07-29) -- **The documentation site is published.**
+
+<https://mustafashaaban.github.io/corex/> · spec 090, merged as PR #162.
+
+`.github/workflows/docs.yml` had regenerated the class reference and built the site on every push to
+`main` since spec 022, then uploaded it as an artifact nothing served. Its own trailing comment had
+described the missing half for several releases.
+
+**Enabling the setting alone would have published a broken site.** A GitHub project page is served
+from a repository subpath, and `astro.config.mjs` had neither `site` nor `base` — without `base`
+every internal link, asset URL and the Pagefind index resolves to the domain root, so the site 404s
+on itself. The build had also been warning that the sitemap integration was skipping, because `site`
+was unset. Three changes, not one: the Astro config (both values env-overridable so the same build
+still serves a dedicated domain or the local WAMP vhost), the workflow (Pages permissions, a `pages`
+concurrency group that does not cancel in flight, `upload-pages-artifact`, a `deploy-pages` job gated
+on the build), and the repository setting.
+
+**Checked before merging, not after:** the `github-pages` environment carries a custom branch policy,
+and a policy without `main` in it rejects the deploy while the workflow still reports green. `main`
+was allowed.
+
+**Verified after merging, because a green workflow is not a site that loads.** Run `30410411129`,
+both jobs success, then six URLs: the root, a deep page, a hashed asset (proving `base`), the
+Pagefind index, the sitemap, and a reference page generated from source — all 200.
+
+Also corrected: `README.md` still claimed 1704 unit tests against an actual 1711. Prose counts sit
+outside `wp corex version`'s reach, which is worth remembering the next time one drifts.
+
+**`PROJECT-STATUS.md`'s known-open list is now three items** — three excluded browser specs, a 1px
+RTL overflow on `corex-access`, and Arabic typography proved for layout but not type. No security
+items, no documentation gaps.
+
+**Next:** owner decision. Two repository settings remain owner-only (five of six CI checks are not
+*required* in branch protection), and `upstream/main` — the Azure remote — is 5 commits behind.
+
+---
 ## RESUME HERE (2026-07-29) -- **v0.40.0: every dependency advisory closed.**
 
 On `spec/089-dependency-advisories`, after v0.39.0. `PROJECT-STATUS.md` shipped listing 24 bounded

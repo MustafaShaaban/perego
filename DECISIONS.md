@@ -3992,3 +3992,128 @@ separate review dates, and the cheapest route to closing six of them was to fix 
 first. A blocker measured once stays in the record as a fact long after it has stopped being one;
 re-measuring before believing it is the actual lesson.
 Status: Final.
+
+## #208 — Every check that always runs is required; the one that does not is not
+Date: 2026-07-29
+Decision: `main` requires all six pull-request checks — PHP unit, JavaScript, integration, Playwright
+and both CodeQL contexts. `dependency-security` is deliberately **not** required. Reviews are not
+required and admins are not enforced.
+Why: five of the six ran on every pull request and could not block a merge, which is the state
+DECISIONS #153 already recorded the cost of — GitHub renders "no checks" the same way it renders "all
+checks passed", and a stack once sat queued for merge with eight real failures in it.
+Scope: `dependency-security.yml` is paths-filtered to manifests, lockfiles and the policy. A required
+check that does not run leaves a pull request pending **forever**, so requiring it would block every
+change that touches no dependency — the check would be enforcing on absence rather than on failure.
+Reviews and `enforce_admins` are off for the same class of reason: this is a single-maintainer
+repository, and both would lock the maintainer out of their own `main` rather than add a reviewer.
+Each is a deliberate omission with a stated reason, not an oversight, and `PROJECT-STATUS.md` says so
+where somebody evaluating the project will read it.
+Status: Final.
+
+## #209 — Both remaining open items named the wrong cause
+Date: 2026-07-29
+Decision: the 1px RTL overflow is fixed in `corex-admin-shell.css` against WordPress's admin-bar menu
+toggle, and the leaking access-request fixtures are fixed in `AccessRequestFormTest`'s `afterEach`.
+Why: neither item was where it had been recorded, and in both cases the wrong attribution is what
+kept it open for several releases.
+- *"`corex-access` overflows 1px in RTL"*: bisecting the document lands on
+  `#wp-admin-bar-menu-toggle > a.ab-item`, which carries `margin-left: -1px` beside a 1px left border
+  — a border-overlap trick written for LTR — inside a left-floating `li`. In RTL that puts it at
+  `left: -1`. It is WordPress's own markup and it happens on **every** CoreX screen; access was
+  simply the one somebody measured. Six screens confirmed, RTL only.
+- *"`clearPendingRequests` only clears the current requester's"*: that helper is correct and its
+  comment explains why it deliberately spares other specs' rows. The 311 accumulated users came from
+  `AccessRequestFormTest`, which created a subscriber per test and never deleted it.
+Scope: the margin is flipped to the inline-end side rather than zeroed, so the overlap the rule
+exists for still happens on the side it belongs on. `tests/e2e/rtl-overflow.spec.js` measures six
+screens in both directions, and was verified to fail on all six RTL cases without the fix — a
+single-screen test is precisely what allowed the mis-attribution to survive this long.
+Status: Final.
+
+## #210 — The base is applied at build time, not typed into 84 links
+Date: 2026-07-29
+Decision: a `rehypeBaseLinks` plugin in `docs-app/astro.config.mjs` prefixes root-absolute hrefs with
+`base`; `tests/docs-links.test.js` asserts the built output; the CI Jest job builds the docs so that
+test cannot skip.
+Why: spec 090 added `base` and Astro rewrote what it owns — assets, and Starlight's `slug:` sidebar —
+leaving 84 hand-written markdown links resolving off the base path. `dist/index.html` shipped
+`href="/corex/project-status/"` from the sidebar and `href="/project-status/"` from the body, on one
+page. Hardcoding `/corex/` into the content would have fixed the symptom while making
+`COREX_DOCS_BASE` decorative and leaving the next author free to reintroduce it.
+Scope: **the test is the deliverable; the rewrite is what makes it pass.** Spec 090 verified the
+deployment against six URLs and every one was a form Astro rewrites — a real check that sampled only
+the working half. It was confirmed failing (29 files) before the fix and passing after, because a
+link test that has never failed proves nothing. The CI step matters as much: the test skips when
+`docs-app/dist` is absent, which is right locally and worthless in CI, and a silently skipped check
+is the condition that published 85 broken links.
+Status: Final.
+
+## #211 — Admin docs links point at the docs site, not at its Markdown source
+Date: 2026-07-29
+Decision: `DocsUrl`'s fallback is `https://mustafashaaban.github.io/corex` instead of a GitHub `blob`
+URL into `docs-app/src/content/docs`.
+Why: the GitHub fallback was correct when written — it guaranteed an absolute URL at a time when no
+site existed, and an absolute URL is the load-bearing part (a relative one resolves against the
+*client's* domain in wp-admin). A site has existed since v0.40.0, and until now an operator clicking
+"Documentation" was handed raw Markdown with the front matter showing.
+Scope: `hasConfiguredBase()` kept, with its docblock corrected — it no longer distinguishes "a site"
+from "raw source" but *whose* site, which is what a team hosting their own needs. Two tests asserted
+the old contract; both updated rather than deleted.
+## #212 — The support email's rendering follows its transport
+Date: 2026-07-29
+Decision: `SupportMailer` sends a registered HTML template through the Corex Mail rung and plain text
+through the `wp_mail()` floor, both composed from one `SupportMessage`.
+Why: spec 087 sent one `"\n"`-joined plain-text body to both, with a docblock arguing plain text was
+deliberate. That was right about `wp_mail()`, which sends no `Content-Type`. It was wrong about the
+other rung: `WpMailDriver` stamps `text/html` on every message, so on any site with Corex Mail active
+— most of them — the newlines collapsed into one run-on paragraph. **The email was broken before it
+was unstyled**; the design is what the HTML rendering is for.
+Scope: `SupportMessage` exists so the parts are assembled once. Two renderings built from the same
+fields separately is how they drift, and the drift would be invisible — both emails still arrive.
+Status: Final.
+
+## #213 — The email palette is literal, and Layout's rule still stands
+Date: 2026-07-29
+Decision: `SupportEmailPalette` holds the admin's light-mode tokens as literal hex values.
+Why: `Layout`'s docblock forbids exactly this — *"never design tokens — the brand values are
+injected, not hardcoded"* — and it is right, for `Layout`, which wraps every site's mail and must
+carry no opinion. Two things make it inapplicable to a template body. An email cannot read
+`--corex-admin-*` (custom properties are not supported across mail clients), so a token must become a
+literal somewhere; the only question is whether in one named place or scattered through markup. And
+the brass identity is not in the brand pipeline at all — `Layout`'s injected accent is `theme.json`'s
+`primary`, navy — so "use the CoreX design" and "inject the brand colour" name different colours.
+Scope: the visible result is a **navy shell rule around a brass-edged card**, and that is stated in
+the spec rather than hidden. Overriding `Layout` from one add-on's template would make one message
+lie about the site's brand. If the two should match, the fix is migrating the brass into
+`theme.json` — the direction `design/handoffs/brand-foundation.md` already approves — not a
+special case here. Light values, not dark: dark-mode email support is unreliable, and dark-on-dark in
+a client that ignores it is worse than light everywhere.
+Status: Final.
+
+## #214 — The guide a reader needs first is gated lowest
+Date: 2026-07-29
+Decision: `OrientationGuide` requires `read`, not a CoreX ability, and sorts first.
+Why: every other guide answers "how do I do X" and assumes the reader already knows which screen
+they want. Somebody handed a finished site meets thirteen unfamiliar menu words. Gating that
+explanation behind `manage_options` would withhold it from precisely the person who needs it — a
+contributor with two capabilities is *more* lost than an administrator, not less.
+Scope: it documents the menu rather than any one screen, so it has no ability to inherit. The guides
+it points at stay individually gated, so naming a screen in the orientation costs nothing: a reader
+who cannot open Submissions still learns what Submissions is, and simply finds no guide for it.
+Status: Final.
+
+## #215 — The settings guide is asserted against the registry, on labels
+Date: 2026-07-29
+Decision: `SettingsGuideCoverageTest` fails when any field in `SettingsRegistry::sections()` is not
+named in the guide, matching on the field's **label**.
+Why: "every single input described" is a promise that decays the first time somebody adds a field,
+and it decays silently — the guide still renders, the field still saves, and nothing says the two
+disagree. On labels rather than keys because a reader looks for "Company name"; `brand.company_name`
+appears nowhere they can see, so a guide passing a key check could still be useless to them.
+Scope: it earned itself on the first run, failing on `captcha.action` and `media.webp.min_saving`
+where the prose had dropped the parenthetical part of a label — "Minimum size saving" against the
+screen's "Minimum size saving (%)". Small, and exactly the drift that makes a reader think a guide
+describes a different screen. The related browser test was changed the same way: it asserted
+`toHaveCount( 1 )` and reported "expected 1, received 3", a true statement about a number that says
+nothing about whether gating works. Both now name what they mean.
+Status: Final.

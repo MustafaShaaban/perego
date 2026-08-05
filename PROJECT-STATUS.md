@@ -57,6 +57,47 @@ the same reason — so the next such gap is found by a reader, not by a customer
 Each of these is recorded somewhere in the repository already. The source is the point — you can
 verify every one.
 
+### Three browser specs are excluded from a fresh-install run
+
+Two block-editor specs trade a failure between them: whichever opens the editor *first* fails to see
+the inserter, demonstrated in both directions. A trace rules out console errors, failed requests,
+`php -S` versus nginx, worker starvation and the welcome-guide modal; timeouts from 30s to 150s all
+failed, and 150s destabilised neighbouring specs. A third, the flow-builder spec, times out
+mid-interaction and — unlike the editor pair — has **not** been shown to be environmental, so it may
+be a real slow path.
+
+The editor itself works; `smoke.spec.js` clicks that inserter successfully whenever it is not first.
+These are real coverage gaps, diagnosed down to "needs fresh eyes".
+*Source: `tests/e2e/playwright.config.js`, `CANNOT_RUN_ON_A_FRESH_INSTALL`.*
+
+### Arabic typography has layout proof, not type proof
+
+The RTL acceptance matrix forces `dir="rtl"` onto English strings, so it proves the layout holds and
+proves nothing about Arabic typography. Bidi artifacts visible in those cells belong to the fixture,
+not the product. An Arabic catalogue and its own pass are still owed.
+*Source: `specs/079-admin-errors-access-request/evidence/after/acceptance-matrix.md`, DECISIONS #196.*
+
+### Development installs may hold leaked test fixtures
+
+`AccessRequestFormTest` used to create a subscriber per test and never delete it. Fixed in spec 091,
+but an install that ran the suite before that still holds them — 311 on the one where this was found.
+Each carries a pending access request, and the denied surface renders its *pending* state when one
+exists, so enough of them make `access-request.spec.js` find a confirmation where it expects a form.
+
+Repository state is correct; this is only about installs that predate the fix:
+
+```bash
+wp user list --field=user_login | grep '^corex-079-requester-' | xargs -r -n1 wp user delete --yes
+```
+
+*Source: `specs/091-rtl-overflow-and-fixture-leak/`.*
+
+## Closed, and worth knowing were closed
+
+Two entries stood under *Known open items* in v0.39.0 and no longer do. They are kept, briefly,
+because "was this ever a problem, and how was it dealt with" is a fair question to ask of a project
+you are evaluating.
+
 ### Dependency advisories — none open
 
 `.github/dependency-security-policy.json` holds **zero exceptions**, and
@@ -73,49 +114,19 @@ Astro 7 migration landed with it. (Spec 089, DECISIONS #206)
 The gate fails closed on any unbounded finding, so an empty list is a state that is checked on every
 pull request, not a claim.
 
-### Three browser specs are excluded from a fresh-install run
+### Branch protection
 
-Two block-editor specs trade a failure between them: whichever opens the editor *first* fails to see
-the inserter, demonstrated in both directions. A trace rules out console errors, failed requests,
-`php -S` versus nginx, worker starvation and the welcome-guide modal; timeouts from 30s to 150s all
-failed, and 150s destabilised neighbouring specs. A third, the flow-builder spec, times out
-mid-interaction and — unlike the editor pair — has **not** been shown to be environmental, so it may
-be a real slow path.
+All six checks that run on every pull request are **required** on `main`: the PHP unit suite, the
+JavaScript suite, integration against a provisioned WordPress, Playwright, and both CodeQL contexts.
+Force-pushes and branch deletion are blocked.
 
-The editor itself works; `smoke.spec.js` clicks that inserter successfully whenever it is not first.
-These are real coverage gaps, diagnosed down to "needs fresh eyes".
-*Source: `tests/e2e/playwright.config.js`, `CANNOT_RUN_ON_A_FRESH_INSTALL`.*
+Two things are deliberately *not* set, and the reasons matter more than the settings:
 
-### A one-pixel RTL overflow on the access screen
-
-`corex-access` overflows horizontally by 1px in RTL at 375px. Measured, reproducible, open.
-*Source: `PROGRESS.md`.*
-
-### Arabic typography has layout proof, not type proof
-
-The RTL acceptance matrix forces `dir="rtl"` onto English strings, so it proves the layout holds and
-proves nothing about Arabic typography. Bidi artifacts visible in those cells belong to the fixture,
-not the product. An Arabic catalogue and its own pass are still owed.
-*Source: `specs/079-admin-errors-access-request/evidence/after/acceptance-matrix.md`, DECISIONS #196.*
-
-### Test-suite hygiene
-
-`clearPendingRequests` in `access-request.spec.js` clears only the current requester's rows, so failed
-runs accumulate. A local suite failed twice until 133 stuck pending requests were cleared. No product
-impact; it will cost somebody an hour.
-*Source: `PROGRESS.md`.*
-
-### GitHub Pages is not enabled
-
-`.github/workflows/docs.yml` regenerates the class reference and builds the docs site on every push
-to `main`, then uploads the result as an artifact. Publishing is a repository setting, and it is off.
-*Source: `.github/workflows/docs.yml`.*
-
-### Branch protection does not require every check
-
-Five of six CI checks are not marked *required* in branch protection. All six run on every PR; five
-of them cannot block a merge.
-*Source: `PROGRESS.md`. Owner action, not a code change.*
+- **`dependency-security` is not required**, because it is paths-filtered — it runs only on pull
+  requests that touch a manifest, a lockfile or the policy. A required check that does not run leaves
+  a pull request pending forever, so requiring it would block every change that touches no dependency.
+- **Reviews are not required and admins are not enforced.** This is a single-maintainer repository;
+  both would lock the maintainer out of their own `main` rather than add a reviewer.
 
 ## Deliberately not built
 
