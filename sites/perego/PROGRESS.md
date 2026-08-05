@@ -28,9 +28,21 @@ are byte-identical EN and AR before and after.
 2. Then the still-open item from spec 026: deploy and rerun Lighthouse against
    `https://peregoads.com/` in a clean profile, per the note below.
 
-**Standing gotcha recorded this round:** the framework Jest suite reports "2 skipped" unless
-`docs-app` is built first — `tests/docs-links.test.js` skips itself when `docs-app/dist` is absent.
-Build the docs, or read a skip as a pass.
+**Standing gotchas recorded this round.**
+
+1. The framework Jest suite reports "2 skipped" unless `docs-app` is built first —
+   `tests/docs-links.test.js` skips itself when `docs-app/dist` is absent. Build the docs, or read a
+   skip as a pass.
+2. **`corex-guides` was never installed on this machine.** Every other add-on had a link in
+   `wp/wp-content/plugins/`; this one had none, so the guide screens could never appear no matter what
+   the merge did — and 11 of this upgrade's 13 changed source files live there. Now junctioned and
+   active (junction, not symlink: symlinks need elevation here). **Production still 404s for it** and
+   needs a deploy.
+3. **The CoreX admin is meant to look identical after this upgrade.** The whole admin-stylesheet delta
+   is one RTL admin-bar rule; 18 of its 22 lines are comment. Do not read "looks the same" as "did not
+   apply" — the cache-bust is filemtime-based, so assets refresh on their own.
+4. WP-CLI cannot confirm the Guides menu: `GuidesScreen` registers only under `is_admin()`, false for
+   CLI whatever you define. Resolve the screen and fire `admin_menu` directly instead.
 
 ## (previous, 2026-07-30) - Lighthouse client performance
 

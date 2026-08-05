@@ -151,6 +151,40 @@ done rather than treated as optional.
 dispatch real email from the client's three mailboxes, and the merge provably touched no forms code,
 which the framework suite already covers.
 
+## Why the admin looked unchanged after the merge
+
+The owner reported seeing "the old css and modules" in the CoreX admin once this landed. Both halves
+resolved, and neither was a merge fault.
+
+**The modules: `corex-guides` was not installed in WordPress at all.** `wp/wp-content/plugins/` carried
+a link for every add-on except this one, and it had never appeared in `active_plugins`. The framework's
+own `PROGRESS.md` (spec 084) says this machine needs it as a **junction** rather than a symlink,
+because `New-Item -ItemType SymbolicLink` requires elevation here — and that junction was never
+created. This matters out of proportion to its size: **11 of the 13 source files this upgrade changed
+live in `corex-guides`**, so the framework updated correctly and the visible result was nothing.
+
+Fixed locally by creating the junction and activating the plugin. Verified by resolving `GuidesScreen`
+and firing `admin_menu` as an administrator: the **Guides** submenu registers under `corex-settings`
+and the registry holds **16 guides**. Note that WP-CLI cannot verify this the obvious way —
+`GuidesScreen` registers only under `is_admin()`, which is false for a CLI request no matter when
+`WP_ADMIN` is defined, so a naive menu dump reports a false absence.
+
+**Production does not have the add-on either:** `corex-guides/corex-guides.php` returns 404 there
+while `corex-core` assets return 200. That pattern fits CoreX's `UpdateService` updating *installed*
+plugins while never installing a *new* one, so production has not been redeployed since the add-on was
+introduced. A deploy is required; the dist builder already copies every `addons/*` folder.
+
+**The CSS was never stale.** Production's `corex-admin-shell.css` is **byte-identical to
+`upstream/main`** (57,441 bytes) and differs from v0.40.0 (56,444), and the local file carries the
+merge's mtime. `HttpServiceProvider::assetVersion()` keys the cache-bust on **filemtime, not the
+framework version**, so declining the v0.41.0 version stamp does not stale any asset. OPcache is not
+implicated either (`validate_timestamps=On`, `revalidate_freq=2`).
+
+The real answer is that **this upgrade contains almost no visual CSS change**: the entire delta to the
+admin stylesheet is one rule flipping a 1px `margin-left` to `margin-inline-end` on WordPress's own
+admin-bar menu toggle in RTL. The admin is *supposed* to look identical. Expecting a visible
+difference from a 22-line diff that is 18 lines of comment is the mismatch, not a caching fault.
+
 ## One thing this branch inherits and does not fix
 
 `verify-a11y` reports **2 serious violations** (baseline 0): `role-img-alt` on
