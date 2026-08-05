@@ -38,16 +38,30 @@ as a Windows access violation (`-1073741819`) that looks like a crash. Run
 `php -d memory_limit=1G vendor/bin/pest`. Verified: framework 1739 Pest / 54 suites / 442 Jest;
 Perego 599 Pest / 312 Jest, both unchanged.
 
+**Done since:** the a11y regression this branch surfaced is fixed (`24eb73fc`, and the spec 026
+addendum) — `verify-a11y` is back to **0 serious/critical across 12 routes**, measured pre- and
+post-fix rather than asserted. The framework update itself is merged into `fix/026`, so this branch
+now carries both; the local install reports **0.41.0** for core, blocks, forms and the theme.
+
 **Next:** two things, in this order.
 
-1. **Fix the a11y regression that spec 026 introduced and this branch surfaced.** `verify-a11y` is at
-   2 serious violations against a baseline of 0: `role-img-alt` on `.indiv-card[role="img"]`, home EN
-   and AR. Commit `8ef527cc` changed the inert client card from `role="listitem"` to `role="img"`.
-   Do not just add an `aria-label` — `role="img"` collapses the card into a single image node, so its
-   `<h3>` title and body copy stop being reachable at all; a name would satisfy axe while leaving the
-   content hidden. It belongs on `fix/026`, where it originated.
+1. **CI on this branch is red, and neither failure comes from the framework update** — both were
+   already failing before it landed:
+   - **`lint:css`** walks `sites/perego/perego-theme/style.css` and reports **4870 errors** (mostly
+     `max-line-length`, plus `no-descending-specificity`). The root `.stylelintignore` excludes
+     `node_modules`, `vendor`, `build`, `dist` and `wp/` — but not `sites/`. This is the **third**
+     instance of one pattern: an upstream check that assumes no client site in the tree
+     (`repo-hygiene.test.js` and `jest.config.js` are the other two). Decide it deliberately —
+     ignoring `sites/` matches the `jest.config.js` precedent and leaves the client CSS unlinted;
+     fixing it is a large diff on authored CSS where `no-descending-specificity` reordering can
+     change rendering.
+   - **Playwright**: 135 passed, **1** failed — `admin-errors.spec.js` "every admin refusal a
+     subscriber meets is a CoreX document", failing at `signInAs`. Fixture-user sign-in, from
+     upstream spec 095's per-spec browser users.
 2. Then the still-open item from spec 026: deploy and rerun Lighthouse against
-   `https://peregoads.com/` in a clean profile, per the note below.
+   `https://peregoads.com/` in a clean profile, per the note below. **Production still has no
+   `corex-guides` at all** — CoreX's `UpdateService` updates installed plugins and never installs a
+   new one — so the add-on only appears there after a deploy.
 
 **Standing gotchas recorded this round.**
 
