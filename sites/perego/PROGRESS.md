@@ -24,13 +24,28 @@ media is eager and below-fold media is lazy. Client carousel controls keep their
 native button/link roles. Perego theme and plugin static assets receive a finite
 30-day cache policy, with no `immutable` directive on stable filenames.
 
-Verification: theme and client-plugin builds pass; **599 Pest tests / 2,086
-assertions** and **47 Jest suites / 312 tests** pass; the final focused renderer
-run passes **132 tests / 399 assertions**. Clean EN/AR browser checks at 375,
-768, and 1440 pixels found no overflow, broken media, hidden reveal content, or
-console errors. An extension-free Lighthouse rerun reaches Accessibility 100
-and SEO 100, clears unsized-image and invalid-ARIA findings, and leaves no
-Perego theme/plugin URL in the cache audit.
+Verification: theme and client-plugin builds pass; **601 Pest tests** and **47
+Jest suites / 312 tests** pass; the final focused renderer run passes **132 tests
+/ 399 assertions**. Clean EN/AR browser checks at 375, 768, and 1440 pixels found
+no overflow, broken media, hidden reveal content, or console errors. An
+extension-free Lighthouse rerun reaches Accessibility 100 and SEO 100, clears
+unsized-image findings, and leaves no Perego theme/plugin URL in the cache audit.
+
+**Corrected 2026-08-05 (`24eb73fc`, spec 026 addendum).** The "clears invalid-ARIA
+findings" claim above was wrong, and so was the Accessibility 100 it rested on.
+`verify-a11y` — axe-core over the full WCAG 2.0/2.1/2.2 A+AA tag set, 12 routes —
+reported **2 serious `role-img-alt` violations, home EN and AR**, against a
+baseline of 0. Lighthouse samples a subset of rules on one page and did not see
+them. The inert individual card had been given a nameless `role="img"`, which
+both failed the rule and collapsed the card's own `<h3>`, subtitle and body copy
+into a single graphic, unreachable by assistive tech. Now fixed and measured both
+ways: pre-fix `hardFailures: 2`, fixed `hardFailures: 0`.
+
+**Lighthouse is not this project's a11y gate.** Run
+`node sites/perego/perego-site/scripts/verify-a11y.mjs` before claiming an
+accessibility success criterion, and check the mtime of `./output/verify-a11y.json`
+— that path is relative to the cwd, and two stale copies of the same filename sit
+under `perego-site/`.
 
 **Next:** deploy this client branch and rerun Lighthouse against
 `https://peregoads.com/` in a clean profile. Do not compare the local Performance

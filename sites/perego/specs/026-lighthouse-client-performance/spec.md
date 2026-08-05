@@ -207,3 +207,78 @@ verify that third-party extension code is absent from the result.
 - A homepage redesign, content rewrite, or change to the approved brand assets.
 - Broad removal of framework or WordPress CSS/JavaScript based solely on
   Lighthouse's small unused-code estimates.
+
+---
+
+## Addendum (2026-08-05) — SC-003 was reported met and was not
+
+**Commit:** `24eb73fc`. Found by the CoreX v0.41.0 update branch, fixed here because it originated here.
+
+`verify-a11y` reported **2 serious `role-img-alt` violations — home EN and AR** — against a baseline
+of 0. This spec's own record claimed the opposite: *"clears unsized-image and invalid-ARIA findings"*
+and *"Accessibility 100"*.
+
+Both claims came from Lighthouse, which scores a sample of rules on one page. `verify-a11y` runs
+axe-core over the full WCAG 2.0/2.1/2.2 A+AA tag set across 12 routes. **SC-003 was verified by the
+weaker instrument**, and the stronger one — already in this repository, already part of the
+project's definition of done — was not run before the claim was written down.
+
+### What went wrong in the code
+
+Commit `8ef527cc` ("the renderers serve WebP with intrinsic dimensions") also changed the carousel
+track from `role="list"` to `role="group"`. That made the cards' `role="listitem"` invalid, which is
+a real problem and was correctly noticed. The `<button>` and `<a>` card variants had `listitem`
+**removed**, which was right and is why they were never implicated. The inert `<div>` variant was
+given `role="img"` instead, and that was wrong twice over:
+
+1. **It is nameless.** `cardTags()` emitted `role="img"` for both card types, but only
+   `corporateCard()` passes an `aria-label`. `individualCard()` calls
+   `cardTags($client, 'indiv-card')` with no extra attributes, so the individual card got a
+   `role="img"` with nothing to announce. That is the violation axe reported.
+2. **The name was the smaller half.** `role="img"` declares the element a single graphic, so the
+   `<h3>` title, the subtitle and the body copy *inside* an individual card stop being reachable by
+   assistive technology at all. Adding an `aria-label` would have satisfied axe while leaving the
+   card's actual content hidden — a fix that verifies as a fix and leaves the user worse off.
+
+An ARIA role was added to satisfy a rule about a *different* role, on an element whose content
+needed no role at all.
+
+### The fix
+
+The inert individual card takes **no role**. Its content is real text; a plain `<div>` lets it
+speak, which is how the lightbox and link variants have always behaved.
+
+The corporate tile **keeps** `role="img"`, and the asymmetry is the substance rather than an
+inconsistency: it is a bare `alt=""` logo, so it genuinely is one graphic, and it already carries
+the client name as `aria-label`. `role="img"` therefore moved out of the shared inert branch in
+`cardTags()` and became a caller's declaration (`?string $inertRole`). It is deliberately not folded
+into `$extraAttributes`, because those also reach the `<button>` and `<a>` branches, where a role
+would overwrite the interactive semantics that make them work.
+
+### Verification, measured both ways
+
+Two tests pin both halves — one asserts the individual card has no role and its `<h3>` survives, the
+other asserts the corporate tile keeps a **named** `role="img"`. Perego Pest 599 → **601**.
+
+Causality was measured rather than assumed. Same command, same 12 routes, only the renderer differing:
+
+| `sites/perego/perego-site/src/Blocks/ClientsCarouselRenderer.php` | `verify-a11y` |
+|---|---|
+| at `HEAD~1` (pre-fix) | `hardFailures: 2` — `role-img-alt` (serious), home EN + AR |
+| at `HEAD` (fixed) | `hardFailures: 0`, 12 pages |
+
+Live markup confirms `<div class="indiv-card">` and
+`<div class="corp-card" role="img" aria-label="…">`.
+
+### Two things to carry forward
+
+**Lighthouse is not the a11y gate; `verify-a11y` is.** A Lighthouse Accessibility 100 does not
+license an SC-003-style claim. Run `node sites/perego/perego-site/scripts/verify-a11y.mjs` before
+writing one down.
+
+**Its evidence file is easy to read stale.** The script's docblock says it writes
+`output/verify-a11y.json`, and that path is relative to the **current working directory** — run from
+the repo root it writes `./output/verify-a11y.json`, not
+`sites/perego/perego-site/output/verify-a11y.json`. Two older copies of that filename exist under
+`perego-site/`, both months stale, and reading either one reports a clean run that never happened.
+Check the mtime.
