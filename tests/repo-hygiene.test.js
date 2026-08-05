@@ -62,10 +62,17 @@ const FORBIDDEN = [
 		/^playwright-report\/|\/playwright-report\//,
 		'Playwright report output',
 	],
-	[
-		/^sites\//,
-		'a client site implementation — those live in their own repository',
-	],
+	// ⚠ FORK DIVERGENCE from upstream v0.41.0 — the one rule this fork inverts.
+	//
+	// Upstream forbids `sites/` outright: "a client site implementation — those live in their own
+	// repository." That is true of upstream, which tracks zero files there. It is false here by
+	// design — `sites/perego/` IS this fork's deliverable, 653 tracked files, and the repository's
+	// own CLAUDE.md defines a Client Site Mode that edits nothing else.
+	//
+	// The rule is dropped rather than the file ignored in jest.config.js, because everything else
+	// this suite checks — committed secrets, private keys, node_modules, build output, editor
+	// artifacts, the canonical root document list — is worth keeping and applies to the fork
+	// unchanged. Ignoring the file would have discarded all of it to silence one inverted rule.
 	[
 		/\.zip$|\.tar\.gz$|\.tgz$|\.rar$|\.7z$/,
 		'an archive — ship releases, not committed archives',
