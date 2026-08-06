@@ -6,8 +6,20 @@
 
 declare(strict_types=1);
 
+use Brain\Monkey\Functions;
 use PeregoSite\Theme\LegacyRouteRedirect;
 use PeregoSite\Theme\SiteRoutes;
+
+/*
+ * `destinationFor()` is documented as "pure so it can be unit-tested without WordPress", and it is
+ * nearly true — it calls `untrailingslashit()`. This file carried no stubs at all and passed only
+ * because Brain Monkey's `when()` defines a function process-wide, so PolylangLanguageDriverTest
+ * happened to define it first. Green by run order, and red the moment this file ran on its own.
+ * Same alias that file uses, so the two cannot drift into disagreeing.
+ */
+beforeEach(function () {
+    Functions\when('untrailingslashit')->alias(fn (string $url) => rtrim($url, '/'));
+});
 
 it('sends the old contact path to the start-a-project page', function () {
     expect((new LegacyRouteRedirect())->destinationFor('/contact'))->toBe(SiteRoutes::START_PROJECT);
