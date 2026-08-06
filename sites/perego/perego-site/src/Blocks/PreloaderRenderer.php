@@ -10,6 +10,8 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
+use Corex\Assets\Image;
+
 /**
  * Server-renders the perego/preloader block: a branded overlay shown only on a visitor's first
  * homepage view of a session, cleared ~0.9s after first paint (independent of full asset load),
@@ -21,7 +23,14 @@ final class PreloaderRenderer
 {
     public function render(): string
     {
-        $logo = esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png');
+        $logo = Image::picture('images/logo-full.png', [
+            'base' => 'perego-theme',
+            'alt' => '',
+            'class' => 'preloader__logo',
+            'width' => 552,
+            'height' => 170,
+            'loading' => 'eager',
+        ]);
 
         // The locked handoff preloader structure (stage → three rings + glow + logo, progress bar, and
         // the bilingual wordmark). All styling comes from the authoritative reference stylesheet's
@@ -36,7 +45,7 @@ final class PreloaderRenderer
             . '<span class="preloader__ring preloader__ring--2"></span>'
             . '<span class="preloader__ring preloader__ring--3"></span>'
             . '<span class="preloader__glow"></span>'
-            . '<img class="preloader__logo" src="' . $logo . '" alt="" />'
+            . $logo
             . '</div>'
             . '<div class="preloader__bar" aria-hidden="true"><span></span></div>'
             . '<p class="preloader__word">بيريجو · PEREGO</p>'

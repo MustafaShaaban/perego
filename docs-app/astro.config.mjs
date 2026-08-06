@@ -10,12 +10,85 @@ import starlight from '@astrojs/starlight';
 //
 // Apache (WAMP): build, then point a vhost `docs.corex.local` at `docs-app/dist`
 // (DocumentRoot), or browse the repo path http://localhost/corex/docs-app/dist/.
-// `base` stays '/' so the build moves to a dedicated public site unchanged — for the
-// repo-subpath URL above, set `base: '/corex/docs-app/dist'` before building.
+//
+// Published at https://mustafashaaban.github.io/corex/ by `.github/workflows/docs.yml`.
+// A GitHub project page is served from a repository subpath, so `base` is not optional
+// there: without it every internal link, asset and Pagefind index URL resolves to the
+// domain root and the site 404s on itself.
+//
+// Both are overridable so the same build serves somewhere else unchanged — set
+// COREX_DOCS_SITE and COREX_DOCS_BASE for a dedicated domain (`base: '/'`), or for the
+// local repo-subpath URL above.
 //
 // Search is Pagefind (bundled with Starlight): instant, fuzzy, keyboard-driven, and
 // fully client-side — it indexes every page + heading at build time, no server needed.
+const site = process.env.COREX_DOCS_SITE || 'https://mustafashaaban.github.io';
+const base = process.env.COREX_DOCS_BASE || '/corex';
+
+/** `base` without a trailing slash, so joining never produces `//`. */
+const basePrefix = base.replace( /\/$/, '' );
+
+/**
+ * Prefix root-absolute links in authored content with `base`.
+ *
+ * Astro rewrites what it owns — asset URLs, and Starlight's sidebar, which is declared with `slug:`.
+ * It does **not** touch a hand-written `[Getting Started](/getting-started/overview/)`, so v0.40.0
+ * published a site where 85 such links resolved off the base path and 404'd. The sidebar and the
+ * body of `index.html` disagreed about the same page.
+ *
+ * Done here rather than by rewriting 84 links to `/corex/…` because `base` is deliberately
+ * env-overridable (`COREX_DOCS_BASE`) — hardcoding it into the content would make that override a
+ * lie, and would leave the next author free to reintroduce the bug. `tests/docs-links.test.js` is
+ * what proves this actually ran.
+ *
+ * @return {(tree: object) => void} A rehype transformer.
+ */
+function rehypeBaseLinks() {
+	const attributes = [ 'href', 'src' ];
+
+	/** @param {object} node One hast node. */
+	const visit = ( node ) => {
+		if ( node.type === 'element' && node.properties ) {
+			for ( const attribute of attributes ) {
+				const value = node.properties[ attribute ];
+
+				if ( typeof value !== 'string' || ! value.startsWith( '/' ) ) {
+					continue;
+				}
+				// `//host/path` is protocol-relative and already absolute; prefixing it would
+				// rewrite somebody else's domain into a path on ours.
+				if ( value.startsWith( '//' ) ) {
+					continue;
+				}
+				// Idempotent: a link an author already wrote with the base must not gain a second.
+				if (
+					value === basePrefix ||
+					value.startsWith( `${ basePrefix }/` )
+				) {
+					continue;
+				}
+
+				node.properties[ attribute ] = `${ basePrefix }${ value }`;
+			}
+		}
+
+		for ( const child of node.children || [] ) {
+			visit( child );
+		}
+	};
+
+	return ( tree ) => visit( tree );
+}
+
 export default defineConfig( {
+	site,
+	base,
+	markdown: {
+		// Applies to `.md` and to the markdown content of `.mdx`. A raw `<a href="/x">` written as
+		// JSX in an MDX file is not markdown and would not be rewritten — there are none today, and
+		// the link test is what keeps it that way.
+		rehypePlugins: [ rehypeBaseLinks ],
+	},
 	integrations: [
 		starlight( {
 			title: 'Corex',

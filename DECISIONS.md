@@ -3992,3 +3992,288 @@ separate review dates, and the cheapest route to closing six of them was to fix 
 first. A blocker measured once stays in the record as a fact long after it has stopped being one;
 re-measuring before believing it is the actual lesson.
 Status: Final.
+
+## #208 — Every check that always runs is required; the one that does not is not
+Date: 2026-07-29
+Decision: `main` requires all six pull-request checks — PHP unit, JavaScript, integration, Playwright
+and both CodeQL contexts. `dependency-security` is deliberately **not** required. Reviews are not
+required and admins are not enforced.
+Why: five of the six ran on every pull request and could not block a merge, which is the state
+DECISIONS #153 already recorded the cost of — GitHub renders "no checks" the same way it renders "all
+checks passed", and a stack once sat queued for merge with eight real failures in it.
+Scope: `dependency-security.yml` is paths-filtered to manifests, lockfiles and the policy. A required
+check that does not run leaves a pull request pending **forever**, so requiring it would block every
+change that touches no dependency — the check would be enforcing on absence rather than on failure.
+Reviews and `enforce_admins` are off for the same class of reason: this is a single-maintainer
+repository, and both would lock the maintainer out of their own `main` rather than add a reviewer.
+Each is a deliberate omission with a stated reason, not an oversight, and `PROJECT-STATUS.md` says so
+where somebody evaluating the project will read it.
+Status: Final.
+
+## #209 — Both remaining open items named the wrong cause
+Date: 2026-07-29
+Decision: the 1px RTL overflow is fixed in `corex-admin-shell.css` against WordPress's admin-bar menu
+toggle, and the leaking access-request fixtures are fixed in `AccessRequestFormTest`'s `afterEach`.
+Why: neither item was where it had been recorded, and in both cases the wrong attribution is what
+kept it open for several releases.
+- *"`corex-access` overflows 1px in RTL"*: bisecting the document lands on
+  `#wp-admin-bar-menu-toggle > a.ab-item`, which carries `margin-left: -1px` beside a 1px left border
+  — a border-overlap trick written for LTR — inside a left-floating `li`. In RTL that puts it at
+  `left: -1`. It is WordPress's own markup and it happens on **every** CoreX screen; access was
+  simply the one somebody measured. Six screens confirmed, RTL only.
+- *"`clearPendingRequests` only clears the current requester's"*: that helper is correct and its
+  comment explains why it deliberately spares other specs' rows. The 311 accumulated users came from
+  `AccessRequestFormTest`, which created a subscriber per test and never deleted it.
+Scope: the margin is flipped to the inline-end side rather than zeroed, so the overlap the rule
+exists for still happens on the side it belongs on. `tests/e2e/rtl-overflow.spec.js` measures six
+screens in both directions, and was verified to fail on all six RTL cases without the fix — a
+single-screen test is precisely what allowed the mis-attribution to survive this long.
+Status: Final.
+
+## #210 — The base is applied at build time, not typed into 84 links
+Date: 2026-07-29
+Decision: a `rehypeBaseLinks` plugin in `docs-app/astro.config.mjs` prefixes root-absolute hrefs with
+`base`; `tests/docs-links.test.js` asserts the built output; the CI Jest job builds the docs so that
+test cannot skip.
+Why: spec 090 added `base` and Astro rewrote what it owns — assets, and Starlight's `slug:` sidebar —
+leaving 84 hand-written markdown links resolving off the base path. `dist/index.html` shipped
+`href="/corex/project-status/"` from the sidebar and `href="/project-status/"` from the body, on one
+page. Hardcoding `/corex/` into the content would have fixed the symptom while making
+`COREX_DOCS_BASE` decorative and leaving the next author free to reintroduce it.
+Scope: **the test is the deliverable; the rewrite is what makes it pass.** Spec 090 verified the
+deployment against six URLs and every one was a form Astro rewrites — a real check that sampled only
+the working half. It was confirmed failing (29 files) before the fix and passing after, because a
+link test that has never failed proves nothing. The CI step matters as much: the test skips when
+`docs-app/dist` is absent, which is right locally and worthless in CI, and a silently skipped check
+is the condition that published 85 broken links.
+Status: Final.
+
+## #211 — Admin docs links point at the docs site, not at its Markdown source
+Date: 2026-07-29
+Decision: `DocsUrl`'s fallback is `https://mustafashaaban.github.io/corex` instead of a GitHub `blob`
+URL into `docs-app/src/content/docs`.
+Why: the GitHub fallback was correct when written — it guaranteed an absolute URL at a time when no
+site existed, and an absolute URL is the load-bearing part (a relative one resolves against the
+*client's* domain in wp-admin). A site has existed since v0.40.0, and until now an operator clicking
+"Documentation" was handed raw Markdown with the front matter showing.
+Scope: `hasConfiguredBase()` kept, with its docblock corrected — it no longer distinguishes "a site"
+from "raw source" but *whose* site, which is what a team hosting their own needs. Two tests asserted
+the old contract; both updated rather than deleted.
+## #212 — The support email's rendering follows its transport
+Date: 2026-07-29
+Decision: `SupportMailer` sends a registered HTML template through the Corex Mail rung and plain text
+through the `wp_mail()` floor, both composed from one `SupportMessage`.
+Why: spec 087 sent one `"\n"`-joined plain-text body to both, with a docblock arguing plain text was
+deliberate. That was right about `wp_mail()`, which sends no `Content-Type`. It was wrong about the
+other rung: `WpMailDriver` stamps `text/html` on every message, so on any site with Corex Mail active
+— most of them — the newlines collapsed into one run-on paragraph. **The email was broken before it
+was unstyled**; the design is what the HTML rendering is for.
+Scope: `SupportMessage` exists so the parts are assembled once. Two renderings built from the same
+fields separately is how they drift, and the drift would be invisible — both emails still arrive.
+Status: Final.
+
+## #213 — The email palette is literal, and Layout's rule still stands
+Date: 2026-07-29
+Decision: `SupportEmailPalette` holds the admin's light-mode tokens as literal hex values.
+Why: `Layout`'s docblock forbids exactly this — *"never design tokens — the brand values are
+injected, not hardcoded"* — and it is right, for `Layout`, which wraps every site's mail and must
+carry no opinion. Two things make it inapplicable to a template body. An email cannot read
+`--corex-admin-*` (custom properties are not supported across mail clients), so a token must become a
+literal somewhere; the only question is whether in one named place or scattered through markup. And
+the brass identity is not in the brand pipeline at all — `Layout`'s injected accent is `theme.json`'s
+`primary`, navy — so "use the CoreX design" and "inject the brand colour" name different colours.
+Scope: the visible result is a **navy shell rule around a brass-edged card**, and that is stated in
+the spec rather than hidden. Overriding `Layout` from one add-on's template would make one message
+lie about the site's brand. If the two should match, the fix is migrating the brass into
+`theme.json` — the direction `design/handoffs/brand-foundation.md` already approves — not a
+special case here. Light values, not dark: dark-mode email support is unreliable, and dark-on-dark in
+a client that ignores it is worse than light everywhere.
+Status: Final.
+
+## #214 — The guide a reader needs first is gated lowest
+Date: 2026-07-29
+Decision: `OrientationGuide` requires `read`, not a CoreX ability, and sorts first.
+Why: every other guide answers "how do I do X" and assumes the reader already knows which screen
+they want. Somebody handed a finished site meets thirteen unfamiliar menu words. Gating that
+explanation behind `manage_options` would withhold it from precisely the person who needs it — a
+contributor with two capabilities is *more* lost than an administrator, not less.
+Scope: it documents the menu rather than any one screen, so it has no ability to inherit. The guides
+it points at stay individually gated, so naming a screen in the orientation costs nothing: a reader
+who cannot open Submissions still learns what Submissions is, and simply finds no guide for it.
+Status: Final.
+
+## #215 — The settings guide is asserted against the registry, on labels
+Date: 2026-07-29
+Decision: `SettingsGuideCoverageTest` fails when any field in `SettingsRegistry::sections()` is not
+named in the guide, matching on the field's **label**.
+Why: "every single input described" is a promise that decays the first time somebody adds a field,
+and it decays silently — the guide still renders, the field still saves, and nothing says the two
+disagree. On labels rather than keys because a reader looks for "Company name"; `brand.company_name`
+appears nowhere they can see, so a guide passing a key check could still be useless to them.
+Scope: it earned itself on the first run, failing on `captcha.action` and `media.webp.min_saving`
+where the prose had dropped the parenthetical part of a label — "Minimum size saving" against the
+screen's "Minimum size saving (%)". Small, and exactly the drift that makes a reader think a guide
+describes a different screen. The related browser test was changed the same way: it asserted
+`toHaveCount( 1 )` and reported "expected 1, received 3", a true statement about a number that says
+nothing about whether gating works. Both now name what they mean.
+Status: Final.
+
+## #216 — The Help tab is wp-admin's chrome, and CoreX admin is not wp-admin
+
+Date: 2026-08-05 · Spec: 097 · Status: Final
+
+Spec 084 put each guide into the WordPress contextual Help tab of the screen it describes, reasoning
+that the panel was a whole surface standing empty. That reading was fair and the conclusion was
+wrong: the panel belongs to wp-admin, and every CoreX screen is a full-bleed product deliberately
+built to hide wp-admin (`body.corex-admin-screen`, spec 067). The tab was the one piece of core
+chrome that survived that, and it opened *above* the shell, pushing the entire product down the page.
+
+Three things about how it was removed are decisions rather than mechanics.
+
+**It is a removal, not a stylesheet.** `remove_help_tabs()` plus an emptied sidebar means
+`WP_Screen::render_screen_meta()` never enters its help branch, so the link, the toggle and the panel
+are never emitted. Hiding them with CSS would leave the markup, its scripts and its reserved height
+in the page — the defect made invisible rather than absent.
+
+**It runs on `admin_head` at `PHP_INT_MAX`, not on `current_screen`.** Deleting spec 084's
+registration removes the tabs *CoreX* added and nothing else. `admin-header.php` fires `admin_head`
+and only then renders the screen meta, so that is the last point which still beats the render and the
+first which is later than every point at which help can be registered — including by core or by a
+plugin CoreX has never heard of. A screen that is clean until somebody activates an unrelated plugin
+has been tidied, not fixed.
+
+**It lives in `corex-config`, not in the Guides add-on.** `corex-guides` is optional (Principle IX);
+a removal shipped with it would hand the tab back the moment somebody deactivated Guides.
+
+`Guide::onScreen()` was kept. The Guides screen already rendered the declared address as a link to
+the screen it describes, which was always the better half of spec 084's idea — searchable, carrying
+the steps, and one click from the menu. Only `GuideRegistry::forScreen()`, whose sole consumer was
+the help tab, was removed rather than left as dead code.
+
+## #217 — Three CoreX admin surfaces overran their own shell, and `overflow: clip` hid it
+
+Date: 2026-08-05 · Spec: 097 · Status: Final
+
+The two Playwright failures that blocked the v0.41.0 release read as unrelated — a click that
+"intercepts pointer events" for sixty seconds, and a boolean overflow assertion at one viewport
+width. They were the same mistake in three places: **a CSS length written as a preference and read by
+the engine as a floor.**
+
+- `grid-template-columns: minmax(10rem, 2fr) repeat(3, minmax(6rem, 1fr)) minmax(9rem, 1fr)` on the
+  Forms catalog row — 37rem of track minimums the row could never go under.
+- `repeat(auto-fit, minmax(16rem, 1fr))` on the Blog Pro workspace, which reads as "at least 16rem
+  per column" and prevents the grid dropping to one column instead of causing it.
+- `min-inline-size: 11rem` on `.corex-select`, in toolbars narrower than 11rem.
+
+`.corex-admin__shell` carries `overflow: clip`, so none of this was visible: the content simply left
+the box and stopped being painted. That is why the Forms failure presented as pointer interception —
+`document.elementFromPoint()` at the row button's own centre returned the `.corex-admin` wrapper,
+because the button had been clipped out of existence. **It was not a flaky click. The control was not
+there.**
+
+The fixes are `minmax(0, …)` where the ratio was the real intent, and `min(Xrem, 100%)` where the
+floor was. Both let the length yield to a container narrower than itself, which is what the original
+declarations meant. Neither assertion was changed, and both were measured before and after.
+
+The general rule, worth keeping: **inside a clipping container, a minimum that cannot yield is not a
+minimum, it is an overflow.** `overflow: clip` on the shell is correct and stays — it is what keeps
+the product inside its own frame — but it means a containment defect is silent, so containment has to
+be asserted rather than seen.
+
+## #218 — The record is kept in six places, and each answers one question
+
+Date: 2026-08-05 · Spec: 098 · Status: Final
+
+`PROGRESS.md` reached 4,589 lines — forty stacked `RESUME HERE` blocks, 435 KB, append-only. Only the
+top was ever read. Everything beneath it was already recorded somewhere better: what changed in a
+release in `CHANGELOG.md`, why in `DECISIONS.md`, the agreed contract in `specs/`, and what happened
+on a given day in `git log`.
+
+Two earlier versions of this repository *defended* the size — `README.md` and `PROJECT-STATUS.md`
+both carried a section explaining that 420 KB was "the method, not clutter". The defence was half
+right. The method is the record; the transcript was not the record, it was a copy of it with the
+provenance stripped.
+
+So each document now answers exactly one question, and none answers another's:
+
+| File | Question |
+|---|---|
+| `PROJECT-STATUS.md` | What works, what is partial, what is not built — today. |
+| `ROADMAP.md` | What is planned, in what order, what is deferred. |
+| `CHANGELOG.md` | What changed in each release. |
+| `PROGRESS.md` | Where to resume: baseline, in flight, next. |
+| `DECISIONS.md` | Why anything non-obvious is the way it is. |
+| `specs/` | The contract, written before the code. |
+
+`DECISIONS.md` is deliberately **not** trimmed. It is 4,111 lines because it is the one file whose
+value is cumulative — a decision that turned out wrong is worth as much as one that did not, and this
+entry is only meaningful beside the 215 before it.
+
+Three consequences worth stating:
+
+- **The four `COREX-*.md` working documents moved to `docs/internal/`**, so the repository root holds
+  only the canonical set. This required a PATCH amendment to the constitution (1.2.1 → 1.2.2), whose
+  source-of-truth hierarchy named `COREX-FRAMEWORK.md` by its old path.
+- **The docs site no longer keeps a second, hand-written status page.** It was 62 lines against the
+  root file's 123, with its own opening paragraph and its own version sentence. It is generated from
+  `PROJECT-STATUS.md` by `scripts/sync-project-status.mjs` and held to it by a test — the same
+  arrangement the token inventory has, for the same reason.
+- **`tests/repo-hygiene.test.js` enforces the shape**: the root holds exactly the canonical set, no
+  generated directory or archive or export is tracked, every prose version statement agrees with
+  `package.json`, and no document announces a release for which no tag exists. That last check is not
+  hypothetical — `PROGRESS.md` opened with "**v0.41.0 released**" while the newest tag was v0.40.0.
+Status: Final.
+
+## #219 — A patch pin on one action is not an upgrade, and the nightly E2E workflow never ran
+
+Date: 2026-08-05 · Spec: 099 · Status: Final
+
+Two decisions from the same pass over the repository's GitHub state.
+
+**`github/codeql-action` stays on `@v4`.** Dependabot proposed `@v4` → `@v4.37.4`, which reads like a
+bump and is a *narrowing*: `@v4` is a moving major tag that already receives every patch. Accepting it
+would freeze a security scanner at one patch, make it the only action here not pinned to a major —
+`checkout`, `setup-node`, `setup-php`, `upload-artifact` and `deploy-pages` are all `@vN` — and open a
+pull request for every future patch, which is noise that teaches a reviewer to skim. The ignore is
+scoped to minor and patch only, so `@v4` → `@v5` will still be proposed. It lifts if the repository
+adopts SHA pinning for every action, at which point the inconsistency argument is gone.
+
+**`.github/workflows/e2e.yml` is deleted.** It ran nightly and had failed every night for at least a
+week, always at the same place:
+
+> `global-setup could not authenticate the admin user. Tried: /wp-login.php, /corex-login/.`
+
+It could not have passed. It set no `COREX_BASE_URL`, so Playwright's config fell back to
+`http://corex.local` — a developer's WAMP host that does not exist on a runner — and no
+`COREX_ADMIN_USER`/`COREX_ADMIN_PASS`, and it seeded none of the fixtures the specs need. It was
+written before `ci.yml` had a browser job at all.
+
+`ci.yml`'s **Browser tests (Playwright)** job supersedes it completely and is stricter in every
+dimension: it provisions a real WordPress behind nginx, seeds every fixture, runs on **every pull
+request** rather than nightly, and is a required check on `main`. Keeping a second, permanently red
+workflow beside it does not add a safety net — **a red that is always red carries no information**,
+and the habit of ignoring it is the thing that lets a real failure through.
+
+## #220 — Eight dependency pull requests, tested rather than trusted
+
+Date: 2026-08-05 · Spec: 099 · Status: Final
+
+Eight Dependabot pull requests (#172–#179) were open. Seven are consolidated into one change and one
+is closed with the hold above. What matters is how the two majors were decided, because a green
+"Validate dependency advisories" check would have said nothing about either.
+
+- **`@wordpress/components` 37 → 38.** Imported by more than twenty admin modules — the Data
+  explorer, every dialog, the Submissions inbox, the block editor sidebars. A component library major
+  breaks at *render* time, which no advisory scan and no unit test reaches. Verified against the
+  build, Jest (442), both linters, and the full Playwright suite (144) driving those screens in a real
+  browser.
+- **`@wordpress/scripts` 33 → 34.** The build toolchain itself — webpack, babel, the lint configs and
+  the Jest transform. Verified the same way, plus the produced bundles.
+
+Both passed everything, so both land. Had either failed, it would have been closed with a precise
+`dependabot.yml` hold naming the failure, not left open and red.
+
+The general rule this pass confirms: **a green dependency-security check proves an advisory is
+closed, not that the software still works.** The two are different questions, and only one of them
+has a scanner.
+Status: Final.

@@ -10,6 +10,7 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
+use Corex\Assets\Image;
 use PeregoSite\Content\ClientsContent;
 use PeregoSite\Content\TranslatedMeta;
 use PeregoSite\PostTypes\ClientPostType;
@@ -84,7 +85,14 @@ final class ClientsCarouselRenderer
     public function render(): string
     {
         $html = '<section class="clients" id="clients" aria-labelledby="corporateTitle">';
-        $html .= '<div class="wavy-bg" aria-hidden="true"><img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/wavy-corners.png') . '" alt="" /></div>';
+        $html .= '<div class="wavy-bg" aria-hidden="true">'
+            . Image::picture('images/wavy-corners.png', [
+                'base' => 'perego-theme',
+                'alt' => '',
+                'width' => 2560,
+                'height' => 1440,
+            ])
+            . '</div>';
         $html .= '<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="eqg" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#31ffff"/><stop offset="0.5" stop-color="#7b8bf0"/><stop offset="1" stop-color="#d86af3"/></linearGradient></defs><symbol id="eq" viewBox="0 0 64 64"><g fill="none" stroke="#ffffff" stroke-width="3.4" stroke-linecap="round"><line x1="17" y1="11" x2="17" y2="53"/><line x1="32" y1="11" x2="32" y2="53"/><line x1="47" y1="11" x2="47" y2="53"/></g><g fill="#4a0d8f" stroke="#ffffff" stroke-width="3.2"><circle class="eq-bar" cx="17" cy="36" r="7"/><circle class="eq-bar" cx="32" cy="46" r="7"/><circle class="eq-bar" cx="47" cy="22" r="7"/></g></symbol></svg>';
         $html .= '<div class="container clients__inner">';
         $html .= $this->carousel('corporate', 'corporateHeading', 'corporateSubtitle');
@@ -117,8 +125,8 @@ final class ClientsCarouselRenderer
         $previousLabel = $isCorporate ? __('Previous clients', 'perego-site') : __('Previous', 'perego-site');
         $nextLabel = $isCorporate ? __('More clients', 'perego-site') : __('More', 'perego-site');
         $trackAttributes = $isCorporate
-            ? 'id="corporateTrack" tabindex="0" role="list" aria-label="' . esc_attr__('Corporate client logos', 'perego-site') . '"'
-            : 'id="individualTrack" tabindex="0" role="list" aria-label="' . esc_attr__('Individual clients', 'perego-site') . '"';
+            ? 'id="corporateTrack" tabindex="0" role="group" aria-label="' . esc_attr__('Corporate client logos', 'perego-site') . '"'
+            : 'id="individualTrack" tabindex="0" role="group" aria-label="' . esc_attr__('Individual clients', 'perego-site') . '"';
 
         $html .= '<div class="' . $sliderClass . ' reveal"><button type="button" class="corp-arrow corp-arrow--prev" aria-label="' . esc_attr($previousLabel) . '">' . $this->arrowSvg('previous') . '</button>';
         $html .= '<div class="' . $trackClass . '" ' . $trackAttributes . '>';
@@ -144,7 +152,7 @@ final class ClientsCarouselRenderer
     private function corporateCard(\WP_Post $client): string
     {
         $title = (string) get_the_title($client);
-        $tags = $this->cardTags($client, 'corp-card', ' aria-label="' . esc_attr($title) . '"');
+        $tags = $this->cardTags($client, 'corp-card', ' aria-label="' . esc_attr($title) . '"', 'img');
         // Follows the English fallback: Polylang gives a translation its own empty thumbnail slot, so
         // an Arabic tile would otherwise drop back to the placeholder its English twin never shows.
         $logo = $this->thumbnailHtml($client, 'medium', ['class' => 'corp-card__logo']);
@@ -168,10 +176,25 @@ final class ClientsCarouselRenderer
      * Link with no destination) degrades to the inert element, because a control that visibly invites
      * a click and then does nothing is worse than a plain tile.
      *
+     * `$inertRole` applies to the inert `<div>` only, and only the corporate tile passes one. It is a
+     * caller's choice rather than a constant here because the two cards hold different things: a
+     * corporate tile is a bare `alt=""` logo, so `role="img"` describes it exactly and
+     * `corporateCard()` supplies the `aria-label` that names it. An individual card holds a heading,
+     * a subtitle and body copy, and `role="img"` on that collapses the whole card into one graphic —
+     * its text stops being reachable by assistive technology at all. It takes no role, because a
+     * plain `<div>` lets its own content speak.
+     *
+     * It is deliberately NOT folded into `$extraAttributes`: those flow to the `<button>` and `<a>`
+     * branches too, where a role would overwrite the interactive semantics that make them work.
+     *
      * @return array{open:string, close:string, opensLightbox:bool}
      */
-    private function cardTags(\WP_Post $client, string $class, string $extraAttributes = ''): array
-    {
+    private function cardTags(
+        \WP_Post $client,
+        string $class,
+        string $extraAttributes = '',
+        ?string $inertRole = null,
+    ): array {
         $tags = match ($this->behavior($client)) {
             'lightbox' => $this->lightboxTags($client, $class, $extraAttributes),
             'link' => $this->linkTags($client, $class, $extraAttributes),
@@ -181,7 +204,9 @@ final class ClientsCarouselRenderer
         // The `?? ` is the degrade-to-inert rule: a behaviour whose data is missing produces null
         // above, and lands here rather than rendering a control that does nothing.
         return $tags ?? [
-            'open' => '<div class="' . $class . '" role="listitem"' . $extraAttributes . '>',
+            'open' => '<div class="' . $class . '"'
+                . ($inertRole !== null ? ' role="' . esc_attr($inertRole) . '"' : '')
+                . $extraAttributes . '>',
             'close' => '</div>',
             'opensLightbox' => false,
         ];
@@ -206,7 +231,7 @@ final class ClientsCarouselRenderer
         }
 
         return [
-            'open' => '<button type="button" class="' . $class . '" role="listitem"' . $extraAttributes . $trigger . '>',
+            'open' => '<button type="button" class="' . $class . '"' . $extraAttributes . $trigger . '>',
             'close' => '</button>',
             'opensLightbox' => true,
         ];
@@ -230,7 +255,7 @@ final class ClientsCarouselRenderer
             ?? (! empty($link['openInNewTab']) ? ' target="_blank" rel="noopener"' : '');
 
         return [
-            'open' => '<a class="' . $class . '" href="' . esc_url($href) . '"' . $target . ' role="listitem"' . $extraAttributes . '>',
+            'open' => '<a class="' . $class . '" href="' . esc_url($href) . '"' . $target . $extraAttributes . '>',
             'close' => '</a>',
             'opensLightbox' => false,
         ];

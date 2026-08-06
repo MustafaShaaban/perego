@@ -24,11 +24,11 @@ Corex separates **two** automated pipelines, and it matters which is which:
 A third workflow, **Docs** ([`.github/workflows/docs.yml`](../../../.github/workflows/docs.yml)), runs on push
 to `main`: it regenerates the per-class reference from source (`composer docs:generate`, a headless equivalent
 of `wp corex docs:generate` that needs no WordPress) and builds the docs site, so the published reference can
-never drift from the code. Enable GitHub Pages to publish the built artifact (see the comment in that file).
+never drift from the code, then publishes it to GitHub Pages at <https://mustafashaaban.github.io/corex/>.
 
 ## Pipeline stages
 
-Per [`COREX-FRAMEWORK.md §19`](../../../COREX-FRAMEWORK.md), a full pipeline is:
+Per [`../../internal/COREX-FRAMEWORK.md §19`](../../../COREX-FRAMEWORK.md), a full pipeline is:
 
 ```mermaid
 flowchart LR
@@ -66,4 +66,4 @@ Pipelines variable groups backed by Key Vault) and the cloud's secret manager at
 ## See also
 
 - [`.github/workflows/ci.yml`](../../../.github/workflows/ci.yml) (the repo gate) ·
-  [Team workflow → quality gates](../04-team-workflow/) · [`COREX-FRAMEWORK.md §19`](../../../COREX-FRAMEWORK.md)
+  [Team workflow → quality gates](../04-team-workflow/) · [`../../internal/COREX-FRAMEWORK.md §19`](../../../COREX-FRAMEWORK.md)

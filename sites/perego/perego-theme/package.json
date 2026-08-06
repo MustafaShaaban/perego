@@ -1,12 +1,13 @@
 {
 	"name": "perego-theme",
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"private": true,
 	"description": "Frontend assets for the Perego theme (Corex client site).",
 	"scripts": {
 		"styles": "sass assets/src/scss/main.scss:assets/css/main.css assets/src/scss/editor-inspector.scss:assets/css/editor-inspector.css --style=compressed --no-source-map",
 		"scripts": "wp-scripts build assets/src/js/main.js --output-path=assets/js",
-		"images": "node scripts/optimize-images.mjs",
+		"images": "node scripts/optimize-images.mjs && node scripts/verify-theme-images.mjs",
+		"verify:images": "node scripts/verify-theme-images.mjs",
 		"build": "npm run styles && npm run scripts && npm run images",
 		"start": "wp-scripts start assets/src/js/main.js --output-path=assets/js"
 	},

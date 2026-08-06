@@ -9,18 +9,33 @@ declare(strict_types=1);
 defined('ABSPATH') || exit;
 
 /**
- * Perego theme front-end assets. Registers this theme's CoreX asset base, then enqueues the
- * COMPILED CSS/JS through the CoreX asset helpers (Corex\Assets\*) — never hardcoded paths and
- * never a version string by hand. SCSS is source only (assets/src/scss/); `npm run styles`
- * compiles it to assets/css/. Build everything with `npm run build`.
+ * Register the client asset base before FSE server rendering. Dynamic blocks render before
+ * `wp_enqueue_scripts`, so CoreX image helpers need the base during `after_setup_theme`.
  */
-add_action('wp_enqueue_scripts', static function (): void {
+function perego_register_theme_asset_base(): void
+{
+    if (\Corex\Assets\Assets::registry()->has('perego-theme')) {
+        return;
+    }
+
     \Corex\Assets\Assets::registerBase(
         'perego-theme',
         get_stylesheet_directory() . '/assets',
         get_stylesheet_directory_uri() . '/assets',
         (string) wp_get_theme()->get('Version'),
     );
+}
+
+add_action('after_setup_theme', 'perego_register_theme_asset_base', 1);
+
+/**
+ * Perego theme front-end assets. Registers this theme's CoreX asset base, then enqueues the
+ * COMPILED CSS/JS through the CoreX asset helpers (Corex\Assets\*) — never hardcoded paths and
+ * never a version string by hand. SCSS is source only (assets/src/scss/); `npm run styles`
+ * compiles it to assets/css/. Build everything with `npm run build`.
+ */
+add_action('wp_enqueue_scripts', static function (): void {
+    perego_register_theme_asset_base();
 
     \Corex\Assets\Style::enqueue('perego-theme-main', 'css/main.css', ['base' => 'perego-theme']);
     \Corex\Assets\Script::enqueue('perego-theme-main', 'js/main.js', [
@@ -67,12 +82,7 @@ add_action('after_setup_theme', static function (): void {
  * `assets/src/scss/editor-inspector.scss` by `npm run styles`.
  */
 add_action('enqueue_block_editor_assets', static function (): void {
-    \Corex\Assets\Assets::registerBase(
-        'perego-theme',
-        get_stylesheet_directory() . '/assets',
-        get_stylesheet_directory_uri() . '/assets',
-        (string) wp_get_theme()->get('Version'),
-    );
+    perego_register_theme_asset_base();
 
     \Corex\Assets\Style::enqueue('perego-theme-editor-inspector', 'css/editor-inspector.css', ['base' => 'perego-theme']);
 });

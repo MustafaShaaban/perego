@@ -1028,7 +1028,13 @@ form.corex-is-loading .corex-form__submit::after {
 	inset: 0;
 	z-index: 0;
 	pointer-events: none;
-	background: url("../images/wavy-corners.png") center / cover no-repeat;
+	background-image: image-set(
+		url("../images/wavy-corners.webp") type("image/webp"),
+		url("../images/wavy-corners.png") type("image/png")
+	);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
 	opacity: 0.5;
 }
 

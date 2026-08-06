@@ -48,7 +48,7 @@ final class MailService
         }
 
         /*
-         * ⚠ FORK DIVERGENCE from upstream v0.40.0 — deliberate, and the only one in this addon.
+         * ⚠ FORK DIVERGENCE from upstream v0.41.0 — deliberate, and the only one in this addon.
          *
          * Upstream rebuilds the message here with SEVEN arguments, which silently drops `$from` and
          * `$attachments`. Every send passes through this method, so a sender threaded all the way from

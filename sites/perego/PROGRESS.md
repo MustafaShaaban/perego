@@ -2,6 +2,158 @@
 
 > Live status. First action each session: read this, then continue from **Next**.
 
+## RESUME HERE (2026-08-05, latest) — CoreX framework updated to the published v0.41.0
+
+> ### ⚠ After ANY CoreX update, run the builds — the suites do not
+>
+> Every compiled bundle lives in a git-ignored `build/`, so an update changes PHP and CSS in git
+> while the JavaScript keeps whatever it was last built from. That is exactly what happened here:
+> `corex-config/build/admin` was from **14 July** and `build/notification-ui` from **22 July** while
+> the framework was stamped 0.41.0 — new markup and stylesheet, three-week-old JS. The admin looked
+> wrong because it *was* wrong.
+>
+> ```bash
+> npm run build                                       # framework workspaces
+> cd sites/perego/perego-theme && npm run build       # client theme
+> cd sites/perego/perego-site  && npm run build       # client plugin
+> ```
+>
+> The client plugin build was **broken** by this update and every suite still passed — see
+> `DECISIONS.md` (2026-08-05, `@wordpress/icons`). Nothing the project measures runs a client build.
+>
+> **`peregoads.com` is served from this working tree** (via Cloudflare), and the WordPress `siteurl`
+> points at it — so the admin you open in a browser is this checkout, not a separate deployment, and
+> a rebuild here changes what you see. Static assets carry `Cache-Control: max-age=14400`, so after
+> a rebuild use a hard refresh (Ctrl+F5) before concluding anything is stale.
+
+**Branch `chore/corex-post-v0.40.0-update`** (off `fix/026-lighthouse-client-performance`), spec
+`specs/027-corex-post-v0.40.0-update/`, which now covers **two merges**. Part 1 took `upstream/main`
+at `60dd5a70` while no tag existed. Upstream then published **v0.41.0**, and Part 2 (`c380e0c3`)
+takes `upstream/main` at `b6eccd49` — the tag plus one post-release correction, 116 files.
+
+Part 1 predicted the next update would start from the tag. It did not, and the reasoning is worth
+carrying forward: **`v0.41.0` is an ancestor of `main`**, so taking `main` includes the tag. The one
+commit past it fixes a defect Part 1 had filed as open — the docs-link check was reading 55 of the
+922 pages the site publishes. Tag-vs-main is a per-release reading of what sits between the two, not
+a standing rule.
+
+**Both of Part 1's open findings are now closed.** `verify:dependencies` passes (upstream's spec 099
+closed `brace-expansion` and `fast-uri`; the restraint of not bumping our own lockfile cost one day
+and was right), and the docs-link check now passes over all 922 built pages.
+
+Nothing needed reconciling on the Perego side again — no front-end runtime file changed. But three
+things this merge did differently are worth knowing before the next one:
+
+- **A blanket "ours" restore is no longer safe.** Upstream bumped two dependencies *inside*
+  `plugins/corex-config/package.json`, a file we hold for an unrelated one-line fix. It was merged
+  by hand. The auto-merge assertion compares **names, not content**, so it would have printed the
+  expected six either way.
+- **The assertion has a blind spot.** It covers `addons plugins packages theme tests` and says
+  nothing about root `package.json`, `.gitignore`, `AGENTS.md`, `CLAUDE.md`, `jest.config.js` or
+  `composer.lock` — all fork-owned now.
+- **Upstream's new `repo-hygiene.test.js` forbids `sites/`**, which is true upstream and false here.
+  The rule is dropped with a comment; the rest of the suite is kept, and it immediately earned that
+  by finding a 17MB design-handoff zip tracked at the repo root since the *v0.40.0 update commit*.
+
+**Local gotcha:** the framework Pest suite no longer fits in WAMP's 128MB `memory_limit` and fails
+as a Windows access violation (`-1073741819`) that looks like a crash. Run
+`php -d memory_limit=1G vendor/bin/pest`. Verified: framework 1739 Pest / 54 suites / 442 Jest;
+Perego 599 Pest / 312 Jest, both unchanged.
+
+**Done since:** the a11y regression this branch surfaced is fixed (`24eb73fc`, and the spec 026
+addendum) — `verify-a11y` is back to **0 serious/critical across 12 routes**, measured pre- and
+post-fix rather than asserted. The framework update itself is merged into `fix/026`, so this branch
+now carries both; the local install reports **0.41.0** for core, blocks, forms and the theme.
+
+**Next:** two things, in this order.
+
+1. **CI on this branch is red, and neither failure comes from the framework update** — both were
+   already failing before it landed:
+   - **`lint:css`** walks `sites/perego/perego-theme/style.css` and reports **4870 errors** (mostly
+     `max-line-length`, plus `no-descending-specificity`). The root `.stylelintignore` excludes
+     `node_modules`, `vendor`, `build`, `dist` and `wp/` — but not `sites/`. This is the **third**
+     instance of one pattern: an upstream check that assumes no client site in the tree
+     (`repo-hygiene.test.js` and `jest.config.js` are the other two). Decide it deliberately —
+     ignoring `sites/` matches the `jest.config.js` precedent and leaves the client CSS unlinted;
+     fixing it is a large diff on authored CSS where `no-descending-specificity` reordering can
+     change rendering.
+   - **Playwright**: 135 passed, **1** failed — `admin-errors.spec.js` "every admin refusal a
+     subscriber meets is a CoreX document", failing at `signInAs`. Fixture-user sign-in, from
+     upstream spec 095's per-spec browser users.
+2. Then the still-open item from spec 026: deploy and rerun Lighthouse against
+   `https://peregoads.com/` in a clean profile, per the note below. **Production still has no
+   `corex-guides` at all** — CoreX's `UpdateService` updates installed plugins and never installs a
+   new one — so the add-on only appears there after a deploy.
+
+**Standing gotchas recorded this round.**
+
+1. The framework Jest suite reports "2 skipped" unless `docs-app` is built first —
+   `tests/docs-links.test.js` skips itself when `docs-app/dist` is absent. Build the docs, or read a
+   skip as a pass.
+2. **`corex-guides` was never installed on this machine.** Every other add-on had a link in
+   `wp/wp-content/plugins/`; this one had none, so the guide screens could never appear no matter what
+   the merge did — and 11 of this upgrade's 13 changed source files live there. Now junctioned and
+   active (junction, not symlink: symlinks need elevation here). **Production still 404s for it** and
+   needs a deploy.
+3. **The CoreX admin is meant to look identical after this upgrade.** The whole admin-stylesheet delta
+   is one RTL admin-bar rule; 18 of its 22 lines are comment. Do not read "looks the same" as "did not
+   apply" — the cache-bust is filemtime-based, so assets refresh on their own.
+4. WP-CLI cannot confirm the Guides menu: `GuidesScreen` registers only under `is_admin()`, false for
+   CLI whatever you define. Resolve the screen and fire `admin_menu` directly instead.
+
+## (previous, 2026-07-30) - Lighthouse client performance
+
+**Branch `fix/026-lighthouse-client-performance`**, spec
+`specs/026-lighthouse-client-performance/`. The supplied production report's
+Perego-owned findings are fixed without changing CoreX, WordPress runtime files,
+uploads, or third-party code.
+
+Perego's theme image build now creates deterministic compressed PNG fallbacks
+and same-stem WebP siblings, verifies dimensions and byte budgets, and renders
+the hero, wave artwork, service cards, and default logos through CoreX's public
+picture contract. After the hero fidelity correction, the three report-targeted
+WebPs total **327,122 bytes**, down from the supplied **3,294,944-byte** baseline
+(about **90.1% smaller**). The full-screen hero is now encoded from a true-colour
+fallback at WebP quality 95, eliminating the visible banding from the earlier
+22 KB palette-derived encode while remaining only 75,380 bytes. The live hero
+now references `hero-bg-v2.webp`, forcing browsers that cached the earlier URL
+under the 30-day policy to fetch the corrected file immediately.
+Default logos and audited images have intrinsic dimensions; hero/preloader/header
+media is eager and below-fold media is lazy. Client carousel controls keep their
+native button/link roles. Perego theme and plugin static assets receive a finite
+30-day cache policy, with no `immutable` directive on stable filenames.
+
+Verification: theme and client-plugin builds pass; **601 Pest tests** and **47
+Jest suites / 312 tests** pass; the final focused renderer run passes **132 tests
+/ 399 assertions**. Clean EN/AR browser checks at 375, 768, and 1440 pixels found
+no overflow, broken media, hidden reveal content, or console errors. An
+extension-free Lighthouse rerun reaches Accessibility 100 and SEO 100, clears
+unsized-image findings, and leaves no Perego theme/plugin URL in the cache audit.
+
+**Corrected 2026-08-05 (`24eb73fc`, spec 026 addendum).** The "clears invalid-ARIA
+findings" claim above was wrong, and so was the Accessibility 100 it rested on.
+`verify-a11y` — axe-core over the full WCAG 2.0/2.1/2.2 A+AA tag set, 12 routes —
+reported **2 serious `role-img-alt` violations, home EN and AR**, against a
+baseline of 0. Lighthouse samples a subset of rules on one page and did not see
+them. The inert individual card had been given a nameless `role="img"`, which
+both failed the rule and collapsed the card's own `<h3>`, subtitle and body copy
+into a single graphic, unreachable by assistive tech. Now fixed and measured both
+ways: pre-fix `hardFailures: 2`, fixed `hardFailures: 0`.
+
+**Lighthouse is not this project's a11y gate.** Run
+`node sites/perego/perego-site/scripts/verify-a11y.mjs` before claiming an
+accessibility success criterion, and check the mtime of `./output/verify-a11y.json`
+— that path is relative to the cwd, and two stale copies of the same filename sit
+under `perego-site/`.
+
+**Next:** deploy this client branch and rerun Lighthouse against
+`https://peregoads.com/` in a clean profile. Do not compare the local Performance
+69 / Best Practices 78 scores directly with production: the local audit used
+HTTP, mobile throttling, and Lighthouse 13.3.0 reported a `NO_LCP` trace warning
+under the installed Node 22.14 runtime. Remaining local cache/image findings are
+uploads, WordPress/CoreX assets, or third-party resources and are outside this
+client-only change.
+
 ## RESUME HERE (2026-07-29, latest) — Round 16: the client's phone
 
 **Branch `fix/025-mobile-client-fixes`** (off `chore/corex-v0.40.0-update`), spec

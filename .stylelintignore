@@ -3,3 +3,20 @@
 **/build/**
 **/dist/**
 wp/**
+
+# Client sites under `sites/` are a fork-level addition upstream does not have, so the root
+# `lint:css` — which is the framework's lint — had never been pointed at one until upstream wired
+# every always-running check into CI (spec 091). It then reported 4870 errors on Perego's authored
+# `perego-theme/style.css`, none of them about the framework.
+#
+# Same call as `jest.config.js` makes for the same reason: root tooling covers the framework, each
+# client site carries its own. Perego's does not have a stylelint setup yet, so this ignore is a
+# deliberate gap rather than a solved problem — the CSS is unlinted until that lands, and reordering
+# it to satisfy `no-descending-specificity` would need a full visual re-verification anyway.
+sites/**
+
+# The raw design handoff is git-ignored reference material, so CI never sees it and only a local run
+# ever hits it — 3746 errors from a vendor stylesheet nobody here wrote or ships. Listed so `npm run
+# lint:css` means the same thing on this machine as it does in CI; a local-only failure that CI
+# cannot reproduce is the fastest way to teach someone to stop reading the output.
+_design_handoff/**

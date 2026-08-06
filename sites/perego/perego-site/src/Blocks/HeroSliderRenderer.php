@@ -10,6 +10,7 @@ namespace PeregoSite\Blocks;
 
 defined('ABSPATH') || exit;
 
+use Corex\Assets\Image;
 use PeregoSite\Content\HeroContent;
 use PeregoSite\Services\LanguageService;
 use PeregoSite\Theme\SiteRoutes;
@@ -57,7 +58,13 @@ final class HeroSliderRenderer
             . 'data-wp-init="callbacks.init">';
 
         $html .= '<div class="hero__prism" aria-hidden="true">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/hero-bg.png') . '" alt="" />'
+            . Image::picture('images/hero-bg-v2.png', [
+                'base' => 'perego-theme',
+                'alt' => '',
+                'width' => 1920,
+                'height' => 1080,
+                'loading' => 'eager',
+            ])
             . '</div>';
 
         // Swipe/drag navigation (view.js actions.pointerDown/Up): pointer events cover touch + mouse.

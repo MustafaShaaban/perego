@@ -9,5 +9,9 @@
 		"build:panels": "wp-scripts build --webpack-src-dir=src/EditorPanels --output-path=build/EditorPanels",
 		"start": "wp-scripts start --experimental-modules --webpack-src-dir=src/Blocks --output-path=build/Blocks",
 		"test:js": "wp-scripts test-unit-js --config=jest.config.js"
+	},
+	"//dependencies": "@wordpress/icons is imported directly by src/Editor/RecordPicker.js and SortableItem.js, and DependencyExtractionWebpackPlugin BUNDLES it rather than mapping it to a wp.* global — so it must exist in node_modules at build time. It was never listed here: it reached this build by hoisting out of the framework root, as a transitive of @wordpress/scripts 33 / @wordpress/components 37. CoreX v0.41.0 bumped those to 34 / 38, the transitive disappeared, and both client builds broke on 'Can't resolve @wordpress/icons' while every framework suite stayed green. Pinned to the 15.2.0 the hoist had been supplying. An undeclared dependency is one upstream can remove without knowing we existed.",
+	"dependencies": {
+		"@wordpress/icons": "^15.2.0"
 	}
 }

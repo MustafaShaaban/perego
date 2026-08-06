@@ -248,7 +248,7 @@ it('renders a corporate tile as an inert div when its behaviour is the default "
 
     $html = renderClients();
 
-    expect($html)->toContain('<div class="corp-card" role="listitem"')
+    expect($html)->toContain('<div class="corp-card" role="img"')
         ->and($html)->not->toContain('data-image=')
         ->and($html)->not->toContain('<button type="button" class="corp-card"');
 });
@@ -269,7 +269,7 @@ it('degrades a lightbox tile with neither gallery nor logo to an inert div rathe
 
     $html = renderClients();
 
-    expect($html)->toContain('<div class="corp-card" role="listitem"')
+    expect($html)->toContain('<div class="corp-card" role="img"')
         ->and($html)->not->toContain('<button type="button" class="corp-card"');
 });
 
@@ -330,7 +330,8 @@ it('opens a link in place when the editor did not ask for a new tab', function (
         ClientPostType::META_LINK_URL => 'https://client.example/',
     ]]);
 
-    expect(renderClients())->toContain('<a class="corp-card" href="https://client.example/" role="listitem"');
+    expect(renderClients())->toContain('<a class="corp-card" href="https://client.example/"')
+        ->not->toContain('<a class="corp-card" href="https://client.example/" role=');
 });
 
 it('degrades a link behaviour with no destination to an inert div', function () {
@@ -338,7 +339,7 @@ it('degrades a link behaviour with no destination to an inert div', function () 
 
     $html = renderClients();
 
-    expect($html)->toContain('<div class="corp-card" role="listitem"')
+    expect($html)->toContain('<div class="corp-card" role="img"')
         ->and($html)->not->toContain('<a class="corp-card"');
 });
 
@@ -356,6 +357,39 @@ it('renders a non-interactive card with no play affordance when the behaviour is
     expect($html)->toContain('<div class="indiv-card"')
         ->and($html)->not->toContain('class="play-btn"')
         ->and($html)->not->toContain('data-video=');
+});
+
+/**
+ * The inert individual card carries NO role, and that is the whole fix.
+ *
+ * It briefly carried `role="img"`, which axe reported as two serious `role-img-alt` violations
+ * (home EN and AR) because nothing gave it a name. The name was the smaller half of the problem:
+ * `role="img"` makes the element a single graphic to assistive technology, so the `<h3>` title,
+ * the subtitle and the body copy *inside* it stop being reachable at all. An `aria-label` would
+ * have satisfied axe and left the content hidden — a green check over a worse card.
+ *
+ * A plain `<div>` is right because the card's content is real text that reads itself. The lightbox
+ * and link variants already carry no role and have always been fine, which is the shape this
+ * restores.
+ */
+it('gives the inert individual card no role, so its heading and copy stay reachable', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('<div class="indiv-card">')
+        ->and($html)->not->toContain('<div class="indiv-card" role=')
+        ->and($html)->toContain('<h3 class="indiv-card__title">Sample Creator One</h3>');
+});
+
+/**
+ * The corporate tile keeps `role="img"`, and the contrast with the test above is the point: it is a
+ * bare logo with `alt=""`, so it genuinely IS one graphic, and `corporateCard()` passes the client
+ * name as `aria-label` — which is what `role-img-alt` asks for. Same inert branch, different role,
+ * because the two cards hold different things.
+ */
+it('keeps role="img" on the inert corporate tile, which is a named graphic and nothing else', function () {
+    $html = renderClients();
+
+    expect($html)->toContain('<div class="corp-card" role="img" aria-label="Sample Corporate Client A">');
 });
 
 it('renders a lightbox client as a single-action button with the ▶ affordance (handoff C-04: never lightbox + navigation together)', function () {
@@ -501,12 +535,30 @@ it('renders the handoff navigation controls for populated tracks', function () {
 it('preserves the handoff track identifiers, labels, and arrow SVG controls', function () {
     $html = renderClients();
 
-    expect($html)->toContain('id="corporateTrack" tabindex="0" role="list"')
-        ->and($html)->toContain('id="individualTrack" tabindex="0" role="list"')
+    expect($html)->toContain('id="corporateTrack" tabindex="0" role="group"')
+        ->and($html)->toContain('id="individualTrack" tabindex="0" role="group"')
         ->and($html)->toContain('aria-label="Previous clients"')
         ->and($html)->toContain('aria-label="More clients"')
         ->and($html)->toContain('<circle class="eq-bar"')
         ->and($html)->toContain('<svg viewBox="0 0 24 24" aria-hidden="true">');
+});
+
+it('keeps buttons and links in the carousel on their valid native roles', function () {
+    Functions\when('has_post_thumbnail')->justReturn(true);
+    Functions\when('get_the_post_thumbnail_url')->justReturn('https://perego.local/client.png');
+    perego_stage_meta([
+        11 => [ClientPostType::META_BEHAVIOR => 'lightbox'],
+        21 => [
+            ClientPostType::META_BEHAVIOR => 'link',
+            ClientPostType::META_LINK_URL => 'https://creator.example/',
+        ],
+    ]);
+
+    $html = renderClients();
+
+    expect($html)->toContain('<button type="button" class="corp-card"')
+        ->and($html)->toContain('<a class="indiv-card" href="https://creator.example/"')
+        ->and($html)->not->toContain('role="listitem"');
 });
 
 it('omits the handoff track shell for a client type with no posts, keeping the heading', function () {
@@ -575,9 +627,9 @@ it('resolves an Arabic client behaviour and gallery from its linked English reco
 
     $html = renderClients();
 
-    expect($html)->toContain('<button type="button" class="indiv-card" role="listitem" data-video="https://www.youtube.com/embed/from-english"')
+    expect($html)->toContain('<button type="button" class="indiv-card" data-video="https://www.youtube.com/embed/from-english"')
         // The exact defect: no inert div is left behind for a client whose EN record has media.
-        ->and($html)->not->toContain('<div class="indiv-card" role="listitem">');
+        ->and($html)->not->toContain('<div class="indiv-card" role="listitem"');
 });
 
 it('does NOT inherit the English subtitle — media crosses languages, editorial copy does not', function () {

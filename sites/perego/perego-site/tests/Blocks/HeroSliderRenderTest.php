@@ -89,6 +89,16 @@ it('preserves the handoff container and hero entry class contract', function () 
         ->and($html)->toContain('class="hero__content hero-enter"');
 });
 
+it('serves the hero through the CoreX picture contract with stable intrinsic dimensions', function () {
+    $html = renderHero();
+
+    expect($html)->toContain('<source type="image/webp" srcset="https://perego.local/wp-content/themes/perego-theme/assets/images/hero-bg-v2.webp"')
+        ->and($html)->toContain('src="https://perego.local/wp-content/themes/perego-theme/assets/images/hero-bg-v2.png"')
+        ->and($html)->toContain('width="1920" height="1080"')
+        ->and($html)->toContain('loading="eager"')
+        ->and($html)->toContain('decoding="async"');
+});
+
 it('binds each slide hidden state and each dot selected state to the store', function () {
     $html = renderHero();
 

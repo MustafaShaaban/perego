@@ -8,6 +8,7 @@ declare(strict_types=1);
 
 namespace PeregoSite\Blocks;
 
+use Corex\Assets\Image;
 use PeregoSite\Content\GlobalContent;
 use PeregoSite\Forms\QuickMessageForm;
 use PeregoSite\Services\LanguageService;
@@ -135,7 +136,13 @@ final class SiteFooterRenderer
 
         $html .= '<a class="logo" href="' . esc_url($this->languageService->driver()->localizedUrl('/')) . '" '
             . 'aria-label="' . esc_attr__('Perego — home', 'perego-site') . '">'
-            . '<img src="' . esc_url(get_stylesheet_directory_uri() . '/assets/images/logo-full.png') . '" alt="" class="logo__img" />'
+            . Image::picture('images/logo-full.png', [
+                'base' => 'perego-theme',
+                'alt' => '',
+                'class' => 'logo__img',
+                'width' => 552,
+                'height' => 170,
+            ])
             . '</a>';
 
         $html .= '<h2 class="footer-heading">' . esc_html__('Contact us', 'perego-site') . '</h2>';
